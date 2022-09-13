@@ -1,0 +1,531 @@
+// Histograms needed in the dijet analysis
+
+// C++ includes
+#include <assert.h>
+
+// Root includes
+#include <TFile.h>
+#include <TMath.h>
+
+// Own includes
+#include "EECHistograms.h"
+
+/*
+ * Default constructor
+ */
+EECHistograms::EECHistograms() :
+  fhVertexZ(0),
+  fhVertexZWeighted(0),
+  fhEvents(0),
+  fhTrackCuts(0),
+  fhCentrality(0),
+  fhCentralityWeighted(0),
+  fhPtHat(0),
+  fhPtHatWeighted(0),
+  fhMultiplicity(0),
+  fhInclusiveJet(0),
+  fhTrack(0),
+  fhTrackUncorrected(0),
+  fhEnergyEnergyCorrelator(0),
+  fhEnergyEnergyCorrelatorUncorrected(0),
+  fhEnergyEnergyCorrelatorJetPt(0),
+  fhEnergyEnergyCorrelatorJetPtUncorrected(0),
+  fhJetPtClosure(0),
+  fCard(0)
+{
+  // Default constructor
+  
+}
+
+/*
+ * Custom constructor
+ */
+EECHistograms::EECHistograms(ConfigurationCard *newCard) :
+  fhVertexZ(0),
+  fhVertexZWeighted(0),
+  fhEvents(0),
+  fhTrackCuts(0),
+  fhCentrality(0),
+  fhCentralityWeighted(0),
+  fhPtHat(0),
+  fhPtHatWeighted(0),
+  fhMultiplicity(0),
+  fhInclusiveJet(0),
+  fhTrack(0),
+  fhTrackUncorrected(0),
+  fhEnergyEnergyCorrelator(0),
+  fhEnergyEnergyCorrelatorUncorrected(0),
+  fhEnergyEnergyCorrelatorJetPt(0),
+  fhEnergyEnergyCorrelatorJetPtUncorrected(0),
+  fhJetPtClosure(0),
+  fCard(newCard)
+{
+  // Custom constructor
+
+}
+
+/*
+ * Copy constructor
+ */
+EECHistograms::EECHistograms(const EECHistograms& in) :
+  fhVertexZ(in.fhVertexZ),
+  fhVertexZWeighted(in.fhVertexZWeighted),
+  fhEvents(in.fhEvents),
+  fhTrackCuts(in.fhTrackCuts),
+  fhCentrality(in.fhCentrality),
+  fhCentralityWeighted(in.fhCentralityWeighted),
+  fhPtHat(in.fhPtHat),
+  fhPtHatWeighted(in.fhPtHatWeighted),
+  fhMultiplicity(in.fhMultiplicity),
+  fhInclusiveJet(in.fhInclusiveJet),
+  fhTrack(in.fhTrack),
+  fhTrackUncorrected(in.fhTrackUncorrected),
+  fhEnergyEnergyCorrelator(in.fhEnergyEnergyCorrelator),
+  fhEnergyEnergyCorrelatorUncorrected(in.fhEnergyEnergyCorrelatorUncorrected),
+  fhEnergyEnergyCorrelatorJetPt(in.fhEnergyEnergyCorrelatorJetPt),
+  fhEnergyEnergyCorrelatorJetPtUncorrected(in.fhEnergyEnergyCorrelatorJetPtUncorrected),
+  fhJetPtClosure(in.fhJetPtClosure),
+  fCard(in.fCard)
+{
+  // Copy constructor
+  
+}
+
+/*
+ * Assingment operator
+ */
+EECHistograms& EECHistograms::operator=(const EECHistograms& in){
+  // Assingment operator
+  
+  if (&in==this) return *this;
+  
+  fhVertexZ = in.fhVertexZ;
+  fhVertexZWeighted = in.fhVertexZWeighted;
+  fhEvents = in.fhEvents;
+  fhTrackCuts = in.fhTrackCuts;
+  fhCentrality = in.fhCentrality;
+  fhCentralityWeighted = in.fhCentralityWeighted;
+  fhPtHat = in.fhPtHat;
+  fhPtHatWeighted = in.fhPtHatWeighted;
+  fhMultiplicity = in.fhMultiplicity;
+  fhInclusiveJet = in.fhInclusiveJet;
+  fhTrack = in.fhTrack;
+  fhTrackUncorrected = in.fhTrackUncorrected;
+  fhEnergyEnergyCorrelator = in.fhEnergyEnergyCorrelator;
+  fhEnergyEnergyCorrelatorUncorrected = in.fhEnergyEnergyCorrelatorUncorrected;
+  fhEnergyEnergyCorrelatorJetPt = in.fhEnergyEnergyCorrelatorJetPt;
+  fhEnergyEnergyCorrelatorJetPtUncorrected = in.fhEnergyEnergyCorrelatorJetPtUncorrected;
+  fhJetPtClosure = in.fhJetPtClosure;
+  fCard = in.fCard;
+  
+  return *this;
+}
+
+/*
+ * Destructor
+ */
+EECHistograms::~EECHistograms(){
+  // destructor
+  delete fhVertexZ;
+  delete fhVertexZWeighted;
+  delete fhEvents;
+  delete fhTrackCuts;
+  delete fhCentrality;
+  delete fhCentralityWeighted;
+  delete fhPtHat;
+  delete fhPtHatWeighted;
+  delete fhMultiplicity;
+  delete fhInclusiveJet;
+  delete fhTrack;
+  delete fhTrackUncorrected;
+  delete fhEnergyEnergyCorrelator;
+  delete fhEnergyEnergyCorrelatorUncorrected;
+  delete fhEnergyEnergyCorrelatorJetPt;
+  delete fhEnergyEnergyCorrelatorJetPtUncorrected;
+  delete fhJetPtClosure;
+  
+}
+
+/*
+ * Set the configuration card used for the histogram class
+ */
+void EECHistograms::SetCard(ConfigurationCard *newCard){
+  fCard = newCard;
+}
+
+/*
+ * Create the necessary histograms
+ */
+void EECHistograms::CreateHistograms(){
+  
+  // ======== Common binning information for histograms =========
+  
+  // Centrality
+  const Double_t minCentrality = -0.75;   // Minimum centrality bin, is negative since hiBin is -1 for pp
+  const Double_t maxCentrality = 100.25;  // Maximum centrality bin
+  const Int_t nCentralityBins = 202;      // Number of centrality bins
+  
+  // Jet pT
+  const Double_t minPtJet = 0;     // Minimum jet pT
+  const Double_t maxPtJet = 500;   // Maximum jet pT
+  const Int_t nPtBinsJet = 100;    // Number of jet pT bins
+  
+  //Track pT
+  const Double_t minPtTrack = 0;   // Minimum track pT for track histograms
+  const Double_t maxPtTrack = 20;  // Maximum track pT for track histograms (Hallie's analysis = 20)
+  const Int_t nPtBinsTrack = 500;  // Number of track pT bins for track histograms (Hallie's analysis = 500)
+  
+  // Phi
+  const Double_t minPhi = -TMath::Pi();  // Minimum phi
+  const Double_t maxPhi = TMath::Pi();   // Maximum phi
+  const Int_t nPhiBins = 64;             // Number of phi bins
+  
+  // Eta
+  const Double_t minEta = -2.5;    // Minimum eta (current eta cut for tracks = 2.4)
+  const Double_t maxEta = 2.5;     // Maximum eta (current eta cut for tracks = 2.4)
+  const Int_t nEtaBins = 50;       // Number of eta bins
+  
+  // Vertex z-position
+  const Double_t minVz = -20;   // Minimum vz
+  const Double_t maxVz = 20;    // Maximum vz
+  const Int_t nVzBins = 80;     // Number of vz bins
+  
+  // pT hat
+  const Double_t minPtHat = 0;     // Minimum pT hat
+  const Double_t maxPtHat = 460;   // Maximum pT hat
+  const Int_t nFinePtHatBins = 230; // Number of fine pT hat bins
+  
+  // Generator level pT binning for closure histograms
+  const Double_t minClosurePt = 50;                             // Minimum gen jet pT for closure plots
+  const Double_t maxClosurePt = 500;                            // Maximum gen jet pT for closure plots
+  const Int_t nClosurePtBins = (maxClosurePt-minClosurePt)/10;  // Bin width of 10 for the Gen pT in closure plots
+  
+  // Particle type for closure plots (0 = quark, 1 = gluon)
+  const Double_t minClosureParticleType = -0.5;                        // Closure particle type indexing starts from zero
+  const Double_t maxClosureParticleType = knClosureParticleTypes-0.5;  // Maximum closure particle type index
+  const Int_t nClosureParticleTypeBins = knClosureParticleTypes;       // Bin width for particle type is 1
+  
+  // Binning for reco/gen ratio for closure histograms
+  const Double_t minClosureRatio = 0;    // Minimum ratio for the closure plots
+  const Double_t maxClosureRatio = 2;    // Maximum ratio for the closure plots
+  const Int_t nClosureRatioBins = 40;    // Number of closure ratio bins
+  
+  // Binning for multiplicity
+  const Double_t minMultiplicity = 0;
+  const Double_t maxMultiplicity = 5000;
+  const Double_t maxMultiplicityWeighted = 4000;
+  const Int_t nMultiplicityBins = 500;
+  const Int_t nMultiplicityBinsWeighted = 400;
+  
+  // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
+  const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
+  Double_t wideCentralityBins[nWideCentralityBins+1];
+  for(Int_t iCentrality = 0; iCentrality < nWideCentralityBins+1; iCentrality++){
+    wideCentralityBins[iCentrality] = fCard->Get("CentralityBinEdges",iCentrality);
+  }
+  
+  // Bins for the pT hat histogram
+  const Int_t nPtHatBins = fCard->GetNBin("PtHatBinEdges");
+  Double_t ptHatBins[nPtHatBins+1];
+  for(Int_t iPtHat = 0; iPtHat < nPtHatBins+1; iPtHat++){
+    ptHatBins[iPtHat] = fCard->Get("PtHatBinEdges",iPtHat);
+  }
+  
+  // Jet pT binning for energy-energy correlator histograms
+  const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
+  Double_t jetPtBinsEEC[nJetPtBinsEEC+1];
+  for(Int_t iJetPt = 0; iJetPt < nJetPtBinsEEC+1; iJetPt++){
+    jetPtBinsEEC[iJetPt] = fCard->Get("JetPtBinEdgesEEC",iJetPt);
+  }
+  const Double_t minJetPtEEC = jetPtBinsEEC[0];
+  const Double_t maxJetPtEEC = jetPtBinsEEC[nJetPtBinsEEC];
+  
+  // Track pT binning for energy-energy correlator histograms
+  const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
+  Double_t trackPtBinsEEC[nTrackPtBinsEEC+1];
+  for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC+1; iTrackPt++){
+    trackPtBinsEEC[iTrackPt] = fCard->Get("TrackPtBinEdgesEEC",iTrackPt);
+  }
+  const Double_t minTrackPtEEC = trackPtBinsEEC[0];
+  const Double_t maxTrackPtEEC = trackPtBinsEEC[nTrackPtBinsEEC];
+  
+  // DeltaR binning for energy-energy correlator histograms
+  const Int_t nDeltaRBinsEEC = fCard->GetNBin("DeltaRBinEdgesEEC");
+  Double_t deltaRBinsEEC[nDeltaRBinsEEC+1];
+  for(Int_t iDeltaR = 0; iDeltaR < nDeltaRBinsEEC+1; iDeltaR++){
+    deltaRBinsEEC[iDeltaR] = fCard->Get("DeltaRBinEdgesEEC",iDeltaR);
+  }
+  const Double_t minDeltaREEC = deltaRBinsEEC[0];
+  const Double_t maxDeltaREEC = deltaRBinsEEC[nDeltaRBinsEEC];
+  
+  // Arrays for creating THnSparses
+  const Int_t nAxesMultiplicity = 3;
+  Int_t nBinsMultiplicity[nAxesMultiplicity];
+  Double_t lowBinBorderMultiplicity[nAxesMultiplicity];
+  Double_t highBinBorderMultiplicity[nAxesMultiplicity];
+  
+  const Int_t nAxesJet = 5;
+  Int_t nBinsJet[nAxesJet];
+  Double_t lowBinBorderJet[nAxesJet];
+  Double_t highBinBorderJet[nAxesJet];
+  
+  const Int_t nAxesTrack = 4;
+  Int_t nBinsTrack[nAxesTrack];
+  Double_t lowBinBorderTrack[nAxesTrack];
+  Double_t highBinBorderTrack[nAxesTrack];
+  
+  const Int_t nAxesEnergyEnergyCorrelator = 4;
+  Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
+  Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
+  Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
+  
+  const Int_t nAxesJetClosure = 6;
+  Int_t nBinsJetClosure[nAxesJetClosure];
+  Double_t lowBinBorderJetClosure[nAxesJetClosure];
+  Double_t highBinBorderJetClosure[nAxesJetClosure];
+  
+  
+  // ======== Plain TH1 histograms ========
+  
+  fhVertexZ = new TH1F("vertexZ","vertexZ",nVzBins,minVz,maxVz); fhVertexZ->Sumw2();
+  fhVertexZWeighted = new TH1F("vertexZweighted","vertexZweighted",nVzBins,minVz,maxVz); fhVertexZWeighted->Sumw2();
+  fhEvents = new TH1F("nEvents","nEvents",knEventTypes,-0.5,knEventTypes-0.5); fhEvents->Sumw2();
+  fhTrackCuts = new TH1F("trackCuts","trackCuts",knTrackCuts,-0.5,knTrackCuts-0.5); fhTrackCuts->Sumw2();
+  fhCentrality = new TH1F("centrality","centrality",nCentralityBins,minCentrality,maxCentrality); fhCentrality->Sumw2();
+  fhCentralityWeighted = new TH1F("centralityWeighted","centralityWeighted",nCentralityBins,minCentrality,maxCentrality); fhCentralityWeighted->Sumw2();
+  fhPtHat = new TH1F("pthat","pthat",nPtHatBins,ptHatBins); fhPtHat->Sumw2();
+  fhPtHatWeighted = new TH1F("pthatWeighted","pthatWeighted",nFinePtHatBins,minPtHat,maxPtHat); fhPtHatWeighted->Sumw2();
+  
+  // For the event histogram, label each bin corresponding to an event cut
+  for(Int_t i = 0; i < knEventTypes; i++){
+    fhEvents->GetXaxis()->SetBinLabel(i+1,kEventTypeStrings[i]);
+  }
+  
+  // If we are using PF jets, change the axis label for that
+  if(fCard->Get("JetType") == 1) fhEvents->GetXaxis()->SetBinLabel(kCaloJet+1,"PFJet");
+  
+  // For the track cut histogram, label each bin corresponding to a track cut
+  for(Int_t i = 0; i < knTrackCuts; i++){
+    fhTrackCuts->GetXaxis()->SetBinLabel(i+1,kTrackCutStrings[i]);
+  }
+  
+  // ======== THnSparses for multiplicity ========
+  
+  // Axis 0 for the multiplicity histogram: multiplicity
+  nBinsMultiplicity[0] = nMultiplicityBins;       // nBins for multiplicity
+  lowBinBorderMultiplicity[0] = minMultiplicity;  // low bin border for multiplicity
+  highBinBorderMultiplicity[0] = maxMultiplicity; // high bin border for multiplicity
+  
+  // Axis 1 for the multiplicity histogram: weighted multiplicity
+  nBinsMultiplicity[1] = nMultiplicityBinsWeighted;       // nBins for weighted multiplicity
+  lowBinBorderMultiplicity[1] = minMultiplicity;          // low bin border for weighted multiplicity
+  highBinBorderMultiplicity[1] = maxMultiplicityWeighted; // high bin border for weighted multiplicity
+  
+  // Axis 2 for the multiplicity histogram: centrality
+  nBinsMultiplicity[2] = nCentralityBins;     // nBins for wide centrality bins
+  lowBinBorderMultiplicity[2] = minCentrality;    // low bin border for centrality
+  highBinBorderMultiplicity[2] = maxCentrality;   // high bin border for centrality
+  
+  // Create the histograms for leading and subleading jets using the above binning information
+  fhMultiplicity = new THnSparseF("multiplicity", "multiplicity", nAxesMultiplicity, nBinsMultiplicity, lowBinBorderMultiplicity, highBinBorderMultiplicity); fhMultiplicity->Sumw2();
+  
+  // Set custom centrality bins for histograms
+  //fhMultiplicity->SetBinEdges(2,wideCentralityBins);
+  
+  // ======== THnSparse for all jets ========
+  
+  // Axis 0 for the any jet histogram: jet pT
+  nBinsJet[0] = nPtBinsJet;         // nBins for any jet pT
+  lowBinBorderJet[0] = minPtJet;    // low bin border for any jet pT
+  highBinBorderJet[0] = maxPtJet;   // high bin border for any jet pT
+  
+  // Axis 1 for the any jet histogram: jet phi
+  nBinsJet[1] = nPhiBins;        // nBins for any jet phi
+  lowBinBorderJet[1] = minPhi;   // low bin border for any jet phi
+  highBinBorderJet[1] = maxPhi;  // high bin border for any jet phi
+  
+  // Axis 2 for the any jet histogram: jet eta
+  nBinsJet[2] = nEtaBins;        // nBins for any jet eta
+  lowBinBorderJet[2] = minEta;   // low bin border for any jet eta
+  highBinBorderJet[2] = maxEta;  // high bin border for any jet eta
+  
+  // Axis 3 for the any jet histogram: centrality
+  nBinsJet[3] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderJet[3] = minCentrality;  // low bin border for centrality
+  highBinBorderJet[3] = maxCentrality; // high bin border for centrality
+  
+  // Axis 4 for the jet histogram: jet flavor (quark/gluon)
+  nBinsJet[4] = nClosureParticleTypeBins;        // nBins for jet flavor
+  lowBinBorderJet[4] = minClosureParticleType;   // low bin border for jet flavor
+  highBinBorderJet[4] = maxClosureParticleType;  // high bin border for jet flavor
+  
+  // Create the histogram for all jets using the above binning information
+  fhInclusiveJet = new THnSparseF("inclusiveJet","inclusiveJet",nAxesJet,nBinsJet,lowBinBorderJet,highBinBorderJet); fhInclusiveJet->Sumw2();
+
+  // Set custom centrality bins for histograms
+  fhInclusiveJet->SetBinEdges(3,wideCentralityBins);
+  
+  // ======== THnSparses for tracks and uncorrected tracks ========
+  
+  // Axis 0 for the track histogram: track pT
+  nBinsTrack[0] = nPtBinsTrack;         // nBins for track pT
+  lowBinBorderTrack[0] = minPtTrack;    // low bin border for track pT
+  highBinBorderTrack[0] = maxPtTrack;   // high bin border for track pT
+  
+  // Axis 1 for the track histogram: track phi
+  nBinsTrack[1] = nPhiBins;         // nBins for track phi
+  lowBinBorderTrack[1] = minPhi;    // low bin border for track phi
+  highBinBorderTrack[1] = maxPhi;   // high bin border for track phi
+  
+  // Axis 2 for the track histogram: track eta
+  nBinsTrack[2] = nEtaBins;         // nBins for track eta
+  lowBinBorderTrack[2] = minEta;    // low bin border for track eta
+  highBinBorderTrack[2] = maxEta;   // high bin border for track eta
+  
+  // Axis 3 for the track histogram: centrality
+  nBinsTrack[3] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderTrack[3] = minCentrality;  // low bin border for centrality
+  highBinBorderTrack[3] = maxCentrality; // high bin border for centrality
+  
+  // Create the histograms for tracks and uncorrected tracks using the above binning information
+  fhTrack = new THnSparseF("track","track",nAxesTrack,nBinsTrack,lowBinBorderTrack,highBinBorderTrack); fhTrack->Sumw2();
+  fhTrackUncorrected = new THnSparseF("trackUncorrected","trackUncorrected",nAxesTrack,nBinsTrack,lowBinBorderTrack,highBinBorderTrack); fhTrackUncorrected->Sumw2();
+
+  // Set custom centrality bins for histograms
+  fhTrack->SetBinEdges(3,wideCentralityBins);
+  fhTrackUncorrected->SetBinEdges(3,wideCentralityBins);
+  
+  // ======== THnSparses for energy-energy correlators ========
+  
+  // Axis 0 for the energy-energy correlator histogram: deltaR
+  nBinsEnergyEnergyCorrelator[0] = nDeltaRBinsEEC;        // nBins for deltaR between the two tracks
+  lowBinBorderEnergyEnergyCorrelator[0] = minDeltaREEC;   // low bin border for deltaR
+  highBinBorderEnergyEnergyCorrelator[0] = maxDeltaREEC;  // high bin border for deltaR
+  
+  // Axis 1 for the energy-energy correlator histogram: jet pT
+  nBinsEnergyEnergyCorrelator[1] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderEnergyEnergyCorrelator[1] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderEnergyEnergyCorrelator[1] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 2 for the energy-energy correlator histogram: track pT
+  nBinsEnergyEnergyCorrelator[2] = nTrackPtBinsEEC;        // nBins for track pT
+  lowBinBorderEnergyEnergyCorrelator[2] = minTrackPtEEC;   // low bin border for track pT
+  highBinBorderEnergyEnergyCorrelator[2] = maxTrackPtEEC;  // high bin border for track pT
+  
+  // Axis 3 for the energy-energy correlator histogram: centrality
+  nBinsEnergyEnergyCorrelator[3] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderEnergyEnergyCorrelator[3] = minCentrality;  // low bin border for centrality
+  highBinBorderEnergyEnergyCorrelator[3] = maxCentrality; // high bin border for centrality
+  
+  // Create the histograms for energy-energy correlators with and without track efficiency corrections
+  fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();
+  fhEnergyEnergyCorrelatorUncorrected = new THnSparseF("energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorUncorrected", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorUncorrected->Sumw2();
+  fhEnergyEnergyCorrelatorJetPt = new THnSparseF("energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorJetPt", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorJetPt->Sumw2();
+  fhEnergyEnergyCorrelatorJetPtUncorrected = new THnSparseF("energyEnergyCorrelatorJetPtUncorrected", "energyEnergyCorrelatorJetPtUncorrected", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorJetPtUncorrected->Sumw2();
+  
+  // Set custom bin borders for histograms
+  fhEnergyEnergyCorrelator->SetBinEdges(0,deltaRBinsEEC);                      // DeltaR bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(0,deltaRBinsEEC);           // DeltaR bins
+  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(0,deltaRBinsEEC);                 // DeltaR bins
+  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(0,deltaRBinsEEC);      // DeltaR bins
+  
+  fhEnergyEnergyCorrelator->SetBinEdges(1,jetPtBinsEEC);                       // Jet pT bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(1,jetPtBinsEEC);            // Jet pT bins
+  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(1,jetPtBinsEEC);                  // Jet pT bins
+  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(1,jetPtBinsEEC);       // Jet pT bins
+  
+  fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                     // Track pT bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(2,trackPtBinsEEC);          // Track pT bins
+  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(2,trackPtBinsEEC);                // Track pT bins
+  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(2,trackPtBinsEEC);     // Track pT bins
+  
+  fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                 // Centrality bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(3,wideCentralityBins);      // Centrality bins
+  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(3,wideCentralityBins);            // Centrality bins
+  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(3,wideCentralityBins); // Centrality bins
+  
+  // ======== THnSparses for jet pT closures ========
+  
+  // Axis 0 for the jet pT closure histogram: generator level jet pT
+  nBinsJetClosure[0] = nClosurePtBins;       // nBins for generator level pT bins in closure plots
+  lowBinBorderJetClosure[0] = minClosurePt;  // low bin border generator level pT in closure plots
+  highBinBorderJetClosure[0] = maxClosurePt; // high bin border generator level pT in closure plots
+  
+  // Axis 1 for the jet pT closure histogram: reconstructed jet pT
+  nBinsJetClosure[1] = nClosurePtBins;       // nBins for reconstructed jet pT bins in closure plots
+  lowBinBorderJetClosure[1] = minClosurePt;  // low bin border for reconstructed jet pT in closure plots
+  highBinBorderJetClosure[1] = maxClosurePt; // high bin border for reconstructed jet pT in closure plots
+  
+  // Axis 2 for the jet pT closure histogram: generator level jet eta
+  nBinsJetClosure[2] = nEtaBins;             // nBins for jet eta
+  lowBinBorderJetClosure[2] = minEta;        // low bin border for jet eta
+  highBinBorderJetClosure[2] = maxEta;       // high bin border for jet eta
+  
+  // Axis 3 for the jet pT closure histogram: centrality
+  nBinsJetClosure[3] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderJetClosure[3] = minCentrality;    // low bin border for centrality
+  highBinBorderJetClosure[3] = maxCentrality;   // high bin border for centrality
+  
+  // Axis 4 for the jet pT closure histogram: ref parton = quark/gluon
+  nBinsJetClosure[4] = nClosureParticleTypeBins;         // nBins for reference parton
+  lowBinBorderJetClosure[4] = minClosureParticleType;    // low bin border for reference parton
+  highBinBorderJetClosure[4] = maxClosureParticleType;   // high bin border for reference parton
+  
+  // Axis 5 for the jet pT closure histogram: reco/gen ratio for closure
+  nBinsJetClosure[5] = nClosureRatioBins;        // nBins for closure ratio
+  lowBinBorderJetClosure[5] = minClosureRatio;   // low bin border for closure ratio
+  highBinBorderJetClosure[5] = maxClosureRatio;  // high bin border for closure ratio
+  
+  // Create histograms for jet pT closure
+  fhJetPtClosure = new THnSparseF("jetPtClosure", "jetPtClosure", nAxesJetClosure, nBinsJetClosure, lowBinBorderJetClosure, highBinBorderJetClosure); fhJetPtClosure->Sumw2();
+  
+  // Set custom centrality bins for histograms
+  fhJetPtClosure->SetBinEdges(3,wideCentralityBins);
+  
+}
+
+/*
+ * Write the histograms to file
+ */
+void EECHistograms::Write() const{
+  
+  // Write the histograms to file
+  fhVertexZ->Write();
+  fhVertexZWeighted->Write();
+  fhEvents->Write();
+  fhTrackCuts->Write();
+  fhCentrality->Write();
+  fhCentralityWeighted->Write();
+  fhPtHat->Write();
+  fhPtHatWeighted->Write();
+  fhMultiplicity->Write();
+  fhInclusiveJet->Write();
+  fhTrack->Write();
+  fhTrackUncorrected->Write();
+  fhEnergyEnergyCorrelator->Write();
+  fhEnergyEnergyCorrelatorUncorrected->Write();
+  fhEnergyEnergyCorrelatorJetPt->Write();
+  fhEnergyEnergyCorrelatorJetPtUncorrected->Write();
+  fhJetPtClosure->Write();
+  
+}
+
+/*
+ * Write the histograms to a given file
+ */
+void EECHistograms::Write(TString outputFileName) const{
+  
+  // Define the output file
+  TFile *outputFile = new TFile(outputFileName, "RECREATE");
+  
+  // Write the histograms to file
+  Write();
+  
+  // Close the file after everything is written
+  outputFile->Close();
+  
+  // Delete the outputFile object
+  delete outputFile;
+}
+
+

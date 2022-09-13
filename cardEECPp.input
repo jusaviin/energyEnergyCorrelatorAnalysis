@@ -1,0 +1,62 @@
+# Configuration card for leading-subleading jet analysis
+
+# Data type for the analysis
+DataType 0  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
+
+# Select correlation type for Monte Carlo runs (Jet-Track)
+McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
+MatchJets 0 # 1 = Match generator level jets with reconstructed jets, 0 = Do not do that
+
+# Specify the forest type in the selected data files and choose forest readers based on this
+ForestType 0 # 0 = High Forest, 1 = Skim Forest
+ReadMode 2017   # 0 = Regular forest, 1 = PYTHIA8 forest
+
+# Select which histograms to save. Checked bit by bit. Needed for memory issues.
+FilledHistograms 31 # Bit 0 = Event information histograms            (to set: 1)
+                    # Bit 1 = Jet histograms                         (to set: 2)
+                    # Bit 2 = Track histograms                       (to set: 4)
+                    # Bit 3 = Energy-energy correlators              (to set: 8)
+                    # Bit 4 = Uncorrected energy-energy correlators  (to set: 16)
+                    # Bit 5 = Jet pT closure histograms              (to set: 32)
+                    # Examples: All = 63, All but jet pT closure = 31
+
+# Cuts for dijets
+JetType 0                  # 0 = Calo jets, 1 = PF jets
+JetAxis 0                  # 0 = Escheme axis, 1 = Leading PF candidate axis, 2 = WTA
+JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
+MinJetPtCut 120            # Minimum pT of a leading jet accepted in the analysis
+MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis
+MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
+MaxMaxTrackPtFraction 0.98 # Maximum fraction of jet pT taken by the highest pT track in jet
+JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty
+
+# Cuts for tracks
+TrackEtaCut 2.4             # Region in eta around midrapidity from which tracks are accepted
+MinTrackPtCut 0.5           # Minimum track pT considered in the analysis
+MaxTrackPtRelativeError 0.3 # Maximum relative error allowed for track pT
+VertexMaxDistance 3         # TODO: Understand what this cut means
+CalorimeterSignalLimitPt 20 # Require signal in calorimeters for all track above this pT
+HighPtEtFraction 0.5        # For high pT tracks, require Et to be at least this fraction of pT
+Chi2QualityCut 100000       # Maximum accepted chi2/(nDof*nHits) for tracks
+MinimumTrackHits 0          # Require this many hits for each track
+SubeventCut 2               # Cut on subevent index. 0 = 0, 1 = (>0), 2 = no cut
+
+# Cuts for event selection
+ZVertexCut 15       # Maximum vz value for accepted tracks
+LowPtHatCut -1      # Minimum accepted pT hat
+HighPtHatCut 1      # Maximum accepted pT hat
+MultiplicityMode 0 # 0 = Weight MC centrality to match data. 1 = Weight multiplicity to match
+
+# Configuration for energy-energy correlators
+JetRadius 0.4      # Radius around jets used to calculate the correlations
+JetPtBinEdgesEEC 50 100 120 140 160 180 200 300 500 5020 # Jet pT bin edges for EEC
+TrackPtBinEdgesEEC 0.7 1 2 3 4 6 300 # Track pT bin edges for EEC
+DeltaRBinEdgesEEC 0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 # DeltaR bin edges for EEC
+
+# Binning for THnSparses
+CentralityBinEdges -0.75 -0.25 9.75 29.75 49.75 100.25  # Centrality binning
+TrackPtBinEdges     0.7 1 2 3 4 8 12 300                # Track pT binning
+PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
+
+# Debug
+DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

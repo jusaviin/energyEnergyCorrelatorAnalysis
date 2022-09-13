@@ -1,0 +1,1460 @@
+// Class for the main analysis algorithms for the energy-energy correlator analysis
+
+// Root includes
+#include <TFile.h>
+#include <TMath.h>
+
+// Own includes
+#include "EECAnalyzer.h"
+
+using namespace std;
+
+/*
+ * Total weight function to match multiplicity in MC to that in data.
+ *
+ * Derived using the multiplicityPlotter macro. First the shape of the multiplicity distribution is determined
+ * from the non-efficiency corrected distribution. Then the multiplicity boundaries are obtained from the
+ * efficiency corrected distribution. This gives the base value below. The weight comes from the difference
+ * between the multiplicity distribution in MC from a flat line.
+ *
+ * The used data files:
+ *  dijetPbPb2018_akCaloJet_onlyJets_jet100TriggerEta1v3_withTrackEff_processed_2022-01-19.root
+ *  PbPbMC2018_RecoGen_akCaloJet_onlyJets_noCentShift_noCentWeight_jetEta1v3_processed_2022-01-21.root
+ */
+double totalMultiplicityWeight(double *x, double *par){
+  
+  double weight = 0;
+  double base = 0;
+  
+  if(x[0] < 600){
+    weight = (0.0309424+0.110670*TMath::Exp(3000*(-0.00138397))) / (0.0685758+0.374178*TMath::Exp(x[0]*(-0.00550382)));
+  } else {
+    weight = (0.0309424+0.110670*TMath::Exp(3000*(-0.00138397))) / (0.0309424+0.110670*TMath::Exp(x[0]*(-0.00138397)));
+  }
+  
+  // Gauss function, if multiplicity > 3000
+  if(x[0] > 3000) {
+    base = TMath::Exp(-0.5*TMath::Power((3000-x[0])/215,2));
+  } else if(x[0] < 300) {
+    // Second order polynomial, if multiplicity < 300
+    base = (-10.5233 + 1.47193 * x[0] -0.0024 * x[0] * x[0]) / 503.0;
+  } else {
+    base = (0.10665541 * x[0] + 183.00338) / 503.0;
+  }
+  
+  return base * weight;
+  
+}
+
+/*
+ * Default constructor
+ */
+EECAnalyzer::EECAnalyzer() :
+  fFileNames(0),
+  fCard(0),
+  fHistograms(0),
+  fVzWeightFunction(0),
+  fCentralityWeightFunction(0),
+  fMultiplicityWeightFunction(0),
+  fPtWeightFunction(0),
+  fSmearingFunction(0),
+  fTrackEfficiencyCorrector2018(),
+  fJetCorrector2018(),
+  fJetUncertainty2018(),
+  fRng(0),
+  fDataType(-1),
+  fForestType(0),
+  fReadMode(0),
+  fJetType(0),
+  fMatchJets(false),
+  fDebugLevel(0),
+  fLocalRun(0),
+  fVzWeight(1),
+  fCentralityWeight(1),
+  fPtHatWeight(1),
+  fTotalEventWeight(1),
+  fJetAxis(0),
+  fVzCut(0),
+  fMinimumPtHat(0),
+  fMaximumPtHat(0),
+  fJetEtaCut(0),
+  fJetMinimumPtCut(0),
+  fJetMaximumPtCut(0),
+  fMinimumMaxTrackPtFraction(0),
+  fMaximumMaxTrackPtFraction(0),
+  fJetUncertaintyMode(0),
+  fTrackEtaCut(0),
+  fTrackMinPtCut(0),
+  fMaxTrackPtRelativeError(0),
+  fMaxTrackDistanceToVertex(0),
+  fCalorimeterSignalLimitPt(0),
+  fHighPtEtFraction(0),
+  fChi2QualityCut(0),
+  fMinimumTrackHits(0),
+  fSubeventCut(0),
+  fMcCorrelationType(0),
+  fJetRadius(0.4),
+  fFillEventInformation(false),
+  fFillJetHistograms(false),
+  fFillTrackHistograms(false),
+  fFillEnergyEnergyCorrelators(false),
+  fFillEnergyEnergyCorrelatorsUncorrected(false),
+  fFillJetPtClosure(false),
+  fMultiplicityMode(false)
+{
+  // Default constructor
+  fHistograms = new EECHistograms();
+  fHistograms->CreateHistograms();
+  
+  // Initialize readers to null
+  fJetReader = NULL;
+  fTrackReader = NULL;
+  
+}
+
+/*
+ * Custom constructor
+ */
+EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, bool runLocal) :
+  fFileNames(fileNameVector),
+  fCard(newCard),
+  fHistograms(0),
+  fJetCorrector2018(),
+  fJetUncertainty2018(),
+  fForestType(0),
+  fJetType(0),
+  fMatchJets(false),
+  fVzWeight(1),
+  fCentralityWeight(1),
+  fPtHatWeight(1),
+  fTotalEventWeight(1),
+  fMinimumPtHat(0),
+  fMaximumPtHat(0),
+  fJetEtaCut(0),
+  fJetMinimumPtCut(0),
+  fJetMaximumPtCut(0),
+  fMinimumMaxTrackPtFraction(0),
+  fMaximumMaxTrackPtFraction(0),
+  fJetUncertaintyMode(0),
+  fTrackEtaCut(0),
+  fTrackMinPtCut(0),
+  fMaxTrackPtRelativeError(0),
+  fMaxTrackDistanceToVertex(0),
+  fCalorimeterSignalLimitPt(0),
+  fHighPtEtFraction(0),
+  fChi2QualityCut(0),
+  fMinimumTrackHits(0),
+  fSubeventCut(0),
+  fMcCorrelationType(0),
+  fJetRadius(0.4)
+{
+  // Custom constructor
+  fHistograms = new EECHistograms(fCard);
+  fHistograms->CreateHistograms();
+  
+  // Initialize readers to null
+  fJetReader = NULL;
+  fTrackReader = NULL;
+  
+  // Amount of debugging messages
+  fDebugLevel = fCard->Get("DebugLevel");
+  
+  // Flog for local running or CRAB running
+  fLocalRun = runLocal ? 1 : 0;
+  
+  // Jet axis type
+  fJetAxis = fCard->Get("JetAxis");
+  
+  // vz cut
+  fVzCut = fCard->Get("ZVertexCut");          // Event cut vor the z-position of the primary vertex
+  
+  // pT weight function for Pythia to match 2017 MC and data pT spectra. Derived from all jets above 120 GeV
+  fPtWeightFunction = new TF1("fPtWeightFunction","pol3",0,500);
+  //fPtWeightFunction->SetParameters(0.699073,0.00287672,-6.35568e-06,5.02292e-09);
+  //fPtWeightFunction->SetParameters(0.708008,0.0032891,-1.05716e-05,1.16656e-08); // From JECv4
+  fPtWeightFunction->SetParameters(0.79572,0.0021861,-6.35407e-06,6.66435e-09); // From JECv6
+  
+  // Function for smearing the jet pT for systemtic uncertainties
+  fSmearingFunction = new TF1("fSmearingFunction","pol4",0,500);
+  
+  
+  // Find the correct folder for track correction tables based on data type
+  fDataType = fCard->Get("DataType");
+  fReadMode = fCard->Get("ReadMode");
+  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC || fDataType == ForestReader::kLocalTest){
+    
+    // Track correction for 2017 pp data
+    fTrackEfficiencyCorrector2018 = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
+    
+    // Weight function for 2017 MC
+    fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
+    fVzWeightFunction->SetParameters(0.973805, 0.00339418, 0.000757544, -1.37331e-06, -2.82953e-07, -3.06778e-10, 3.48615e-09);
+    fCentralityWeightFunction = NULL;
+    fMultiplicityWeightFunction = NULL;
+    
+  } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
+    
+    // Track correction for 2018 PbPb data
+    fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", false, "trackCorrectionTables/PbPb2018/");
+    
+    // Common vz weight function used by UIC group for PbPb MC
+    fVzWeightFunction = new TF1("fvz","pol6",-15,15);
+    fVzWeightFunction->SetParameters(1.00656, -0.0193651, 0.000976851, -1.043e-05, -9.79808e-06, 9.07733e-08, 1.79165e-08); // Parameters for 2018 MC
+    
+    // Common centrality weight function used by UIC group for 2018 PbPb MC
+    fCentralityWeightFunction = new TF1("fcent","pol6",0,90);
+    fCentralityWeightFunction->SetParameters(4.64945,-0.201337, 0.00435794,-7.00799e-05,8.18299e-07,-5.52604e-09,1.54472e-11);
+    
+    // Multiplicity based weight function
+    fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
+    
+    
+  } else {
+    fVzWeightFunction = NULL;
+    fCentralityWeightFunction = NULL;
+    fMultiplicityWeightFunction = NULL;
+  }
+  
+  // Read which histograms to fill this run
+  int filledHistograms = fCard->Get("FilledHistograms");
+  std::bitset<knFillTypes> bitChecker(filledHistograms);
+  fFillEventInformation = bitChecker.test(kFillEventInformation);
+  fFillJetHistograms = bitChecker.test(kFillJets);
+  fFillTrackHistograms = bitChecker.test(kFillTracks);
+  fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
+  fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
+  fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
+  
+  // Initialize the random number generator with a random seed
+  fRng = new TRandom3();
+  fRng->SetSeed(0);
+  
+}
+
+/*
+ * Copy constructor
+ */
+EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
+  fJetReader(in.fJetReader),
+  fTrackReader(in.fTrackReader),
+  fFileNames(in.fFileNames),
+  fCard(in.fCard),
+  fHistograms(in.fHistograms),
+  fVzWeightFunction(in.fVzWeightFunction),
+  fCentralityWeightFunction(in.fCentralityWeightFunction),
+  fMultiplicityWeightFunction(in.fMultiplicityWeightFunction),
+  fPtWeightFunction(in.fPtWeightFunction),
+  fSmearingFunction(in.fSmearingFunction),
+  fRng(in.fRng),
+  fDataType(in.fDataType),
+  fForestType(in.fForestType),
+  fReadMode(in.fReadMode),
+  fJetType(in.fJetType),
+  fMatchJets(in.fMatchJets),
+  fDebugLevel(in.fDebugLevel),
+  fLocalRun(in.fLocalRun),
+  fVzWeight(in.fVzWeight),
+  fCentralityWeight(in.fCentralityWeight),
+  fPtHatWeight(in.fPtHatWeight),
+  fTotalEventWeight(in.fTotalEventWeight),
+  fJetAxis(in.fJetAxis),
+  fVzCut(in.fVzCut),
+  fMinimumPtHat(in.fMinimumPtHat),
+  fMaximumPtHat(in.fMaximumPtHat),
+  fJetEtaCut(in.fJetEtaCut),
+  fJetMinimumPtCut(in.fJetMinimumPtCut),
+  fJetMaximumPtCut(in.fJetMaximumPtCut),
+  fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
+  fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
+  fJetUncertaintyMode(in.fJetUncertaintyMode),
+  fTrackEtaCut(in.fTrackEtaCut),
+  fTrackMinPtCut(in.fTrackMinPtCut),
+  fMaxTrackPtRelativeError(in.fMaxTrackPtRelativeError),
+  fMaxTrackDistanceToVertex(in.fMaxTrackDistanceToVertex),
+  fCalorimeterSignalLimitPt(in.fCalorimeterSignalLimitPt),
+  fHighPtEtFraction(in.fHighPtEtFraction),
+  fChi2QualityCut(in.fChi2QualityCut),
+  fMinimumTrackHits(in.fMinimumTrackHits),
+  fSubeventCut(in.fSubeventCut),
+  fMcCorrelationType(in.fMcCorrelationType),
+  fJetRadius(in.fJetRadius),
+  fFillEventInformation(in.fFillEventInformation),
+  fFillJetHistograms(in.fFillJetHistograms),
+  fFillTrackHistograms(in.fFillTrackHistograms),
+  fFillEnergyEnergyCorrelators(in.fFillEnergyEnergyCorrelators),
+  fFillEnergyEnergyCorrelatorsUncorrected(in.fFillEnergyEnergyCorrelatorsUncorrected),
+  fFillJetPtClosure(in.fFillJetPtClosure),
+  fMultiplicityMode(in.fMultiplicityMode)
+{
+  // Copy constructor
+  
+}
+
+/*
+ * Assingment operator
+ */
+EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
+  // Assingment operator
+  
+  if (&in==this) return *this;
+  
+  fJetReader = in.fJetReader;
+  fTrackReader = in.fTrackReader;
+  fFileNames = in.fFileNames;
+  fCard = in.fCard;
+  fHistograms = in.fHistograms;
+  fVzWeightFunction = in.fVzWeightFunction;
+  fCentralityWeightFunction = in.fCentralityWeightFunction;
+  fMultiplicityWeightFunction = in.fMultiplicityWeightFunction;
+  fPtWeightFunction = in.fPtWeightFunction;
+  fSmearingFunction = in.fSmearingFunction;
+  fRng = in.fRng;
+  fDataType = in.fDataType;
+  fForestType = in.fForestType;
+  fReadMode = in.fReadMode;
+  fJetType = in.fJetType;
+  fMatchJets = in.fMatchJets;
+  fDebugLevel = in.fDebugLevel;
+  fLocalRun = in.fLocalRun;
+  fVzWeight = in.fVzWeight;
+  fCentralityWeight = in.fCentralityWeight;
+  fPtHatWeight = in.fPtHatWeight;
+  fTotalEventWeight = in.fTotalEventWeight;
+  fJetAxis = in.fJetAxis;
+  fVzCut = in.fVzCut;
+  fMinimumPtHat = in.fMinimumPtHat;
+  fMaximumPtHat = in.fMaximumPtHat;
+  fJetEtaCut = in.fJetEtaCut;
+  fJetMinimumPtCut = in.fJetMinimumPtCut;
+  fJetMaximumPtCut = in.fJetMaximumPtCut;
+  fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
+  fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
+  fJetUncertaintyMode = in.fJetUncertaintyMode;
+  fTrackEtaCut = in.fTrackEtaCut;
+  fTrackMinPtCut = in.fTrackMinPtCut;
+  fMaxTrackPtRelativeError = in.fMaxTrackPtRelativeError;
+  fMaxTrackDistanceToVertex = in.fMaxTrackDistanceToVertex;
+  fCalorimeterSignalLimitPt = in.fCalorimeterSignalLimitPt;
+  fHighPtEtFraction = in.fHighPtEtFraction;
+  fChi2QualityCut = in.fChi2QualityCut;
+  fMinimumTrackHits = in.fMinimumTrackHits;
+  fSubeventCut = in.fSubeventCut;
+  fMcCorrelationType = in.fMcCorrelationType;
+  fJetRadius = in.fJetRadius;
+  fFillEventInformation = in.fFillEventInformation;
+  fFillJetHistograms = in.fFillJetHistograms;
+  fFillTrackHistograms = in.fFillTrackHistograms;
+  fFillEnergyEnergyCorrelators = in.fFillEnergyEnergyCorrelators;
+  fFillEnergyEnergyCorrelatorsUncorrected = in.fFillEnergyEnergyCorrelatorsUncorrected;
+  fFillJetPtClosure = in.fFillJetPtClosure;
+  fMultiplicityMode = in.fMultiplicityMode;
+  
+  return *this;
+}
+
+/*
+ * Destructor
+ */
+EECAnalyzer::~EECAnalyzer(){
+  // destructor
+  delete fHistograms;
+  if(fVzWeightFunction) delete fVzWeightFunction;
+  if(fTrackEfficiencyCorrector2018) delete fTrackEfficiencyCorrector2018;
+  if(fJetCorrector2018) delete fJetCorrector2018;
+  if(fJetUncertainty2018) delete fJetUncertainty2018;
+  if(fCentralityWeightFunction) delete fCentralityWeightFunction;
+  if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
+  if(fPtWeightFunction) delete fPtWeightFunction;
+  if(fSmearingFunction) delete fSmearingFunction;
+  if(fRng) delete fRng;
+  if(fJetReader) delete fJetReader;
+  if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
+}
+
+/*
+ * Main analysis loop
+ */
+void EECAnalyzer::RunAnalysis(){
+  
+  //****************************************
+  //         Event selection cuts
+  //****************************************
+  
+  fMinimumPtHat = fCard->Get("LowPtHatCut");  // Minimum accepted pT hat value
+  fMaximumPtHat = fCard->Get("HighPtHatCut"); // Maximum accepted pT hat value
+  
+  //****************************************
+  //          Jet selection cuts
+  //****************************************
+  
+  fJetEtaCut = fCard->Get("JetEtaCut");           // Eta cut around midrapidity
+  fJetMinimumPtCut = fCard->Get("MinJetPtCut");   // Minimum pT cut for jets
+  fJetMaximumPtCut = fCard->Get("MaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
+  fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
+  fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
+  fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
+  
+  //****************************************
+  //        Track selection cuts
+  //****************************************
+  
+  fTrackEtaCut = fCard->Get("TrackEtaCut");     // Eta cut around midrapidity
+  fTrackMinPtCut = fCard->Get("MinTrackPtCut"); // Minimum pT cut
+  fMaxTrackPtRelativeError = fCard->Get("MaxTrackPtRelativeError");   // Maximum relative error for pT
+  fMaxTrackDistanceToVertex = fCard->Get("VertexMaxDistance");        // Maximum distance to primary vetrex
+  fCalorimeterSignalLimitPt = fCard->Get("CalorimeterSignalLimitPt"); // Require signal in calorimeters for track above this pT
+  fHighPtEtFraction = fCard->Get("HighPtEtFraction"); // For high pT tracks, minimum required Et as a fraction of track pT
+  fChi2QualityCut = fCard->Get("Chi2QualityCut");     // Quality cut for track reconstruction
+  fMinimumTrackHits = fCard->Get("MinimumTrackHits"); // Quality cut for track hits
+  
+  fSubeventCut = fCard->Get("SubeventCut");     // Required subevent type
+  
+  //****************************************
+  //    Correlation type for Monte Carlo
+  //****************************************
+  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) {
+    fMcCorrelationType = -100;
+  } else {
+    fMcCorrelationType = fCard->Get("McCorrelationType");         // Correlation type for Monte Carlo
+  }
+  fMultiplicityMode = (fCard->Get("MultiplicityMode") == 1);
+
+  //****************************************
+  //       Jet selection and matching
+  //****************************************
+  fForestType = fCard->Get("ForestType");
+  fJetType = fCard->Get("JetType");
+  fMatchJets = (fCard->Get("MatchJets") >= 1);
+  
+  //*************************************************************
+  //    Turn off certain track cuts for generated tracks and pp
+  //*************************************************************
+  
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fReadMode == 2017){
+    fCalorimeterSignalLimitPt = 10000;
+    fChi2QualityCut = 10000;
+    fMinimumTrackHits = 0;
+  }
+  
+  //************************************************
+  //   Configuration for energy-energy correlators
+  //************************************************
+  fJetRadius = fCard->Get("JetRadius");
+  
+  //****************************************
+  //            All cuts set!
+  //****************************************
+  
+  //************************************************
+  //  Define variables needed in the analysis loop
+  //************************************************
+  
+  // Input files and forest readers for analysis
+  TFile *inputFile;
+  TFile *copyInputFile; // If we read forest for tracks and jets with different readers, we need to give different file pointers to them
+  
+  // Event variables
+  Int_t nEvents = 0;                // Number of events
+  Double_t vz = 0;                  // Vertex z-position
+  Double_t centrality = 0;          // Event centrality
+  Int_t hiBin = 0;                  // CMS hiBin (centrality * 2)
+  Double_t ptHat = 0;               // pT hat for MC events
+  
+  // Combining bools to make the code more readable
+  Bool_t useDifferentReaderForJetsAndTracks = (fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenReco); // Use different forest reader for jets and tracks
+  
+  // Variables for jets
+  Double_t jetPt = 0;               // pT of the i:th jet in the event
+  Double_t jetPtCorrected = 0;      // Jet pT corrected with the JFF correction
+  Double_t jetPhi = 0;              // phi of the i:th jet in the event
+  Double_t jetEta = 0;              // eta of the i:th jet in the event
+  Int_t jetFlavor = 0;              // Flavor of the jet. 0 = Quark jet. 1 = Gluon jet.
+  Double_t jetPtWeight = 1;         // Weighting for jet pT
+  
+  // Variables for smearing study
+  Double_t smearingFactor = 0;       // Larger of the JEC uncertainties
+  Double_t jetPtErrorUp = 0;          // Uncertainty to be added to the jet pT
+  Double_t jetPtErrorDown = 0;           // Uncertainty to be subtracted from the jet pT
+  Double_t smearingEta = 0;
+  Double_t smearingPhi = 0;
+  Double_t smearPhiSigmas[4] = {0.022, 0.017, 0.015, 0.015};
+  Double_t smearEtaSigmas[4] = {0.021, 0.016, 0.013, 0.013};
+  Int_t centralityBin = 0;
+  
+  // Variables for jet matching and closure
+  Int_t unmatchedCounter = 0;       // Number of jets that fail the matching
+  Int_t matchedCounter = 0;         // Number of jets that are matched
+  Int_t nonSensicalPartonIndex = 0; // Parton index is -999 even though jets are matched
+  Int_t partonFlavor = -999;        // Code for parton flavor in Monte Carlo
+  
+  // Variables for tracks
+  Double_t fillerTrack[4];                // Track histogram filler
+  Double_t trackEfficiencyCorrection;     // Track efficiency correction
+  Int_t nTracks;                          // Number of tracks in an event
+  Double_t trackPt = 0;                   // Track pT
+  Double_t trackEta = 0;                  // Track eta
+  Double_t trackPhi = 0;                  // Track phi
+  Double_t trackMultiplicity = 0;         // Multiplicity
+  Double_t trackMultiplicityWeighted = 0; // Weighted multiplicity
+  
+  // Variables for energy-energy correlators
+  vector<bool> trackCloseToJet;
+  Double_t deltaRTrackJet = 0;
+  
+  // File name helper variables
+  TString currentFile;
+  
+  // Histograms that should be filled
+  Int_t filledHistograms = fCard->Get("FilledHistograms");
+  Bool_t readTrackTree = true;
+  if(filledHistograms < 4) {
+    useDifferentReaderForJetsAndTracks = false;
+    readTrackTree = false;  // Do not read track trees if only jets are used. Makes things much faster in this case.
+  }
+  
+  // Fillers for THnSparses
+  const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
+  const Int_t nFillMultiplicity = 3; // 3 is nominal
+  Double_t fillerJet[nFillJet];
+  Double_t fillerMultiplicity[nFillMultiplicity];
+  
+  // For 2018 PbPb and 2017 pp data, we need to correct jet pT
+  std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
+  std::string correctionFileResidual[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt", "CorrectionNotAppliedPF.txt", "CorrectionNotAppliedPF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt"};
+  std::string uncertaintyFile[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt"};
+  
+  // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
+  if(fJetType == 0){
+    size_t pfIndex = 0;
+    pfIndex = correctionFileRelative[fDataType].find("PF", pfIndex);
+    correctionFileRelative[fDataType].replace(pfIndex, 2, "Calo");
+    pfIndex = 0;
+    pfIndex = correctionFileResidual[fDataType].find("PF", pfIndex);
+    correctionFileResidual[fDataType].replace(pfIndex, 2, "Calo");
+    pfIndex = 0;
+    pfIndex = uncertaintyFile[fDataType].find("PF", pfIndex);
+    uncertaintyFile[fDataType].replace(pfIndex, 2, "Calo");
+    
+  }
+    
+  vector<string> correctionFiles;
+  correctionFiles.push_back(correctionFileRelative[fDataType]);
+  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp)  correctionFiles.push_back(correctionFileResidual[fDataType]);
+  
+  fJetCorrector2018 = new JetCorrector(correctionFiles);
+  fJetUncertainty2018 = new JetUncertainty(uncertaintyFile[fDataType]);
+  
+  //************************************************
+  //      Find forest readers for data files
+  //************************************************
+  
+  if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
+      fJetReader = new GeneratorLevelForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets,readTrackTree);
+  } else {
+      fJetReader = new HighForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets,readTrackTree);
+  }
+  
+  // Select the reader for tracks based on forest and MC correlation type
+  if(fMcCorrelationType == kRecoGen){
+    fTrackReader = new GeneratorLevelForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets);
+  } else if (fMcCorrelationType == kGenReco){
+    fTrackReader = new HighForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets);
+  } else {
+    fTrackReader = fJetReader;
+  }
+  
+  
+  //************************************************
+  //       Main analysis loop over all files
+  //************************************************
+  
+  // Loop over files
+  Int_t nFiles = fFileNames.size();
+  for(Int_t iFile = 0; iFile < nFiles; iFile++) {
+    
+    //************************************************
+    //              Find and open files
+    //************************************************
+    
+    // Find the filename and open the input file
+    currentFile = fFileNames.at(iFile);
+    inputFile = TFile::Open(currentFile);
+    if(useDifferentReaderForJetsAndTracks) copyInputFile = TFile::Open(currentFile);
+    
+    // Check that the file exists
+    if(!inputFile){
+      cout << "Error! Could not find the file: " << currentFile.Data() << endl;
+      assert(0);
+    }
+
+    // Check that the file is open
+    if(!inputFile->IsOpen()){
+      cout << "Error! Could not open the file: " << currentFile.Data() << endl;
+      assert(0);
+    }
+    
+    // Check that the file is not zombie
+    if(inputFile->IsZombie()){
+      cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
+      assert(0);
+    }
+    
+
+    // Print the used files
+    if(fDebugLevel > 0) cout << "Reading from file: " << currentFile.Data() << endl;
+
+    
+    //************************************************
+    //            Read forest from file
+    //************************************************
+    
+    // If file is good, read the forest from the file
+    fJetReader->ReadForestFromFile(inputFile);  // There might be a memory leak in handling the forest...
+    if(useDifferentReaderForJetsAndTracks) fTrackReader->ReadForestFromFile(copyInputFile); // If we mix reco and gen, the reader for jets and tracks is different
+    nEvents = fJetReader->GetNEvents();
+    
+
+    //************************************************
+    //         Main event loop for each file
+    //************************************************
+    
+    for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
+      
+      //************************************************
+      //         Read basic event information
+      //************************************************
+      
+      // Print to console how the analysis is progressing
+      if(fDebugLevel > 1 && iEvent % 1000 == 0) cout << "Analyzing event " << iEvent << endl;
+      
+      // Read the event to memory
+      fJetReader->GetEvent(iEvent);
+      
+      // If track reader is not the same as jet reader, read the event to memory in trackReader
+      if(useDifferentReaderForJetsAndTracks) fTrackReader->GetEvent(iEvent);
+
+      // Get vz, centrality and pT hat information
+      vz = fJetReader->GetVz();
+      centrality = fJetReader->GetCentrality();
+      hiBin = fJetReader->GetHiBin();
+      ptHat = fJetReader->GetPtHat();
+      
+      // We need to apply pT hat cuts before getting pT hat weight. There might be rare events above the upper
+      // limit from which the weights are calculated, which could cause the code to crash.
+      if(ptHat < fMinimumPtHat || ptHat >= fMaximumPtHat) continue;
+      
+      // Get the weighting for the event
+      fVzWeight = GetVzWeight(vz);
+      if(fMultiplicityMode){
+        // Multiplicity based weight
+        trackMultiplicity = GetMultiplicity();
+        fCentralityWeight = GetMultiplicityWeight(trackMultiplicity);
+        centrality = GetCentralityFromMultiplicity(trackMultiplicity);
+      } else {
+        // Regular centrality based weight
+        fCentralityWeight = GetCentralityWeight(hiBin);
+      }
+
+      // Event weight for 2018 MC
+      fPtHatWeight = fJetReader->GetEventWeight(); // 2018 MC
+      fTotalEventWeight = fVzWeight*fCentralityWeight*fPtHatWeight;
+      
+      // Fill event counter histogram
+      fHistograms->fhEvents->Fill(EECHistograms::kAll);          // All the events looped over
+      
+      //  ============================================
+      //  ===== Apply all the event quality cuts =====
+      //  ============================================
+      
+      if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
+      
+      // Fill the event information histograms for the events that pass the event cuts
+      if(fFillEventInformation){
+        fHistograms->fhVertexZ->Fill(vz);                            // z vertex distribution from all events
+        fHistograms->fhVertexZWeighted->Fill(vz,fVzWeight);          // z-vertex distribution weighted with the weight function
+        fHistograms->fhCentrality->Fill(centrality);                 // Centrality filled from all events
+        fHistograms->fhCentralityWeighted->Fill(centrality,fCentralityWeight); // Centrality weighted with the centrality weighting function
+        fHistograms->fhPtHat->Fill(ptHat);                           // pT hat histogram
+        fHistograms->fhPtHatWeighted->Fill(ptHat,fPtHatWeight);      // pT het histogram weighted with corresponding cross section and event number
+      }
+      
+      // ======================================
+      // ===== Event quality cuts applied =====
+      // ======================================
+      
+      // Reset the variables used in dijet finding
+      centralityBin = GetCentralityBin(centrality);  // Only needed for smearing study
+      
+      //****************************************************
+      //    Loop over all jets and find tracks within jets
+      //****************************************************
+      
+      // Search for leading jet and fill histograms for all jets within the eta range
+      for(Int_t jetIndex = 0; jetIndex < fJetReader->GetNJets(); jetIndex++) {
+        jetPt = fJetReader->GetJetPt(jetIndex);
+        jetPhi = fJetReader->GetJetPhi(jetIndex);
+        jetEta = fJetReader->GetJetEta(jetIndex);
+        jetFlavor = 0;
+        
+        // Smearing for the angles:
+        if(fJetUncertaintyMode == 4){
+          smearingEta = fRng->Gaus(0,smearEtaSigmas[centralityBin]); // Number based on study of Enea
+          smearingPhi = fRng->Gaus(0,smearPhiSigmas[centralityBin]); // Number based on study of Enea
+          jetEta = jetEta + smearingEta;
+          jetPhi = jetPhi + smearingPhi;
+        }
+
+        
+        // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
+        // This is used in one of the systematic checks for long range correlations
+        if((fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) && vz > 0) jetFlavor = 1;
+        
+        //  ========================================
+        //  ======== Apply jet quality cuts ========
+        //  ========================================
+        
+        if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
+        if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
+        if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
+        
+        // Jet matching between reconstructed and generator level jets
+        if(fMatchJets && !fJetReader->HasMatchingJet(jetIndex)) {
+          unmatchedCounter++;
+          continue;
+        }
+        
+        
+        // Require also reference parton flavor to be quark [-6,-1] U [1,6] or gluon (21)
+        // We need to match gen jets to reco to get the parton flavor, but for reco jets it is always available in the forest
+        // Here should implement an option if only quark and gluon tagged jets should be allowed in final results!
+        if(fMatchJets){
+          
+          if(fMatchJets) matchedCounter++; // For debugging purposes, count the number of matched jets
+          jetFlavor = 0;    // Jet flavor. 0 = Quark jet.
+          
+          partonFlavor = fJetReader->GetPartonFlavor(jetIndex);
+          if(partonFlavor == -999) nonSensicalPartonIndex++;
+          //if(partonFlavor < -6 || partonFlavor > 21 || (partonFlavor > 6 && partonFlavor < 21) || partonFlavor == 0) continue;
+          if(TMath::Abs(partonFlavor) == 21) jetFlavor = 1; // 1 = Gluon jet
+          
+        }
+        
+        //  ========================================
+        //  ======= Jet quality cuts applied =======
+        //  ========================================
+        
+        // For 2018 data: do a correction for the jet pT
+        fJetCorrector2018->SetJetPT(jetPt);
+        fJetCorrector2018->SetJetEta(jetEta);
+        fJetCorrector2018->SetJetPhi(jetPhi);
+        
+        fJetUncertainty2018->SetJetPT(jetPt);
+        fJetUncertainty2018->SetJetEta(jetEta);
+        fJetUncertainty2018->SetJetPhi(jetPhi);
+        
+        jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
+        
+        // Only do the correction for 2018 data and reconstructed Monte Carlo
+        if(fReadMode > 2000 && !(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
+          jetPt = jetPtCorrected;
+          
+          // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+          if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+          if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+          
+          // If we are using smearing scenario, modify the jet pT using gaussian smearing
+          if(fJetUncertaintyMode == 3){
+            smearingFactor = GetSmearingFactor(jetPt, centrality);
+            jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+          }
+          
+          // Second smearing scenario, where we smear the jet energy based on the uncertainties
+          if(fJetUncertaintyMode == 5){
+            jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
+            jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
+            smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
+            jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+          }
+          
+        }
+        
+        // After the jet pT can been corrected, apply analysis jet pT cuts
+        if(jetPt < fJetMinimumPtCut) continue;
+        if(jetPt > fJetMaximumPtCut) continue;
+        
+        //************************************************
+        //       Fill histograms for jet pT closure
+        //************************************************
+        
+        // Only fill is matching is enabled and histograms are selected for filling
+        if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
+        
+        //************************************************
+        //         Fill histograms for all jets
+        //************************************************
+        
+        // Only fill the any jet histogram if selected
+        if(fFillJetHistograms){
+          
+          jetPtCorrected = jetPt;
+          
+          // Find the pT weight for the jet
+          jetPtWeight = GetJetPtWeight(jetPtCorrected);
+          
+          // Fill the axes in correct order
+          fillerJet[0] = jetPtCorrected;          // Axis 0 = any jet pT
+          fillerJet[1] = jetPhi;                  // Axis 1 = any jet phi
+          fillerJet[2] = jetEta;                  // Axis 2 = any jet eta
+          fillerJet[3] = centrality;              // Axis 3 = centrality
+          fillerJet[4] = jetFlavor;               // Axis 4 = flavor of the jet
+          
+          fHistograms->fhInclusiveJet->Fill(fillerJet,fTotalEventWeight*jetPtWeight); // Fill the data point to histogram
+          
+          
+        } // Check if we want to fill any jet histograms
+        
+        //************************************************
+        //   Do energy-energy correlation within jets
+        //************************************************
+        
+        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
+          
+          // Loop over tracks and check which are within the jet radius
+          trackCloseToJet.clear();
+          nTracks = fTrackReader->GetNTracks();
+          for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+            
+            // Check that all the track cuts are passed
+            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) {
+              trackCloseToJet.push_back(false);
+              continue;
+            }
+            
+            // Find the track eta and phi
+            trackEta = fTrackReader->GetTrackEta(iTrack);
+            trackPhi = fTrackReader->GetTrackPhi(iTrack);
+            
+            // Get the distance of the track to the jet
+            deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+            
+            // Check if the track is within the jet radius
+            if(deltaRTrackJet < fJetRadius){
+              trackCloseToJet.push_back(true);
+            } else {
+              trackCloseToJet.push_back(false);
+            }
+            
+          }
+          
+          // Calculate the energy-energy correlator within this jet
+          CalculateEnergyEnergyCorrelator(trackCloseToJet, jetPtCorrected);
+          
+        } // Fill energy-energy correltor histograms
+        
+      } // End of jet loop
+      
+      //************************************************
+      //       Fill histograms for inclusive tracks
+      //************************************************
+      
+      // Inclusive track histograms
+      if((fFillTrackHistograms || fFillEventInformation)){
+        
+        // Loop over all track in the event
+        nTracks = fTrackReader->GetNTracks();
+        trackMultiplicity = 0;
+        trackMultiplicityWeighted = 0;
+        for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+          
+          // Check that all the track cuts are passed
+          if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts)) continue;
+          
+          // Get the efficiency correction
+          trackPt = fTrackReader->GetTrackPt(iTrack);
+          trackEta = fTrackReader->GetTrackEta(iTrack);
+          trackPhi = fTrackReader->GetTrackPhi(iTrack);
+          trackEfficiencyCorrection = GetTrackEfficiencyCorrection(iTrack);
+          
+          trackMultiplicity += 1;
+          trackMultiplicityWeighted += trackEfficiencyCorrection;
+          
+          // Fill track histograms
+          if(fFillTrackHistograms){
+            fillerTrack[0] = trackPt;      // Axis 0: Track pT
+            fillerTrack[1] = trackPhi;     // Axis 1: Track phi
+            fillerTrack[2] = trackEta;     // Axis 2: Track eta
+            fillerTrack[3] = centrality;   // Axis 3: Centrality
+            fHistograms->fhTrack->Fill(fillerTrack,trackEfficiencyCorrection*fTotalEventWeight);  // Fill the track histogram
+            fHistograms->fhTrackUncorrected->Fill(fillerTrack,fTotalEventWeight);                 // Fill the uncorrected track histogram
+          }
+          
+        } // Track loop
+        
+        // Fill multiplicity histogram from all events
+        if(fFillEventInformation){
+          fillerMultiplicity[0] = trackMultiplicity;
+          fillerMultiplicity[1] = trackMultiplicityWeighted;
+          fillerMultiplicity[2] = centrality;
+          fHistograms->fhMultiplicity->Fill(fillerMultiplicity, fTotalEventWeight);
+        }
+      }
+      
+    } // Event loop
+    
+    //************************************************
+    //      Cleanup at the end of the file loop
+    //************************************************
+    
+    // Close the input files after the event has been read
+    inputFile->Close();
+    if(useDifferentReaderForJetsAndTracks) copyInputFile->Close();
+    
+  } // File loop
+  
+}
+
+/*
+ * Method for calculating the energy-energy correlators for tracks within the jets
+ *
+ *  const vector<bool> trackCloseToJet = Array telling if this track should be included in the correlator calculation
+ *  const double jetPt = pT of the jet the tracks are close to
+ */
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseToJet, const double jetPt){
+  
+  // Define a filler for THnSparse
+  Double_t fillerEnergyEnergyCorrelator[4]; // Axes: deltaR, Jet pT, lower track pT, centrality
+  
+  // Event information
+  Double_t centrality = fTrackReader->GetCentrality();
+  if(fMultiplicityMode) centrality = GetCentralityFromMultiplicity(GetMultiplicity());
+  
+  // Variables for tracks
+  Double_t trackPt1;       // Track pT for the first track
+  Double_t trackEta1;      // Track eta for the first track
+  Double_t trackPhi1;      // Track phi for the first track
+  Double_t trackPt2;       // Track pT for the second track
+  Double_t trackEta2;      // Track eta for the second track
+  Double_t trackPhi2;      // Track phi for the second track
+  Double_t trackDeltaR;    // DeltaR between the two tracks
+  Double_t lowerTrackPt;   // Lower of the two track pT:s
+  Double_t trackEfficiencyCorrection1;  // Efficiency correction for the first track
+  Double_t trackEfficiencyCorrection2;  // Efficiency correction for the first track
+  Double_t correlatorWeight;            // Weight given to the energy-energy correlator pT1*pT2
+  Double_t correlatorWeightJetPt;       // Alternative weight given to the energy-energy correlator (pT1*pT2)/ jet pT^2
+  
+  // Loop over all track in the event
+  Int_t nTracks = fTrackReader->GetNTracks();
+  for(Int_t iFirstTrack = 0; iFirstTrack < nTracks; iFirstTrack++){
+    
+    // Make sure track is close to a jet. This also includes track quality cuts
+    if(!trackCloseToJet.at(iFirstTrack)) continue;
+    
+    // Get the kinematics for the first track
+    trackPt1 = fTrackReader->GetTrackPt(iFirstTrack);
+    trackPhi1 = fTrackReader->GetTrackPhi(iFirstTrack);
+    trackEta1 = fTrackReader->GetTrackEta(iFirstTrack);
+    
+    // Get the efficiency correction for the first track
+    trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(iFirstTrack);
+    
+    // Loop over the tracks again to create all possible pairs of tracks. Avoid double counting pairs.
+    for(Int_t iSecondTrack = iFirstTrack+1; iSecondTrack < nTracks; iSecondTrack++){
+      
+      // Make sure the track is close to a jet. This also includes track quality cuts
+      if(!trackCloseToJet.at(iSecondTrack)) continue;
+      
+      // Get the kinematics for the second track
+      trackPt2 = fTrackReader->GetTrackPt(iSecondTrack);
+      trackPhi2 = fTrackReader->GetTrackPhi(iSecondTrack);
+      trackEta2 = fTrackReader->GetTrackEta(iSecondTrack);
+      
+      // Get the efficiency correction for the second track
+      trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(iSecondTrack);
+      
+      // Find the deltaR between the tracks
+      trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+      
+      // Find the lower of the two track pT:s
+      lowerTrackPt = trackPt1;
+      if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+      
+      // Calculate the weights given to the energy-energy correlators
+      correlatorWeight = trackPt1*trackPt2;
+      correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
+      
+      // Fill the energy-energy correlator histograms
+      fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 1: DeltaR between the two tracks
+      fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 2: pT of the jet the tracks are near of
+      fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 3: Lower of the two track pT:s
+      fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 4: Event centrality
+      if(fFillEnergyEnergyCorrelators){
+        fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight);  // Fill the energy-energy correlator histogram
+        fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt);  // Fill the energy-energy correlator histogram
+      }
+      if(fFillEnergyEnergyCorrelatorsUncorrected) {
+        fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeight);  // Fill the uncorrected energy-energy correlator histogram
+        fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt);  // Fill the uncorrected energy-energy correlator histogram
+      }
+      
+    } // Inner track loop
+  } // Outer track loop
+  
+}
+
+/*
+ * Fill the jet pT closure histograms
+ *
+ *  const Int_t jetIndex = Index of a jet for which the closure is filled
+ */
+void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
+
+  // Define a filler for the closure histogram
+  const Int_t nAxesClosure = 6;
+  Double_t fillerClosure[nAxesClosure];
+  
+  // Find the pT of the matched gen jet and flavor of reference parton
+  Float_t matchedGenPt = fJetReader->GetMatchedPt(jetIndex);
+  Float_t matchedGenEta = fJetReader->GetMatchedEta(jetIndex);
+  Float_t matchedGenPhi = fJetReader->GetMatchedPhi(jetIndex);
+  Int_t referencePartonFlavor = fJetReader->GetPartonFlavor(jetIndex);
+  
+  // Find the centrality of the event and the pT of the reconstructed jet
+  Double_t recoPt = fJetReader->GetJetPt(jetIndex);
+  Double_t centrality = fJetReader->GetCentrality();
+  Double_t jetEta = fJetReader->GetJetEta(jetIndex);
+  Double_t jetPhi = fJetReader->GetJetPhi(jetIndex);
+  
+  // If we are using generator level jets, swap reco and gen variables
+  if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
+    Double_t swapper = matchedGenPt;
+    matchedGenPt = recoPt;
+    recoPt = swapper;
+    swapper = matchedGenEta;
+    matchedGenEta = jetEta;
+    jetEta = swapper;
+    swapper = matchedGenPhi;
+    matchedGenPhi = jetPhi;
+    jetPhi = swapper;
+  }
+  
+  // Helper variable for smearing study
+  Double_t smearingFactor;
+  
+  // For 2018 data, we need to correct the reconstructed pT with jet energy correction
+  fJetCorrector2018->SetJetPT(recoPt);
+  fJetCorrector2018->SetJetEta(jetEta);
+  fJetCorrector2018->SetJetPhi(jetPhi);
+  
+  if(fReadMode > 2000){
+    recoPt = fJetCorrector2018->GetCorrectedPT();
+    
+    // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
+    if(fJetUncertaintyMode == 3){
+      smearingFactor = GetSmearingFactor(recoPt, centrality);
+      recoPt = recoPt * fRng->Gaus(1,smearingFactor);
+    }
+    
+  }
+  
+  // Define index for parton flavor using algoritm: [-6,-1] U [1,6] -> kQuark, 21 -> kGluon, anything else -> -1
+  Int_t referencePartonIndex = -1;
+  if(referencePartonFlavor >= -6 && referencePartonFlavor <= 6 && referencePartonFlavor != 0) referencePartonIndex = EECHistograms::kQuark;
+  if(referencePartonFlavor == 21) referencePartonIndex = EECHistograms::kGluon;
+  
+  // Fill the different axes for the filler
+  fillerClosure[0] = matchedGenPt;         // Axis 0: pT of the matched generator level jet
+  fillerClosure[1] = recoPt;               // Axis 1: pT of the matched reconstructed jet
+  fillerClosure[2] = jetEta;               // Axis 2: eta of the jet under consideration
+  fillerClosure[3] = centrality;           // Axis 3: Centrality of the event
+  fillerClosure[4] = referencePartonIndex; // Axis 4: Reference parton type (quark/gluon)
+  fillerClosure[5] = recoPt/matchedGenPt;  // Axis 5: Reconstructed level jet to generator level jet pT ratio
+  
+  // Fill the closure histogram
+  fHistograms->fhJetPtClosure->Fill(fillerClosure,fTotalEventWeight);
+  
+}
+
+
+
+/*
+ * Get the proper vz weighting depending on analyzed system
+ *
+ *  Arguments:
+ *   const Double_t vz = Vertex z position for the event
+ *
+ *   return: Multiplicative correction factor for vz
+ */
+Double_t EECAnalyzer::GetVzWeight(const Double_t vz) const{
+  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) return 1;  // No correction for real data
+  if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPpMC) return fVzWeightFunction->Eval(vz); // Weight for 2018 MC
+  return -1; // Return crazy value for unknown data types, so user will not miss it
+}
+
+/*
+ * Get the proper centrality weighting depending on analyzed system
+ *
+ *  Arguments:
+ *   const Int_t hiBin = CMS hiBin
+ *
+ *   return: Multiplicative correction factor for the given CMS hiBin
+ */
+Double_t EECAnalyzer::GetCentralityWeight(const Int_t hiBin) const{
+  if(fDataType != ForestReader::kPbPbMC) return 1;
+  
+  // No weighting for the most peripheral centrality bins
+  return (hiBin < 194) ? fCentralityWeightFunction->Eval(hiBin/2.0) : 1;
+}
+
+/*
+ *  Get the proper multiplicity weight for MC
+ *
+ *  Arguments:
+ *   const Double_t multiplicity = Track multiplicity in the event
+ *
+ *   return: Multiplicative correction factor for the given multiplicity value
+ */
+Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
+  if(fDataType != ForestReader::kPbPbMC) return 1;
+  
+  return fMultiplicityWeightFunction->Eval(multiplicity);
+}
+
+/*
+ * Get the proper jet pT weighting depending on analyzed system
+ *
+ *  Arguments:
+ *   const Double_t jetPt = Jet pT for the weighted jet
+ *
+ *   return: Multiplicative correction factor for the jet pT
+ */
+Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
+  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
+  
+  return fPtWeightFunction->Eval(jetPt);
+}
+
+/*
+ * Get a smearing factor corresponding to worsening the smearing resolution in MC by 20 %
+ * This is obtained by multiplying the MC smearing resolution by 0.666 and using this as additional
+ * smearing for the data. Smearing factor depends on jet pT and centrality.
+ *
+ *  Arguments:
+ *   Double_t jetPt = Jet pT
+ *   const Double_t centrality = Centrality of the event
+ *
+ *  return: Additional smearing factor
+ */
+Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centrality) {
+  
+  // For all the jets above 500 GeV, use the resolution for 500 GeV jet
+  if(jetPt > 500) jetPt = 500;
+  
+  // Find the correct centrality bin
+  Int_t centralityBin = 0;
+  if(centrality > fCard->Get("CentralityBinEdges",2)) centralityBin++;
+  if(centrality > fCard->Get("CentralityBinEdges",3)) centralityBin++;
+  if(centrality > fCard->Get("CentralityBinEdges",4)) centralityBin++;
+  
+  // Set the parameters to the smearing function. pp and PbPb have different smearing function parameters
+  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
+    // Settings for pp
+    fSmearingFunction->SetParameters(0.174881, -0.00091979, 3.50064e-06, -6.52541e-09, 4.64199e-12);
+    
+  } else {
+    
+//    // Parameters for the smearing function for flow jets
+//    Double_t resolutionFit[4][5] = {
+//      {0.451855, -0.00331992, 1.25897e-05, -2.26434e-08, 1.55081e-11},
+//      {0.366326, -0.00266997, 1.04733e-05, -1.95302e-08, 1.38409e-11},
+//      {0.268453, -0.00184878, 7.45201e-06, -1.43486e-08, 1.04726e-11},
+//      {0.202255, -0.00114677, 4.2566e-06, -7.69286e-09, 5.32617e-12}
+//    };
+    
+    // Parameters for the smearing function for calo jets
+    Double_t resolutionFit[4][5] = {
+      {0.268878, -0.00142952, 4.91294e-06, -8.43379e-09, 5.64202e-12},
+      {0.251296, -0.00130685, 4.51052e-06, -7.78237e-09, 5.21521e-12},
+      {0.246154, -0.00137711, 5.21775e-06, -9.76697e-09, 6.98133e-12},
+      {0.215341, -0.000966671, 3.06525e-06, -4.92523e-09, 3.08673e-12}
+    };
+    
+    for(int iParameter = 0; iParameter < 5; iParameter++){
+      // Settings for PbPb
+      
+      fSmearingFunction->SetParameter(iParameter, resolutionFit[centralityBin][iParameter]);
+    }
+  }
+  
+  // Calculation for resolution worsening: we assume the jet energy resolution is a Gassian distribution with some certain sigma, if you would like to add a Gassian noise to make it worse, the sigma getting larger, then it obeys the random variable rule that X=Y+Z, where Y~N(y, sigmay) and Z~N(z,sigmaz), then X~N(y+z, sqrt(sigmay^2+sigmaz^2))). In this case, we assume that noise and the resolution are independent.
+  // So let assume the sigmay is the jet energy resolution, then you want the sigmax = 1.2sigmay
+  // which means that the sigmaz = sigmay * sqrt(1.2^2-1)
+  
+  // After the smearing function is set, read the value to return
+  // Worsening resolution by 20%: 0.663
+  // Worsening resolution by 10%: 0.458
+  // Worsening resolution by 30%: 0.831
+  return fSmearingFunction->Eval(jetPt)*0.663;
+  
+}
+
+/*
+ * Check is a track passes the required subevent cut
+ *
+ *  Arguments:
+ *   const Int_t subeventIndex = Subevent index for the track in consideration
+ *
+ *  return: true if subevent cut is passes, false if not
+ */
+Bool_t EECAnalyzer::PassSubeventCut(const Int_t subeventIndex) const{
+  if(fSubeventCut == kSubeventAny) return true;
+  if((fSubeventCut == kSubeventZero) && (subeventIndex == 0)) return true;
+  if((fSubeventCut == kSubeventNonZero) && (subeventIndex > 0)) return true;
+  return false;
+}
+
+/*
+ * Check if the event passes all the track cuts
+ *
+ *  Arguments:
+ *   ForestReader *eventReader = ForestReader containing the event information checked for event cuts
+ *   const Bool_t fillHistograms = Flag for filling the event information histograms.
+ *
+ *   return = True if all event cuts are passed, false otherwise
+ */
+Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms){
+
+  // Cut for primary vertex. Only applied for data.
+  if(eventReader->GetPrimaryVertexFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kPrimaryVertex);
+  
+  // Cut for collision event selection. Only applied for PbPb data.
+  if(eventReader->GetCollisionEventSelectionFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kCollisionEventSelection);
+  
+  // Cut for HB/HE noise. Only applied for data.
+  if(eventReader->GetHBHENoiseFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kHBHENoise);
+  
+  // Cut for beam scraping. Only applied for pp data.
+  if(eventReader->GetBeamScrapingFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kBeamScraping);
+  
+  // Cut for energy deposition in at least 3 hadronic forward towers. Only applied for PbPb data.
+  if(eventReader->GetHfCoincidenceFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kHfCoincidence);
+  
+  // Cut for cluster compatibility. Only applied for PbPb data.
+  if(eventReader->GetClusterCompatibilityFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kClusterCompatibility);
+  
+  // Jet trigger requirement.
+  if(eventReader->GetCaloJetFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kCaloJet);
+  
+  // Cut for vertex z-position
+  if(TMath::Abs(eventReader->GetVz()) > fVzCut) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kVzCut);
+  
+  return true;
+  
+}
+
+/*
+ * Check if a track passes all the track cuts
+ *
+ *  Arguments:
+ *   const Int_t iTrack = Index of the checked track in reader
+ *   TH1F *trackCutHistogram = Histogram to which the track cut performance is filled
+ *   const Bool_t bypassFill = Pass filling the track cut histograms
+ *
+ *   return: True if all track cuts are passed, false otherwise
+ */
+Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill){
+  
+  // Only fill the track cut histograms for same event data
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kAllTracks);
+  
+  // Cuts specific to generator level MC tracks
+  if(fTrackReader->GetTrackCharge(iTrack) == 0) return false;  // Require that the track is charged
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcCharge);
+  
+  if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcSube);
+  
+  if(fTrackReader->GetTrackMCStatus(iTrack) != 1) return false;  // Require final state particles
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcStatus);
+  
+  Double_t trackPt = fTrackReader->GetTrackPt(iTrack);
+  Double_t trackEta = fTrackReader->GetTrackEta(iTrack);
+  Double_t trackEt = (fTrackReader->GetTrackEnergyEcal(iTrack)+fTrackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
+  
+  //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
+  
+  // Cut for track pT
+  if(trackPt <= fTrackMinPtCut) return false;                     // Minimum pT cut
+  if(trackPt >= fJetMaximumPtCut) return false;                   // Maximum pT cut (same as for leading jets)
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kPtCuts);
+  
+  // Cut for track eta
+  if(TMath::Abs(trackEta) >= fTrackEtaCut) return false;          // Eta cut
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kEtaCut);
+  
+  // New cut for 2018 data based on track algorithm and MVA
+  if(fTrackReader->GetTrackAlgorithm(iTrack) == 6 && fTrackReader->GetTrackMVA(iTrack) < 0.98 && fReadMode > 2017) return false; // Only apply this cut to 2018 PbPb
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kTrackAlgorithm);
+  
+  // Cut for high purity
+  if(!fTrackReader->GetTrackHighPurity(iTrack)) return false;     // High purity cut
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kHighPurity);
+  
+  // Cut for relative error for track pT
+  if(fTrackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kPtError);
+  
+  // Cut for track distance from primary vertex
+  if(TMath::Abs(fTrackReader->GetTrackVertexDistanceZ(iTrack)/fTrackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
+  if(TMath::Abs(fTrackReader->GetTrackVertexDistanceXY(iTrack)/fTrackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kVertexDistance);
+  
+  // Cut for energy deposition in calorimeters for high pT tracks
+  if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
+  
+  // Cuts for track reconstruction quality
+  if( fTrackReader->GetTrackChi2(iTrack) / (1.0*fTrackReader->GetNTrackDegreesOfFreedom(iTrack)) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  if(fTrackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
+  if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
+  
+  // If passed all checks, return true
+  return true;
+}
+
+/*
+ * Get the track efficiency correction for a given track
+ *
+ *  Arguments:
+ *   const Int_t iTrack = Index of the track for which the efficiency correction is obtained
+ *
+ *   return: Multiplicative track efficiency correction
+ */
+Double_t EECAnalyzer::GetTrackEfficiencyCorrection(const Int_t iTrack){
+  
+  // No correction for generator level tracks
+  if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen) return 1;
+  
+  // Get track information
+  Float_t trackPt = fTrackReader->GetTrackPt(iTrack);    // Track pT
+  Float_t trackEta = fTrackReader->GetTrackEta(iTrack);  // Track eta
+  Int_t hiBin = fTrackReader->GetHiBin();                // hiBin for 2018 track correction
+  
+  // Weight factor only for 2017 pp MC as instructed be the tracking group
+  double preWeight = 1.0;
+  if(fDataType == ForestReader::kPpMC) preWeight = 0.979;
+  
+  // For PbPb2018 and pp2017, there is an efficiency table from which the correction comes
+  return preWeight * fTrackEfficiencyCorrector2018->getCorrection(trackPt, trackEta, hiBin);
+  
+}
+
+/*
+ * Getter for EEC histograms
+ */
+EECHistograms* EECAnalyzer::GetHistograms() const{
+  return fHistograms;
+}
+
+/*
+ * Getter for centrality bin
+ */
+Int_t EECAnalyzer::GetCentralityBin(const Double_t centrality) const{
+  
+  // Find the correct centrality bin
+  Int_t centralityBin = 0;
+  if(centrality > fCard->Get("CentralityBinEdges",2)) centralityBin++;
+  if(centrality > fCard->Get("CentralityBinEdges",3)) centralityBin++;
+  if(centrality > fCard->Get("CentralityBinEdges",4)) centralityBin++;
+  
+  return centralityBin;
+}
+
+/*
+ * Get the track multiplicity in the current event
+ */
+Double_t EECAnalyzer::GetMultiplicity(){
+
+  // Loop over all track in the event
+  Int_t nTracks = fTrackReader->GetNTracks();
+  Double_t trackMultiplicity = 0;
+  Double_t trackEfficiencyCorrection = 0;
+  
+  // Disable subevent cut while determining the total multiplicity
+  Int_t originalCut = fSubeventCut;
+  fSubeventCut = kSubeventAny;
+  
+  for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+    
+    // Check that all the track cuts are passed
+    if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+    
+    // Get the efficiency correction
+    trackEfficiencyCorrection = GetTrackEfficiencyCorrection(iTrack);
+    
+    //trackMultiplicity += 1;
+    trackMultiplicity += trackEfficiencyCorrection;
+    
+  } // Track loop
+  
+  fSubeventCut = originalCut;
+
+  return trackMultiplicity;
+  
+}
+
+/*
+ * Get the analysis centrality bin corresponding to the given multiplicity value
+ *
+ *  Arguments:
+ *   const Double_t multiplicity = Multiplicity in MC
+ *
+ *   return: Centrality corresponding to this value of multiplicity
+ */
+Double_t EECAnalyzer::GetCentralityFromMultiplicity(const Double_t multiplicity) const{
+  
+  // Centrality bin 0-10
+  if(multiplicity > 2225) return 7;
+  
+  // Centrality bin 10-30
+  if(multiplicity > 980) return 17;
+  
+  // Centrality bin 30-50
+  if(multiplicity > 340) return 37;
+  
+  // Centrality bin 50-90
+  return 57;
+  
+}
+
+/*
+ * Get deltaR between two objects
+ *
+ *  Arguments:
+ *   const Double_t eta1 = Eta of the first object
+ *   const Double_t phi1 = Phi of the first object
+ *   const Double_t eta2 = Eta of the second object
+ *   const Double_t phi2 = Phi of the second object
+ *
+ *  return: DeltaR between the two objects
+ */
+Double_t EECAnalyzer::GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const{
+
+  Double_t deltaEta = eta1 - eta2;
+  Double_t deltaPhi = phi1 - phi2;
+  
+  // Transform deltaPhi to interval [-pi,pi]
+  while(deltaPhi > TMath::Pi()){deltaPhi += -2*TMath::Pi();}
+  while(deltaPhi < -TMath::Pi()){deltaPhi += 2*TMath::Pi();}
+  
+  // Return the distance between the objects
+  return TMath::Sqrt(deltaPhi*deltaPhi + deltaEta*deltaEta);
+  
+}
