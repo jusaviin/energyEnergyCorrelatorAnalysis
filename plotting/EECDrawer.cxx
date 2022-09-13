@@ -425,7 +425,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
         } // Track pT loop
       } // Draw individual energy-energy correlator histograms
       
-      // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes
+      // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
       if(fDrawEnergyEnergyCorrelatorsForConstantJetPt){
         
         // Only one legend for the plot
