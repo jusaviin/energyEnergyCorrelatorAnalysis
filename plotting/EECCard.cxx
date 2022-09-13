@@ -127,11 +127,6 @@ int EECCard::GetNTrackPtBinsEEC() const{
   return GetNBins(kTrackPtBinEdgesEEC);
 }
 
-// Get the number of deltaR bins in energy-energy correlator analysis
-int EECCard::GetNDeltaRBinsEEC() const{
-  return GetNBins(kDeltaRBinEdgesEEC);
-}
-
 /*
  * Get a bin index based on a given value.
  * If value is out of bound, return -1
@@ -173,11 +168,6 @@ int EECCard::GetBinIndexTrackPtEEC(const double value) const{
   return GetBinIndex(kTrackPtBinEdgesEEC,value);
 }
 
-// Get the bin index for a given deltaR value in energy-energy correlator analysis
-int EECCard::GetBinIndexDeltaREEC(const double value) const{
-  return GetBinIndex(kDeltaRBinEdgesEEC,value);
-}
-
 // Get the low border of i:th bin from internal index
 double EECCard::GetLowBinBorder(const int index, const int iBin) const{
   
@@ -210,11 +200,6 @@ double EECCard::GetLowBinBorderTrackPtEEC(const int iBin) const{
   return GetLowBinBorder(kTrackPtBinEdgesEEC,iBin);
 }
 
-// Get the low border of i:th deltaR bin in energy-energy correlator analysis
-double EECCard::GetLowBinBorderDeltaREEC(const int iBin) const{
-  return GetLowBinBorder(kDeltaRBinEdgesEEC,iBin);
-}
-
 // Get the high border of i:th bin from internal index
 double EECCard::GetHighBinBorder(const int index, const int iBin) const{
   
@@ -245,11 +230,6 @@ double EECCard::GetHighBinBorderJetPtEEC(const int iBin) const{
 // Get the high border of i:th track pT bin in energy-energy correlator analysis
 double EECCard::GetHighBinBorderTrackPtEEC(const int iBin) const{
   return GetHighBinBorder(kTrackPtBinEdgesEEC,iBin);
-}
-
-// Get the high border of i:th deltaR bin in energy-energy correlator analysis
-double EECCard::GetHighBinBorderDeltaREEC(const int iBin) const{
-  return GetHighBinBorder(kDeltaRBinEdgesEEC,iBin);
 }
 
 /*

@@ -380,7 +380,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   TString compactJetPtString;
   char namerY[100];
   
-  int color[10] = {kBlack, kBlue, kRed, kGreen+3, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
+  int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
     
   // Loop over energy-energy correlator types
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){

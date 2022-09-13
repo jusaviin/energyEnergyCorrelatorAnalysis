@@ -52,7 +52,6 @@ public:
     kJetRadius,                 // Radius around the jet axis which is used to select the tracks for energy-energy correlation analysis
     kJetPtBinEdgesEEC,          // Jet pT binning for energy-energy correlation analysis
     kTrackPtBinEdgesEEC,        // Track pT binning for energy-energy correlation analysis
-    kDeltaRBinEdgesEEC,         // DeltaR binning for energy-energy correlation analysis
     kCentralityBinEdges,        // Centrality bin edges
     kTrackPtBinEdges,           // Track pT bin edges
     kPtHatBinEdges,             // pT hat bin edges
@@ -64,7 +63,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","ForestType","ReadMode","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","DeltaRBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","ForestType","ReadMode","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   
@@ -100,22 +99,18 @@ public:
   int GetNTrackPtBins() const;    // Get the number of track pT bins
   int GetNJetPtBinsEEC() const;   // Get the number of jet pT bins in energy-energy correlator analysis
   int GetNTrackPtBinsEEC() const; // Get the number of track pT bins in energy-energy correlator analysis
-  int GetNDeltaRBinsEEC() const;  // Get the number of deltaR bins in energy-energy correlator analysis
   double GetLowBinBorderCentrality(const int iBin) const;  // Get the low border of i:th centrality bin
   double GetLowBinBorderTrackPt(const int iBin) const;     // Get the low border of i:th track pT bin
   double GetLowBinBorderJetPtEEC(const int iBin) const;    // Get the low border of i:th jet pT bin in energy-energy correlator analysis
   double GetLowBinBorderTrackPtEEC(const int iBin) const;  // Get the low border of i:th track pT bin in energy-energy correlator analysis
-  double GetLowBinBorderDeltaREEC(const int iBin) const;   // Get the low border of i:th deltaR bin in energy-energy correlator analysis
   double GetHighBinBorderCentrality(const int iBin) const; // Get the high border of i:th centrality bin
   double GetHighBinBorderTrackPt(const int iBin) const;    // Get the high border of i:th track pT bin
   double GetHighBinBorderJetPtEEC(const int iBin) const;   // Get the high border of i:th jet pT bin in energy-energy correlator analysis
   double GetHighBinBorderTrackPtEEC(const int iBin) const; // Get the high border of i:th track pT bin in energy-energy correlator analysis
-  double GetHighBinBorderDeltaREEC(const int iBin) const;  // Get the high border of i:th deltaR bin in energy-energy correlator analysis
   int GetBinIndexCentrality(const double value) const;     // Get the bin index for a given centrality value
   int GetBinIndexTrackPt(const double value) const;        // Get the bin index for a given track pT value
   int GetBinIndexJetPtEEC(const double value) const;       // Get the bin index for a given jet pT value in energy-energy correlator analysis
   int GetBinIndexTrackPtEEC(const double value) const;     // Get the bin index for a given track pT value in energy-energy correlator analysis
-  int GetBinIndexDeltaREEC(const double value) const;      // Get the bin index for a given deltaR value in energy-energy correlator analysis
   int GetSubeventCut() const;     // Get the index for used subevent cut
   int GetJetType() const;         // Get the jet type index
   

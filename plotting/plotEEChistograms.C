@@ -126,8 +126,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = true;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
     
   // ==================================================================
   // ===================== Configuration ready ========================
