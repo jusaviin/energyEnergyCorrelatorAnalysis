@@ -151,12 +151,8 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("pthat",&fPtHat,&fPtHatBranch); // pT hat only for MC
   
   // Read event weight for 2018 simulation
-  if(fReadMode > 2000){
-    fHeavyIonTree->SetBranchStatus("weight",1);
-    fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
-  } else {
-    fEventWeight = 1;
-  }
+  fHeavyIonTree->SetBranchStatus("weight",1);
+  fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
   
   // Connect the branches to the jet tree
   const char *jetAxis[3] = {"jt","jt","WTA"};
@@ -238,26 +234,27 @@ void GeneratorLevelForestReader::Initialize(){
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
   } else if (fDataType == kPbPbMC){ // PbPb MC
+    
+    // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
     fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
     fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+    
+    // Cut on noise on HCAL
     fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
     fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
     
-    // Some branches have different naming for 2015 and 2018 data
-    if(fReadMode > 2000){
-      fSkimTree->SetBranchStatus("collisionEventSelectionAODv2",1); // 2018 syntax (or not v2?)
-      fSkimTree->SetBranchAddress("collisionEventSelectionAODv2", &fCollisionEventSelectionFilterBit, &fCollisionEventSelectionBranch); // 2018 syntax (or not v2?)
-      fSkimTree->SetBranchStatus("phfCoincFilter3Th3",1); // 2018 syntax (of Th4?)
-      fSkimTree->SetBranchAddress("phfCoincFilter3Th3", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch); // 2018 syntax (or Th4?)
-    } else {
-      fSkimTree->SetBranchStatus("pcollisionEventSelection",1); // 2015 syntax
-      fSkimTree->SetBranchAddress("pcollisionEventSelection", &fCollisionEventSelectionFilterBit, &fCollisionEventSelectionBranch); // 2015 syntax
-      fSkimTree->SetBranchStatus("phfCoincFilter3",1); // 2015 syntax
-      fSkimTree->SetBranchAddress("phfCoincFilter3",&fHfCoincidenceFilterBit,&fHfCoincidenceBranch); // 2015 syntax
-    }
-      
+    // Combination of hfCoincFilter2Th4, pprimaryVertexFilter and pclusterCompatibilityFilter
+    fSkimTree->SetBranchStatus("collisionEventSelectionAODv2",1);
+    fSkimTree->SetBranchAddress("collisionEventSelectionAODv2", &fCollisionEventSelectionFilterBit, &fCollisionEventSelectionBranch);
+    
+    // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+    fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
+    fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+
+    // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
     fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
     fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+    
     fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
   } else { // Local test
     fPrimaryVertexFilterBit = 1;

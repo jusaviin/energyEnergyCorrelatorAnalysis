@@ -1,0 +1,1 @@
+tar -cvzf eec5TeV.tar.gz Makefile eecAnalysis.cxx jetEnergyCorrections src trackCorrectionTables
