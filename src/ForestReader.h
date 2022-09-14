@@ -25,9 +25,6 @@ using namespace std;
 
 class ForestReader{
   
-protected:
-  static const Int_t fnMaxParticleFlowCandidates = 10000;        // Maximum number of particle flow candidates
-  
 public:
   
   // Possible data types to be read with the reader class
@@ -106,13 +103,6 @@ public:
   virtual Int_t GetTrackOriginalAlgorithm(Int_t iTrack) const;           // Getter for track original algorithm
   virtual Float_t GetTrackMVA(Int_t iTrack) const;                       // Getter for track MVA
   
-  // Getters for leaves in the particle flow candidate tree
-  virtual Int_t GetParticleFlowCandidateId(Int_t iCandidate) const;      // Getter for particle flow candidate ID
-  virtual Float_t GetParticleFlowCandidatePt(Int_t iCandidate) const;    // Getter for particle flow candidate pT
-  virtual Float_t GetParticleFlowCandidatePhi(Int_t iCandidate) const;   // Getter for particle flow candidate phi
-  virtual Float_t GetParticleFlowCandidateEta(Int_t iCandidate) const;   // Getter for particle flow candidate eta
-  virtual Int_t GetNParticleFlowCandidates() const;                      // Getter for number of particle flow candidates in an event
-  
   // Setter for data type
   void SetDataType(Int_t dataType); // Setter for data type
   
@@ -174,13 +164,6 @@ protected:
   TBranch *fnHitsTrackBranch;                 // Branch for number of hits for the track
   TBranch *fTrackEnergyEcalBranch;            // Branch for track energy in ECal
   TBranch *fTrackEnergyHcalBranch;            // Branch for track energy in HCal
-  
-  // Branched for particle flow candidate tree
-  TBranch *nfParticleFlowCandidateBranch;     // Branch for the number of particle flow candidates, needed for PYTHIA8 forest
-  TBranch *fParticleFlowCandidateIdBranch;    // Branch for particle flow candidate ID
-  TBranch *fParticleFlowCandidatePtBranch;    // Branch for particle flow candidate pT
-  TBranch *fParticleFlowCandidatePhiBranch;   // Branch for particle flow candidate phi
-  TBranch *fParticleFlowCandidateEtaBranch;   // Branch for particle flow candidate eta
     
   // Leaves for heavy ion tree
   Float_t fVertexZ;    // Vertex z-position
@@ -207,16 +190,6 @@ protected:
   // Leaves for the track tree
   Int_t fnTracks;  // Number of tracks
   
-  // Leaves for the particle flow candidate tree
-  Int_t fnParticleFlowCandidates;                                      // For PYTHIA8 forest an array is needed instead of vector
-  Int_t fParticleFlowCandidateIdArray[fnMaxParticleFlowCandidates];    // For PYTHIA8 forest an array is needed instead of vector
-  Float_t fParticleFlowCandidatePtArray[fnMaxParticleFlowCandidates];  // For PYTHIA8 forest an array is needed instead of vector
-  Float_t fParticleFlowCandidatePhiArray[fnMaxParticleFlowCandidates]; // For PYTHIA8 forest an array is needed instead of vector
-  Float_t fParticleFlowCandidateEtaArray[fnMaxParticleFlowCandidates]; // For PYTHIA8 forest an array is needed instead of vector
-  vector<int> *fParticleFlowCandidateIdVector;                         // Vector for particle flow candidate ID:s
-  vector<float> *fParticleFlowCandidatePtVector;                       // Vector for particle flow candidate pT:s
-  vector<float> *fParticleFlowCandidatePhiVector;                      // Vector for particle flow candidate phis
-  vector<float> *fParticleFlowCandidateEtaVector;                      // Vector for particle flow candidate etas
 };
 
 #endif

@@ -63,13 +63,6 @@ public:
   Float_t GetTrackEnergyEcal(Int_t iTrack) const;            // Getter for track energy in ECal
   Float_t GetTrackEnergyHcal(Int_t iTrack) const;            // Getter for track energy in HCal
   
-  // Getters for leaves in the particle flow candidate tree
-  Int_t GetParticleFlowCandidateId(Int_t iCandidate) const;      // Getter for particle flow candidate ID
-  Float_t GetParticleFlowCandidatePt(Int_t iCandidate) const;    // Getter for particle flow candidate pT
-  Float_t GetParticleFlowCandidatePhi(Int_t iCandidate) const;   // Getter for particle flow candidate phi
-  Float_t GetParticleFlowCandidateEta(Int_t iCandidate) const;   // Getter for particle flow candidate eta
-  Int_t GetNParticleFlowCandidates() const;                      // Getter for number of particle flow candidates in an event
-  
   // Check if generator level jet has a matching reconstructed jet
   Bool_t HasMatchingJet(Int_t iJet) const;  // Check if generator level jet has a matching reconstructed jet
   Float_t GetMatchedPt(Int_t iJet) const;   // Getter for matched reconstructed jet pT

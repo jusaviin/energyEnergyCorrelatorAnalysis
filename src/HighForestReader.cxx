@@ -13,7 +13,6 @@ HighForestReader::HighForestReader() :
   fHltTree(0),
   fSkimTree(0),
   fTrackTree(0),
-  fParticleFlowCandidateTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
   fTrackAlgorithmBranch(0),
@@ -64,7 +63,6 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t readMode, Int_t jetType
   fHltTree(0),
   fSkimTree(0),
   fTrackTree(0),
-  fParticleFlowCandidateTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
   fTrackAlgorithmBranch(0),
@@ -106,7 +104,6 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fHltTree(in.fHltTree),
   fSkimTree(in.fSkimTree),
   fTrackTree(in.fTrackTree),
-  fParticleFlowCandidateTree(in.fParticleFlowCandidateTree),
   fnJetsBranch(in.fnJetsBranch),
   fnTracksBranch(in.fnTracksBranch),
   fTrackAlgorithmBranch(in.fTrackAlgorithmBranch),
@@ -159,7 +156,6 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fHltTree = in.fHltTree;
   fSkimTree = in.fSkimTree;
   fTrackTree = in.fTrackTree;
-  fParticleFlowCandidateTree = in.fParticleFlowCandidateTree;
   fnJetsBranch = in.fnJetsBranch;
   fnTracksBranch = in.fnTracksBranch;
   fTrackAlgorithmBranch = in.fTrackAlgorithmBranch;
@@ -423,34 +419,6 @@ void HighForestReader::Initialize(){
     }
   } // Reading track trees
   
-  // Do not read the particle flow candidate tree for 2018 data
-  if(fReadMode < 2000){
-    
-    // Connect the branches to the particle flow candidate tree
-    fParticleFlowCandidateTree->SetBranchStatus("*",0);
-    
-    if(fReadMode == 0 || fReadMode == 2){ // Regular forests have vectors for particle flow candidate tree
-      fParticleFlowCandidateTree->SetBranchStatus("pfId",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfId",&fParticleFlowCandidateIdVector,&fParticleFlowCandidateIdBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfPt",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfPt",&fParticleFlowCandidatePtVector,&fParticleFlowCandidatePtBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfPhi",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfPhi",&fParticleFlowCandidatePhiVector,&fParticleFlowCandidatePhiBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfEta",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfEta",&fParticleFlowCandidateEtaVector,&fParticleFlowCandidateEtaBranch);
-    } else { // PYTHIA8 forest has arrays instead of vectors for particle flow candidate tree
-      fParticleFlowCandidateTree->SetBranchStatus("nPFpart",1);
-      fParticleFlowCandidateTree->SetBranchAddress("nPFpart",&fnParticleFlowCandidates,&nfParticleFlowCandidateBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfId",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfId",&fParticleFlowCandidateIdArray,&fParticleFlowCandidateIdBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfPt",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfPt",&fParticleFlowCandidatePtArray,&fParticleFlowCandidatePtBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfPhi",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfPhi",&fParticleFlowCandidatePhiArray,&fParticleFlowCandidatePhiBranch);
-      fParticleFlowCandidateTree->SetBranchStatus("pfEta",1);
-      fParticleFlowCandidateTree->SetBranchAddress("pfEta",&fParticleFlowCandidateEtaArray,&fParticleFlowCandidateEtaBranch);
-    }
-  } // Not 2018 data
 }
 
 /*
@@ -480,32 +448,7 @@ void HighForestReader::ReadForestFromFile(TFile *inputFile){
     treeName[1] = "ak4PFJetAnalyzer/t";  // Only PF jets in local test file
   }
   fJetTree = (TTree*)inputFile->Get(treeName[fJetType]);
-  
-  // The track tree and the particle flow candidate tree have different names for differant datasets
-  if(fDataType == kPp || fDataType == kPpMC || fDataType == kLocalTest){
-    if(fReadTrackTree) fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree");
-    
-    // No particle flow candidate tree for 2017 pp
-    if(fReadMode < 2000){
-      fParticleFlowCandidateTree = (TTree*)inputFile->Get("pfcandAnalyzer/pfTree");
-    }
-  } else if (fDataType == kPbPb || fDataType == kPbPbMC){
-    
-    // Track tree has different name in 2018 data
-    if(fReadMode > 2000){
-      if(fReadTrackTree) fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree"); // 2018 syntax
-    } else {
-      if(fReadTrackTree) fTrackTree = (TTree*)inputFile->Get("anaTrack/trackTree"); // 2015 syntax
-      
-      // Do not read the PF candidate tree for 2018 data, information is not needed
-      if(fReadMode == 1){
-        fParticleFlowCandidateTree = (TTree*)inputFile->Get("pfcandAnalyzer/pfTree"); // PYTHIA8+Hydjet
-      } else {
-        fParticleFlowCandidateTree = (TTree*)inputFile->Get("pfcandAnalyzerCS/pfTree"); // PYTHIA6+Hydjet
-      }
-    }
-    
-  }
+  if(fReadTrackTree) fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree");
   
   Initialize();
 }
@@ -527,7 +470,6 @@ void HighForestReader::BurnForest(){
   fSkimTree->Delete();
   fJetTree->Delete();
   fTrackTree->Delete();
-  fParticleFlowCandidateTree->Delete();
 }
 
 /*
@@ -539,9 +481,6 @@ void HighForestReader::GetEvent(Int_t nEvent){
   fHltTree->GetEntry(nEvent);
   fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) fTrackTree->GetEntry(nEvent);
-  
-  // No particle flow candidate tree for 2018 data
-  if(fReadMode < 2000) fParticleFlowCandidateTree->GetEntry(nEvent);
 }
 
 // Getter for jet pT

@@ -86,7 +86,6 @@ private:
   TTree *fHltTree;         // Tree for high level trigger information
   TTree *fSkimTree;        // Tree for event selection information
   TTree *fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
-  TTree *fParticleFlowCandidateTree;  // Tree for particle flow candidates
   
   // Non-common branches for all types of trees
   TBranch *fnJetsBranch;         // Branch for number of jets in an event

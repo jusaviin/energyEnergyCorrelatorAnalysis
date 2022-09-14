@@ -50,10 +50,6 @@ ForestReader::ForestReader() :
   fnHitsTrackBranch(0),
   fTrackEnergyEcalBranch(0),
   fTrackEnergyHcalBranch(0),
-  fParticleFlowCandidateIdBranch(0),
-  fParticleFlowCandidatePtBranch(0),
-  fParticleFlowCandidatePhiBranch(0),
-  fParticleFlowCandidateEtaBranch(0),
   fVertexZ(-100),
   fHiBin(-1),
   fPtHat(0),
@@ -68,16 +64,7 @@ ForestReader::ForestReader() :
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
-  fnTracks(0),
-  fnParticleFlowCandidates(0),
-  fParticleFlowCandidateIdArray(),
-  fParticleFlowCandidatePtArray(),
-  fParticleFlowCandidatePhiArray(),
-  fParticleFlowCandidateEtaArray(),
-  fParticleFlowCandidateIdVector(0),
-  fParticleFlowCandidatePtVector(0),
-  fParticleFlowCandidatePhiVector(0),
-  fParticleFlowCandidateEtaVector(0)
+  fnTracks(0)
 
 {
   // Default constructor
@@ -138,10 +125,6 @@ ForestReader::ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t 
   fnHitsTrackBranch(0),
   fTrackEnergyEcalBranch(0),
   fTrackEnergyHcalBranch(0),
-  fParticleFlowCandidateIdBranch(0),
-  fParticleFlowCandidatePtBranch(0),
-  fParticleFlowCandidatePhiBranch(0),
-  fParticleFlowCandidateEtaBranch(0),
   fVertexZ(-100),
   fHiBin(-1),
   fPtHat(0),
@@ -156,16 +139,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t 
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
-  fnTracks(0),
-  fnParticleFlowCandidates(0),
-  fParticleFlowCandidateIdArray(),
-  fParticleFlowCandidatePtArray(),
-  fParticleFlowCandidatePhiArray(),
-  fParticleFlowCandidateEtaArray(),
-  fParticleFlowCandidateIdVector(0),
-  fParticleFlowCandidatePtVector(0),
-  fParticleFlowCandidatePhiVector(0),
-  fParticleFlowCandidateEtaVector(0)
+  fnTracks(0)
 {
   // Custom constructor
   
@@ -220,10 +194,6 @@ ForestReader::ForestReader(const ForestReader& in) :
   fnHitsTrackBranch(in.fnHitsTrackBranch),
   fTrackEnergyEcalBranch(in.fTrackEnergyEcalBranch),
   fTrackEnergyHcalBranch(in.fTrackEnergyHcalBranch),
-  fParticleFlowCandidateIdBranch(in.fParticleFlowCandidateIdBranch),
-  fParticleFlowCandidatePtBranch(in.fParticleFlowCandidatePtBranch),
-  fParticleFlowCandidatePhiBranch(in.fParticleFlowCandidatePhiBranch),
-  fParticleFlowCandidateEtaBranch(in.fParticleFlowCandidateEtaBranch),
   fVertexZ(in.fVertexZ),
   fHiBin(in.fHiBin),
   fPtHat(in.fPtHat),
@@ -238,21 +208,9 @@ ForestReader::ForestReader(const ForestReader& in) :
   fHBHENoiseFilterBit(in.fHBHENoiseFilterBit),
   fHfCoincidenceFilterBit(in.fHfCoincidenceFilterBit),
   fClusterCompatibilityFilterBit(in.fClusterCompatibilityFilterBit),
-  fnTracks(in.fnTracks),
-  fnParticleFlowCandidates(in.fnParticleFlowCandidates),
-  fParticleFlowCandidateIdVector(in.fParticleFlowCandidateIdVector),
-  fParticleFlowCandidatePtVector(in.fParticleFlowCandidatePtVector),
-  fParticleFlowCandidatePhiVector(in.fParticleFlowCandidatePhiVector),
-  fParticleFlowCandidateEtaVector(in.fParticleFlowCandidateEtaVector)
+  fnTracks(in.fnTracks)
 {
-
-  for(Int_t iParticleFlowCandidate = 0; iParticleFlowCandidate < fnMaxParticleFlowCandidates; iParticleFlowCandidate++){
-    fParticleFlowCandidateIdArray[iParticleFlowCandidate] = in.fParticleFlowCandidateIdArray[iParticleFlowCandidate];
-    fParticleFlowCandidatePtArray[iParticleFlowCandidate] = in.fParticleFlowCandidatePtArray[iParticleFlowCandidate];
-    fParticleFlowCandidatePhiArray[iParticleFlowCandidate] = in.fParticleFlowCandidatePhiArray[iParticleFlowCandidate];
-    fParticleFlowCandidateEtaArray[iParticleFlowCandidate] = in.fParticleFlowCandidateEtaArray[iParticleFlowCandidate];
-  }
-  
+  // Copy constructor
 }
 
 /*
@@ -306,10 +264,6 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fnHitsTrackBranch = in.fnHitsTrackBranch;
   fTrackEnergyEcalBranch = in.fTrackEnergyEcalBranch;
   fTrackEnergyHcalBranch = in.fTrackEnergyHcalBranch;
-  fParticleFlowCandidateIdBranch = in.fParticleFlowCandidateIdBranch;
-  fParticleFlowCandidatePtBranch = in.fParticleFlowCandidatePtBranch;
-  fParticleFlowCandidatePhiBranch = in.fParticleFlowCandidatePhiBranch;
-  fParticleFlowCandidateEtaBranch = in.fParticleFlowCandidateEtaBranch;
   fVertexZ = in.fVertexZ;
   fHiBin = in.fHiBin;
   fPtHat = in.fPtHat;
@@ -325,18 +279,6 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fHfCoincidenceFilterBit = in.fHfCoincidenceFilterBit;
   fClusterCompatibilityFilterBit = in.fClusterCompatibilityFilterBit;
   fnTracks = in.fnTracks;
-  fnParticleFlowCandidates = in.fnParticleFlowCandidates;
-  fParticleFlowCandidateIdVector = in.fParticleFlowCandidateIdVector;
-  fParticleFlowCandidatePtVector = in.fParticleFlowCandidatePtVector;
-  fParticleFlowCandidatePhiVector = in.fParticleFlowCandidatePhiVector;
-  fParticleFlowCandidateEtaVector = in.fParticleFlowCandidateEtaVector;
-  
-  for(Int_t iParticleFlowCandidate = 0; iParticleFlowCandidate < fnMaxParticleFlowCandidates; iParticleFlowCandidate++){
-    fParticleFlowCandidateIdArray[iParticleFlowCandidate] = in.fParticleFlowCandidateIdArray[iParticleFlowCandidate];
-    fParticleFlowCandidatePtArray[iParticleFlowCandidate] = in.fParticleFlowCandidatePtArray[iParticleFlowCandidate];
-    fParticleFlowCandidatePhiArray[iParticleFlowCandidate] = in.fParticleFlowCandidatePhiArray[iParticleFlowCandidate];
-    fParticleFlowCandidateEtaArray[iParticleFlowCandidate] = in.fParticleFlowCandidateEtaArray[iParticleFlowCandidate];
-  }
   
   return *this;
 }
@@ -445,41 +387,6 @@ Int_t ForestReader::GetClusterCompatibilityFilterBit() const{
 // Getter for number of tracks in an event
 Int_t ForestReader::GetNTracks() const{
   return fnTracks;
-}
-
-// Getter for particle flow candidate ID
-Int_t ForestReader::GetParticleFlowCandidateId(Int_t iCandidate) const{
-  if(fReadMode > 2000) return 0; // No PF candidates for 2018 data
-  if(fReadMode == 1 && fDataType == kPpMC) return fParticleFlowCandidateIdArray[iCandidate];   // For PYTHIA8 forest
-  return fParticleFlowCandidateIdVector->at(iCandidate);                                       // Regular
-}
-
-// Getter for particle flow candidate pT
-Float_t ForestReader::GetParticleFlowCandidatePt(Int_t iCandidate) const{
-  if(fReadMode > 2000) return 0; // No PF candidates for 2018 data
-  if(fReadMode == 1 && fDataType == kPpMC) return fParticleFlowCandidatePtArray[iCandidate];  // For PYTHIA8 forest
-  return fParticleFlowCandidatePtVector->at(iCandidate);                                      // Regular
-}
-
-// Getter for particle flow candidate phi
-Float_t ForestReader::GetParticleFlowCandidatePhi(Int_t iCandidate) const{
-  if(fReadMode > 2000) return 0; // No PF candidates for 2018 data
-  if(fReadMode == 1 && fDataType == kPpMC) return fParticleFlowCandidatePhiArray[iCandidate];  // For PYTHIA8 forest
-  return fParticleFlowCandidatePhiVector->at(iCandidate);                                      // Regular
-}
-
-// Getter for particle flow candidate eta
-Float_t ForestReader::GetParticleFlowCandidateEta(Int_t iCandidate) const{
-  if(fReadMode > 2000) return 0; // No PF candidates for 2018 data
-  if(fReadMode == 1 && fDataType == kPpMC)  return fParticleFlowCandidateEtaArray[iCandidate];  // For PYTHIA8 forest
-  return fParticleFlowCandidateEtaVector->at(iCandidate);                                       // Regular
-}
-
-// Getter number of particle flow candidates in an event
-Int_t ForestReader::GetNParticleFlowCandidates() const{
-  if(fReadMode > 2000) return 0; // No PF candidates for 2018 data
-  if(fReadMode == 1 && fDataType == kPpMC) return fnParticleFlowCandidates; // For PYTHIA8 forest
-  return fParticleFlowCandidateIdVector->size();                            // Regular
 }
 
 // Getter for track algorithm

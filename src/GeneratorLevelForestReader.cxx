@@ -471,31 +471,6 @@ Float_t GeneratorLevelForestReader::GetTrackEnergyHcal(Int_t iTrack) const{
   return 1; // Note: The cut on Et is disabled for generator level tracks in the main analysis code
 }
 
-// Getter for particle flow candidate ID (not relevant for generator tracks)
-Int_t GeneratorLevelForestReader::GetParticleFlowCandidateId(Int_t iCandidate) const{
-  return 1; // Return 1 as we use regular generator lavel tracks to determine leading particle flow candidate
-}
-
-// Getter for particle flow candidate pT (just regular tracks in generator level)
-Float_t GeneratorLevelForestReader::GetParticleFlowCandidatePt(Int_t iCandidate) const{
-  return fTrackPtArray->at(iCandidate); // Use regular generated particle pT for particle flow candidates
-}
-
-// Getter for particle flow candidate phi (just regular tracks in generator level)
-Float_t GeneratorLevelForestReader::GetParticleFlowCandidatePhi(Int_t iCandidate) const{
-  return fTrackPhiArray->at(iCandidate); // Use regular generated particle phi for particle flow candidates
-}
-
-// Getter for particle flow candidate eta (just regular tracks in generator level)
-Float_t GeneratorLevelForestReader::GetParticleFlowCandidateEta(Int_t iCandidate) const{
-  return fTrackEtaArray->at(iCandidate); // Use regular generated particle eta for particle flow candidates
-}
-
-// Getter number of particle flow candidates in an event (just regular tracks in generator level)
-Int_t GeneratorLevelForestReader::GetNParticleFlowCandidates() const{
-  return fnTracks; // Use regular tracks in generator level
-}
-
 // Check if generator level jet has a matching reconstructed jet
 Bool_t GeneratorLevelForestReader::HasMatchingJet(Int_t iJet) const{
   
