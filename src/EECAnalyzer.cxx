@@ -922,7 +922,7 @@ void EECAnalyzer::RunAnalysis(){
 void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseToJet, const double jetPt){
   
   // Define a filler for THnSparse
-  Double_t fillerEnergyEnergyCorrelator[4]; // Axes: deltaR, Jet pT, lower track pT, centrality
+  Double_t fillerEnergyEnergyCorrelator[5]; // Axes: deltaR, Jet pT, lower track pT, centrality, subevent
   
   // Event information
   Double_t centrality = fTrackReader->GetCentrality();
@@ -941,6 +941,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseT
   Double_t trackEfficiencyCorrection2;  // Efficiency correction for the first track
   Double_t correlatorWeight;            // Weight given to the energy-energy correlator pT1*pT2
   Double_t correlatorWeightJetPt;       // Alternative weight given to the energy-energy correlator (pT1*pT2)/ jet pT^2
+  Int_t subeventTrack1;    // Subevent index for the first track (0 = pythia, > 0 = hydjet)
+  Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
+  Int_t subeventType;      // Subevent type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-hydjet)
   
   // Loop over all track in the event
   Int_t nTracks = fTrackReader->GetNTracks();
@@ -957,6 +960,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseT
     // Get the efficiency correction for the first track
     trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(iFirstTrack);
     
+    // Find the track subevent (only relevant for simulation)
+    subeventTrack1 = fTrackReader->GetTrackSubevent(iFirstTrack);
+    
     // Loop over the tracks again to create all possible pairs of tracks. Avoid double counting pairs.
     for(Int_t iSecondTrack = iFirstTrack+1; iSecondTrack < nTracks; iSecondTrack++){
       
@@ -971,6 +977,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseT
       // Get the efficiency correction for the second track
       trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(iSecondTrack);
       
+      // Find the track subevent (only relevant for simulation)
+      subeventTrack2 = fTrackReader->GetTrackSubevent(iSecondTrack);
+      
+      // Find the subevent type based on the subevents of the tracks (only relevant for simulation)
+      subeventType = GetSubeventType(subeventTrack1, subeventTrack2);
+      
       // Find the deltaR between the tracks
       trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
       
@@ -983,10 +995,11 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseT
       correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
       
       // Fill the energy-energy correlator histograms
-      fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 1: DeltaR between the two tracks
-      fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 2: pT of the jet the tracks are near of
-      fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 3: Lower of the two track pT:s
-      fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 4: Event centrality
+      fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
+      fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 1: pT of the jet the tracks are near of
+      fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 2: Lower of the two track pT:s
+      fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 3: Event centrality
+      fillerEnergyEnergyCorrelator[4] = subeventType;              // Axis 4: Subevent type
       if(fFillEnergyEnergyCorrelators){
         fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight);  // Fill the energy-energy correlator histogram
         fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt);  // Fill the energy-energy correlator histogram
@@ -1274,7 +1287,8 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fTrackReader->GetTrackCharge(iTrack) == 0) return false;  // Require that the track is charged
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcCharge);
   
-  if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
+  // TODO: Subevent cut removed, add subevent as axis in relevent histograms
+  //if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcSube);
   
   if(fTrackReader->GetTrackMCStatus(iTrack) != 1) return false;  // Require final state particles
@@ -1452,5 +1466,30 @@ Double_t EECAnalyzer::GetDeltaR(const Double_t eta1, const Double_t phi1, const 
   
   // Return the distance between the objects
   return TMath::Sqrt(deltaPhi*deltaPhi + deltaEta*deltaEta);
+  
+}
+
+/*
+ * Get the subevent type from two track subevents
+ *
+ *  Arguments:
+ *   const Int_t subevent1 = Subevent index for the first track (0 = pythia, > 0 = hydjet)
+ *   const Int_t subevent2 = Subevent index for the second track (0 = pythia, > 0 = hydjet)
+ *
+ * return: Subevent type: 0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-hydjet
+ */
+Int_t EECAnalyzer::GetSubeventType(const Int_t subevent1, const Int_t subevent2) const{
+  
+  // For data or reconstructed tracks, just return -1. It will go to the underflow bin of the histogram
+  if(subevent1 < 0 || subevent2 < 0) return -1;
+  
+  // If both tracks are from the pythia simulation, return 0
+  if(subevent1 == 0 && subevent2 == 0) return 0;
+  
+  // If both tracks are from hydjet simulation, return 2
+  if(subevent1 > 0 && subevent2 > 0) return 2;
+  
+  // The only option left is that one of the tracks is from pythia, and the other from hydjet. Return 1
+  return 1;
   
 }

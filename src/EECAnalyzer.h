@@ -67,6 +67,7 @@ private:
   Double_t GetMultiplicity(); // Get the track multiplicity in the current event
   Double_t GetCentralityFromMultiplicity(const Double_t multiplicity) const; // Get the analysis centrality bin corresponding to the given multiplicity
   Double_t GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const; // Get deltaR between two objects
+  Int_t GetSubeventType(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent type from two track subevents 
   
   // Private data members
   ForestReader *fJetReader;            // Reader for jets in the event
