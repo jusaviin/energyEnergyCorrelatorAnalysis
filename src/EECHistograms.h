@@ -16,7 +16,7 @@ class EECHistograms{
 public:
   
   // Enumeration for event types to event histogram and track cuts for track cut histogram
-  enum enumEventTypes {kAll, kPrimaryVertex, kCollisionEventSelection, kHBHENoise, kBeamScraping, kHfCoincidence, kClusterCompatibility, kCaloJet, kVzCut, kDijet, knEventTypes};
+  enum enumEventTypes {kAll, kPrimaryVertex, kHfCoincidence, kClusterCompatibility, kHBHENoise, kBeamScraping, kCaloJet, kVzCut, knEventTypes};
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
   
@@ -56,7 +56,7 @@ public:
 private:
   
   ConfigurationCard *fCard;    // Card for binning info
-  const TString kEventTypeStrings[knEventTypes] = {"All", "PrimVertex", "CollEvtSel", "HBHENoise", "BeamScrape", "HfCoin3", "ClustCompt", "CaloJet", "v_{z} cut", "Dijet"}; // Strings corresponding to event types
+  const TString kEventTypeStrings[knEventTypes] = {"All", "PrimVertex", "HfCoin2Th4", "ClustCompt", "HBHENoise", "BeamScrape", "CaloJet", "v_{z} cut"}; // Strings corresponding to event types
   const TString kTrackCutStrings[knTrackCuts] = {"All", "MC Charge", "MC sube", "MC status", "p_{T} cut", "#eta cut", "Track algo", "HighPurity", "p_{T} error", "vertexDist", "caloSignal", "RecoQuality"}; // String corresponding to track cuts
   
 };

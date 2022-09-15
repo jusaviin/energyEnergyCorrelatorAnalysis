@@ -412,6 +412,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             
             // === Energy-energy correlator ===
             drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+            drawnHistogram->Scale(1/drawnHistogram->Integral("width")); // For now, just normalize the integral to one
             sprintf(namerY,"%s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator));
             fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
             legend = new TLegend(0.62,0.75,0.82,0.9);

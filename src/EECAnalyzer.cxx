@@ -1223,13 +1223,17 @@ Bool_t EECAnalyzer::PassSubeventCut(const Int_t subeventIndex) const{
  */
 Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms){
 
-  // Cut for primary vertex. Only applied for data.
+  // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction. Only applied for data.
   if(eventReader->GetPrimaryVertexFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kPrimaryVertex);
   
-  // Cut for collision event selection. Only applied for PbPb data.
-  if(eventReader->GetCollisionEventSelectionFilterBit() == 0) return false;
-  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kCollisionEventSelection);
+  // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV. Only applied for PbPb data.
+  if(eventReader->GetHfCoincidenceFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kHfCoincidence);
+  
+  // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible. Only applied for PbPb data.
+  if(eventReader->GetClusterCompatibilityFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kClusterCompatibility);
   
   // Cut for HB/HE noise. Only applied for data.
   if(eventReader->GetHBHENoiseFilterBit() == 0) return false;
@@ -1238,14 +1242,6 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHi
   // Cut for beam scraping. Only applied for pp data.
   if(eventReader->GetBeamScrapingFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kBeamScraping);
-  
-  // Cut for energy deposition in at least 3 hadronic forward towers. Only applied for PbPb data.
-  if(eventReader->GetHfCoincidenceFilterBit() == 0) return false;
-  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kHfCoincidence);
-  
-  // Cut for cluster compatibility. Only applied for PbPb data.
-  if(eventReader->GetClusterCompatibilityFilterBit() == 0) return false;
-  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kClusterCompatibility);
   
   // Jet trigger requirement.
   if(eventReader->GetCaloJetFilterBit() == 0) return false;

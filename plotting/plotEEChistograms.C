@@ -103,8 +103,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstDrawnTrackPtBinEEC = 2;
+  int lastDrawnTrackPtBinEEC = 3;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -125,9 +125,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = false;
+  const bool drawIndividualEnergyEnergyCorrelators = true;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
     
   // ==================================================================
   // ===================== Configuration ready ========================

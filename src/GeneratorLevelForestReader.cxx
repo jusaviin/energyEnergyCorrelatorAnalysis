@@ -230,7 +230,6 @@ void GeneratorLevelForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
     fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
     fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    fCollisionEventSelectionFilterBit = 1;  // No collision event selection filter for pp
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
   } else if (fDataType == kPbPbMC){ // PbPb MC
@@ -242,10 +241,6 @@ void GeneratorLevelForestReader::Initialize(){
     // Cut on noise on HCAL
     fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
     fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    
-    // Combination of hfCoincFilter2Th4, pprimaryVertexFilter and pclusterCompatibilityFilter
-    fSkimTree->SetBranchStatus("collisionEventSelectionAODv2",1);
-    fSkimTree->SetBranchAddress("collisionEventSelectionAODv2", &fCollisionEventSelectionFilterBit, &fCollisionEventSelectionBranch);
     
     // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
     fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
@@ -259,7 +254,6 @@ void GeneratorLevelForestReader::Initialize(){
   } else { // Local test
     fPrimaryVertexFilterBit = 1;
     fBeamScrapingFilterBit = 1;
-    fCollisionEventSelectionFilterBit = 1;
     fHBHENoiseFilterBit = 1;
     fHfCoincidenceFilterBit = 1;
     fClusterCompatibilityFilterBit = 1;

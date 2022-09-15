@@ -31,7 +31,6 @@ ForestReader::ForestReader() :
   fCaloJetFilterPrescaleBranch(0),
   fPrimaryVertexBranch(0),
   fBeamScrapingBranch(0),
-  fCollisionEventSelectionBranch(0),
   fHBHENoiseBranch(0),
   fHfCoincidenceBranch(0),
   fClusterCompatibilityBranch(0),
@@ -60,7 +59,6 @@ ForestReader::ForestReader() :
   fCaloJetFilterBitPrescale(0),
   fPrimaryVertexFilterBit(0),
   fBeamScrapingFilterBit(0),
-  fCollisionEventSelectionFilterBit(0),
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
@@ -106,7 +104,6 @@ ForestReader::ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t 
   fCaloJetFilterPrescaleBranch(0),
   fPrimaryVertexBranch(0),
   fBeamScrapingBranch(0),
-  fCollisionEventSelectionBranch(0),
   fHBHENoiseBranch(0),
   fHfCoincidenceBranch(0),
   fClusterCompatibilityBranch(0),
@@ -135,7 +132,6 @@ ForestReader::ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t 
   fCaloJetFilterBitPrescale(0),
   fPrimaryVertexFilterBit(0),
   fBeamScrapingFilterBit(0),
-  fCollisionEventSelectionFilterBit(0),
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
@@ -175,7 +171,6 @@ ForestReader::ForestReader(const ForestReader& in) :
   fCaloJetFilterPrescaleBranch(in.fCaloJetFilterPrescaleBranch),
   fPrimaryVertexBranch(in.fPrimaryVertexBranch),
   fBeamScrapingBranch(in.fBeamScrapingBranch),
-  fCollisionEventSelectionBranch(in.fCollisionEventSelectionBranch),
   fHBHENoiseBranch(in.fHBHENoiseBranch),
   fHfCoincidenceBranch(in.fHfCoincidenceBranch),
   fClusterCompatibilityBranch(in.fClusterCompatibilityBranch),
@@ -204,7 +199,6 @@ ForestReader::ForestReader(const ForestReader& in) :
   fCaloJetFilterBitPrescale(in.fCaloJetFilterBitPrescale),
   fPrimaryVertexFilterBit(in.fPrimaryVertexFilterBit),
   fBeamScrapingFilterBit(in.fBeamScrapingFilterBit),
-  fCollisionEventSelectionFilterBit(in.fCollisionEventSelectionFilterBit),
   fHBHENoiseFilterBit(in.fHBHENoiseFilterBit),
   fHfCoincidenceFilterBit(in.fHfCoincidenceFilterBit),
   fClusterCompatibilityFilterBit(in.fClusterCompatibilityFilterBit),
@@ -245,7 +239,6 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fCaloJetFilterPrescaleBranch = in.fCaloJetFilterPrescaleBranch;
   fPrimaryVertexBranch = in.fPrimaryVertexBranch;
   fBeamScrapingBranch = in.fBeamScrapingBranch;
-  fCollisionEventSelectionBranch = in.fCollisionEventSelectionBranch;
   fHBHENoiseBranch = in.fHBHENoiseBranch;
   fHfCoincidenceBranch = in.fHfCoincidenceBranch;
   fClusterCompatibilityBranch = in.fClusterCompatibilityBranch;
@@ -274,7 +267,6 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fCaloJetFilterBitPrescale = in.fCaloJetFilterBitPrescale;
   fPrimaryVertexFilterBit = in.fPrimaryVertexFilterBit;
   fBeamScrapingFilterBit = in.fBeamScrapingFilterBit;
-  fCollisionEventSelectionFilterBit = in.fCollisionEventSelectionFilterBit;
   fHBHENoiseFilterBit = in.fHBHENoiseFilterBit;
   fHfCoincidenceFilterBit = in.fHfCoincidenceFilterBit;
   fClusterCompatibilityFilterBit = in.fClusterCompatibilityFilterBit;
@@ -367,11 +359,6 @@ Int_t ForestReader::GetBeamScrapingFilterBit() const{
 // Getter for HB/HE noise filter bit. Always 1 for MC (set in the initializer).
 Int_t ForestReader::GetHBHENoiseFilterBit() const{
   return fHBHENoiseFilterBit;
-}
-
-// Getter for collision event selection filter bit. Always 1 for MC and pp (set in the initializer).
-Int_t ForestReader::GetCollisionEventSelectionFilterBit() const{
-  return fCollisionEventSelectionFilterBit;
 }
 
 // Getter for HF energy coincidence filter bit. Always 1 for MC and pp (set in the initializer).

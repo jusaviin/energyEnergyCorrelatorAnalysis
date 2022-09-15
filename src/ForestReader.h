@@ -67,7 +67,6 @@ public:
   Int_t GetPrimaryVertexFilterBit() const;           // Getter for primary vertex filter bit
   Int_t GetBeamScrapingFilterBit() const;            // Getter got beam scraping filter bit
   Int_t GetHBHENoiseFilterBit() const;               // Getter for HB/HE noise filter bit
-  Int_t GetCollisionEventSelectionFilterBit() const; // Getter for collision event selection filter bit
   Int_t GetHfCoincidenceFilterBit() const;           // Getter for hadronic forward coincidence filter bit
   Int_t GetClusterCompatibilityFilterBit() const;    // Getter for cluster compatibility filter bit
   
@@ -143,7 +142,6 @@ protected:
   // Branches for skim tree
   TBranch *fPrimaryVertexBranch;           // Branch for primary vertex filter bit
   TBranch *fBeamScrapingBranch;            // Branch for beam scraping filter bit
-  TBranch *fCollisionEventSelectionBranch; // Branch for collision event selection filter bit
   TBranch *fHBHENoiseBranch;               // Branch for HB/HE noise filter bit
   TBranch *fHfCoincidenceBranch;           // Branch for energy recorded in at least 3 HF calorimeter towers
   TBranch *fClusterCompatibilityBranch;    // Branch for cluster compatibility
@@ -182,7 +180,6 @@ protected:
   // Leaves for the skim tree
   Int_t fPrimaryVertexFilterBit;           // Filter bit for primary vertex
   Int_t fBeamScrapingFilterBit;            // Filter bit for beam scraping
-  Int_t fCollisionEventSelectionFilterBit; // Filter bit for collision event selection
   Int_t fHBHENoiseFilterBit;               // Filter bit for HB/HE noise
   Int_t fHfCoincidenceFilterBit;           // Filter bit for energy recorded in at least 3 HF calorimeter towers
   Int_t fClusterCompatibilityFilterBit;    // Filter bit for cluster compatibility

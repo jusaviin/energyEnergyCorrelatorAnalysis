@@ -281,7 +281,6 @@ void HighForestReader::Initialize(){
   //  hltanalysis/HltTree   HLT_HIPuAK4CaloJet100_Eta5p1_v1      Event selection for PbPb
   //  hltanalysis/HltTree      HLT_AK4CaloJet80_Eta5p1_v1         Event selection for pp
   // skimanalysis/HltTree         pprimaryVertexFilter           Event selection for PbPb
-  // skimanalysis/HltTree       pcollisionEventSelection         Event selection for PbPb
   // skimanalysis/HltTree    HBHENoiseFilterResultRun2Loose   Event selection for pp and PbPb
   // skimanalysis/HltTree         pPAprimaryVertexFilter          Event selection for pp
   // skimanalysis/HltTree           pBeamScrapingFilter           Event selection for pp
@@ -335,7 +334,6 @@ void HighForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
     fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
     fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    fCollisionEventSelectionFilterBit = 1;  // No collision event selection filter for pp
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
   } else if (fDataType == kPbPb || fDataType == kPbPbMC){ // PbPb data or MC
@@ -347,10 +345,6 @@ void HighForestReader::Initialize(){
     // Cut on noise on HCAL
     fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
     fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    
-    // Combination of hfCoincFilter2Th4, pprimaryVertexFilter and pclusterCompatibilityFilter
-    fSkimTree->SetBranchStatus("collisionEventSelectionAODv2",1);
-    fSkimTree->SetBranchAddress("collisionEventSelectionAODv2", &fCollisionEventSelectionFilterBit, &fCollisionEventSelectionBranch);
     
     // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
     fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
@@ -364,7 +358,6 @@ void HighForestReader::Initialize(){
   } else { // Local test
     fPrimaryVertexFilterBit = 1;
     fBeamScrapingFilterBit = 1;
-    fCollisionEventSelectionFilterBit = 1;
     fHBHENoiseFilterBit = 1;
     fHfCoincidenceFilterBit = 1;
     fClusterCompatibilityFilterBit = 1;     
