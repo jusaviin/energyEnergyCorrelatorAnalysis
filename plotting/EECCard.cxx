@@ -57,8 +57,10 @@ void EECCard::FindDataTypeString(){
   
   // Define the different data types corresponding to certain indices
   TString dataTypes[5] = {"pp","PbPb","pp MC","PbPb MC","localTest"};
+  TString alternativeDataTypes[5] = {"pp","PbPb","Pythia8","Pythia+Hydjet","localTest"};
   if(fDataType < 0 || fDataType > 4){
     fDataTypeString = "Unknown";
+    fAlternativeDataTypeString = "Unknown";
     return;
   }
   
@@ -66,15 +68,18 @@ void EECCard::FindDataTypeString(){
   TString monteCarloString[4] = {" RecoReco"," RecoGen"," GenReco"," GenGen"};
   if(fMonteCarloType < 0 || fMonteCarloType > 3){
     fDataTypeString = "Unknown";
+    fAlternativeDataTypeString = "Unknown";
     return;
   }
   
   for(int iDataType = 2; iDataType <=3; iDataType++){
     dataTypes[iDataType].Append(monteCarloString[fMonteCarloType]);
+    alternativeDataTypes[iDataType].Append(monteCarloString[fMonteCarloType]);
   }
   
   // Remember the constructed data type string
   fDataTypeString = dataTypes[fDataType];
+  fAlternativeDataTypeString = alternativeDataTypes[fDataType];
 }
 
 /*
@@ -83,6 +88,14 @@ void EECCard::FindDataTypeString(){
 TString EECCard::GetDataType() const{
   return fDataTypeString;
 }
+
+/*
+ *  Getter for alternative data type string
+ */
+TString EECCard::GetAlternativeDataType() const{
+  return fAlternativeDataTypeString;
+}
+
 
 /*
  *  Getter for subevent cut
@@ -96,6 +109,11 @@ int EECCard::GetSubeventCut() const{
  */
 int EECCard::GetJetType() const{
   return (*fCardEntries[kJetType])[1];
+}
+
+// Getter the minimum jet pT cut
+double EECCard::GetJetPtCut() const{
+  return (*fCardEntries[kMinPtCut])[1];
 }
 
 /*

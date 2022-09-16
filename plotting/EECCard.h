@@ -72,6 +72,7 @@ private:
   int fDataType;             // Total number of centrality bins in the analysis
   int fMonteCarloType;       // Type of Monte Carlo used for jet-track correlations
   TString fDataTypeString;   // Total number of eta gaps in the analysis
+  TString fAlternativeDataTypeString; // Alternative data type string
   
   void FindDataTypeString(); // Construct a data type string based on information on the card
   void ReadVectors();        // Read the vectors from the file
@@ -91,9 +92,10 @@ public:
   EECCard(TFile *inFile); // Contructor with input file
   ~EECCard();             // Destructor
   
-  TString GetDataType() const;   // Getter for data type string
-  void Write(TDirectory *file);  // Write the contents of the card to a file
-  void Print() const;            // Print the contents of the card to the console
+  TString GetDataType() const;            // Getter for data type string
+  TString GetAlternativeDataType() const; // Getter for alternative data type string
+  void Write(TDirectory *file);           // Write the contents of the card to a file
+  void Print() const;                     // Print the contents of the card to the console
   
   int GetNCentralityBins() const; // Get the number of centrality bins
   int GetNTrackPtBins() const;    // Get the number of track pT bins
@@ -113,6 +115,7 @@ public:
   int GetBinIndexTrackPtEEC(const double value) const;     // Get the bin index for a given track pT value in energy-energy correlator analysis
   int GetSubeventCut() const;     // Get the index for used subevent cut
   int GetJetType() const;         // Get the jet type index
+  double GetJetPtCut() const;     // Get the minimum jet pT cut
   
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double *contents); // Add a vector to the card

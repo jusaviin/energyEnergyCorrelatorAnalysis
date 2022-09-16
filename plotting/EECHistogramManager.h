@@ -29,6 +29,9 @@ public:
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
   
+  // Indices for different subevent types
+  enum enumSubeventTypes{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventTypes};
+  
   // Dimensions for histogram arrays
   static const int kMaxCentralityBins = 5;       // Maximum allowed number of centrality bins
   static const int kMaxTrackPtBins = 10;         // Maximum allowed number of track pT bins
@@ -53,6 +56,9 @@ private:
   
   // Naming for closure particle
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
+  
+  // Naming for subevent types
+  const char* fSubeventTypeName[knSubeventTypes] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
   
 public:
   
@@ -123,6 +129,8 @@ public:
   const char* GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const; // Getter for energy-energy correlator histogram name
   const char* GetEnergyEnergyCorrelatorAxisName(int iEnergyEnergyCorrelatorType) const;      // Getter for energy-energy correlator axis name
   
+  const char* GetSubeventType(const int iSubeventType) const; // Getter for subevent types
+  
   TString GetSystem() const;  // Getter for collision system
   
   // Getters for event information histograms
@@ -151,7 +159,7 @@ public:
   TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
   
   // Getters for energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
   
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
@@ -259,7 +267,7 @@ private:
   TH2D *fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1]; // 2D eta-phi histogram for track
   
   // Histograms for energy-energy correlators
-  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
+  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knSubeventTypes+1];
   
   // Histograms for jet pT closure
   TH1D *fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1]; // Jet pT closure

@@ -112,7 +112,9 @@ EECHistogramManager::EECHistogramManager() :
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt] = NULL;
+          for(int iSubevent = 0; iSubevent < knSubeventTypes+1; iSubevent++){
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent] = NULL;
+          }
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
     } // Energy-energy correlator type loop
@@ -308,7 +310,9 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt] = in.fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt];
+          for(int iSubevent = 0; iSubevent < knSubeventTypes+1; iSubevent++){
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent] = in.fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent];
+          }
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
     } // Energy-energy correlator type loop
@@ -546,19 +550,20 @@ void EECHistogramManager::LoadTrackHistograms(){
  *
  *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorJetPt/energyEnergyCorrelatorUncorrected/energyEnergyCorrelatorJetPtUncorrected
  *
- *     Axis index       Content of axis
- * ----------------------------------------
+ *     Axis index       Content of axis               Note
+ * -----------------------------------------------------------------
  *       Axis 0              DeltaR
  *       Axis 1              Jet pT
  *       Axis 2           Track pT cut
  *       Axis 3            Centrality
+ *       Axis 4             Subevent           Only relevant for MC
  */
 void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   
   // Define arrays to help find the histograms
-  int axisIndices[3] = {0};
-  int lowLimits[3] = {0};
-  int highLimits[3] = {0};
+  int axisIndices[4] = {0};
+  int lowLimits[4] = {0};
+  int highLimits[4] = {0};
   
   // Define helper variables
   int duplicateRemover = -1;
@@ -598,7 +603,20 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
         axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
         
         // Read the energy-energy correlator histograms without jet pT restrictions
-        fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 2, axisIndices, lowLimits, highLimits);
+        fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 2, axisIndices, lowLimits, highLimits);
+        
+        // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
+        if(fSystemAndEnergy.Contains("PbPb MC")){
+          for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            
+            // Add a restriction for the subevent axis
+            axisIndices[2] = 4; lowLimits[2] = iSubevent+1; highLimits[2] = iSubevent+1;
+            
+            // Read the energy-energy correlator histograms
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
+            
+          } // Subevent loop
+        } // PbPb MC requirement
         
         // Loop over jet pT bins
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
@@ -611,7 +629,20 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           axisIndices[2] = 1; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
           
           // Read the energy-energy correlator histograms
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
+          
+          // For PbPb MC, loop over subevent types
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              
+              // Add a restriction for the subevent axis
+              axisIndices[3] = 4; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+              
+              // Read the energy-energy correlator histograms
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
+              
+            } // Subevent loop
+          } // PbPb MC requirement
           
         } // Jet pT loop
       } // Track pT loop
@@ -1063,14 +1094,36 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
         
         // Write histograms without jet pT binning
         sprintf(histogramNamer,"%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt);
-        if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt]->Write(histogramNamer, TObject::kOverwrite);
+        if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
+        
+        // For PbPb MC, write histograms without jet pT and with subevent type binning
+        if(fSystemAndEnergy.Contains("PbPb MC")){
+          for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            
+            // Write the energy-energy correlator histograms with subevent binning
+            sprintf(histogramNamer,"%s_C%dT%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iSubevent);
+            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+            
+          } // Subevent type loop
+        } // Data is PbPb MC
         
         // Loop over jet pT
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
           
           // Write the energy-energy correlator histograms
           sprintf(histogramNamer,"%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iJetPt);
-          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt]->Write(histogramNamer, TObject::kOverwrite);
+          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
+          
+          // For PbPb MC, loop over subevent types
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              
+              // Write the energy-energy correlator histograms with subevent binning
+              sprintf(histogramNamer,"%s_C%dT%dJ%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iJetPt, iSubevent);
+              if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+              
+            } // Subevent type loop
+          } // Data is PbPb MC
           
         } // Loop over jet pT bins
       } // Loop over track pT bins
@@ -1251,15 +1304,39 @@ void EECHistogramManager::LoadProcessedHistograms(){
         
         // Load the histograms without jet pT binning
         sprintf(histogramNamer,"%s/%s_C%dT%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt);
-        fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer);
-        
-        // TODO: Potential bug that jet pT integrated histogram is overwritten by null
+        fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
+             
+        // For PbPb MC, load histograms without jet pT and with subevent type binning
+        if(fSystemAndEnergy.Contains("PbPb MC")){
+          for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            
+            // Write the energy-energy correlator histograms with subevent binning
+            sprintf(histogramNamer,"%s_C%dT%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iSubevent);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+            
+          } // Subevent type loop
+        } // Data is PbPb MC
         
         // Loop over jet pT
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+          
+          // Make sure that jet pT integrated histogram is not overwritten by null
+          if(fLastLoadedJetPtBinEEC >= fnJetPtBinsEEC) continue;
+          
           // Load the energy-energy correlator histograms
           sprintf(histogramNamer,"%s/%s_C%dT%dJ%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iJetPt);
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
+          
+          // For PbPb MC, loop over subevent types
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              
+              // Write the energy-energy correlator histograms with subevent binning
+              sprintf(histogramNamer,"%s/%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], iCentrality, iTrackPt, iJetPt, iSubevent);
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+              
+            } // Subevent type loop
+          } // Data is PbPb MC
           
         } // Jet pT loop
       } // Track pT loop
@@ -1593,6 +1670,13 @@ const char* EECHistogramManager::GetEnergyEnergyCorrelatorAxisName(int iEnergyEn
   return fEnergyEnergyCorrelatorAxisNames[iEnergyEnergyCorrelatorType];
 }
 
+// Getter for subevent types
+const char* EECHistogramManager::GetSubeventType(const int iSubeventType) const{
+  if(iSubeventType < 0) return "All combinations";
+  if(iSubeventType >= knSubeventTypes) return "All combinations";
+  return fSubeventTypeName[iSubeventType];
+}
+
 // Getter for collision system
 TString EECHistogramManager::GetSystem() const{
   return fCard->GetDataType();
@@ -1721,8 +1805,8 @@ TH2D* EECHistogramManager::GetHistogramTrackEtaPhi(const int iTrackType, const i
 }
 
 // Getter for energy-energy correlator histograms
-TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt) const{
-  return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt];
+TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iSubevent) const{
+  return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iSubevent];
 }
 
 // Getter for jet pT closure histograms
@@ -1758,7 +1842,7 @@ TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, in
   if(name.EqualTo("trackpt",TString::kIgnoreCase) || name.EqualTo("fhtrackpt",TString::kIgnoreCase)) return GetHistogramTrackPt(bin1,bin2);
   if(name.EqualTo("trackphi",TString::kIgnoreCase) || name.EqualTo("fhtrackphi",TString::kIgnoreCase)) return GetHistogramTrackPhi(bin1,bin2,bin3);
   if(name.EqualTo("tracketa",TString::kIgnoreCase) || name.EqualTo("fhtracketa",TString::kIgnoreCase)) return GetHistogramTrackEta(bin1,bin2,bin3);
-  if(name.EqualTo("energyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("fhenergyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("eec",TString::kIgnoreCase)) return GetHistogramEnergyEnergyCorrelator(bin1,bin2,bin3,bin4);
+  if(name.EqualTo("energyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("fhenergyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("eec",TString::kIgnoreCase)) return GetHistogramEnergyEnergyCorrelator(bin1,bin2,bin3,bin4,bin5);
   return NULL;
 }
 

@@ -104,7 +104,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 2;
-  int lastDrawnTrackPtBinEEC = 3;
+  int lastDrawnTrackPtBinEEC = 2;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -117,7 +117,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   TString figureNameSuffix = "_test";
   
   // Logarithmic scales for figures
-  bool logPt = true;          // pT distributions
+  const bool logPt = true;          // pT distributions
+  const bool logDeltaR = true;      // DeltaR axis for energy-energy correlators
+  const bool logEEC = true;         // EEC axis for energy-energy correlators
   
   // Plotting style for 2D and 3D plots
   const int colorPalette = kLightTemperature;  // kRainBow kTemperatureMap kLightTemperature
@@ -125,10 +127,16 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-    
+  bool drawEnergyEnergyCorrelatorsSubevent = true;
+  
+  // If the collision system in not PbPb MC, we cannot draw subevent decomposition
+  if(!collisionSystem.Contains("PbPb MC")){
+    drawEnergyEnergyCorrelatorsSubevent = false;
+  }
+
   // ==================================================================
   // ===================== Configuration ready ========================
   // ==================================================================
@@ -180,9 +188,12 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawSingleEnergyEnergyCorrelators(drawIndividualEnergyEnergyCorrelators);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantJetPt(drawEnergyEnergyCorrelatorsForConstantJetPt);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantTrackPt(drawEnergyEnergyCorrelatorsForConstantTrackPt);
+  resultDrawer->SetDrawEnergyEnergyCorrelatorsSubevent(drawEnergyEnergyCorrelatorsSubevent);
   
   resultDrawer->SetSaveFigures(saveFigures,figureFormat,figureNameSuffix);
   resultDrawer->SetLogPt(logPt);
+  resultDrawer->SetLogDeltaR(logDeltaR);
+  resultDrawer->SetLogEEC(logEEC);
   resultDrawer->SetDrawingStyles(colorPalette,style2D,style3D);
   
   // Draw the selected histograms
