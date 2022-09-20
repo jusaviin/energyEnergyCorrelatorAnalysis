@@ -75,13 +75,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   //  Binning configuration for the drawn histograms
   // ====================================================
   
-  // Option to read all the binning information from EECCard used to create the file
-  const bool readCentralityBinsFromFile = false;
-  const bool readTrackPtBinsFromFile = true;
-  const bool readEECJetPtBinsFromFile = true;
-  const bool readEECTrackPtBinsFromFile = true;
-  
-  // If not reading the bins from the file, manually define new bin borders
+  // Find the number of bins from the card
   const int nCentralityBins = card->GetNCentralityBins();
   const int nTrackPtBins = card->GetNTrackPtBins();
   const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
