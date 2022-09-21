@@ -15,7 +15,7 @@ void compareEEChistograms(){
   const int nDatasets = 2;
   TString inputFileName[] = { "data/eecAnalysis_akFlowJets_moreLowTrackPtCuts_processed_2022-09-15.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_firstLook_2022-09-15_someMissing_processed.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_firstLook_withTrigger_2022-09-15_someMissing_processed.root"};
   
-  TString legendComment[] = {"PbPb data", "Pythia+Hydjet, no trigger", "Pythia+Hydjet, jet trigger"};
+  TString legendComment[] = {"PbPb data", "Pythia+Hydjet", "Pythia+Hydjet, jet trigger"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -93,10 +93,10 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 2;
-  int lastDrawnTrackPtBinEEC = 2;
+  int firstDrawnTrackPtBinEEC = 7;
+  int lastDrawnTrackPtBinEEC = 7;
   
   // ==================================================================
   // ===================== Configuration ready ========================

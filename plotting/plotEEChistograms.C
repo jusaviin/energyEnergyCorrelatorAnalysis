@@ -97,8 +97,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 2;
-  int lastDrawnTrackPtBinEEC = 2;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
