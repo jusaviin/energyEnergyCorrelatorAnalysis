@@ -53,6 +53,7 @@ private:
   // Private methods
   void CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseToJet, const double jetPt);  // Calculate energy-energy correlators
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
+  void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
@@ -67,7 +68,8 @@ private:
   Double_t GetMultiplicity(); // Get the track multiplicity in the current event
   Double_t GetCentralityFromMultiplicity(const Double_t multiplicity) const; // Get the analysis centrality bin corresponding to the given multiplicity
   Double_t GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const; // Get deltaR between two objects
-  Int_t GetSubeventType(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent type from two track subevents 
+  Int_t GetSubeventType(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent type from two track subevents
+  Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
   
   // Private data members
   ForestReader *fJetReader;            // Reader for jets in the event
@@ -87,8 +89,7 @@ private:
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
-  Int_t fForestType;                 // Analyzed forest type
-  Int_t fReadMode;                   // Read mode. 0 = Regular forest, 1 = PYTHIA8 forest
+  Int_t fUseJetTrigger;              // 0 = Do not use any triggers, 1 = Require jet trigger
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
   Bool_t fMatchJets;                 // Match generator and reconstruction level jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
@@ -125,7 +126,8 @@ private:
   Int_t fMcCorrelationType;            // Correlation type for Monte Carlo. See enumeration enumMcCorrelationType
   
   // Configuration for energy-energy correlators
-  Double_t fJetRadius;
+  Double_t fJetRadius;       // Jet radius parameter
+  Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

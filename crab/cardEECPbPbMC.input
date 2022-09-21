@@ -1,4 +1,4 @@
-# Configuration card for leading-subleading jet analysis
+# Configuration card for energy-energy correlator jet analysis
 
 # Data type for the analysis
 DataType 3  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
@@ -7,9 +7,8 @@ DataType 3  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 McCorrelationType 1 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Match dijets. 3 = Match leading jets. 4 = Anti-match dijets. 5 = Anti-match leading jets. 6 = Find the matching dijet, but do not require analysis cuts from it
 
-# Specify the forest type in the selected data files and choose forest readers based on this
-ForestType 0 # 0 = High Forest, 1 = Skim Forest
-ReadMode 2019   # 0 = Regular forest, 1 = PYTHIA8 forest, 2018 data, 2019 = Use trigger with 2018 MC
+# Select if you want to use the jet trigger
+UseJetTrigger 0   # 0 = No trigger, 1 = Use jet trigger
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 31 # Bit 0 = Event information histograms            (to set: 1)
@@ -56,6 +55,9 @@ TrackPtBinEdgesEEC 0.7 1 2 3 4 6 300 # Track pT bin edges for EEC
 CentralityBinEdges -0.75 -0.25 9.75 29.75 49.75 89.75  # Centrality binning
 TrackPtBinEdges     0.7 1 2 3 4 8 12 300                # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
+
+# Background estimation using eta-reflected jet cone
+DoReflectedCone 0  # 0 = No background estimation, 1 = Estimate background using reflected cone
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

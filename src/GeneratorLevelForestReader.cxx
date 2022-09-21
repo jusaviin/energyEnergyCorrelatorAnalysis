@@ -31,14 +31,14 @@ GeneratorLevelForestReader::GeneratorLevelForestReader() :
  *
  *  Arguments:
  *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = Local Test
- *   Int_t readMode: 0 = Regular forests, 1 = Official PYTHIA8 forest
+ *   Int_t useJetTrigger: 0 = Do not use any triggers, 1 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = Leading particle flow candidate axis, 2 = WTA axis
  *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  */
-GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
-  ForestReader(dataType,readMode,jetType,jetAxis,matchJets,readTrackTree),
+GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
+  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree),
   fHeavyIonTree(0),
   fJetTree(0),
   fHltTree(0),
@@ -150,7 +150,7 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchStatus("pthat",1);
   fHeavyIonTree->SetBranchAddress("pthat",&fPtHat,&fPtHatBranch); // pT hat only for MC
   
-  // Read event weight for 2018 simulation
+  // Read event weight for simulation
   fHeavyIonTree->SetBranchStatus("weight",1);
   fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
   
@@ -206,20 +206,23 @@ void GeneratorLevelForestReader::Initialize(){
   
   // Connect the branches to the HLT tree
   fHltTree->SetBranchStatus("*",0);
-  if(fDataType == kPp){ // pp data
-    branchNameHlt[0] = "HLT_AK4CaloJet80_Eta5p1_v1";
-    branchNameHlt[1] = "HLT_AK4PFJet80_Eta5p1_v1";
-    fHltTree->SetBranchStatus(branchNameHlt[fJetType],1);
-    fHltTree->SetBranchAddress(branchNameHlt[fJetType],&fCaloJetFilterBit,&fCaloJetFilterBranch);
-  } else if (fDataType == kPpMC){
-    fCaloJetFilterBit = 1; // No filtering for Monte Carlo
-  } else if (fDataType == kPbPb || (fDataType == kPbPbMC && fReadMode == 2019)){ // PbPb or MC is specifically required
-    fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1);
-    fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
+  if(fUseJetTrigger){
+    if(fDataType == kPp){ // pp data
+      branchNameHlt[0] = "HLT_AK4CaloJet80_Eta5p1_v1";
+      branchNameHlt[1] = "HLT_AK4PFJet80_Eta5p1_v1";
+      fHltTree->SetBranchStatus(branchNameHlt[fJetType],1);
+      fHltTree->SetBranchAddress(branchNameHlt[fJetType],&fCaloJetFilterBit,&fCaloJetFilterBranch);
+    } else if (fDataType == kPpMC){
+      fCaloJetFilterBit = 1; // No filtering for Monte Carlo TODO: Check if this exists in new pp MC!
+    } else if (fDataType == kPbPb || fDataType == kPbPbMC){ // PbPb or PbPb MC
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
+    } else {
+      fCaloJetFilterBit = 1;  // No filter for local test of MC if not specifically required
+    }
   } else {
-    fCaloJetFilterBit = 1;  // No filter for local test of MC if not specifically required
+    fCaloJetFilterBit = 1;  // No jet trigger required
   }
-  fCaloJetFilterBitPrescale = 1; // Set the prescaled filter bit to 1. Only relevant for minimum bias PbPb (data skim)
   
   // Connect the branches to the skim tree (different for pp and PbPb Monte Carlo)
   fSkimTree->SetBranchStatus("*",0);
@@ -272,10 +275,6 @@ void GeneratorLevelForestReader::Initialize(){
     fTrackTree->SetBranchAddress("chg",&fTrackChargeArray,&fTrackPtErrorBranch);  // Reuse a branch from ForestReader that is not otherwise needed here
     fTrackTree->SetBranchStatus("sube",1);
     fTrackTree->SetBranchAddress("sube",&fTrackSubeventArray,&fTrackChi2Branch);  // Reuse a branch from ForestReader that is not otherwise needed here
-    /*if(fDataType != kLocalTest && fReadMode == 0) {
-     fTrackTree->SetBranchStatus("sta",1);
-     fTrackTree->SetBranchAddress("sta",&fTrackStatusArray,&fTrackEnergyEcalBranch); // Reuse a branch from ForestReader that is not otherwise needed here. Not available for local test or PYTHIA8 forest
-     } */ // Quick test. New PbPb MC files do not have this branch
   } // Reading track trees
 
 }
@@ -363,14 +362,14 @@ Float_t GeneratorLevelForestReader::GetJetEta(Int_t iJet) const{
   return fJetEtaArray[iJet];
 }
 
-// Getter for jet raw pT (not relevant for generator jets, just return value that passes cuts)
+// Getter for jet raw pT (not relevant for generator jets, just return regular jet pT)
 Float_t GeneratorLevelForestReader::GetJetRawPt(Int_t iJet) const{
-  return 2; // The cut is on maxTrackPt/rawPt. Giving 1 and 2 here passes the analysis cuts
+  return fJetPtArray[iJet];;
 }
 
-// Getter for maximum track pT inside a jet (not relevant for generator jets, just return value that passes cuts)
+// Getter for maximum track pT inside a jet (not relevant for generator jets, return negative value to show this)
 Float_t GeneratorLevelForestReader::GetJetMaxTrackPt(Int_t iJet) const{
-  return 1; // The cut is on maxTrackPt/rawPt. Giving 1 and 2 here passes the analysis cuts
+  return -1;
 }
 
 // Getter for track pT
@@ -400,8 +399,6 @@ Int_t GeneratorLevelForestReader::GetTrackSubevent(Int_t iTrack) const{
 
 // Getter for track MC status
 Int_t GeneratorLevelForestReader::GetTrackMCStatus(Int_t iTrack) const{
-  /*if(fDataType == kLocalTest || fReadMode == 1 || fReadMode == 2) return 1;
-  return fTrackStatusArray->at(iTrack);*/ // There is no status for MC tracks in new PbPb MC trees.
   return 1;
 }
 
@@ -512,8 +509,8 @@ Float_t GeneratorLevelForestReader::GetMatchedPt(Int_t iJet) const{
   if(matchingIndex == -1) return -999;
   
   // Return the matching jet pT. Need raw pT for reco jets before jet corrections are in the forest
-  if(fReadMode > 2000) return fRecoJetRawPtArray[matchingIndex];
-  return fRecoJetPtArray[matchingIndex];
+  return fRecoJetRawPtArray[matchingIndex]; // Use this if doing jet pT correction manually
+  //return fRecoJetPtArray[matchingIndex]; // Use this if jet pT corrected in the forest
 }
 
 // Get the phi of the matched reconstructed jet

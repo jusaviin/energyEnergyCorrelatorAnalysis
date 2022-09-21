@@ -50,14 +50,14 @@ HighForestReader::HighForestReader() :
  *
  *  Arguments:
  *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = Local Test
- *   Int_t readMode: 0 = Regular forests, 1 = Official PYTHIA8 forest
+ *   Int_t useJetTrigger: 0 = Do not use any triggers, 1 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = Leading particle flow candidate axis, 2 = WTA axis
  *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  */
-HighForestReader::HighForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
-  ForestReader(dataType,readMode,jetType,jetAxis,matchJets,readTrackTree),
+HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
+  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree),
   fHeavyIonTree(0),
   fJetTree(0),
   fHltTree(0),
@@ -218,8 +218,9 @@ void HighForestReader::Initialize(){
   } else {
     fPtHat = 0; // We do not have pT hat information for real data
   }
-  // Event weight for 2018 MC
-  if((fDataType == kPbPbMC || fDataType == kPpMC) && fReadMode > 2000){
+  
+  // Event weight for Monte Carlo
+  if(fDataType == kPbPbMC || fDataType == kPpMC){
     fHeavyIonTree->SetBranchStatus("weight",1);
     fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
   } else {
@@ -287,42 +288,32 @@ void HighForestReader::Initialize(){
   
   // Connect the branches to the HLT tree
   fHltTree->SetBranchStatus("*",0);
-  if(fDataType == kPp || (fDataType == kPpMC && fReadMode == 2019)){ // pp data
-    
-    if(fReadMode > 2000){
+  if(fUseJetTrigger){
+    if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
+      
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1",1); // 2017 syntax
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet80_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
-    } else {
-      fHltTree->SetBranchStatus("HLT_AK4CaloJet80_Eta5p1_v1",1); // 2015 syntax
-      fHltTree->SetBranchAddress("HLT_AK4CaloJet80_Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
       
-    }
-    
-  }else if ((fDataType == kPbPb ||fDataType == kPbPbMC) && fReadMode == 2019){ // PbPb data
-    
-    // Trigger branch naming is different for 2018 and 2015 forests
-    if(fReadMode > 2000){
+    } else if (fDataType == kPbPb ||fDataType == kPbPbMC){ // PbPb data or MC
       
       // Calo jet 80 trigger
-      //fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1",1); // 2018 syntax
-      //fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch); // 2018 syntax
+      //fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1",1);
+      //fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
       
       // Calo jet 100 trigger
-      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1); // 2018 syntax
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch); // 2018 syntax
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
       
       // PF jet 80 trigger
-      //fHltTree->SetBranchStatus("HLT_HICsAK4PFJet80Eta1p5_v1",1); // 2018 syntax
-      //fHltTree->SetBranchAddress("HLT_HICsAK4PFJet80Eta1p5_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch); // 2018 syntax
+      //fHltTree->SetBranchStatus("HLT_HICsAK4PFJet80Eta1p5_v1",1);
+      //fHltTree->SetBranchAddress("HLT_HICsAK4PFJet80Eta1p5_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
       
-    } else {
-      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100_Eta5p1_v1",1); // 2015 syntax
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100_Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch); // 2015 syntax
+    } else { // Local test
+      fCaloJetFilterBit = 1;  // No filter for local test
     }
-  } else { // Local test or MC
-    fCaloJetFilterBit = 1;  // No filter for local test or MC forests
+  } else {
+    fCaloJetFilterBit = 1;
   }
-  fCaloJetFilterBitPrescale = 1; // Set the prescaled filter bit to 1. Only relevant for minimum bias PbPb (data skim)
   
   // Connect the branches to the skim tree (different for pp and PbPb data and Monte Carlo)
   fSkimTree->SetBranchStatus("*",0);
@@ -348,7 +339,7 @@ void HighForestReader::Initialize(){
     
     // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
     fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
-    fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch); // 2018 syntax
+    fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
     
     // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
     fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
@@ -399,14 +390,14 @@ void HighForestReader::Initialize(){
     fTrackTree->SetBranchStatus("pfHcal",1);
     fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
     
-    // Additional information needed for 2018 track cuts
+    // Additional information for track cuts
     fTrackTree->SetBranchStatus("trkAlgo",1);
     fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
     fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
     fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
     
-    // Track MVA only in 2018 PbPb trees
-    if(fReadMode > 2000 && (fDataType == kPbPb || fDataType == kPbPbMC)){
+    // Track MVA only in PbPb trees
+    if(fDataType == kPbPb || fDataType == kPbPbMC){
       fTrackTree->SetBranchStatus("trkMVA",1);
       fTrackTree->SetBranchAddress("trkMVA",&fTrackMVAArray,&fTrackMVABranch);
     }
@@ -478,11 +469,6 @@ void HighForestReader::GetEvent(Int_t nEvent){
 
 // Getter for jet pT
 Float_t HighForestReader::GetJetPt(Int_t iJet) const{
-  
-  // TODO: For 2018, JEC is applied on the fly, so raw pT should be returned here
-  // If this is fixed in the forest, can return the regular pT instead
-  if(fReadMode > 2000) return fJetRawPtArray[iJet];
-  
   return fJetPtArray[iJet];
 }
 

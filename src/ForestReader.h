@@ -49,7 +49,7 @@ public:
   Float_t GetCentrality() const;      // Getter for centrality
   Int_t GetHiBin() const;             // Getter for CMS hiBin
   Float_t GetPtHat() const;           // Getter for pT hat
-  Float_t GetEventWeight() const;     // Getter for jet weight in 2018 MC
+  Float_t GetEventWeight() const;     // Getter for jet weight in MC
   
   // Getters for leaves in jet tree
   virtual Float_t GetJetPt(Int_t iJet) const = 0;         // Getter for jet pT
@@ -61,7 +61,6 @@ public:
   
   // Getters for leaves in HLT tree
   Int_t GetCaloJetFilterBit() const;           // Getter for calorimeter jet filter bit
-  Int_t GetPrescaledCaloJetFilterBit() const;  // Getter for calorimeter jet filter bit
   
   // Getters for leaves in skim tree
   Int_t GetPrimaryVertexFilterBit() const;           // Getter for primary vertex filter bit
@@ -111,11 +110,11 @@ protected:
   virtual void Initialize() = 0;  // Connect the branches to the tree
   
   Int_t fDataType;        // Type of data read with the tree. 0 = pp, 1 = PbPb, 2 = ppMC, 3 = PbPbMC, 4 = LocalTest
-  Int_t fReadMode;        // Different forests have different naming conventions. 0 = General forests, 1 = PYTHIA8 forest
+  Int_t fUseJetTrigger;   // 0 = Do not use any triggers, 1 = Require jet trigger
   Int_t fJetType;         // Choose the type of jets usedfor analysis. 0 = Calo jets, 1 = PF jets
   Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = Leading particle flow candidate, 2 = WTA
   Bool_t fMatchJets;      // Match generator and reconstructed level jets
-  Bool_t fReadTrackTree; // Read the track trees from the forest
+  Bool_t fReadTrackTree;  // Read the track trees from the forest
   
   // Branches for heavy ion tree
   TBranch *fHiVzBranch;                   // Branch for vertex z-position
@@ -133,11 +132,10 @@ protected:
   TBranch *fJetMatchedPtBranch;  // Branch for the matched jet pT (reco to gen or vice versa)
   TBranch *fJetMatchedEtaBranch; // Branch for the matched jet eta (reco to gen or vice versa)
   TBranch *fJetMatchedPhiBranch; // Branch for the matched jet phi (reco to gen or vice versa)
-  TBranch *fEventWeightBranch;     // Branch for jet weight for 2018 MC
+  TBranch *fEventWeightBranch;     // Branch for jet weight in MC
   
   // Branches for HLT tree
   TBranch *fCaloJetFilterBranch;         // Branch for calo jet filter bit
-  TBranch *fCaloJetFilterPrescaleBranch; // Branch for prescaled calo jet filter bit
   
   // Branches for skim tree
   TBranch *fPrimaryVertexBranch;           // Branch for primary vertex filter bit
@@ -171,11 +169,10 @@ protected:
   // Leaves for jet tree
   Int_t fnJets;          // number of jets in an event
   Int_t fnMatchedJets;   // number of matched jets in an event
-  Float_t fEventWeight;    // jet weight in the 2018 MC tree
+  Float_t fEventWeight;    // jet weight in the MC tree
   
   // Leaves for the HLT tree
   Int_t fCaloJetFilterBit;         // Filter bit for calorimeter jets
-  Int_t fCaloJetFilterBitPrescale; // Prescaled filter bit needed for the minimum bias file in PbPb mixing
   
   // Leaves for the skim tree
   Int_t fPrimaryVertexFilterBit;           // Filter bit for primary vertex

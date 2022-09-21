@@ -63,8 +63,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetUncertainty2018(),
   fRng(0),
   fDataType(-1),
-  fForestType(0),
-  fReadMode(0),
+  fUseJetTrigger(0),
   fJetType(0),
   fMatchJets(false),
   fDebugLevel(0),
@@ -94,6 +93,7 @@ EECAnalyzer::EECAnalyzer() :
   fSubeventCut(0),
   fMcCorrelationType(0),
   fJetRadius(0.4),
+  fDoReflectedCone(false),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -121,32 +121,10 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fHistograms(0),
   fJetCorrector2018(),
   fJetUncertainty2018(),
-  fForestType(0),
-  fJetType(0),
-  fMatchJets(false),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
-  fTotalEventWeight(1),
-  fMinimumPtHat(0),
-  fMaximumPtHat(0),
-  fJetEtaCut(0),
-  fJetMinimumPtCut(0),
-  fJetMaximumPtCut(0),
-  fMinimumMaxTrackPtFraction(0),
-  fMaximumMaxTrackPtFraction(0),
-  fJetUncertaintyMode(0),
-  fTrackEtaCut(0),
-  fTrackMinPtCut(0),
-  fMaxTrackPtRelativeError(0),
-  fMaxTrackDistanceToVertex(0),
-  fCalorimeterSignalLimitPt(0),
-  fHighPtEtFraction(0),
-  fChi2QualityCut(0),
-  fMinimumTrackHits(0),
-  fSubeventCut(0),
-  fMcCorrelationType(0),
-  fJetRadius(0.4)
+  fTotalEventWeight(1)
 {
   // Custom constructor
   fHistograms = new EECHistograms(fCard);
@@ -156,17 +134,11 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fJetReader = NULL;
   fTrackReader = NULL;
   
-  // Amount of debugging messages
-  fDebugLevel = fCard->Get("DebugLevel");
+  // Configurure the analyzer from input card
+  ReadConfigurationFromCard();
   
   // Flog for local running or CRAB running
   fLocalRun = runLocal ? 1 : 0;
-  
-  // Jet axis type
-  fJetAxis = fCard->Get("JetAxis");
-  
-  // vz cut
-  fVzCut = fCard->Get("ZVertexCut");          // Event cut vor the z-position of the primary vertex
   
   // pT weight function for Pythia to match 2017 MC and data pT spectra. Derived from all jets above 120 GeV
   fPtWeightFunction = new TF1("fPtWeightFunction","pol3",0,500);
@@ -177,10 +149,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   // Function for smearing the jet pT for systemtic uncertainties
   fSmearingFunction = new TF1("fSmearingFunction","pol4",0,500);
   
-  
   // Find the correct folder for track correction tables based on data type
-  fDataType = fCard->Get("DataType");
-  fReadMode = fCard->Get("ReadMode");
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC || fDataType == ForestReader::kLocalTest){
     
     // Track correction for 2017 pp data
@@ -215,16 +184,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
   }
   
-  // Read which histograms to fill this run
-  int filledHistograms = fCard->Get("FilledHistograms");
-  std::bitset<knFillTypes> bitChecker(filledHistograms);
-  fFillEventInformation = bitChecker.test(kFillEventInformation);
-  fFillJetHistograms = bitChecker.test(kFillJets);
-  fFillTrackHistograms = bitChecker.test(kFillTracks);
-  fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
-  fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
-  fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
-  
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
   fRng->SetSeed(0);
@@ -247,8 +206,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSmearingFunction(in.fSmearingFunction),
   fRng(in.fRng),
   fDataType(in.fDataType),
-  fForestType(in.fForestType),
-  fReadMode(in.fReadMode),
+  fUseJetTrigger(in.fUseJetTrigger),
   fJetType(in.fJetType),
   fMatchJets(in.fMatchJets),
   fDebugLevel(in.fDebugLevel),
@@ -278,6 +236,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSubeventCut(in.fSubeventCut),
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
+  fDoReflectedCone(in.fDoReflectedCone),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -310,8 +269,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSmearingFunction = in.fSmearingFunction;
   fRng = in.fRng;
   fDataType = in.fDataType;
-  fForestType = in.fForestType;
-  fReadMode = in.fReadMode;
+  fUseJetTrigger = in.fUseJetTrigger;
   fJetType = in.fJetType;
   fMatchJets = in.fMatchJets;
   fDebugLevel = in.fDebugLevel;
@@ -341,6 +299,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSubeventCut = in.fSubeventCut;
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
+  fDoReflectedCone = in.fDoReflectedCone;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -372,14 +331,21 @@ EECAnalyzer::~EECAnalyzer(){
 }
 
 /*
- * Main analysis loop
+ * Read all the configuration from the input card
  */
-void EECAnalyzer::RunAnalysis(){
+void EECAnalyzer::ReadConfigurationFromCard(){
+  
+  //****************************************
+  //     Analyzed data type and trigger
+  //****************************************
+  fDataType = fCard->Get("DataType");
+  fUseJetTrigger = fCard->Get("UseJetTrigger");
   
   //****************************************
   //         Event selection cuts
   //****************************************
   
+  fVzCut = fCard->Get("ZVertexCut");          // Event cut vor the z-position of the primary vertex
   fMinimumPtHat = fCard->Get("LowPtHatCut");  // Minimum accepted pT hat value
   fMaximumPtHat = fCard->Get("HighPtHatCut"); // Maximum accepted pT hat value
   
@@ -422,15 +388,15 @@ void EECAnalyzer::RunAnalysis(){
   //****************************************
   //       Jet selection and matching
   //****************************************
-  fForestType = fCard->Get("ForestType");
-  fJetType = fCard->Get("JetType");
-  fMatchJets = (fCard->Get("MatchJets") >= 1);
+  fJetType = fCard->Get("JetType");              // Select the type of analyzed jets (Calo, CSPF, PuPF, FlowPF)
+  fJetAxis = fCard->Get("JetAxis");              // Select between escheme and WTA axes
+  fMatchJets = (fCard->Get("MatchJets") >= 1);   // Match reconstructed and generator level jets
   
   //*************************************************************
   //    Turn off certain track cuts for generated tracks and pp
   //*************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fReadMode == 2017){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -440,10 +406,30 @@ void EECAnalyzer::RunAnalysis(){
   //   Configuration for energy-energy correlators
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
+  fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
   
-  //****************************************
-  //            All cuts set!
-  //****************************************
+  //************************************************
+  //         Read which histograms to fill
+  //************************************************
+  int filledHistograms = fCard->Get("FilledHistograms");
+  std::bitset<knFillTypes> bitChecker(filledHistograms);
+  fFillEventInformation = bitChecker.test(kFillEventInformation);
+  fFillJetHistograms = bitChecker.test(kFillJets);
+  fFillTrackHistograms = bitChecker.test(kFillTracks);
+  fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
+  fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
+  fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
+  
+  //************************************************
+  //              Debug messages
+  //************************************************
+  fDebugLevel = fCard->Get("DebugLevel");
+}
+
+/*
+ * Main analysis loop
+ */
+void EECAnalyzer::RunAnalysis(){
   
   //************************************************
   //  Define variables needed in the analysis loop
@@ -549,16 +535,16 @@ void EECAnalyzer::RunAnalysis(){
   //************************************************
   
   if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
-      fJetReader = new GeneratorLevelForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets,readTrackTree);
+      fJetReader = new GeneratorLevelForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets,readTrackTree);
   } else {
-      fJetReader = new HighForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets,readTrackTree);
+      fJetReader = new HighForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets,readTrackTree);
   }
   
   // Select the reader for tracks based on forest and MC correlation type
   if(fMcCorrelationType == kRecoGen){
-    fTrackReader = new GeneratorLevelForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets);
+    fTrackReader = new GeneratorLevelForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets);
   } else if (fMcCorrelationType == kGenReco){
-    fTrackReader = new HighForestReader(fDataType,fReadMode,fJetType,fJetAxis,fMatchJets);
+    fTrackReader = new HighForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets);
   } else {
     fTrackReader = fJetReader;
   }
@@ -691,7 +677,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // Search for leading jet and fill histograms for all jets within the eta range
       for(Int_t jetIndex = 0; jetIndex < fJetReader->GetNJets(); jetIndex++) {
-        jetPt = fJetReader->GetJetPt(jetIndex);
+        jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
         jetPhi = fJetReader->GetJetPhi(jetIndex);
         jetEta = fJetReader->GetJetEta(jetIndex);
         jetFlavor = 0;
@@ -714,8 +700,12 @@ void EECAnalyzer::RunAnalysis(){
         //  ========================================
         
         if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
-        if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
-        if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
+        
+        // No jet quality cuts for generator level jets
+        if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
+          if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
+          if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
+        }
         
         // Jet matching between reconstructed and generator level jets
         if(fMatchJets && !fJetReader->HasMatchingJet(jetIndex)) {
@@ -754,8 +744,8 @@ void EECAnalyzer::RunAnalysis(){
         
         jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
         
-        // Only do the correction for 2018 data and reconstructed Monte Carlo
-        if(fReadMode > 2000 && !(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
+        // No jet pT correction for generator level jets
+        if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
           jetPt = jetPtCorrected;
           
           // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
@@ -1026,13 +1016,13 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   Double_t fillerClosure[nAxesClosure];
   
   // Find the pT of the matched gen jet and flavor of reference parton
-  Float_t matchedGenPt = fJetReader->GetMatchedPt(jetIndex);
+  Float_t matchedGenPt = fJetReader->GetMatchedPt(jetIndex);  // If not doing jet pT correction manually, change the implementation in GeneratorLevelForestReader!
   Float_t matchedGenEta = fJetReader->GetMatchedEta(jetIndex);
   Float_t matchedGenPhi = fJetReader->GetMatchedPhi(jetIndex);
   Int_t referencePartonFlavor = fJetReader->GetPartonFlavor(jetIndex);
   
   // Find the centrality of the event and the pT of the reconstructed jet
-  Double_t recoPt = fJetReader->GetJetPt(jetIndex);
+  Double_t recoPt = fJetReader->GetJetRawPt(jetIndex); // Read raw pT and do correction manually
   Double_t centrality = fJetReader->GetCentrality();
   Double_t jetEta = fJetReader->GetJetEta(jetIndex);
   Double_t jetPhi = fJetReader->GetJetPhi(jetIndex);
@@ -1057,17 +1047,14 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   fJetCorrector2018->SetJetPT(recoPt);
   fJetCorrector2018->SetJetEta(jetEta);
   fJetCorrector2018->SetJetPhi(jetPhi);
+  recoPt = fJetCorrector2018->GetCorrectedPT();
   
-  if(fReadMode > 2000){
-    recoPt = fJetCorrector2018->GetCorrectedPT();
-    
-    // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
-    if(fJetUncertaintyMode == 3){
-      smearingFactor = GetSmearingFactor(recoPt, centrality);
-      recoPt = recoPt * fRng->Gaus(1,smearingFactor);
-    }
-    
+  // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
+  if(fJetUncertaintyMode == 3){
+    smearingFactor = GetSmearingFactor(recoPt, centrality);
+    recoPt = recoPt * fRng->Gaus(1,smearingFactor);
   }
+  
   
   // Define index for parton flavor using algoritm: [-6,-1] U [1,6] -> kQuark, 21 -> kGluon, anything else -> -1
   Int_t referencePartonIndex = -1;
@@ -1310,7 +1297,7 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kEtaCut);
   
   // New cut for 2018 data based on track algorithm and MVA
-  if(fTrackReader->GetTrackAlgorithm(iTrack) == 6 && fTrackReader->GetTrackMVA(iTrack) < 0.98 && fReadMode > 2017) return false; // Only apply this cut to 2018 PbPb
+  if(fTrackReader->GetTrackAlgorithm(iTrack) == 6 && fTrackReader->GetTrackMVA(iTrack) < 0.98 && (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC)) return false; // Only apply this cut for PbPb
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kTrackAlgorithm);
   
   // Cut for high purity
@@ -1492,4 +1479,24 @@ Int_t EECAnalyzer::GetSubeventType(const Int_t subevent1, const Int_t subevent2)
   // The only option left is that one of the tracks is from pythia, and the other from hydjet. Return 1
   return 1;
   
+}
+
+/*
+ * Get jet eta reflected around zero, avoiding overlapping jet cones
+ *
+ *  Argumensts:
+ *   const Double_t eta = Eta of the jet
+ *
+ * return: Eta of a reflected jet axis
+ */
+Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
+
+  // If the jet eta is far enough from zero that the cones do not overlap, do a direct reflection
+  if(TMath::Abs(eta) > fJetRadius) return -eta;
+  
+  // If eta is negative, add twice the jet radius to the eta to avoid overlapping cones
+  if(eta < 0) return eta + 2*fJetRadius;
+  
+  // Now eta must be positive. Subtract twice the jet radius from the value to avoid overlapping cones
+  return eta - 2*fJetRadius;
 }

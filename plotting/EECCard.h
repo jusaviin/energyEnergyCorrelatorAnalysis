@@ -26,8 +26,7 @@ public:
     kDataType,                  // Data type in the data file (pp, PbPb, pp MC, PbPb MC)
     kMcCorrelationType,         // Monte Carlo correlation type (RecoReco, RecoGen, GenReco, GenGen)
     kMatchJets,                 // 0 = Reco and Gen jets are not matched, 1 = They are matched
-    kForestType,                // 0 = High forest, 1 = Skim Forest
-    kReadMode,                  // Certain files have different structure, so branch names need to be adjusted for them
+    kUseJetTrigger,             // 0 = Do not use any triggers, 1 = Require jet trigger
     kJetType,                   // 0 = Calorimeter jets, 1 = PF jets
     kJetAxis,                   // 0 = Anti-kt axis, 1 = Leading PF candidate axis, 2 = WTA axis
     kJetEtaCut,                 // Eta cut for jets
@@ -55,6 +54,7 @@ public:
     kCentralityBinEdges,        // Centrality bin edges
     kTrackPtBinEdges,           // Track pT bin edges
     kPtHatBinEdges,             // pT hat bin edges
+    kDoReflectedCone,           // 0 = No background estimation, 1 = Estimate background using reflected cone
     knEntries};                 // Number of entries in the card
   
   // Enumeration for input files used in postprocessing
@@ -63,7 +63,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","ForestType","ReadMode","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   

@@ -24,7 +24,7 @@ public:
   
   // Constructors and destructors
   HighForestReader();                                              // Default constructor
-  HighForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree = true); // Custom constructor
+  HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree = true); // Custom constructor
   HighForestReader(const HighForestReader& in);                    // Copy constructor
   virtual ~HighForestReader();                                     // Destructor
   HighForestReader& operator=(const HighForestReader& obj);        // Equal sign operator
@@ -62,7 +62,6 @@ public:
   Int_t GetTrackSubevent(Int_t iTrack) const;                // Getter for track subevent index (relevant only for generator level tracks)
   Int_t GetTrackMCStatus(Int_t iTrack) const;                // Getter for track MC status (only for generator level tracks)
   
-  // New variables for 2018 data
   Int_t GetTrackAlgorithm(Int_t iTrack) const;               // Getter for track algorithm
   Int_t GetTrackOriginalAlgorithm(Int_t iTrack) const;       // Getter for track original algorithm
   Float_t GetTrackMVA(Int_t iTrack) const;                   // Getter for track MVA
@@ -125,7 +124,6 @@ private:
   Float_t fTrackEnergyEcalArray[fnMaxTrack] = {0};            // Array for track energy in ECal
   Float_t fTrackEnergyHcalArray[fnMaxTrack] = {0};            // Array for track energy in HCal
   
-  // Additional leaves for 2018 PbPB track cuts
   UChar_t fTrackAlgorithmArray[fnMaxTrack] = {0};             // Array for track algorithm
   UChar_t fTrackOriginalAlgorithmArray[fnMaxTrack] = {0};     // Array for track original algorithm
   Float_t fTrackMVAArray[fnMaxTrack] = {0};                   // Array for track MVA
