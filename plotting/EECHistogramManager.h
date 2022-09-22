@@ -60,6 +60,9 @@ private:
   // Naming for subevent types
   const char* fSubeventTypeName[knSubeventTypes] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
   
+  // Naming for pairing types
+  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","ReflectedCone"};
+  
 public:
   
   EECHistogramManager();                                    // Default constructor
@@ -131,6 +134,8 @@ public:
   
   const char* GetSubeventType(const int iSubeventType) const; // Getter for subevent types
   
+  const char* GetPairingTypeSaveName(const int iPairingType) const; // Getter for pairing type save names
+  
   TString GetSystem() const;  // Getter for collision system
   
   // Getters for event information histograms
@@ -159,7 +164,7 @@ public:
   TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
   
   // Getters for energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJet, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
   
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
@@ -267,7 +272,7 @@ private:
   TH2D *fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1]; // 2D eta-phi histogram for track
   
   // Histograms for energy-energy correlators
-  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knSubeventTypes+1];
+  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][knSubeventTypes+1];
   
   // Histograms for jet pT closure
   TH1D *fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1]; // Jet pT closure

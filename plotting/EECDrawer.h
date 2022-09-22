@@ -54,6 +54,11 @@ public:
   void SetDrawEnergyEnergyCorrelatorsForConstantTrackPt(const bool drawOrNot); // Setter for drawing all jet pT selections to the same figure for constant track pT cut
   void SetDrawEnergyEnergyCorrelatorsSubevent(const bool drawOrNot);           // Setter for drawing subevent decomposition for energy-energy correlators
   
+  // Setters for drawing different pairing types
+  void SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot);            // Setter for drawing same jet energy-energy correlators
+  void SetDrawReflectedConeEnergyEnergyCorrelators(const bool drawOrNot);      // Setter for drawing reflected cone energy-energy correlators
+  void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawReflectedCone); // Setter for drawing all different energy-energy correlator pairing types
+  
   // Setters for figure saving and logarithmic axes
   void SetSaveFigures(const bool saveOrNot, const char *format, const TString suffix);  // Setter for saving the figures to a file
   void SetLogPt(const bool isLog);          // Setter for logarithmic pT axis
@@ -88,6 +93,8 @@ private:
   bool fDrawEnergyEnergyCorrelatorsForConstantJetPt;    // Draw all track pT cuts to the same figure for constant jet pT selection
   bool fDrawEnergyEnergyCorrelatorsForConstantTrackPt;  // Draw all jet pT selections to the same figure for constant track pT cut
   bool fDrawEnergyEnergyCorrelatorsSubevents;           // Draw subevent decomposition of energy-energy correlators
+  
+  bool fDrawPairingType[EECHistograms::knPairingTypes]; // Select which pairing types to draw
   
   // ==============================================
   // ============== Drawing settings ==============

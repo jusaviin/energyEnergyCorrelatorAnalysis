@@ -111,9 +111,14 @@ int EECCard::GetJetType() const{
   return (*fCardEntries[kJetType])[1];
 }
 
-// Getter the minimum jet pT cut
+// Getter for the minimum jet pT cut
 double EECCard::GetJetPtCut() const{
   return (*fCardEntries[kMinPtCut])[1];
+}
+
+// Getter for the information if reflected cone histograms are filled
+bool EECCard::GetDoReflectedCone() const{
+  return !((*fCardEntries[kDoReflectedCone])[1] == 0);
 }
 
 /*

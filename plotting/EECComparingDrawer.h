@@ -171,7 +171,7 @@ private:
   std::tuple<double,double> GetHistogramAverageAndDifferenceInRegion(TH1D *histogram, const double maxZoomValue, const int nZoomBins, const bool bothSides); // Get the average and absolute difference from a histogram in the specific area
   
   // Find the scaling factors that scale the integral of the distributions to one
-  void FindScalingFactors(const char* histogramName, int bin1, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0);
+  void FindScalingFactors(const char* histogramName, const int bin1, const int bin2 = 0, const int bin3 = 0, const int bin4 = 0, const int bin5 = 0, const int bin6 = 0);
   
   // Check flags to see if we are drawing certain types of histograms
   void CheckFlags();                       // Check flags for all histogram categories

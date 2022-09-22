@@ -540,10 +540,10 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
           // === Energy-energy correlator ===
           
           // Determine scaling factors
-          if(fApplyScaling) FindScalingFactors("energyEnergyCorrelator", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::knSubeventTypes);
+          if(fApplyScaling) FindScalingFactors("energyEnergyCorrelator", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistogramManager::knSubeventTypes);
           
-          // Prepare the energy-energy correlator histograms to be drawn
-          PrepareRatio("energyEnergyCorrelator", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::knSubeventTypes, 0, minRangeX, maxRangeX);
+          // Prepare the energy-energy correlator histograms to be drawn TODO: Implementation for different pairing types
+          PrepareRatio("energyEnergyCorrelator", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistogramManager::knSubeventTypes, minRangeX, maxRangeX);
           
           // Draw the track phi distributions to the upper panel of a split canvas plot
           sprintf(namerY,"%s", fBaseHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator));
@@ -646,20 +646,21 @@ void EECComparingDrawer::PrepareRatio(TString name, int rebin, int bin1, int bin
  * Integrate over the drawn distributions, such that the distributions can be scaled to one.
  *
  *  const char* histogramName = Name of the histogram that is integrated
- *  int bin1 = First bin index for the integrated histogram
- *  int bin2 = Second bin index for the integrated histogram
- *  int bin3 = Third bin index for the integrated histogram
- *  int bin4 = Fourth bin index for the integrated histogram
- *  int bin5 = Fifth bin index for the integrated histogram
+ *  const int bin1 = First bin index for the integrated histogram
+ *  const int bin2 = Second bin index for the integrated histogram
+ *  const int bin3 = Third bin index for the integrated histogram
+ *  const int bin4 = Fourth bin index for the integrated histogram
+ *  const int bin5 = Fifth bin index for the integrated histogram
+ *  const int bin6 = Sixth bin index for the integrated histogram
  */
-void EECComparingDrawer::FindScalingFactors(const char*  histogramName, int bin1, int bin2, int bin3, int bin4, int bin5){
+void EECComparingDrawer::FindScalingFactors(const char*  histogramName, const int bin1, const int bin2, const int bin3, const int bin4, const int bin5, const int bin6){
 
   // Helper variable for reading the normalization scales
   TH1D *scaleReader;
-  scaleReader = (TH1D*)fBaseHistograms->GetOneDimensionalHistogram(histogramName, bin1, bin2, bin3, bin4, bin5)->Clone();
+  scaleReader = (TH1D*)fBaseHistograms->GetOneDimensionalHistogram(histogramName, bin1, bin2, bin3, bin4, bin5, bin6)->Clone();
   fScalingFactors[0] = scaleReader->Integral("width");
   for(int iAdditional = 0; iAdditional < fnAddedHistograms; iAdditional++){
-    scaleReader = (TH1D*)fAddedHistograms[iAdditional]->GetOneDimensionalHistogram(histogramName, bin1, bin2, bin3, bin4, bin5)->Clone();
+    scaleReader = (TH1D*)fAddedHistograms[iAdditional]->GetOneDimensionalHistogram(histogramName, bin1, bin2, bin3, bin4, bin5, bin6)->Clone();
     fScalingFactors[1+iAdditional] = scaleReader->Integral("width");
   }
   

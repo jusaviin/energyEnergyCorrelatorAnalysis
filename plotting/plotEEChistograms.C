@@ -105,6 +105,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
     lastDrawnCentralityBin = 0;
   }
   
+  // Select track pairing type to be draw
+  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  
   // Figure saving
   const bool saveFigures = false;
   const char* figureFormat = "png";
@@ -123,8 +127,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = true;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
+  bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // If the collision system in not PbPb MC, we cannot draw subevent decomposition
   if(!collisionSystem.Contains("PbPb MC")){
@@ -183,6 +187,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantJetPt(drawEnergyEnergyCorrelatorsForConstantJetPt);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantTrackPt(drawEnergyEnergyCorrelatorsForConstantTrackPt);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsSubevent(drawEnergyEnergyCorrelatorsSubevent);
+  
+  resultDrawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
+  resultDrawer->SetDrawReflectedConeEnergyEnergyCorrelators(drawReflectedConeEnergyEnergyCorrelator);
   
   resultDrawer->SetSaveFigures(saveFigures,figureFormat,figureNameSuffix);
   resultDrawer->SetLogPt(logPt);

@@ -113,9 +113,10 @@ public:
   int GetBinIndexTrackPt(const double value) const;        // Get the bin index for a given track pT value
   int GetBinIndexJetPtEEC(const double value) const;       // Get the bin index for a given jet pT value in energy-energy correlator analysis
   int GetBinIndexTrackPtEEC(const double value) const;     // Get the bin index for a given track pT value in energy-energy correlator analysis
-  int GetSubeventCut() const;     // Get the index for used subevent cut
-  int GetJetType() const;         // Get the jet type index
-  double GetJetPtCut() const;     // Get the minimum jet pT cut
+  int GetSubeventCut() const;      // Get the index for used subevent cut
+  int GetJetType() const;          // Get the jet type index
+  double GetJetPtCut() const;      // Get the minimum jet pT cut
+  bool GetDoReflectedCone() const; // Get the information if reflected cone histograms are filled
   
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double *contents); // Add a vector to the card
