@@ -51,7 +51,7 @@ public:
 private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<bool> trackCloseToJet, const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knPairingTypes], const vector<double> relativeTrackEta[EECHistograms::knPairingTypes], const vector<double> relativeTrackPhi[EECHistograms::knPairingTypes], const vector<int> selectedTrackSubevent[EECHistograms::knPairingTypes], const double jetPt);  // Calculate energy-energy correlators
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
@@ -59,6 +59,7 @@ private:
   Bool_t PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
   Bool_t PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
+  Double_t  GetTrackEfficiencyCorrection(const Float_t trackPt, const Float_t trackEta, const Int_t hiBin); // Get the track efficiency correction for given track and event information
   Double_t GetVzWeight(const Double_t vz) const;  // Get the proper vz weighting depending on analyzed system
   Double_t GetCentralityWeight(const Int_t hiBin) const; // Get the proper centrality weighting depending on analyzed system
   Double_t GetMultiplicityWeight(const Double_t multiplicity) const; // Get the proper multiplicity weight for MC

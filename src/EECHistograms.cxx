@@ -205,6 +205,11 @@ void EECHistograms::CreateHistograms(){
   const Double_t maxClosureParticleType = knClosureParticleTypes-0.5;  // Maximum closure particle type index
   const Int_t nClosureParticleTypeBins = knClosureParticleTypes;       // Bin width for particle type is 1
   
+  // Track pairing type for energy-energy correlators (0 = same jet, 1 = eta-reflected jet)
+  const Double_t minTrackPairingType = -0.5;                // Track pairing type indexing starts from zero
+  const Double_t maxTrackPairingType = knPairingTypes-0.5;  // Maximum track pairing type index
+  const Int_t nTrackPairingTypeBins = knPairingTypes;       // Bin width for track pairing type is 1
+  
   // Track subevent index for energy-energy correlators (0 = both tracks from Pythia, 1 = one track from Pythia, one from Hydjet, 2 = Both tracks from Hydjet)
   const Double_t minSubeventType = -0.5;
   const Double_t maxSubeventType = 2.5;
@@ -281,7 +286,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderTrack[nAxesTrack];
   Double_t highBinBorderTrack[nAxesTrack];
   
-  const Int_t nAxesEnergyEnergyCorrelator = 5;
+  const Int_t nAxesEnergyEnergyCorrelator = 6;
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
@@ -424,10 +429,15 @@ void EECHistograms::CreateHistograms(){
   lowBinBorderEnergyEnergyCorrelator[3] = minCentrality;  // low bin border for centrality
   highBinBorderEnergyEnergyCorrelator[3] = maxCentrality; // high bin border for centrality
   
-  // Axis 3 for the energy-energy correlator histogram: track subevent (only relevant for Monte Carlo)
-  nBinsEnergyEnergyCorrelator[4] = nSubeventTypeBins;       // nBins for subevent types (pythia-pythia, pythia-hydjet, hydjet-hydjet)
-  lowBinBorderEnergyEnergyCorrelator[4] = minSubeventType;  // low bin border for subevent types
-  highBinBorderEnergyEnergyCorrelator[4] = maxSubeventType; // high bin border for subevent types
+  // Axis 4 for the energy-energy correlator histogram: track pairing type (same jet/reflected cone jet)
+  nBinsEnergyEnergyCorrelator[4] = nTrackPairingTypeBins;       // nBins for track pairing types
+  lowBinBorderEnergyEnergyCorrelator[4] = minTrackPairingType;  // low bin border for track pairing type
+  highBinBorderEnergyEnergyCorrelator[4] = maxTrackPairingType; // high bin border for track pairing type
+  
+  // Axis 5 for the energy-energy correlator histogram: track subevent (only relevant for Monte Carlo)
+  nBinsEnergyEnergyCorrelator[5] = nSubeventTypeBins;       // nBins for subevent types (pythia-pythia, pythia-hydjet, hydjet-hydjet)
+  lowBinBorderEnergyEnergyCorrelator[5] = minSubeventType;  // low bin border for subevent types
+  highBinBorderEnergyEnergyCorrelator[5] = maxSubeventType; // high bin border for subevent types
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
   fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();
