@@ -732,12 +732,17 @@ void EECDrawer::SetDrawEnergyEnergyCorrelatorsSubevent(const bool drawOrNot){
 
 // Setter for drawing same jet energy-energy correlators
 void EECDrawer::SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot){
-  fDrawPairingType[EECHistograms::kSameJet] = drawOrNot;
+  fDrawPairingType[EECHistograms::kSameJetPair] = drawOrNot;
 }
 
-// Setter for drawing reflected cone energy-energy correlators
-void EECDrawer::SetDrawReflectedConeEnergyEnergyCorrelators(const bool drawOrNot){
-  fDrawPairingType[EECHistograms::kReflectedCone] = drawOrNot;
+// Setter for drawing signal-reflected cone energy-energy correlators
+void EECDrawer::SetDrawSignalReflectedConeEnergyEnergyCorrelators(const bool drawOrNot){
+  fDrawPairingType[EECHistograms::kSignalReflectedConePair] = drawOrNot;
+}
+
+// Setter for drawing reflected cone-reflected cone energy-energy correlators
+void EECDrawer::SetDrawReflectedConeOnlyEnergyEnergyCorrelators(const bool drawOrNot){
+  fDrawPairingType[EECHistograms::kReflectedConePair] = drawOrNot;
 }
 
 // Setter for drawing all different energy-energy correlator pairing types

@@ -107,7 +107,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   
   // Select track pairing type to be draw
   const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
   const bool saveFigures = false;
@@ -189,7 +190,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawEnergyEnergyCorrelatorsSubevent(drawEnergyEnergyCorrelatorsSubevent);
   
   resultDrawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
-  resultDrawer->SetDrawReflectedConeEnergyEnergyCorrelators(drawReflectedConeEnergyEnergyCorrelator);
+  resultDrawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);
+  resultDrawer->SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnlyEnergyEnergyCorrelator);
   
   resultDrawer->SetSaveFigures(saveFigures,figureFormat,figureNameSuffix);
   resultDrawer->SetLogPt(logPt);

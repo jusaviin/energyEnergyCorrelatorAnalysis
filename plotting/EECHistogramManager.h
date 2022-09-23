@@ -61,7 +61,7 @@ private:
   const char* fSubeventTypeName[knSubeventTypes] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
   
   // Naming for pairing types
-  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","ReflectedCone"};
+  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","SignalReflectedConePair","ReflectedConePair"};
   
 public:
   
@@ -164,7 +164,7 @@ public:
   TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
   
   // Getters for energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJet, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
   
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure

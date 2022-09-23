@@ -51,7 +51,7 @@ public:
 private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knPairingTypes], const vector<double> relativeTrackEta[EECHistograms::knPairingTypes], const vector<double> relativeTrackPhi[EECHistograms::knPairingTypes], const vector<int> selectedTrackSubevent[EECHistograms::knPairingTypes], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt);  // Calculate energy-energy correlators
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   

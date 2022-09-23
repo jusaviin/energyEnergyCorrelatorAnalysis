@@ -55,9 +55,10 @@ public:
   void SetDrawEnergyEnergyCorrelatorsSubevent(const bool drawOrNot);           // Setter for drawing subevent decomposition for energy-energy correlators
   
   // Setters for drawing different pairing types
-  void SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot);            // Setter for drawing same jet energy-energy correlators
-  void SetDrawReflectedConeEnergyEnergyCorrelators(const bool drawOrNot);      // Setter for drawing reflected cone energy-energy correlators
-  void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawReflectedCone); // Setter for drawing all different energy-energy correlator pairing types
+  void SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot);              // Setter for drawing same jet energy-energy correlators
+  void SetDrawSignalReflectedConeEnergyEnergyCorrelators(const bool drawOrNot);  // Setter for drawing signal-reflected cone energy-energy correlators
+  void SetDrawReflectedConeOnlyEnergyEnergyCorrelators(const bool drawOrNot);    // Setter for drawing reflected cone-reflected cone energy-energy correlators
+  void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawSignalReflectedCone, const bool drawReflectedConeOnly); // Setter for drawing all different energy-energy correlator pairing types
   
   // Setters for figure saving and logarithmic axes
   void SetSaveFigures(const bool saveOrNot, const char *format, const TString suffix);  // Setter for saving the figures to a file

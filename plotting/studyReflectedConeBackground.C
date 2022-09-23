@@ -139,24 +139,24 @@ void studyReflectedConeBackground(){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
           
           // Histogram with all pair combinations. Normalize it to one
-          hEnergyEnergyCorrelatorTotal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJet, EECHistogramManager::knSubeventTypes);
+          hEnergyEnergyCorrelatorTotal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::knSubeventTypes);
           normalizationFactor = hEnergyEnergyCorrelatorTotal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Integral("width");
           hEnergyEnergyCorrelatorTotal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Scale(1/normalizationFactor);
           
           // Histogram with only signal. Normalize the sum of signal and background to total.
-          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJet, EECHistogramManager::kPythiaPythia);
+          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kPythiaPythia);
           hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Scale(1/normalizationFactor);
           
           // Histogram with all background contributions. Normalize the sum of signal and background to total.
-          hEnergyEnergyCorrelatorSignalFake[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJet, EECHistogramManager::kPythiaHydjet);
+          hEnergyEnergyCorrelatorSignalFake[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kPythiaHydjet);
           hEnergyEnergyCorrelatorBackground[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = (TH1D *) hEnergyEnergyCorrelatorSignalFake[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorBackground%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt));
-          helperHistogram = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJet, EECHistogramManager::kHydjetHydjet);
+          helperHistogram = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kHydjetHydjet);
           hEnergyEnergyCorrelatorBackground[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Add(helperHistogram);
           hEnergyEnergyCorrelatorSignalFake[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Scale(1/normalizationFactor);
           hEnergyEnergyCorrelatorBackground[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Scale(1/normalizationFactor);
           
           // The reflected cone histogram.
-          helperHistogram = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedCone, EECHistogramManager::knSubeventTypes);
+          helperHistogram = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistogramManager::knSubeventTypes);
           
           // Normalize the reflected cone histogram to different DeltaR regions of the tail of the total distribution
           highIntegralBin = hEnergyEnergyCorrelatorTotal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetNbinsX();

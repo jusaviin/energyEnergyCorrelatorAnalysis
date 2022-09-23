@@ -592,7 +592,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
       
       // If reflected cone histograms are not filled in the data file, do not try to load them
-      if(iPairingType == EECHistograms::kReflectedCone && !fCard->GetDoReflectedCone()) continue;
+      if((iPairingType == EECHistograms::kSignalReflectedConePair || iPairingType == EECHistograms::kReflectedConePair) && !fCard->GetDoReflectedCone()) continue;
       
       // Setup axes with restrictions, (4 = pairing type)
       axisIndices[0] = 4; lowLimits[0] = iPairingType+1; highLimits[0] = iPairingType+1;
