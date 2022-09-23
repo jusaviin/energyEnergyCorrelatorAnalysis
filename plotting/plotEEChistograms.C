@@ -106,8 +106,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   }
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
   const bool saveFigures = false;
@@ -125,9 +125,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = false;
+  const bool drawIndividualEnergyEnergyCorrelators = true;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
   bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // If the collision system in not PbPb MC, we cannot draw subevent decomposition

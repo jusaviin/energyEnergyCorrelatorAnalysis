@@ -323,7 +323,6 @@ public:
     
     // If there is no upper pad, create one
     if(fUpperSplitPad == NULL){
-      //SetDefaultAppearanceSplitCanvas();
       CreateSplitCanvas();
     }
     
@@ -344,7 +343,6 @@ public:
     
     // If there is no lower pad, create one
     if(fLowerSplitPad == NULL){
-      //SetDefaultAppearanceSplitCanvas();
       CreateSplitCanvas();
     }
     
@@ -682,7 +680,6 @@ public:
    *  int canvasesInRow = number of canvases in a row before the next row is started
    */
   void CreateSplitCanvas(int canvasIndex, int canvasesInRow){
-    SetDefaultAppearanceSplitCanvas();
     SetNumberOfCanvasesInOneRow(canvasesInRow);
     SetCanvasDisplacement(canvasIndex);
     CreateSplitCanvas();
@@ -1036,8 +1033,7 @@ public:
    */
   void SetDefaultAppearanceSplitCanvas(){
     Reset();
-    //SetHistogramAppearance(2.5, 2.5, 20, 20, 0.01, 0.001, 16, 16, 505, 505, 43); // Smaller label size for axes
-    SetHistogramAppearance(2.5, 2.3, 25, 25, 0.01, 0.001, 20, 20, 505, 505, 43); // Increased label size for axes
+    SetHistogramAppearance(1.5, 1.1, 25, 25, 0.01, 0.001, 20, 20, 505, 505, 43); // Increased label size for axes
     SetSplitRatio(0.4);
     SetRelativeCanvasSize(1.1,0.7);
     SetMargins(0.21,0.05,0.09,0.1);  // Left, right, top, bottom
