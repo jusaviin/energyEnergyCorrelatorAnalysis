@@ -97,8 +97,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 0;
+  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -106,8 +106,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   }
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
@@ -126,9 +126,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
   bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // If the collision system in not PbPb MC, we cannot draw subevent decomposition

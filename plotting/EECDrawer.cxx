@@ -746,9 +746,10 @@ void EECDrawer::SetDrawReflectedConeOnlyEnergyEnergyCorrelators(const bool drawO
 }
 
 // Setter for drawing all different energy-energy correlator pairing types
-void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawReflectedCone){
+void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawSignalReflectedCone, const bool drawReflectedConeOnly){
   SetDrawSameJetEnergyEnergyCorrelators(drawSameJet);
-  SetDrawReflectedConeEnergyEnergyCorrelators(drawReflectedCone);
+  SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedCone);
+  SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnly);
 }
 
 // Setter for saving the figures to a file
