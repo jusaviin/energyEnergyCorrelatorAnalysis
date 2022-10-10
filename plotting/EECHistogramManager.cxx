@@ -1698,6 +1698,15 @@ const char* EECHistogramManager::GetSubeventType(const int iSubeventType) const{
   return fSubeventTypeName[iSubeventType];
 }
 
+// Getter for a well thought save name for subevent types
+TString EECHistogramManager::GetSubeventTypeSaveName(const int iSubeventType) const{
+  if(iSubeventType < 0) return "";
+  if(iSubeventType >= knSubeventTypes) return "";
+  TString niceSaveName = fSubeventTypeName[iSubeventType];
+  niceSaveName.ReplaceAll("-","");
+  return niceSaveName;
+}
+
 // Getter for pairing type save names
 const char* EECHistogramManager::GetPairingTypeSaveName(const int iPairingType) const{
   if(iPairingType < 0) return "NonsensicalIndex";

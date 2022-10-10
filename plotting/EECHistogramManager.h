@@ -133,6 +133,7 @@ public:
   const char* GetEnergyEnergyCorrelatorAxisName(int iEnergyEnergyCorrelatorType) const;      // Getter for energy-energy correlator axis name
   
   const char* GetSubeventType(const int iSubeventType) const; // Getter for subevent types
+  TString GetSubeventTypeSaveName(const int iSubeventType) const; // Getter for a well thought save name for subevent types
   
   const char* GetPairingTypeSaveName(const int iPairingType) const; // Getter for pairing type save names
   

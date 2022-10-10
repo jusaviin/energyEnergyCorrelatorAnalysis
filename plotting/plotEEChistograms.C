@@ -95,10 +95,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 2; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -111,7 +111,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
-  const bool saveFigures = false;
+  const bool saveFigures = true;
   const char* figureFormat = "png";
   TString figureNameSuffix = "_test";
   
@@ -127,13 +127,23 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = true;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
   bool drawEnergyEnergyCorrelatorsSubevent = false;
+  
+  // Select which subevents to draw
+  bool drawAllSubevents = false;  // Draw energy-energy correlators without subevent selection
+  bool drawSignalOnly = false;    // Draw Pythia+Pythia correlations from MC
+  bool drawSignalFake = true;     // Draw Pythia+Hydjet correlations from MC
+  bool drawFakeFake = false;      // Draw Hydjet+Hydjet correlations from MC
   
   // If the collision system in not PbPb MC, we cannot draw subevent decomposition
   if(!collisionSystem.Contains("PbPb MC")){
     drawEnergyEnergyCorrelatorsSubevent = false;
+    drawSignalOnly = false;
+    drawSignalFake = false;
+    drawFakeFake = false;
+    drawAllSubevents = true;
   }
 
   // ==================================================================
@@ -192,6 +202,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
   resultDrawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);
   resultDrawer->SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnlyEnergyEnergyCorrelator);
+  
+  resultDrawer->SetDrawAllSubeventTypes(drawAllSubevents, drawSignalOnly, drawSignalFake, drawFakeFake);
   
   resultDrawer->SetSaveFigures(saveFigures,figureFormat,figureNameSuffix);
   resultDrawer->SetLogPt(logPt);

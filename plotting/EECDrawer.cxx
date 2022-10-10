@@ -52,6 +52,12 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     fDrawPairingType[iPairingType] = false;
   }
+  
+  // By default, only draw the energy-energy correlators without subevent selection
+  fDrawSubeventType[EECHistogramManager::knSubeventTypes] = true;
+  for(int iSubevent = 0; iSubevent < EECHistogramManager::knSubeventTypes; iSubevent++){
+    fDrawSubeventType[iSubevent] = false;
+  }
 
   // Setup the centrality, track pT and energy-energy correlator jet and track pT bins to be drawn
   fFirstDrawnCentralityBin = fHistograms->GetFirstCentralityBin();
@@ -384,6 +390,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   TString compactTrackPtString;
   TString jetPtString;
   TString compactJetPtString;
+  TString subeventString;
+  TString compactSubeventString;
   char namerY[100];
   
   double normalizationFactor;
@@ -395,10 +403,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
     
   // Loop over energy-energy correlator types
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
-        
+    
     // Only draw the selected histograms
     if(!fDrawEnergyEnergyCorrelators[iEnergyEnergyCorrelator]) continue;
-        
+    
     // Loop over different pairing type (same jet/reflected cone)
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
       
@@ -414,38 +422,52 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
         // Draw individual energy-energy correlator histograms
         if(fDrawIndividualEnergyEnergyCorrelators){
           
-          // Loop over track pT bins
-          for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+          // Loop over different subevent combinations
+          for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString.ReplaceAll(".","v");
+            // Only draw selected subevent combinations
+            if(!fDrawSubeventType[iSubevent]) continue;
             
-            // Loop over jet pT bins
-            for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+            subeventString = fHistograms->GetSubeventType(iSubevent);
+            compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
+
+            // Loop over track pT bins
+            for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
               
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
-              compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString.ReplaceAll(".","v");
               
-              // === Energy-energy correlator ===
-              drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType);
-              drawnHistogram->Scale(1/drawnHistogram->Integral("width")); // For now, just normalize the integral to one
-              sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-              
-              // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
-              
-              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
-              legend = new TLegend(0.62,0.75,0.82,0.9);
-              SetupLegend(legend,centralityString,trackPtString,jetPtString);
-              legend->Draw();
-              
-              // Save the figure to a file
-              sprintf(namerY,"%s%s", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-              SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
-              
-            } // Jet pT loop
-          } // Track pT loop
+              // Loop over jet pT bins
+              for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+                
+                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                
+                // === Energy-energy correlator ===
+                drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
+                drawnHistogram->Scale(1/drawnHistogram->Integral("width")); // For now, just normalize the integral to one
+                sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                
+                // For logarithmic x-axis, cannot go all the way to zero
+                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+                
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                legend = new TLegend(0.62,0.75,0.82,0.9);
+                legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+                legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
+                if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+                legend->AddEntry((TObject*) 0, centralityString.Data(), "");
+                legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
+                legend->Draw();
+                
+                // Save the figure to a file
+                sprintf(namerY,"%s%s%s", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data());
+                SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
+                
+              } // Jet pT loop
+            } // Track pT loop
+          } // Subevent type loop
         } // Draw individual energy-energy correlator histograms
         
         // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
@@ -453,42 +475,54 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           
           jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
           
-          // Only one legend for the plot
-          legend = new TLegend(0.62,0.35,0.82,0.9);
-          legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-          legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-          legend->AddEntry((TObject*) 0, centralityString.Data(), "");
-          legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
-          
-          
-          // Loop over track pT bins
-          for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+          // Loop over different subevent combinations
+          for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            // Only draw selected subevent combinations
+            if(!fDrawSubeventType[iSubevent]) continue;
             
-            drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, fHistograms->GetNJetPtBinsEEC(), iTrackPt, iPairingType);
-            drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
-            drawnHistogram->SetLineColor(color[iTrackPt]);
+            subeventString = fHistograms->GetSubeventType(iSubevent);
+            compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
             
-            // For logarithmic x-axis, cannot go all the way to zero
-            if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+            // Only one legend for the plot
+            legend = new TLegend(0.62,0.35,0.82,0.9);
+            legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+            legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
+            if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+            legend->AddEntry((TObject*) 0, centralityString.Data(), "");
+            legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
             
-            if(iTrackPt == fFirstDrawnTrackPtBinEEC){
-              sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
-            } else {
-              drawnHistogram->Draw("same");
-            }
             
-            legend->AddEntry(drawnHistogram, trackPtString.Data(), "l");
+            // Loop over track pT bins
+            for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+              
+              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              
+              drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, fHistograms->GetNJetPtBinsEEC(), iTrackPt, iPairingType, iSubevent);
+              drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
+              drawnHistogram->SetLineColor(color[iTrackPt]);
+              
+              // For logarithmic x-axis, cannot go all the way to zero
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              
+              if(iTrackPt == fFirstDrawnTrackPtBinEEC){
+                sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+              } else {
+                drawnHistogram->Draw("same");
+              }
+              
+              legend->AddEntry(drawnHistogram, trackPtString.Data(), "l");
+              
+            } // Track pT loop
             
-          } // Track pT loop
-          
-          legend->Draw();
-          
-          // Save the figure to a file
-          sprintf(namerY,"%s%sConstantJetPt%.0f", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), fHistograms->GetCard()->GetJetPtCut());
-          SaveFigure(namerY, compactCentralityString);
+            legend->Draw();
+            
+            // Save the figure to a file
+            sprintf(namerY,"%s%s%sConstantJetPt%.0f", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), fHistograms->GetCard()->GetJetPtCut());
+            SaveFigure(namerY, compactCentralityString);
+            
+          } // Subevent loop
           
         } // Draw all track pT cuts in the same plot with the jet pT integrated histogram
         
@@ -502,41 +536,53 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString.ReplaceAll(".","v");
             
-            // Only one legend for the plot
-            legend = new TLegend(0.62,0.35,0.82,0.9);
-            legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-            legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-            legend->AddEntry((TObject*) 0, centralityString.Data(),"");
-            legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
-            
-            // Loop over jet pT bins
-            for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+            // Loop over different subevent combinations
+            for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
               
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              // Only draw selected subevent combinations
+              if(!fDrawSubeventType[iSubevent]) continue;
               
-              drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType);
-              drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
-              drawnHistogram->SetLineColor(color[iJetPt]);
+              subeventString = fHistograms->GetSubeventType(iSubevent);
+              compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
               
-              // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              // Only one legend for the plot
+              legend = new TLegend(0.62,0.35,0.82,0.9);
+              legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+              legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
+              if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+              legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+              legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               
-              if(iJetPt == fFirstDrawnJetPtBinEEC){
-                sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
-              } else {
-                drawnHistogram->Draw("same");
-              }
+              // Loop over jet pT bins
+              for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+                
+                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                
+                drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
+                drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
+                drawnHistogram->SetLineColor(color[iJetPt]);
+                
+                // For logarithmic x-axis, cannot go all the way to zero
+                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+                
+                if(iJetPt == fFirstDrawnJetPtBinEEC){
+                  sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                } else {
+                  drawnHistogram->Draw("same");
+                }
+                
+                legend->AddEntry(drawnHistogram, jetPtString.Data(), "l");
+                
+              } // Jet pT loop
               
-              legend->AddEntry(drawnHistogram, jetPtString.Data(), "l");
+              legend->Draw();
               
-            } // Jet pT loop
-            
-            legend->Draw();
-            
-            // Save the figure to a file
-            sprintf(namerY,"%s%sConstantTrackPt%s",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactTrackPtString.Data());
-            SaveFigure(namerY, compactCentralityString);
+              // Save the figure to a file
+              sprintf(namerY,"%s%s%sConstantTrackPt%s",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), compactTrackPtString.Data());
+              SaveFigure(namerY, compactCentralityString);
+              
+            } // Subevent loop
             
           } // Track pT loop
         } // Draw all jet pT selections for a single track cut
@@ -750,6 +796,34 @@ void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSame
   SetDrawSameJetEnergyEnergyCorrelators(drawSameJet);
   SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedCone);
   SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnly);
+}
+
+// Setter for drawing all pairing combinations
+void EECDrawer::SetDrawAllCombinations(const bool drawOrNot){
+  fDrawSubeventType[EECHistogramManager::knSubeventTypes] = drawOrNot;
+}
+
+// Setter for drawing Pythia+Pythia correlations for simulation
+void EECDrawer::SetDrawSignalOnly(const bool drawOrNot){
+  fDrawSubeventType[EECHistogramManager::kPythiaPythia] = drawOrNot;
+}
+
+// Setter for drawing Pythia+Hydjet correlations for simulation
+void EECDrawer::SetDrawSignalFake(const bool drawOrNot){
+  fDrawSubeventType[EECHistogramManager::kPythiaHydjet] = drawOrNot;
+}
+
+// Setter for drawing Hydjet+Hydjet correlations for simulation
+void EECDrawer::SetDrawFakeFake(const bool drawOrNot){
+  fDrawSubeventType[EECHistogramManager::kHydjetHydjet] = drawOrNot;
+}
+
+// Setter for drawing all subevent types for energy-energy correlators
+void EECDrawer::SetDrawAllSubeventTypes(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake){
+  SetDrawAllCombinations(drawAll);
+  SetDrawSignalOnly(drawSignal);
+  SetDrawSignalFake(drawSignalFake);
+  SetDrawFakeFake(drawFakeFake);
 }
 
 // Setter for saving the figures to a file

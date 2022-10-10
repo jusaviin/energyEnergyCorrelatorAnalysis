@@ -60,6 +60,13 @@ public:
   void SetDrawReflectedConeOnlyEnergyEnergyCorrelators(const bool drawOrNot);    // Setter for drawing reflected cone-reflected cone energy-energy correlators
   void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawSignalReflectedCone, const bool drawReflectedConeOnly); // Setter for drawing all different energy-energy correlator pairing types
   
+  // Setters for drawing different subevent types
+  void SetDrawAllCombinations(const bool drawOrNot); // Setter for drawing all pairing combinations
+  void SetDrawSignalOnly(const bool drawOrNot);      // Setter for drawing Pythia+Pythia correlations for simulation
+  void SetDrawSignalFake(const bool drawOrNot);      // Setter for drawing Pythia+Hydjet correlations for simulation
+  void SetDrawFakeFake(const bool drawOrNot);        // Setter for drawing Hydjet+Hydjet correlations for simulation
+  void SetDrawAllSubeventTypes(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake); // Setter for drawing all subevent types for energy-energy correlators
+  
   // Setters for figure saving and logarithmic axes
   void SetSaveFigures(const bool saveOrNot, const char *format, const TString suffix);  // Setter for saving the figures to a file
   void SetLogPt(const bool isLog);          // Setter for logarithmic pT axis
@@ -95,7 +102,8 @@ private:
   bool fDrawEnergyEnergyCorrelatorsForConstantTrackPt;  // Draw all jet pT selections to the same figure for constant track pT cut
   bool fDrawEnergyEnergyCorrelatorsSubevents;           // Draw subevent decomposition of energy-energy correlators
   
-  bool fDrawPairingType[EECHistograms::knPairingTypes]; // Select which pairing types to draw
+  bool fDrawPairingType[EECHistograms::knPairingTypes];           // Select which pairing types to draw
+  bool fDrawSubeventType[EECHistogramManager::knSubeventTypes+1]; // Select which subevent types to draw
   
   // ==============================================
   // ============== Drawing settings ==============
