@@ -87,11 +87,11 @@ void fakeFakeBackgroundPlotter(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = 0;
   
-  int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
+  int firstStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 0;
-  int lastStudiedTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstStudiedTrackPtBinEEC = 5;
+  int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];

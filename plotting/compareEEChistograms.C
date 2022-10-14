@@ -13,9 +13,12 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_moreLowTrackPtCuts_processed_2022-09-15.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_firstLook_2022-09-15_someMissing_processed.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_firstLook_withTrigger_2022-09-15_someMissing_processed.root"};
+  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root"};
+  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
+  // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"PbPb data", "Pythia+Hydjet", "Pythia+Hydjet, jet trigger"};
+  TString legendComment[] = {"PbPb data","Pythia+Hydjet"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -95,8 +98,8 @@ void compareEEChistograms(){
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 7;
-  int lastDrawnTrackPtBinEEC = 7;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
   // ===================== Configuration ready ========================
