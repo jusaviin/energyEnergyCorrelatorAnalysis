@@ -97,6 +97,7 @@ EECAnalyzer::EECAnalyzer() :
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
+  fFillJetConeHistograms(false),
   fFillEnergyEnergyCorrelators(false),
   fFillEnergyEnergyCorrelatorsUncorrected(false),
   fFillJetPtClosure(false),
@@ -240,6 +241,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
+  fFillJetConeHistograms(in.fFillJetConeHistograms),
   fFillEnergyEnergyCorrelators(in.fFillEnergyEnergyCorrelators),
   fFillEnergyEnergyCorrelatorsUncorrected(in.fFillEnergyEnergyCorrelatorsUncorrected),
   fFillJetPtClosure(in.fFillJetPtClosure),
@@ -303,6 +305,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
+  fFillJetConeHistograms = in.fFillJetConeHistograms;
   fFillEnergyEnergyCorrelators = in.fFillEnergyEnergyCorrelators;
   fFillEnergyEnergyCorrelatorsUncorrected = in.fFillEnergyEnergyCorrelatorsUncorrected;
   fFillJetPtClosure = in.fFillJetPtClosure;
@@ -416,6 +419,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fFillEventInformation = bitChecker.test(kFillEventInformation);
   fFillJetHistograms = bitChecker.test(kFillJets);
   fFillTrackHistograms = bitChecker.test(kFillTracks);
+  fFillJetConeHistograms = bitChecker.test(kFillJetConeHistograms);
   fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
   fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
   fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
@@ -483,6 +487,15 @@ void EECAnalyzer::RunAnalysis(){
   Double_t trackMultiplicity = 0;         // Multiplicity
   Double_t trackMultiplicityWeighted = 0; // Weighted multiplicity
   
+  // Study for track multiplicity inside the jet cone
+  const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
+  Double_t trackPtBinsEEC[nTrackPtBinsEEC];
+  for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+    trackPtBinsEEC[iTrackPt] = fCard->Get("TrackPtBinEdgesEEC",iTrackPt);
+  }
+  Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC]; // Particle multiplicity within a jet cone, no tracking efficiency correction
+  Double_t multiplicityInJetCone[nTrackPtBinsEEC];         // Efficiency corrected particle multiplicity within a jet cone
+  
   // Variables for energy-energy correlators
   vector<double> selectedTrackPt[2];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet)
   vector<double> relativeTrackEta[2];    // Track eta relative to the jet axis (same jet/reflected cone jet)
@@ -505,8 +518,12 @@ void EECAnalyzer::RunAnalysis(){
   // Fillers for THnSparses
   const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
   const Int_t nFillMultiplicity = 3; // 3 is nominal
+  const Int_t nFillMultiplicityInJetCone = 5;
+  const Int_t nFillParticleDensityInJetCone = 5;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
+  Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
+  Double_t fillerParticleDensityInJetCone[nFillParticleDensityInJetCone];
   
   // For 2018 PbPb and 2017 pp data, we need to correct jet pT
   std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
@@ -812,7 +829,7 @@ void EECAnalyzer::RunAnalysis(){
         //   Do energy-energy correlation within jets
         //************************************************
         
-        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
+        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected || fFillJetConeHistograms){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
           for(int iPairingType = 0; iPairingType < 2; iPairingType++){
@@ -820,6 +837,12 @@ void EECAnalyzer::RunAnalysis(){
             relativeTrackEta[iPairingType].clear();
             relativeTrackPhi[iPairingType].clear();
             selectedTrackSubevent[iPairingType].clear();
+          }
+          
+          // Clear the multiplicity arrays
+          for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+            uncorrectedMultiplicityInJetCone[iTrackPt] = 0;
+            multiplicityInJetCone[iTrackPt] = 0;
           }
           
           // Loop over tracks and check which are within the jet radius
@@ -830,8 +853,10 @@ void EECAnalyzer::RunAnalysis(){
             if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
             
             // Find the track eta and phi
+            trackPt = fTrackReader->GetTrackPt(iTrack);
             trackEta = fTrackReader->GetTrackEta(iTrack);
             trackPhi = fTrackReader->GetTrackPhi(iTrack);
+            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
             
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
@@ -840,8 +865,31 @@ void EECAnalyzer::RunAnalysis(){
               relativeTrackEta[0].push_back(trackEta-jetEta);
               
               // Also remember track pT and subevent
-              selectedTrackPt[0].push_back(fTrackReader->GetTrackPt(iTrack));
+              selectedTrackPt[0].push_back(trackPt);
               selectedTrackSubevent[0].push_back(fTrackReader->GetTrackSubevent(iTrack));
+              
+              // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
+              if(fFillJetConeHistograms){
+                for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                  if(trackPt < trackPtBinsEEC[iTrackPt]) break;
+                  uncorrectedMultiplicityInJetCone[iTrackPt]++;
+                  multiplicityInJetCone[iTrackPt] += trackEfficiencyCorrection;
+                }
+              }
+              
+            }
+            
+            // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
+            if(fFillJetConeHistograms){
+              if(deltaRTrackJet < 0.8){
+                fillerParticleDensityInJetCone[0] = deltaRTrackJet; // Axis 0: DeltaR between the track and the jet
+                fillerParticleDensityInJetCone[1] = jetPt;          // Axis 1: jet pT
+                fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
+                fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
+                fillerParticleDensityInJetCone[4] = 0;              // Axis 4: 0 is the index for signal cone
+                fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
+                fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
+              }
             }
             
             // If the track is close to a reflected jet axis, change the track eta-phi coordinates to a system where the reflected jet axis is at origin
@@ -855,12 +903,39 @@ void EECAnalyzer::RunAnalysis(){
                 selectedTrackPt[1].push_back(fTrackReader->GetTrackPt(iTrack));
                 selectedTrackSubevent[1].push_back(fTrackReader->GetTrackSubevent(iTrack));
               }
-            }
+              
+              // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
+              if(fFillJetConeHistograms){
+                if(deltaRTrackJet < 0.8){
+                  fillerParticleDensityInJetCone[0] = deltaRTrackJet; // Axis 0: DeltaR between the track and the jet
+                  fillerParticleDensityInJetCone[1] = jetPt;          // Axis 1: jet pT
+                  fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
+                  fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
+                  fillerParticleDensityInJetCone[4] = 1;              // Axis 4: 1 is the index for reflected cone
+                  fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
+                  fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
+                }
+              }
+            } // Search for track from reflected cone
             
           } // Track loop
           
+          // Fill the multiplicity histograms within the jet
+          if(fFillJetConeHistograms){
+            fillerMultiplicityInJetCone[2] = jetPt;      // Axis 2: Jet pT
+            fillerMultiplicityInJetCone[4] = centrality; // Axis 4: centrality
+            for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+              fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt]; // Axis 0: Uncorrected multiplicity
+              fillerMultiplicityInJetCone[1] = multiplicityInJetCone[iTrackPt];            // Axis 1: Tracking efficiency corrected multiplicity
+              fillerMultiplicityInJetCone[3] = trackPtBinsEEC[iTrackPt]+0.01;              // Axis 3: Track pT
+              fHistograms->fhParticleMultiplicityInJet->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);  // Fill the multiplicity within the jet cone histogram
+            }
+          }
+          
           // Calculate the energy-energy correlator within this jet
-          CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPtCorrected);
+          if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
+            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
+          }
           
         } // Fill energy-energy correltor histograms
         
@@ -1323,8 +1398,7 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fTrackReader->GetTrackCharge(iTrack) == 0) return false;  // Require that the track is charged
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcCharge);
   
-  // TODO: Subevent cut removed, add subevent as axis in relevent histograms
-  //if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
+  if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcSube);
   
   if(fTrackReader->GetTrackMCStatus(iTrack) != 1) return false;  // Require final state particles

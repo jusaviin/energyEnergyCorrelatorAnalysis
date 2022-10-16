@@ -103,7 +103,7 @@ private:
   bool fDrawEnergyEnergyCorrelatorsSubevents;           // Draw subevent decomposition of energy-energy correlators
   
   bool fDrawPairingType[EECHistograms::knPairingTypes];           // Select which pairing types to draw
-  bool fDrawSubeventType[EECHistogramManager::knSubeventTypes+1]; // Select which subevent types to draw
+  bool fDrawSubeventType[EECHistograms::knSubeventTypes+1]; // Select which subevent types to draw
   
   // ==============================================
   // ============== Drawing settings ==============

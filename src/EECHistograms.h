@@ -20,6 +20,8 @@ public:
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
   enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, knPairingTypes}; // Pair tracks from same jet or from reflected jet cone
+  enum enumSubeventTypes{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventTypes};
+  enum enumJetConeTypes{kSignalCone, kReflectedCone, knJetConeTypes};
   
   // Constructors and destructor
   EECHistograms(); // Default constructor
@@ -48,6 +50,9 @@ public:
   THnSparseF *fhInclusiveJet;      // Inclusive jet information. Axes: [jet pT][jet phi][jet eta][cent]
   THnSparseF *fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent][same/mixed]
   THnSparseF *fhTrackUncorrected;  // Track histogram for uncorrected tracks. Axes: [uc pT][uc phi][uc eta][cent][same/mixed]
+  THnSparseF *fhParticleDensityAroundJet;   // Particle density around the studied jets
+  THnSparseF *fhParticlePtDensityAroundJet; // pT weighted particle density around the studied jets
+  THnSparseF *fhParticleMultiplicityInJet;  // Multiplicity of particles within the studied jet cones
   THnSparseF *fhEnergyEnergyCorrelator;            // Histogram for energy-energy correlator. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorUncorrected; // Histogram for energy-energy correlator with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorJetPt;            // Histogram for energy-energy correlator with jet pT normalization. Axes: [dR][jetPt][trackPt][centrality]

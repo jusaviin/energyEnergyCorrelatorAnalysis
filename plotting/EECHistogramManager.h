@@ -26,11 +26,14 @@ public:
   // Indices for different track histogram categories
   enum enumTrackHistograms{kTrack, kUncorrectedTrack, knTrackCategories};
   
+  // Indices for different multiplicity within the jet cone histogram categories
+  enum enumMultiplicityInJetCone{kMultiplicityInJetCone, kMultiplicityInJetConeUncorrected, knMultiplicityInJetConeTypes};
+  
+  // Indices for different particle density types measured around the jet axis
+  enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, knParticleDensityAroundJetAxisTypes};
+  
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
-  
-  // Indices for different subevent types
-  enum enumSubeventTypes{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventTypes};
   
   // Dimensions for histogram arrays
   static const int kMaxCentralityBins = 5;       // Maximum allowed number of centrality bins
@@ -50,6 +53,14 @@ private:
   const char* fJetHistogramName = "inclusiveJet";
   const char* fJetAxisName = "Jet";
   
+  // Naming for multiplicity within the jet cone histograms
+  const char* fMultiplicityInJetsHistogramNames[knMultiplicityInJetConeTypes] = {"multiplicityInJetCone", "multiplicityInJetConeUncorrected"};
+  const char* fMultiplicityInJetsAxisNames[knMultiplicityInJetConeTypes] = {"Multiplicity within jet cone", "UC multiplicity within jet cone"};
+  
+  // Naming for particle density around the jet axis histograms
+  const char* fParticleDensityAroundJetsHistogramNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity"};
+  const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})"};
+  
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
   const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC/jet pT", "Uncorrected EEC", "Uncorrected EEC/jet pT"};
@@ -58,10 +69,13 @@ private:
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
   
   // Naming for subevent types
-  const char* fSubeventTypeName[knSubeventTypes] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
+  const char* fSubeventTypeName[EECHistograms::knSubeventTypes] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
   
   // Naming for pairing types
   const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","SignalReflectedConePair","ReflectedConePair"};
+  
+  // Naming for jet cone types
+  const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone"};
   
 public:
   
@@ -91,6 +105,12 @@ public:
   void SetLoadTracks(const bool loadOrNot);            // Setter for loading tracks
   void SetLoadTracksUncorrected(const bool loadOrNot); // Setter for loading uncorrected tracks
   void SetLoadAllTracks(const bool loadTracks, const bool loadUncorrected); // Setter for loading all track histograms
+  
+  // Setters for multiplicity and particle density around jets
+  void SetLoadMultiplicityInJets(const bool loadOrNot);          // Setter for loading track multiplicity within the jet cone
+  void SetLoadParticleDensityAroundJets(const bool loadOrNot);   // Setter for loading particle density histograms around the jet axis
+  void SetLoadParticlePtDensityAroundJets(const bool loadOrNot); // Setter for loading particle pT density histograms around the jet axis
+  void SetLoadAllParticleDensitiesAroundJets(const bool loadRegular, const bool loadPtWeighted); // Setter for loading all particle density histograms around the jet axis
   
   // Setters for energy-energy correlator histograms
   void SetLoadEnergyEnergyCorrelators(const bool loadOrNot);                 // Setter for loading energy-energy correlators
@@ -129,6 +149,12 @@ public:
   const char* GetJetHistogramName() const; // Getter for the jet histogram name
   const char* GetJetAxisName() const;      // Getter for name suitable for x-axis in a jet histogram
   
+  const char* GetMultiplicityInJetConeHistogramName(int iMultiplicityType) const; // Getter for multiplicity in jet cone histogram name
+  const char* GetMultiplicityInJetConeAxisName(int iMultiplicityType) const;      // Getter for multiplicity in jet cone axis name
+  
+  const char* GetParticleDensityAroundJetAxisHistogramName(int iParticleDensityType) const; // Getter for the particle density around jet axis histogram name
+  const char* GetParticleDensityAroundJetAxisAxisName(int iParticleDensityType) const; // Getter for the particle density around jet axis axis name
+  
   const char* GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const; // Getter for energy-energy correlator histogram name
   const char* GetEnergyEnergyCorrelatorAxisName(int iEnergyEnergyCorrelatorType) const;      // Getter for energy-energy correlator axis name
   
@@ -136,6 +162,8 @@ public:
   TString GetSubeventTypeSaveName(const int iSubeventType) const; // Getter for a well thought save name for subevent types
   
   const char* GetPairingTypeSaveName(const int iPairingType) const; // Getter for pairing type save names
+  
+  const char* GetJetConeTypeSaveName(const int iJetConeType) const; // Getter for jet cone type save name
   
   TString GetSystem() const;  // Getter for collision system
   
@@ -164,8 +192,12 @@ public:
   TH1D* GetHistogramTrackEta(const int iTrackType, const int iCentrality, const int iTrackPt) const;    // Track eta histograms
   TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
   
+  // Getters for multiplicity and particle density histograms within the jet cones
+  TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone) const; // Multiplicity within the jet cone
+  TH1D* GetHistogramParticleDensityAroundJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis) const; // Particle density around the jet cone
+  
   // Getters for energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = knSubeventTypes) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventTypes) const;  // Energy-energy correlator histograms
   
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
@@ -209,7 +241,9 @@ private:
   bool fLoadTracks[knTrackCategories];                     // Load the track histograms
   bool fLoad2DHistograms;                                  // Load also two-dimensional (eta,phi) histograms
   bool fLoadJetPtClosureHistograms;                        // Load the jet pT closure histograms
-  bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes]; // Load the energy-energy correlator histograms
+  bool fLoadMultiplicityInJetHistograms;                   // Load the multiplicity histograms within jet cone
+  bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
+  bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   
   // ==============================================
@@ -272,8 +306,12 @@ private:
   TH1D *fhTrackEta[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];    // Track eta histograms
   TH2D *fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1]; // 2D eta-phi histogram for track
   
+  // Histograms for multiplicity and particle density within the jet cones
+  TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes];
+  TH1D *fhParticleDensityAroundJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes];
+  
   // Histograms for energy-energy correlators
-  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][knSubeventTypes+1];
+  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventTypes+1];
   
   // Histograms for jet pT closure
   TH1D *fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1]; // Jet pT closure
@@ -295,6 +333,8 @@ private:
   void LoadMultiplicityHistograms(); // Loader for multiplicity histograms
   void LoadJetHistograms(); // Loader for jet histograms
   void LoadTrackHistograms(); // Loader for track histograms
+  void LoadMultiplicityInJetConeHistograms(); // Loader for multiplicity histograms within the jet cone
+  void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   
@@ -306,10 +346,12 @@ private:
   int BinIndexCheck(const int nBins, const int binIndex) const; // Check that given index is in defined range
   
   // Methods for histogram writing
-  void WriteJetHistograms();                    // Write the jet histograms to the file that is currently open
-  void WriteTrackHistograms();                  // Write the track histograms to the file that is currently open
-  void WriteEnergyEnergyCorrelatorHistograms(); // Write the energy-energy correlator histograms to the file that is currently open
-  void WriteClosureHistograms();                // Write the closure histograms to the file that is currently open
+  void WriteJetHistograms();                       // Write the jet histograms to the file that is currently open
+  void WriteTrackHistograms();                     // Write the track histograms to the file that is currently open
+  void WriteMultiplicityInJetConeHistograms();     // Write the multiplicity histograms within the jet cone
+  void WriteParticleDensityAroundJetsHistograms(); // Write the particle density histograms around the jet axes
+  void WriteEnergyEnergyCorrelatorHistograms();    // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteClosureHistograms();                   // Write the closure histograms to the file that is currently open
   
 };
 

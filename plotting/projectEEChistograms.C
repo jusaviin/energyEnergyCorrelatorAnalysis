@@ -11,7 +11,7 @@
  *   const char* outputFileName = If we are producing output file, name of the output file
  *   int histogramSelection = If > 0, select a preset group of histograms. Intended to be used for easier production of output files.
  */
-void projectEEChistograms(TString inputFileName = "veryCoolData.root", const char* outputFileName = "veryCoolData_processed.root", int histogramSelection = 255){
+void projectEEChistograms(TString inputFileName = "veryCoolData.root", const char* outputFileName = "veryCoolData_processed.root", int histogramSelection = 2047){
 
   // Print the file name to console
   cout << "Projecting histograms histograms from " << inputFileName.Data() << endl;
@@ -28,6 +28,9 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadJets = false;
   bool loadTracks = false;
   bool loadUncorrectedTracks = false;
+  bool loadMultiplicityInJet = false;
+  bool loadParticleDensityAroundJet = false;
+  bool loadParticlePtDensityAroundJet = false;
   bool loadEnergyEnergyCorrelators = true;
   bool loadEnergyEnergyCorrelatorsJetPt = false;
   bool loadEnergyEnergyCorrelatorsUncorrected = false;
@@ -41,23 +44,29 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 1 = Load jet histograms (to set: 2)
    *  Bit 2 = Load track histograms (to set: 4)
    *  Bit 3 = Load uncorrected track histograms (to set: 8)
-   *  Bit 4 = Load energy-energy correlator histograms (to set: 16)
-   *  Bit 5 = Load jet pT weighted energy-energy correlator histograms (to set: 32)
-   *  Bit 6 = Load uncorrected energy-energy correlator histograms (to set: 64)
-   *  Bit 7 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 128)
-   *  Bit 8 = Load jet pT closure histograms (to set: 256)
+   *  Bit 4 = Load multiplicity histograms within jets (to set: 16)
+   *  Bit 5 = Load particle density histograms around jet axes (to set: 32)
+   *  Bit 6 = Load particle pT density histograms around jet axes (to set: 64)
+   *  Bit 7 = Load energy-energy correlator histograms (to set: 128)
+   *  Bit 8 = Load jet pT weighted energy-energy correlator histograms (to set: 256)
+   *  Bit 9 = Load uncorrected energy-energy correlator histograms (to set: 512)
+   *  Bit 10 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 1024)
+   *  Bit 11 = Load jet pT closure histograms (to set: 2048)
    */
   if(histogramSelection > 0){
-    std::bitset<9> bitChecker(histogramSelection);
+    std::bitset<12> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);
     loadUncorrectedTracks = bitChecker.test(3);
-    loadEnergyEnergyCorrelators = bitChecker.test(4);
-    loadEnergyEnergyCorrelatorsJetPt = bitChecker.test(5);
-    loadEnergyEnergyCorrelatorsUncorrected = bitChecker.test(6);
-    loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(7);
-    loadJetPtClosure = bitChecker.test(8);
+    loadMultiplicityInJet = bitChecker.test(4);
+    loadParticleDensityAroundJet = bitChecker.test(5);
+    loadParticlePtDensityAroundJet = bitChecker.test(6);
+    loadEnergyEnergyCorrelators = bitChecker.test(7);
+    loadEnergyEnergyCorrelatorsJetPt = bitChecker.test(8);
+    loadEnergyEnergyCorrelatorsUncorrected = bitChecker.test(9);
+    loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(10);
+    loadJetPtClosure = bitChecker.test(11);
   }
   
   // ====================================================
@@ -143,6 +152,9 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadJetHistograms(loadJets);
   histograms->SetLoadTracks(loadTracks);
   histograms->SetLoadTracksUncorrected(loadUncorrectedTracks);
+  histograms->SetLoadMultiplicityInJets(loadMultiplicityInJet);
+  histograms->SetLoadParticleDensityAroundJets(loadParticleDensityAroundJet);
+  histograms->SetLoadParticlePtDensityAroundJets(loadParticlePtDensityAroundJet);
   histograms->SetLoadEnergyEnergyCorrelators(loadEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(loadEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(loadEnergyEnergyCorrelatorsUncorrected);

@@ -31,7 +31,7 @@ class EECAnalyzer{
   
 private:
   
-  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsUncorrected, kFillJetPtClosure, knFillTypes}; // Histograms to fill
+  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsUncorrected, kFillJetPtClosure, knFillTypes}; // Histograms to fill
   enum enumSubeventCuts{kSubeventZero,kSubeventNonZero,kSubeventAny,knSubeventCuts}; // Cuts for subevent index
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   
@@ -134,6 +134,7 @@ private:
   Bool_t fFillEventInformation;                   // Fill event information histograms
   Bool_t fFillJetHistograms;                      // Fill single and dijet histograms
   Bool_t fFillTrackHistograms;                    // Fill inclusive tracks and tracks in dijet events
+  Bool_t fFillJetConeHistograms;                  // Fill particle multiplicity and density histograms around the jet cone
   Bool_t fFillEnergyEnergyCorrelators;            // Fill energy-energy correlator histograms
   Bool_t fFillEnergyEnergyCorrelatorsUncorrected; // Fill uncorrected energy-energy correlator histograms
   Bool_t fFillJetPtClosure;                       // Fill jet pT closure histograms

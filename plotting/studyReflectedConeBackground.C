@@ -10,7 +10,8 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
@@ -212,7 +213,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[4] = false;
   
   // Index 5: Compare signal to combined reflected cone subtracted total distribution
-  drawComparisonType[5] = false;
+  drawComparisonType[5] = true;
   ratioIndex[5] = std::make_pair(kSignalEEC, kSubtractCombined);
   legendTextEnergyEnergyCorrelator[5] = "Signal pairs";
   legendTextReflectedCone[5] = "BGsub";
@@ -238,7 +239,7 @@ void studyReflectedConeBackground(){
   double legendX1MinBias[nMinBiasRatioTypes];
   
   // Index 0: Compare fake+fake distribution to corresponding minimum bias distributions
-  drawMinBiasComparisonType[0] = true;
+  drawMinBiasComparisonType[0] = false;
   minBiasRatioIndex[0] = std::make_pair(kFakeFakeEEC, kPureMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
   minBiasRatioText[0] = "MinBias/FakeFake";
@@ -343,12 +344,12 @@ void studyReflectedConeBackground(){
           // ================================================= //
           
           // Histogram with all pair combinations. Normalize it to one
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::knSubeventTypes);
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventTypes);
           normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->Integral("width");
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->Scale(1/normalizationFactor);
           
           // Histogram with only signal. Normalize the sum of signal and background to total.
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kPythiaPythia);
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaPythia);
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalEEC]->Scale(1/normalizationFactor);
           
           // Calculate the signal to total ratio
@@ -356,9 +357,9 @@ void studyReflectedConeBackground(){
           hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalEEC]);
           
           // Histograms with background contributions. Normalize to the total number of pairs.
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kPythiaHydjet);
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaHydjet);
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kBackgroundEEC] = (TH1D *) hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC]->Clone(Form("energyEnergyCorrelatorBackground%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt));
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kHydjetHydjet);
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC] = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kHydjetHydjet);
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kBackgroundEEC]->Add(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC]);
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC]->Scale(1/normalizationFactor);
           hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC]->Scale(1/normalizationFactor);
@@ -368,10 +369,10 @@ void studyReflectedConeBackground(){
           signalFaketoFakeFakeRatio[kNormalizeToGeneratorLevel] = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC]->Integral("width") / hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC]->Integral("width");
           
           // The jet cone + reflected cone histogram.
-          helperHistogram = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistogramManager::knSubeventTypes);
+          helperHistogram = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventTypes);
           
           // The only reflected cone histogram.
-          helperHistogram2 = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistogramManager::knSubeventTypes);
+          helperHistogram2 = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::knSubeventTypes);
           
           // Calculate the signal+fake to fake+fake ratio for the reflected cone histograms
           signalFaketoFakeFakeRatio[kNormalizeToReflectedCone] = helperHistogram->Integral("width") / helperHistogram2->Integral("width");
@@ -432,7 +433,7 @@ void studyReflectedConeBackground(){
           
           for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias++){
             for(int iNormalization = 0; iNormalization < knNormalizationStyles; iNormalization++){
-              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias] = (TH1D*) histograms[kMinBiasHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtMinBias, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::knSubeventTypes)->Clone(Form("pureMinBiasHistogram%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization));
+              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias] = (TH1D*) histograms[kMinBiasHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtMinBias, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventTypes)->Clone(Form("pureMinBiasHistogram%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization));
               
               // Normalize the minimum bias histograms to match the signal+fake to fake+fake ratio with different estimators
               normalizationFactor = hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone]->Integral("width") / (hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias]->Integral("width") * signalFaketoFakeFakeRatio[iNormalization]);

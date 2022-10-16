@@ -54,8 +54,8 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   }
   
   // By default, only draw the energy-energy correlators without subevent selection
-  fDrawSubeventType[EECHistogramManager::knSubeventTypes] = true;
-  for(int iSubevent = 0; iSubevent < EECHistogramManager::knSubeventTypes; iSubevent++){
+  fDrawSubeventType[EECHistograms::knSubeventTypes] = true;
+  for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
     fDrawSubeventType[iSubevent] = false;
   }
 
@@ -423,7 +423,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
         if(fDrawIndividualEnergyEnergyCorrelators){
           
           // Loop over different subevent combinations
-          for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
+          for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventTypes; iSubevent++){
             
             // Only draw selected subevent combinations
             if(!fDrawSubeventType[iSubevent]) continue;
@@ -456,7 +456,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 legend = new TLegend(0.62,0.75,0.82,0.9);
                 legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
                 legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-                if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+                if(iSubevent < EECHistograms::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
                 legend->AddEntry((TObject*) 0, centralityString.Data(), "");
                 legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
                 legend->Draw();
@@ -476,7 +476,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
           
           // Loop over different subevent combinations
-          for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
+          for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventTypes; iSubevent++){
             
             // Only draw selected subevent combinations
             if(!fDrawSubeventType[iSubevent]) continue;
@@ -488,7 +488,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             legend = new TLegend(0.62,0.35,0.82,0.9);
             legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
             legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-            if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+            if(iSubevent < EECHistograms::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
             legend->AddEntry((TObject*) 0, centralityString.Data(), "");
             legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
             
@@ -537,7 +537,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             compactTrackPtString.ReplaceAll(".","v");
             
             // Loop over different subevent combinations
-            for(int iSubevent = 0; iSubevent <= EECHistogramManager::knSubeventTypes; iSubevent++){
+            for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventTypes; iSubevent++){
               
               // Only draw selected subevent combinations
               if(!fDrawSubeventType[iSubevent]) continue;
@@ -549,7 +549,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend = new TLegend(0.62,0.35,0.82,0.9);
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
               legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-              if(iSubevent < EECHistogramManager::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+              if(iSubevent < EECHistograms::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
               legend->AddEntry((TObject*) 0, centralityString.Data(),"");
               legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               
@@ -630,7 +630,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
               
               // Draw the different subevent contributions to the same canvas
-              for(int iSubevent = 0; iSubevent < EECHistogramManager::knSubeventTypes; iSubevent++){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(normalizationFactor);
                 drawnHistogram->SetLineColor(color[iSubevent+1]);
@@ -800,22 +800,22 @@ void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSame
 
 // Setter for drawing all pairing combinations
 void EECDrawer::SetDrawAllCombinations(const bool drawOrNot){
-  fDrawSubeventType[EECHistogramManager::knSubeventTypes] = drawOrNot;
+  fDrawSubeventType[EECHistograms::knSubeventTypes] = drawOrNot;
 }
 
 // Setter for drawing Pythia+Pythia correlations for simulation
 void EECDrawer::SetDrawSignalOnly(const bool drawOrNot){
-  fDrawSubeventType[EECHistogramManager::kPythiaPythia] = drawOrNot;
+  fDrawSubeventType[EECHistograms::kPythiaPythia] = drawOrNot;
 }
 
 // Setter for drawing Pythia+Hydjet correlations for simulation
 void EECDrawer::SetDrawSignalFake(const bool drawOrNot){
-  fDrawSubeventType[EECHistogramManager::kPythiaHydjet] = drawOrNot;
+  fDrawSubeventType[EECHistograms::kPythiaHydjet] = drawOrNot;
 }
 
 // Setter for drawing Hydjet+Hydjet correlations for simulation
 void EECDrawer::SetDrawFakeFake(const bool drawOrNot){
-  fDrawSubeventType[EECHistogramManager::kHydjetHydjet] = drawOrNot;
+  fDrawSubeventType[EECHistograms::kHydjetHydjet] = drawOrNot;
 }
 
 // Setter for drawing all subevent types for energy-energy correlators

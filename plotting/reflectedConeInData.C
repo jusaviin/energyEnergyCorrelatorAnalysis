@@ -10,8 +10,9 @@ void reflectedConeInData(){
   enum enumDataType{kSignalEvent, kMinimumBias, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
   // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root
+  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
@@ -90,7 +91,7 @@ void reflectedConeInData(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
   int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kSignalEvent], nJetPtBinsEEC[kMinimumBias]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 0;
   int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -137,9 +138,7 @@ void reflectedConeInData(){
   enum enumReflectedConeType{kPairSignalReflectedCone, kPairOnlyReflectedCone, kCombineReflectedCone, kSubtractSignalReflectedCone, kSubtractCombined, knReflectedConeTypes};
   enum enumMinBiasHistogramStyle{kPureMinBias, kReflectedConeCombinedMinBias, kMinBiasBackgroundSubtracted, knMinBiasHistograms};
   enum enumNormalizationStyle{kNormalizeToReflectedCone, kNormalizeToTotal, knNormalizationStyles};
-  
-  TString matchString[knNormalizationStyles] = {"Ref cone match", "Gen level match"};
-  
+    
   // =========================================================================================================================== //
   // Select which ratios should be made from the energy-energy correlators and reflected cone histograms and their configuration //
   // =========================================================================================================================== //
@@ -154,7 +153,7 @@ void reflectedConeInData(){
   
   // Index 0: Compare signal+fake to corresponding reflected cone distribution
   drawComparisonType[0] = true;
-  addTotalDistribution[0] = true;
+  addTotalDistribution[0] = false;
   ratioIndex[0] = kPairSignalReflectedCone;
   legendTextReflectedCone[0] = "Jet+ref";
   yRange[0] = std::make_pair(0.0005, 2);

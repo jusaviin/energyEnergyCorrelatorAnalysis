@@ -11,13 +11,14 @@ MatchJets 1 # 1 = Match generator level jets with reconstructed jets, 0 = Do not
 UseJetTrigger 0   # 0 = No trigger, 1 = Use jet trigger
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 31 # Bit 0 = Event information histograms            (to set: 1)
-                    # Bit 1 = Jet histograms                         (to set: 2)
-                    # Bit 2 = Track histograms                       (to set: 4)
-                    # Bit 3 = Energy-energy correlators              (to set: 8)
-                    # Bit 4 = Uncorrected energy-energy correlators  (to set: 16)
-                    # Bit 5 = Jet pT closure histograms              (to set: 32)
-                    # Examples: All = 63, All but jet pT closure = 31
+FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
+                    # Bit 1 = Jet histograms                                (to set: 2)
+                    # Bit 2 = Track histograms                              (to set: 4)
+                    # Bit 3 = Multiplicity and particle density within jets (to set: 8)
+                    # Bit 4 = Energy-energy correlators                     (to set: 16)
+                    # Bit 5 = Uncorrected energy-energy correlators         (to set: 32)
+                    # Bit 6 = Jet pT closure histograms                     (to set: 64)
+                    # Examples: All = 127, All but jet pT closure = 63
 
 # Cuts for dijets
 JetType 1                  # 0 = Calo jets, 1 = PF jets

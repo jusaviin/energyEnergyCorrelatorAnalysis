@@ -11,20 +11,35 @@ fi
 INPUT=$1    # Name of the input file
 OUTPUT=$2   # Name of the output file
 
-# Project event information, track, and jet histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",15)'
+# Project event information and jet histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",3)'
 
-# Project regular energy-energy correlator histograms
+# Project track histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",4)'
+
+# Project uncorrected track histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8)'
+
+# Project multiplicity histograms within the jet cone
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",16)'
 
-# Project jet pT weighted energy-energy correlator histograms
+# Preject the track density around the jet axis histograms
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",32)'
 
-# Project uncorrected energy-energy correlator histograms
+# Preject the track pT density around the jet axis histograms
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",64)'
 
-# Project uncorrected jet pT weighted energy-energy correlator histograms
+# Project regular energy-energy correlator histograms
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'
 
+# Project jet pT weighted energy-energy correlator histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
+
+# Project uncorrected energy-energy correlator histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
+
+# Project uncorrected jet pT weighted energy-energy correlator histograms
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
+
 # Project jet pT closure histograms
-# root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
+# root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'

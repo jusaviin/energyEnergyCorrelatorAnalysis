@@ -21,6 +21,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadJets(false),
   fLoad2DHistograms(false),
   fLoadJetPtClosureHistograms(false),
+  fLoadMultiplicityInJetHistograms(false),
   fJetFlavor(0),
   fFirstLoadedCentralityBin(0),
   fLastLoadedCentralityBin(1),
@@ -39,6 +40,11 @@ EECHistogramManager::EECHistogramManager() :
   // Do not draw anything by default
   for(int iTrackType = 0; iTrackType < knTrackCategories; iTrackType++){
     fLoadTracks[iTrackType] = false;
+  }
+  
+  // Do not draw the particle density histograms around the jet axis by by default
+  for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    fLoadParticleDensityAroundJetsHistograms[iParticleDensityType] = false;
   }
   
   // Do not draw energy-energy correlator histograms for default
@@ -108,12 +114,26 @@ EECHistogramManager::EECHistogramManager() :
       
     } // Track category loop
     
+    // Multiplicity and particle density histograms within the jet cone
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
+        for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
+          fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType] = NULL;
+        } // Multiplicity type loop
+        for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+          for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+            fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType] = NULL;
+          } // Particle density type loop
+        } // Jet cone type loop
+      } // Track pT bins for energy-energy correlators
+    } // Jet pT bins for energy-energy correlators
+    
     // Energy-energy correlator histograms
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
-            for(int iSubevent = 0; iSubevent < knSubeventTypes+1; iSubevent++){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
               fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = NULL;
             } // Subevent loop
           } // Pairing type loop (same jet/reflected cone)
@@ -226,6 +246,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadJets(in.fLoadJets),
   fLoad2DHistograms(in.fLoad2DHistograms),
   fLoadJetPtClosureHistograms(in.fLoadJetPtClosureHistograms),
+  fLoadMultiplicityInJetHistograms(in.fLoadMultiplicityInJetHistograms),
   fJetFlavor(in.fJetFlavor),
   fFirstLoadedCentralityBin(in.fFirstLoadedCentralityBin),
   fLastLoadedCentralityBin(in.fLastLoadedCentralityBin),
@@ -249,7 +270,12 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     fLoadTracks[iTrackType] = in.fLoadTracks[iTrackType];
   }
   
-  // Copy energy-energy correlator histograms
+  // Copy loading particle density histograms
+  for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    fLoadParticleDensityAroundJetsHistograms[iParticleDensityType] = in.fLoadParticleDensityAroundJetsHistograms[iParticleDensityType];
+  }
+  
+  // Copy loading energy-energy correlator histograms
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType] = in.fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType];
   }
@@ -308,12 +334,26 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
       
     } // Track category loop
     
+    // Multiplicity and particle density histograms within the jet cone
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
+        for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
+          fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType] = in.fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType];
+        } // Multiplicity type loop
+        for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+          for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+            fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType] = in.fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType];
+          } // Particle density type loop
+        } // Jet cone type loop
+      } // Track pT bins for energy-energy correlators
+    } // Jet pT bins for energy-energy correlators
+    
     // Energy-energy correlator histograms
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
-            for(int iSubevent = 0; iSubevent < knSubeventTypes+1; iSubevent++){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
               fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = in.fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
             } // Subevent loop
           } // Pairing type loop
@@ -366,6 +406,12 @@ void EECHistogramManager::LoadHistograms(){
   
   // Load track histograms
   LoadTrackHistograms();
+  
+  // Load multiplicity within the jet cone histograms
+  LoadMultiplicityInJetConeHistograms();
+  
+  // Load the particle density around the jet axis histograms
+  LoadParticleDensityHistograms();
   
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
@@ -548,6 +594,242 @@ void EECHistogramManager::LoadTrackHistograms(){
 }
 
 /*
+ * Loader for multiplicity histograms within the jet cone
+ *
+ * THnSparse for multiplicity within the jet cone:
+ *
+ *   Histogram name: multiplicityInJets
+ *
+ *     Axis index       Content of axis               Note
+ * -----------------------------------------------------------------
+ *       Axis 0           Multiplicity
+ *       Axis 1      Uncorrected multiplicity
+ *       Axis 2              Jet pT
+ *       Axis 3           Track pT cut
+ *       Axis 4            Centrality
+ */
+void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
+  
+  if(!fLoadMultiplicityInJetHistograms) return; // Do not load the histograms if they are not selected for loading
+  
+  // Define arrays to help find the histograms
+  int axisIndices[3] = {0};
+  int lowLimits[3] = {0};
+  int highLimits[3] = {0};
+  
+  // Define helper variables
+  int duplicateRemover = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  
+  // Loop over centrality bins
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+    
+    // Select the centrality bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
+    
+    // Setup axes with restrictions (4 = centrality)
+    axisIndices[0] = 4; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+    
+    // Loop over track pT bins
+    for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+      
+      // Select the track pT bin indices. Each bin has the total multiplicity above the lower threshold
+      lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+      higherTrackPtBin = fTrackPtIndicesEEC[iTrackPt+1]+duplicateRemover;
+      
+      // Add restriction for track pT axis (3 = track pT)
+      axisIndices[1] = 3; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+      
+      // Read the multiplicity histograms within the jet cone without jet pT restrictions
+      fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][kMultiplicityInJetCone] = FindHistogram(fInputFile, "multiplicityInJets", 1, 2, axisIndices, lowLimits, highLimits);
+      fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][kMultiplicityInJetConeUncorrected] = FindHistogram(fInputFile, "multiplicityInJets", 0, 2, axisIndices, lowLimits, highLimits);
+      
+      // Loop over jet pT bins
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        
+        // Select the jet pT bin indices
+        lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+        higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+        
+        // Add restriction for jet pT axis (2 = jet pT)
+        axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+        
+        // Read the multiplicity histograms within the jet cone
+        fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][kMultiplicityInJetCone] = FindHistogram(fInputFile, "multiplicityInJets", 1, 3, axisIndices, lowLimits, highLimits);
+        fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][kMultiplicityInJetConeUncorrected] = FindHistogram(fInputFile, "multiplicityInJets", 0, 3, axisIndices, lowLimits, highLimits);
+        
+        
+      } // Jet pT loop
+    } // Track pT loop
+  } // Centrality loop
+}
+
+/*
+ * Loader for particle density histograms around the jet cone
+ *
+ * THnSparse for particle densities around the jet cone:
+ *
+ *   Histogram name: particleDensity/particlePtDensity
+ *
+ *     Axis index       Content of axis               Note
+ * -----------------------------------------------------------------
+ *       Axis 0              DeltaR
+ *       Axis 1              Jet pT
+ *       Axis 2           Track pT cut
+ *       Axis 3            Centrality
+ *       Axis 4          Jet cone type       Signal cone/reflected cone
+ */
+void EECHistogramManager::LoadParticleDensityHistograms(){
+    
+  // Define arrays to help find the histograms
+  int axisIndices[4] = {0};
+  int lowLimits[4] = {0};
+  int highLimits[4] = {0};
+  
+  // Define helper variables
+  int duplicateRemover = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  THnSparseD *histogramArray;
+  
+  // Variables needed to calculate the density from particle number
+  double binLowBorder, binHighBorder;
+  double binLowArea, binHighArea, binArea;
+  double newBinContent, newBinError;
+  
+  // Loop over particle density types
+  for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    
+    // Only load the selected particle density types
+    if(!fLoadParticleDensityAroundJetsHistograms[iParticleDensityType]) continue;
+    
+    // For track pT bins, we are looking at all the tracks above the lower threshold
+    histogramArray = (THnSparseD*) fInputFile->Get(fParticleDensityAroundJetsHistogramNames[iParticleDensityType]);
+    higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+    
+    // Loop over pairing types
+    for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+      
+      // Setup axes with restrictions, (4 = jet cone type)
+      axisIndices[0] = 4; lowLimits[0] = iJetConeType+1; highLimits[0] = iJetConeType+1;
+      
+      // Loop over centrality bins
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+        // Select the centrality bin indices
+        lowerCentralityBin = fCentralityBinIndices[iCentrality];
+        higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
+        
+        // Setup axes with restrictions, (3 = centrality)
+        axisIndices[1] = 3; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin;
+        
+        // Loop over track pT bins
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Select the track pT bin indices. Notice that we do not change the higher bin index
+          lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+          
+          // Add restriction for track pT axis (2 = track pT)
+          axisIndices[2] = 2; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
+          
+          // Read the particle density histograms without jet pT restrictions
+          fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 3, axisIndices, lowLimits, highLimits);
+          
+          // After the histograms are read, normalize each bin to the bin area to make the contents particle density
+          for(int iBin = 1; iBin <= fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->GetNbinsX(); iBin++){
+            
+            // Calculate the bin area
+            binLowBorder = fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->GetXaxis()->GetBinLowEdge(iBin);
+            binHighBorder = fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->GetXaxis()->GetBinUpEdge(iBin);
+            binLowArea = TMath::Pi() * binLowBorder * binLowBorder;
+            binHighArea = TMath::Pi() * binHighBorder * binHighBorder;
+            binArea = binHighArea - binLowArea;
+            
+            // Calculate the new bin content and error for particle density
+            newBinContent = fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->GetBinContent(iBin) / binArea;
+            newBinError = fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->GetBinError(iBin) / binArea;
+            fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->SetBinContent(iBin, newBinContent);
+            fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->SetBinError(iBin, newBinError);
+            
+          } // Bin loop for normalizing particle densities
+          
+          // TODO: Maybe a good idea to have the different subevents here
+          //        // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
+          //        if(fSystemAndEnergy.Contains("PbPb MC")){
+          //          for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+          //
+          //            // Add a restriction for the subevent axis (5 = subevent)
+          //            axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+          //
+          //            // Read the energy-energy correlator histograms
+          //            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
+          //
+          //          } // Subevent loop
+          //        } // PbPb MC requirement
+          
+          // Loop over jet pT bins
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Select the jet pT bin indices
+            lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+            higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+            
+            // Add restriction for jet pT axis (1 = jet pT)
+            axisIndices[3] = 1; lowLimits[3] = lowerJetPtBin; highLimits[3] = higherJetPtBin;
+            
+            // Read the particle density histograms
+            fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 4, axisIndices, lowLimits, highLimits);
+            
+            // After the histograms are read, normalize each bin to the bin area to make the contents particle density
+            for(int iBin = 1; iBin <= fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->GetNbinsX(); iBin++){
+              
+              // Calculate the bin area
+              binLowBorder = fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->GetXaxis()->GetBinLowEdge(iBin);
+              binHighBorder = fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->GetXaxis()->GetBinUpEdge(iBin);
+              binLowArea = TMath::Pi() * binLowBorder * binLowBorder;
+              binHighArea = TMath::Pi() * binHighBorder * binHighBorder;
+              binArea = binHighArea - binLowArea;
+              
+              // Calculate the new bin content and error for particle density
+              newBinContent = fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->GetBinContent(iBin) / binArea;
+              newBinError = fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->GetBinError(iBin) / binArea;
+              fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->SetBinContent(iBin, newBinContent);
+              fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->SetBinError(iBin, newBinError);
+              
+            } // Bin loop for normalizing paritcle densities
+            
+            // TODO: Maybe a good idea to have different subevents here
+            //          // For PbPb MC, loop over subevent types
+            //          if(fSystemAndEnergy.Contains("PbPb MC")){
+            //            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+            //
+            //              // Add a restriction for the subevent axis (5 = subevent)
+            //              axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
+            //
+            //              // Read the energy-energy correlator histograms
+            //              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iJetConeType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 5, axisIndices, lowLimits, highLimits);
+            //
+            //            } // Subevent loop
+            //          } // PbPb MC requirement
+            
+          } // Jet pT loop
+        } // Track pT loop
+      } // Centrality loop
+    } // Jet cone type loop (signal cone/reflected cone)
+  } // Particle density type loop (regular/pT weighted)
+}
+
+/*
  * Loader for energy-energy correlator histograms
  *
  * THnSparse for energy-energy correlators:
@@ -617,11 +899,11 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           axisIndices[2] = 2; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
           
           // Read the energy-energy correlator histograms without jet pT restrictions
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
           
           // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
           if(fSystemAndEnergy.Contains("PbPb MC")){
-            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
               
               // Add a restriction for the subevent axis (5 = subevent)
               axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
@@ -643,11 +925,11 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             axisIndices[3] = 1; lowLimits[3] = lowerJetPtBin; highLimits[3] = higherJetPtBin;
             
             // Read the energy-energy correlator histograms
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventTypes] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
-              for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
                 
                 // Add a restriction for the subevent axis (5 = subevent)
                 axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
@@ -962,6 +1244,12 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   // Write the track histograms to the output file
   WriteTrackHistograms();
   
+  // Write the multiplicity histograms within the jet cone to the output file
+  WriteMultiplicityInJetConeHistograms();
+  
+  // Write the particle density histograms around the jet axis to the output file
+  WriteParticleDensityAroundJetsHistograms();
+  
   // Write the energy-energy correlator histograms to the output file
   WriteEnergyEnergyCorrelatorHistograms();
   
@@ -1084,6 +1372,126 @@ void EECHistogramManager::WriteTrackHistograms(){
 }
 
 /*
+ * Write the multiplicity histograms within the jet cone to the file that is currently open
+ */
+void EECHistogramManager::WriteMultiplicityInJetConeHistograms(){
+  
+  // Helper variable for histogram naming
+  char histogramNamer[200];
+  
+  // Only write the multiplicity within jet cone histograms if they are previously loaded
+  if(fLoadMultiplicityInJetHistograms){
+    
+    for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
+      
+      // Create a directory for the histograms if it does not already exist
+      if(!gDirectory->GetDirectory(fMultiplicityInJetsHistogramNames[iMultiplicityType])) gDirectory->mkdir(fMultiplicityInJetsHistogramNames[iMultiplicityType]);
+      gDirectory->cd(fMultiplicityInJetsHistogramNames[iMultiplicityType]);
+      
+      // Loop over centrality
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+        // Loop over track pT
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Write histograms without jet pT binning
+          sprintf(histogramNamer,"%s_C%dT%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt);
+          if(fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType]) fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType]->Write(histogramNamer, TObject::kOverwrite);
+          
+          // Loop over jet pT
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Write the energy-energy correlator histograms
+            sprintf(histogramNamer,"%s_C%dT%dJ%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt);
+            if(fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]) fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]->Write(histogramNamer, TObject::kOverwrite);
+            
+            
+          } // Loop over jet pT bins
+        } // Loop over track pT bins
+      } // Loop over centrality bins
+      
+      // Return back to main directory
+      gDirectory->cd("../");
+    } // Multiplicity type loop (regular/uncorrected)
+    
+  } // Check the multiplicity histograms are loaded
+  
+}
+
+/*
+ * Write the particle density histograms around the jet axes to the file that is currently open
+ */
+void EECHistogramManager::WriteParticleDensityAroundJetsHistograms(){
+  
+  // Helper variable for histogram naming
+  char histogramNamer[200];
+  
+  // Loop over particle density types
+  for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    
+    // Only write the histograms that have been loaded
+    if(!fLoadParticleDensityAroundJetsHistograms[iParticleDensityType]) continue;
+    
+    // Create a directory for the histograms if it does not already exist
+    if(!gDirectory->GetDirectory(fParticleDensityAroundJetsHistogramNames[iParticleDensityType])) gDirectory->mkdir(fParticleDensityAroundJetsHistogramNames[iParticleDensityType]);
+    gDirectory->cd(fParticleDensityAroundJetsHistogramNames[iParticleDensityType]);
+      
+    // Loop over jet cone type
+    for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+      
+      // Loop over centrality
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+        // Loop over track pT
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Write histograms without jet pT binning
+          sprintf(histogramNamer,"%s%s_C%dT%d", fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fJetConeTypeSaveName[iJetConeType], iCentrality, iTrackPt);
+          if(fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]) fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType]->Write(histogramNamer, TObject::kOverwrite);
+          
+          //          // For PbPb MC, write histograms without jet pT and with subevent type binning
+          //          if(fSystemAndEnergy.Contains("PbPb MC")){
+          //            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+          //
+          //              // Write the energy-energy correlator histograms with subevent binning
+          //              sprintf(histogramNamer,"%s%s_C%dT%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
+          //              if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+          //
+          //            } // Subevent type loop
+          //          } // Data is PbPb MC
+          
+          // Loop over jet pT
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Write the energy-energy correlator histograms
+            sprintf(histogramNamer,"%s%s_C%dT%dJ%d", fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fJetConeTypeSaveName[iJetConeType], iCentrality, iTrackPt, iJetPt);
+            if(fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]) fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType]->Write(histogramNamer, TObject::kOverwrite);
+            
+            // TODO: Might be a good idea to add these at some point
+            //            // For PbPb MC, loop over subevent types
+            //            if(fSystemAndEnergy.Contains("PbPb MC")){
+            //              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+            //
+            //                // Write the energy-energy correlator histograms with subevent binning
+            //                sprintf(histogramNamer,"%s%s_C%dT%dJ%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
+            //                if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+            //
+            //              } // Subevent type loop
+            //            } // Data is PbPb MC
+            
+          } // Loop over jet pT bins
+        } // Loop over track pT bins
+      } // Loop over centrality bins
+    }  // Loop over jet cone types
+    
+    // Return back to main directory
+    gDirectory->cd("../");
+    
+  } // Loop over different energy-energy correlator types
+  
+}
+
+/*
  * Write the energy-energy correlator histograms to the file that is currently open
  */
 void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
@@ -1091,7 +1499,7 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
   // Helper variable for histogram naming
   char histogramNamer[200];
   
-  // Loop over energy-energy correaltor histogram types
+  // Loop over energy-energy correlator histogram types
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     
     // Only write the histograms that have been loaded
@@ -1112,11 +1520,11 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
           
           // Write histograms without jet pT binning
           sprintf(histogramNamer,"%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
-          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
+          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
           
           // For PbPb MC, write histograms without jet pT and with subevent type binning
           if(fSystemAndEnergy.Contains("PbPb MC")){
-            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
               
               // Write the energy-energy correlator histograms with subevent binning
               sprintf(histogramNamer,"%s%s_C%dT%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
@@ -1130,11 +1538,11 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
             
             // Write the energy-energy correlator histograms
             sprintf(histogramNamer,"%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
-            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
+            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventTypes]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
-              for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
                 
                 // Write the energy-energy correlator histograms with subevent binning
                 sprintf(histogramNamer,"%s%s_C%dT%dJ%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
@@ -1163,8 +1571,8 @@ void EECHistogramManager::WriteClosureHistograms(){
   // Helper variable for histogram naming
   char histogramNamer[200];
   
+  // Only write the jet pT closure histograms if they are previously loaded
   if(fLoadJetPtClosureHistograms){
-    
     
     // Create a directory for the histograms if it does not already exist
     sprintf(histogramNamer,"jetPtClosure_%s",fJetHistogramName);
@@ -1312,6 +1720,86 @@ void EECHistogramManager::LoadProcessedHistograms(){
       } // Centrality loop
   } // Track category loop
   
+  // Load the multiplicity histograms within the jet cone
+  if(fLoadMultiplicityInJetHistograms){
+    for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Load the histograms without jet pT binning
+          sprintf(histogramNamer,"%s/%s_C%dT%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt);
+          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType] = (TH1D*) fInputFile->Get(histogramNamer);
+          
+          // Loop over jet pT
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Make sure that jet pT integrated histogram is not overwritten by null
+            if(fLastLoadedJetPtBinEEC >= fnJetPtBinsEEC) continue;
+            
+            // Load the multiplicity within the jet cone histograms
+            sprintf(histogramNamer,"%s/%s_C%dT%dJ%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt);
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]  = (TH1D*) fInputFile->Get(histogramNamer);
+            
+          } // Jet pT loop
+        } // Track pT loop
+      } // Centrality loop
+    } // Multiplicity type loop
+  }
+  
+  // Load the particle density around the jet axis histograms
+  for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    
+    // Only load the selected types of histograms
+    if(!fLoadParticleDensityAroundJetsHistograms[iParticleDensityType]) continue;
+    
+    for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Load the histograms without jet pT binning
+          sprintf(histogramNamer,"%s/%s%s_C%dT%d", fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fJetConeTypeSaveName[iJetConeType], iCentrality, iTrackPt);
+          fhParticleDensityAroundJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType] = (TH1D*) fInputFile->Get(histogramNamer);
+          
+          // TODO: This might be good to add in some point
+//          // For PbPb MC, load histograms without jet pT and with subevent type binning
+//          if(fSystemAndEnergy.Contains("PbPb MC")){
+//            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+//
+//              // Write the energy-energy correlator histograms with subevent binning
+//              sprintf(histogramNamer,"%s/%s%s_C%dT%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
+//              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+//
+//            } // Subevent type loop
+//          } // Data is PbPb MC
+          
+          // Loop over jet pT
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Make sure that jet pT integrated histogram is not overwritten by null
+            if(fLastLoadedJetPtBinEEC >= fnJetPtBinsEEC) continue;
+            
+            // Load the energy-energy correlator histograms
+            sprintf(histogramNamer,"%s/%s%s_C%dT%dJ%d", fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fParticleDensityAroundJetsHistogramNames[iParticleDensityType], fJetConeTypeSaveName[iJetConeType], iCentrality, iTrackPt, iJetPt);
+            fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType] = (TH1D*) fInputFile->Get(histogramNamer);
+            
+            // TODO: This might be good to add at some point
+//            // For PbPb MC, loop over subevent types
+//            if(fSystemAndEnergy.Contains("PbPb MC")){
+//              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+//
+//                // Write the energy-energy correlator histograms with subevent binning
+//                sprintf(histogramNamer,"%s/%s%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
+//                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+//
+//              } // Subevent type loop
+//            } // Data is PbPb MC
+            
+          } // Jet pT loop
+        } // Track pT loop
+      } // Centrality loop
+    } // Pairing type loop
+  } // Particle density type loop
+  
   // Load the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     
@@ -1324,11 +1812,11 @@ void EECHistogramManager::LoadProcessedHistograms(){
           
           // Load the histograms without jet pT binning
           sprintf(histogramNamer,"%s/%s%s_C%dT%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
           
           // For PbPb MC, load histograms without jet pT and with subevent type binning
           if(fSystemAndEnergy.Contains("PbPb MC")){
-            for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
               
               // Write the energy-energy correlator histograms with subevent binning
               sprintf(histogramNamer,"%s/%s%s_C%dT%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
@@ -1345,11 +1833,11 @@ void EECHistogramManager::LoadProcessedHistograms(){
             
             // Load the energy-energy correlator histograms
             sprintf(histogramNamer,"%s/%s%s_C%dT%dJ%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
-              for(int iSubevent = 0; iSubevent < knSubeventTypes; iSubevent++){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
                 
                 // Write the energy-energy correlator histograms with subevent binning
                 sprintf(histogramNamer,"%s/%s%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
@@ -1362,7 +1850,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
         } // Track pT loop
       } // Centrality loop
     } // Pairing type loop
-  } // Load energy-energy correlator histograms
+  } // Energy-energy correlator type loop
   
   // Load the jet pT closure histograms from a processed file
   if(fLoadJetPtClosureHistograms){
@@ -1544,6 +2032,28 @@ void EECHistogramManager::SetLoadAllTracks(const bool loadTracks, const bool loa
   SetLoadTracksUncorrected(loadUncorrected);
 }
 
+// Setter for loading track multiplicity within the jet cone
+void EECHistogramManager::SetLoadMultiplicityInJets(const bool loadOrNot){
+  fLoadMultiplicityInJetHistograms = loadOrNot;
+}
+
+// Setter for loading particle density histograms around the jet axis
+void EECHistogramManager::SetLoadParticleDensityAroundJets(const bool loadOrNot){
+  fLoadParticleDensityAroundJetsHistograms[kParticleDensityAroundJetAxis] = loadOrNot;
+}
+
+// Setter for loading particle pT density histograms around the jet axis
+void EECHistogramManager::SetLoadParticlePtDensityAroundJets(const bool loadOrNot){
+  fLoadParticleDensityAroundJetsHistograms[kParticlePtDensityAroundJetAxis] = loadOrNot;
+}
+
+// Setter for loading particle pT density histograms around the jet axis
+void EECHistogramManager::SetLoadAllParticleDensitiesAroundJets(const bool loadRegular, const bool loadPtWeighted){
+  SetLoadParticleDensityAroundJets(loadRegular);
+  SetLoadParticlePtDensityAroundJets(loadPtWeighted);
+}
+
+
 // Setter for loading energy-energy correlators
 void EECHistogramManager::SetLoadEnergyEnergyCorrelators(const bool loadOrNot){
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelator] = loadOrNot;
@@ -1679,6 +2189,26 @@ const char* EECHistogramManager::GetJetAxisName() const{
   return fJetAxisName;
 }
 
+// Getter for multiplicity in jet cone histogram name
+const char* EECHistogramManager::GetMultiplicityInJetConeHistogramName(int iMultiplicityType) const{
+  return fMultiplicityInJetsHistogramNames[iMultiplicityType];
+}
+
+// Getter for multiplicity in jet cone axis name
+const char* EECHistogramManager::GetMultiplicityInJetConeAxisName(int iMultiplicityType) const{
+  return fMultiplicityInJetsAxisNames[iMultiplicityType];
+}
+
+// Getter for the particle density around jet axis histogram name
+const char* EECHistogramManager::GetParticleDensityAroundJetAxisHistogramName(int iParticleDensityType) const{
+  return fParticleDensityAroundJetsHistogramNames[iParticleDensityType];
+}
+
+// Getter for the particle density around jet axis axis name
+const char* EECHistogramManager::GetParticleDensityAroundJetAxisAxisName(int iParticleDensityType) const{
+  return fParticleDensityAroundJetsAxisNames[iParticleDensityType];
+}
+
 // Getter for energy-energy correlator histogram name
 const char* EECHistogramManager::GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const{
   iEnergyEnergyCorrelatorType = BinIndexCheck(knEnergyEnergyCorrelatorTypes, iEnergyEnergyCorrelatorType);
@@ -1694,14 +2224,14 @@ const char* EECHistogramManager::GetEnergyEnergyCorrelatorAxisName(int iEnergyEn
 // Getter for subevent types
 const char* EECHistogramManager::GetSubeventType(const int iSubeventType) const{
   if(iSubeventType < 0) return "All combinations";
-  if(iSubeventType >= knSubeventTypes) return "All combinations";
+  if(iSubeventType >= EECHistograms::knSubeventTypes) return "All combinations";
   return fSubeventTypeName[iSubeventType];
 }
 
 // Getter for a well thought save name for subevent types
 TString EECHistogramManager::GetSubeventTypeSaveName(const int iSubeventType) const{
   if(iSubeventType < 0) return "";
-  if(iSubeventType >= knSubeventTypes) return "";
+  if(iSubeventType >= EECHistograms::knSubeventTypes) return "";
   TString niceSaveName = fSubeventTypeName[iSubeventType];
   niceSaveName.ReplaceAll("-","");
   return niceSaveName;
@@ -1712,6 +2242,11 @@ const char* EECHistogramManager::GetPairingTypeSaveName(const int iPairingType) 
   if(iPairingType < 0) return "NonsensicalIndex";
   if(iPairingType >= EECHistograms::knPairingTypes) return "NonsensicalIndex";
   return fPairingTypeSaveName[iPairingType];
+}
+
+// Getter for jet cone type save name
+const char* EECHistogramManager::GetJetConeTypeSaveName(const int iJetConeType) const{
+  return fJetConeTypeSaveName[iJetConeType];
 }
 
 // Getter for collision system
@@ -1841,6 +2376,16 @@ TH2D* EECHistogramManager::GetHistogramTrackEtaPhi(const int iTrackType, const i
   return fhTrackEtaPhi[iTrackType][iCentrality][iTrackPt];
 }
 
+// Getter for multiplicity histogram within the jet cone
+TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iMultiplicityType) const{
+  return fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType];
+}
+
+// Getter for particle density histogram around the jet cone
+TH1D* EECHistogramManager::GetHistogramParticleDensityAroundJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType, const int iParticleDensityType) const{
+  return fhParticleDensityAroundJetCone[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType];
+}
+
 // Getter for energy-energy correlator histograms
 TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType, const int iSubevent) const{
   return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
@@ -1879,6 +2424,8 @@ TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, in
   if(name.EqualTo("trackpt",TString::kIgnoreCase) || name.EqualTo("fhtrackpt",TString::kIgnoreCase)) return GetHistogramTrackPt(bin1,bin2);
   if(name.EqualTo("trackphi",TString::kIgnoreCase) || name.EqualTo("fhtrackphi",TString::kIgnoreCase)) return GetHistogramTrackPhi(bin1,bin2,bin3);
   if(name.EqualTo("tracketa",TString::kIgnoreCase) || name.EqualTo("fhtracketa",TString::kIgnoreCase)) return GetHistogramTrackEta(bin1,bin2,bin3);
+  if(name.EqualTo("multiplicityinjetcone",TString::kIgnoreCase) || name.EqualTo("fhmultiplicityinjetcone",TString::kIgnoreCase)) return GetHistogramMultiplicityInJetCone(bin1,bin2,bin3,bin4);
+  if(name.EqualTo("particledensityaroundjetcone",TString::kIgnoreCase) || name.EqualTo("fhparticledensityaroundjetcone",TString::kIgnoreCase)) return GetHistogramParticleDensityAroundJetCone(bin1,bin2,bin3,bin4,bin5);
   if(name.EqualTo("energyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("fhenergyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("eec",TString::kIgnoreCase)) return GetHistogramEnergyEnergyCorrelator(bin1,bin2,bin3,bin4,bin5,bin6);
   return NULL;
 }

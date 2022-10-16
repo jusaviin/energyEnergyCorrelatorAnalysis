@@ -540,10 +540,10 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
           // === Energy-energy correlator ===
           
           // Determine scaling factors
-          if(fApplyScaling) FindScalingFactors("energyEnergyCorrelator", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistogramManager::knSubeventTypes);
+          if(fApplyScaling) FindScalingFactors("energyEnergyCorrelator", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistograms::knSubeventTypes);
           
           // Prepare the energy-energy correlator histograms to be drawn TODO: Implementation for different pairing types
-          PrepareRatio("energyEnergyCorrelator", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistogramManager::knSubeventTypes, minRangeX, maxRangeX);
+          PrepareRatio("energyEnergyCorrelator", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistograms::knSubeventTypes, minRangeX, maxRangeX);
           
           // Draw the track phi distributions to the upper panel of a split canvas plot
           sprintf(namerY,"%s", fBaseHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator));

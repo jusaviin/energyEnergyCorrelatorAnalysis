@@ -13,12 +13,14 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root"};
+  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root"};
   // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root
+  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"PbPb data","Pythia+Hydjet"};
+  TString legendComment[] = {"EScheme","WTA"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
