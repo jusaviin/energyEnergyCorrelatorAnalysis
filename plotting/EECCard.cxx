@@ -14,7 +14,9 @@ EECCard::EECCard(TFile *inFile):
   fInputFile(inFile),
   fCardDirectory("JCard"),
   fDataType(-1),
-  fDataTypeString("")
+  fDataTypeString(""),
+  fAlternativeDataTypeString(""),
+  fGitHash(0)
 {
   fInputFile->cd(fCardDirectory.Data());
   ReadVectors();
@@ -43,6 +45,9 @@ EECCard::~EECCard(){
  */
 void EECCard::ReadVectors(){
   
+  // Read the git hash
+  fGitHash = (TObjString*) gDirectory->Get("GitHash");
+
   // Read the TVectorT<float>:s
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
     fCardEntries[iEntry] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[iEntry]);
@@ -316,7 +321,12 @@ void EECCard::AddFileName(int entryIndex, TString fileName){
  */
 void EECCard::Print() const{
 
+  const char* gitHash = "Unknown";
+  if(fGitHash != NULL) gitHash = fGitHash->String().Data();
+  
   std::cout<<std::endl<<"========================= EECCard =========================="<<std::endl;
+  std::cout << Form("%25s","GitHash"); //print keyword
+  std::cout << ": " << gitHash << std::endl;
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
     if(fCardEntries[iEntry]){
       std::cout << Form("%25s",fCardEntryNames[iEntry]); //print keyword
@@ -343,6 +353,9 @@ void EECCard::Write(TDirectory *file){
   // Create a directory to store the card parameters
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
   file->cd("JCard");
+  
+  // Write the git hask to the file
+  if(fGitHash) fGitHash->Write("GitHash");
   
   // Write all the vectors to the file. Not all of these exist in older versions of cards, thus check if exists before writing.
   for(int iEntry = 0; iEntry < knEntries; iEntry++){

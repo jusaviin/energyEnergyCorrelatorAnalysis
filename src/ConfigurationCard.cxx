@@ -8,6 +8,7 @@ fnEntry(0),
 fKeyWordVector(0),
 fValuesVector(0),
 fValueString(0),
+fGitHash("NotSet"),
 fKeyTable(0)
 {   
   //constructor
@@ -18,6 +19,7 @@ fnEntry(0),
 fKeyWordVector(0),
 fValuesVector(0),
 fValueString(0),
+fGitHash("NotSet"),
 fKeyTable(0)
 {  
   //constructor
@@ -262,11 +264,19 @@ void ConfigurationCard::ReadInputLine( const char *buffer ){
 }
 
 /*
+ *  Set a value for the git hash
+ */
+void ConfigurationCard::SetGitHash( const char *hash ){
+  fGitHash = hash;
+}
+
+/*
  * Print the card to console
  */
-void ConfigurationCard::PrintOut() const{
+void ConfigurationCard::PrintOut(){
   // echo
   cout<<endl<<"======== "<<fCardName<<" ========="<<endl;
+  cout << "GitHash: " << fGitHash.String().Data() << endl;
   for(unsigned int i=0; i < fValuesVector.size(); i++){
     cout << Form("%15s",fKeyWordVector[i].Data()); //print keyword
     cout << " (dim = " << fValuesVector[i].GetNrows() << ") "; //print size of TVector
@@ -286,6 +296,7 @@ void ConfigurationCard::WriteCard(TDirectory *file) const{
     file->mkdir("JCard");//directory to store input parameters
   }
   file->cd("JCard");
+  fGitHash.Write("GitHash");
   for(unsigned int i=0;i<fValuesVector.size();i++){
     fValuesVector[i].Write(fKeyWordVector[i]);
   }

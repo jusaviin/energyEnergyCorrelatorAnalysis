@@ -77,6 +77,9 @@ private:
   void FindDataTypeString(); // Construct a data type string based on information on the card
   void ReadVectors();        // Read the vectors from the file
   
+  // String for git hash
+  TObjString *fGitHash;
+  
   // Vectors for all the lines inside the card
   TVectorT<float> *fCardEntries[knEntries];   // Array of all the vectors in the card
   TObjString *fFileNames[knFileNames];        // Array for filenames used in postprocessing

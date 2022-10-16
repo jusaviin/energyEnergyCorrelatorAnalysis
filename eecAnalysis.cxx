@@ -155,8 +155,12 @@ int main(int argc, char **argv) {
   TString outputFileName = argv[3];
   const int fileSearchIndex = atoi(argv[4]);
   
+  // The git hash here will be replaced by the latest commit hash by makeEECAnalysisTar.sh script
+  const char* gitHash = "GITHASHHERE";
+  
   // Read the card
   ConfigurationCard *configurationCard = new ConfigurationCard(cardName);
+  configurationCard->SetGitHash(gitHash);
   int debugLevel = configurationCard->Get("DebugLevel");
   if(debugLevel > 0){
     configurationCard->PrintOut();

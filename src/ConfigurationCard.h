@@ -45,9 +45,10 @@ public:
   int GetN(TString keyword) const;       //get TVector dimension
   int GetBin(TString keyword, double value) const;  // Find the bin for value from keyword vector
   int GetNBin(TString keyword) const;   // Get number of bins related to keyword
-  void PrintOut() const;
+  void PrintOut();
   void WriteCard(TDirectory *file) const;
   void ReadInputLine( const char* buffer );
+  void SetGitHash(const char* hash);
 
 protected:
   
@@ -60,8 +61,9 @@ protected:
   char fCardName[255];                       // File name for card
   int  fnEntry;                              // Number of lines in configuration file
   std::vector< TString > fKeyWordVector;     // Array of key words
-  std::vector< TVector > fValuesVector;      // Array of float number confg parameter vectors
-  std::vector< TString > fValueString;       // Storage of raw inut string for each item
+  std::vector< TVector > fValuesVector;      // Array of float number config parameter vectors
+  std::vector< TString > fValueString;       // Storage of raw input string for each item
+  TObjString fGitHash;                       // String for git hash
   THashList fKeyTable;                       // key map with hash algorithm
 
 };
