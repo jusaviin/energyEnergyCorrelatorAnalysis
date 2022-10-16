@@ -18,6 +18,15 @@ EECCard::EECCard(TFile *inFile):
   fAlternativeDataTypeString(""),
   fGitHash(0)
 {
+  // Initialize all arrays to null
+  for(int iEntry = 0; iEntry < knEntries; iEntry++){
+    fCardEntries[iEntry] = NULL;
+  }
+  for(int iFileName = 0; iFileName < knFileNames; iFileName++){
+    fFileNames[iFileName] = NULL;
+  }
+  
+  // Read the vectors from the input file
   fInputFile->cd(fCardDirectory.Data());
   ReadVectors();
   fDataType = (*fCardEntries[kDataType])[1];
