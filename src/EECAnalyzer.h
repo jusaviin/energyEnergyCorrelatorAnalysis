@@ -70,6 +70,7 @@ private:
   Double_t GetCentralityFromMultiplicity(const Double_t multiplicity) const; // Get the analysis centrality bin corresponding to the given multiplicity
   Double_t GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const; // Get deltaR between two objects
   Int_t GetSubeventType(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent type from two track subevents
+  Int_t GetSubeventIndex(const Int_t subevent) const; // Get the subevent index for a track
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
   
   // Private data members

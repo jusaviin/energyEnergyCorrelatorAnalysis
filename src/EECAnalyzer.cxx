@@ -486,6 +486,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t trackPhi = 0;                  // Track phi
   Double_t trackMultiplicity = 0;         // Multiplicity
   Double_t trackMultiplicityWeighted = 0; // Weighted multiplicity
+  Int_t trackSubevent = 0;                // Subevent index in Pythia+Hydjet simulation
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
@@ -519,7 +520,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
   const Int_t nFillMultiplicity = 3; // 3 is nominal
   const Int_t nFillMultiplicityInJetCone = 5;
-  const Int_t nFillParticleDensityInJetCone = 5;
+  const Int_t nFillParticleDensityInJetCone = 6;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
@@ -857,6 +858,7 @@ void EECAnalyzer::RunAnalysis(){
             trackEta = fTrackReader->GetTrackEta(iTrack);
             trackPhi = fTrackReader->GetTrackPhi(iTrack);
             trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+            trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
             
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
@@ -866,7 +868,7 @@ void EECAnalyzer::RunAnalysis(){
               
               // Also remember track pT and subevent
               selectedTrackPt[0].push_back(trackPt);
-              selectedTrackSubevent[0].push_back(fTrackReader->GetTrackSubevent(iTrack));
+              selectedTrackSubevent[0].push_back(trackSubevent);
               
               // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
               if(fFillJetConeHistograms){
@@ -881,12 +883,14 @@ void EECAnalyzer::RunAnalysis(){
             
             // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
             if(fFillJetConeHistograms){
+              
               if(deltaRTrackJet < 0.8){
                 fillerParticleDensityInJetCone[0] = deltaRTrackJet; // Axis 0: DeltaR between the track and the jet
                 fillerParticleDensityInJetCone[1] = jetPt;          // Axis 1: jet pT
                 fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
                 fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
                 fillerParticleDensityInJetCone[4] = 0;              // Axis 4: 0 is the index for signal cone
+                fillerParticleDensityInJetCone[5] = GetSubeventIndex(trackSubevent);  // Axis 5: Subevent index for the track
                 fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                 fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
               }
@@ -900,8 +904,8 @@ void EECAnalyzer::RunAnalysis(){
                 relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
-                selectedTrackPt[1].push_back(fTrackReader->GetTrackPt(iTrack));
-                selectedTrackSubevent[1].push_back(fTrackReader->GetTrackSubevent(iTrack));
+                selectedTrackPt[1].push_back(trackPt);
+                selectedTrackSubevent[1].push_back(trackSubevent);
               }
               
               // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
@@ -912,6 +916,7 @@ void EECAnalyzer::RunAnalysis(){
                   fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
                   fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
                   fillerParticleDensityInJetCone[4] = 1;              // Axis 4: 1 is the index for reflected cone
+                  fillerParticleDensityInJetCone[5] = GetSubeventIndex(trackSubevent);  // Axis 5: Subevent index for the track
                   fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                   fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
                 }
@@ -1620,6 +1625,27 @@ Int_t EECAnalyzer::GetSubeventType(const Int_t subevent1, const Int_t subevent2)
   if(subevent1 > 0 && subevent2 > 0) return 2;
   
   // The only option left is that one of the tracks is from pythia, and the other from hydjet. Return 1
+  return 1;
+  
+}
+
+/*
+ * Get the subevent index for a track
+ *
+ *  Arguments:
+ *   const Int_t subevent = Subevent index for the track (0 = pythia, > 0 = hydjet)
+ *
+ * return: Subevent type: 0 = Pythia, 1 = Hydjet
+ */
+Int_t EECAnalyzer::GetSubeventIndex(const Int_t subevent) const{
+  
+  // For data or reconstructed tracks, just return -1. It will go to the underflow bin of the histogram
+  if(subevent < 0) return -1;
+  
+  // If both tracks are from the pythia simulation, return 0
+  if(subevent == 0) return 0;
+  
+  // If the particle is not from Pythia, it must be from Hydjet. Return 1.
   return 1;
   
 }

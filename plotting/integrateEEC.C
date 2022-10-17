@@ -76,12 +76,12 @@ void integrateEEC(){
   histograms->LoadProcessedHistograms();
   
   // Initialize the energy-energy correlator histogram array to NULL
-  TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][EECHistogramManager::knSubeventTypes+1];
+  TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][EECHistograms::knSubeventCombinations+1];
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
     for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
       for(int iJetPt = 0; iJetPt < nJetPtBinsEEC+1; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-          for(int iSubevent = 0; iSubevent < EECHistogramManager::knSubeventTypes+1; iSubevent++){
+          for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations+1; iSubevent++){
             hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSubevent] = NULL;
           } // Subevent loop
         } // Track pT loop
@@ -102,11 +102,11 @@ void integrateEEC(){
         for(int iTrackPt = firstIntegratedTrackPtBinEEC; iTrackPt <= lastIntegratedTrackPtBinEEC; iTrackPt++){
           
           // For normalization, read the histogram with all pair combinations
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistogramManager::knSubeventTypes] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistogramManager::knSubeventTypes);
-          normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistogramManager::knSubeventTypes]->Integral("width");
-          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistogramManager::knSubeventTypes]->Scale(1/normalizationFactor);
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, EECHistograms::knSubeventCombinations);
+          normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Integral("width");
+          hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Scale(1/normalizationFactor);
           
-          for(int iSubevent = 0; iSubevent < EECHistogramManager::knSubeventTypes; iSubevent++){
+          for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
             hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSubevent] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, 0, iSubevent);
             hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSubevent]->Scale(1/normalizationFactor);
             

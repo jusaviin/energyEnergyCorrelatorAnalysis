@@ -225,10 +225,15 @@ void EECHistograms::CreateHistograms(){
   const Double_t maxTrackPairingType = knPairingTypes-0.5;  // Maximum track pairing type index
   const Int_t nTrackPairingTypeBins = knPairingTypes;       // Bin width for track pairing type is 1
   
-  // Track subevent index for energy-energy correlators (0 = both tracks from Pythia, 1 = one track from Pythia, one from Hydjet, 2 = Both tracks from Hydjet)
+  // Subevent index for particles (0 = Particle is from embedded Pythia, 1 = Particle is from Hydjet)
   const Double_t minSubeventType = -0.5;
   const Double_t maxSubeventType = knSubeventTypes-0.5;
   const Int_t nSubeventTypeBins = knSubeventTypes;
+  
+  // Subevent pairing index for particles (0 = both paritcles from Pythia, 1 = one particle from Pythia, one from Hydjet, 2 = Both particles from Hydjet)
+  const Double_t minSubeventCombination = -0.5;
+  const Double_t maxSubeventCombination = knSubeventCombinations-0.5;
+  const Int_t nSubeventCombinationBins = knSubeventCombinations;
   
   // Jet cone type (0 = signal cone, 1 = reflected cone)
   const Double_t minJetConeType = -0.5;
@@ -321,7 +326,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderTrack[nAxesTrack];
   Double_t highBinBorderTrack[nAxesTrack];
   
-  const Int_t nAxesTrackDensity = 5;
+  const Int_t nAxesTrackDensity = 6;
   Int_t nBinsTrackDensity[nAxesTrackDensity];
   Double_t lowBinBorderTrackDensity[nAxesTrackDensity];
   Double_t highBinBorderTrackDensity[nAxesTrackDensity];
@@ -505,6 +510,11 @@ void EECHistograms::CreateHistograms(){
   lowBinBorderTrackDensity[4] = minJetConeType;   // low bin border for centrality
   highBinBorderTrackDensity[4] = maxJetConeType;  // high bin border for centrality
   
+  // Axis 5 for track density histogram: track subevent (only relevant for Monte Carlo)
+  nBinsTrackDensity[5] = nSubeventTypeBins;       // nBins for subevent types (Pythia/Hydjet)
+  lowBinBorderTrackDensity[5] = minSubeventType;  // low bin border for subevent combinations
+  highBinBorderTrackDensity[5] = maxSubeventType; // high bin border for subevent combinations
+  
   // Create the histograms for track density and pT weighted track density using the above binning information
   fhParticleDensityAroundJet = new THnSparseF("particleDensity", "particleDensity", nAxesTrackDensity, nBinsTrackDensity ,lowBinBorderTrackDensity, highBinBorderTrackDensity); fhParticleDensityAroundJet->Sumw2();
   fhParticlePtDensityAroundJet = new THnSparseF("particlePtDensity", "particlePtDensity", nAxesTrackDensity, nBinsTrackDensity, lowBinBorderTrackDensity, highBinBorderTrackDensity); fhParticlePtDensityAroundJet->Sumw2();
@@ -547,9 +557,9 @@ void EECHistograms::CreateHistograms(){
   highBinBorderEnergyEnergyCorrelator[4] = maxTrackPairingType; // high bin border for track pairing type
   
   // Axis 5 for the energy-energy correlator histogram: track subevent (only relevant for Monte Carlo)
-  nBinsEnergyEnergyCorrelator[5] = nSubeventTypeBins;       // nBins for subevent types (pythia-pythia, pythia-hydjet, hydjet-hydjet)
-  lowBinBorderEnergyEnergyCorrelator[5] = minSubeventType;  // low bin border for subevent types
-  highBinBorderEnergyEnergyCorrelator[5] = maxSubeventType; // high bin border for subevent types
+  nBinsEnergyEnergyCorrelator[5] = nSubeventCombinationBins;       // nBins for subevent combinations (pythia-pythia, pythia-hydjet, hydjet-hydjet)
+  lowBinBorderEnergyEnergyCorrelator[5] = minSubeventCombination;  // low bin border for subevent combinations
+  highBinBorderEnergyEnergyCorrelator[5] = maxSubeventCombination; // high bin border for subevent combinations
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
   fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();

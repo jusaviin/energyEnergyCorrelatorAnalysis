@@ -291,7 +291,7 @@ void reflectedConeInData(){
           /*
            TODO: Implementation for minimum bias
           for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinimumBias]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinimumBias]; iJetPtMinBias++){
-            hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][kPureMinBias] = (TH1D*) histograms[kMinimumBias]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtMinBias, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::knSubeventTypes)->Clone(Form("pureMinBiasHistogram%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt));
+            hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][kPureMinBias] = (TH1D*) histograms[kMinimumBias]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtMinBias, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventCombinations)->Clone(Form("pureMinBiasHistogram%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt));
             
             // Normalize the minimum bias histograms to match the signal+fake to fake+fake ratio with different estimators
             normalizationFactor = hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone]->Integral("width") / (hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][kPureMinBias]->Integral("width") * signalFaketoFakeFakeRatio);

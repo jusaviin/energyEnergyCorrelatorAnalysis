@@ -19,9 +19,11 @@ public:
   enum enumEventTypes {kAll, kPrimaryVertex, kHfCoincidence, kClusterCompatibility, kHBHENoise, kBeamScraping, kCaloJet, kVzCut, knEventTypes};
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
-  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, knPairingTypes}; // Pair tracks from same jet or from reflected jet cone
-  enum enumSubeventTypes{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventTypes};
   enum enumJetConeTypes{kSignalCone, kReflectedCone, knJetConeTypes};
+  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, knPairingTypes}; // Pair tracks from same jet or from reflected jet cone
+  enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
+  enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventCombinations};
+  
   
   // Constructors and destructor
   EECHistograms(); // Default constructor
