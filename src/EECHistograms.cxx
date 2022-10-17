@@ -29,6 +29,9 @@ EECHistograms::EECHistograms() :
   fhParticleDensityAroundJet(0),
   fhParticlePtDensityAroundJet(0),
   fhParticleMultiplicityInJet(0),
+  fhParticleMultiplicityInReflectedCone(0),
+  fhParticleMultiplicityInJetUncorrected(0),
+  fhParticleMultiplicityInReflectedConeUncorrected(0),
   fhEnergyEnergyCorrelator(0),
   fhEnergyEnergyCorrelatorUncorrected(0),
   fhEnergyEnergyCorrelatorJetPt(0),
@@ -59,6 +62,9 @@ EECHistograms::EECHistograms(ConfigurationCard *newCard) :
   fhParticleDensityAroundJet(0),
   fhParticlePtDensityAroundJet(0),
   fhParticleMultiplicityInJet(0),
+  fhParticleMultiplicityInReflectedCone(0),
+  fhParticleMultiplicityInJetUncorrected(0),
+  fhParticleMultiplicityInReflectedConeUncorrected(0),
   fhEnergyEnergyCorrelator(0),
   fhEnergyEnergyCorrelatorUncorrected(0),
   fhEnergyEnergyCorrelatorJetPt(0),
@@ -89,6 +95,9 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhParticleDensityAroundJet(in.fhParticleDensityAroundJet),
   fhParticlePtDensityAroundJet(in.fhParticlePtDensityAroundJet),
   fhParticleMultiplicityInJet(in.fhParticleMultiplicityInJet),
+  fhParticleMultiplicityInReflectedCone(in.fhParticleMultiplicityInReflectedCone),
+  fhParticleMultiplicityInJetUncorrected(in.fhParticleMultiplicityInJetUncorrected),
+  fhParticleMultiplicityInReflectedConeUncorrected(in.fhParticleMultiplicityInReflectedConeUncorrected),
   fhEnergyEnergyCorrelator(in.fhEnergyEnergyCorrelator),
   fhEnergyEnergyCorrelatorUncorrected(in.fhEnergyEnergyCorrelatorUncorrected),
   fhEnergyEnergyCorrelatorJetPt(in.fhEnergyEnergyCorrelatorJetPt),
@@ -123,6 +132,9 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhParticleDensityAroundJet = in.fhParticleDensityAroundJet;
   fhParticlePtDensityAroundJet = in.fhParticlePtDensityAroundJet;
   fhParticleMultiplicityInJet = in.fhParticleMultiplicityInJet;
+  fhParticleMultiplicityInReflectedCone = in.fhParticleMultiplicityInReflectedCone;
+  fhParticleMultiplicityInJetUncorrected = in.fhParticleMultiplicityInJetUncorrected;
+  fhParticleMultiplicityInReflectedConeUncorrected = in.fhParticleMultiplicityInReflectedConeUncorrected;
   fhEnergyEnergyCorrelator = in.fhEnergyEnergyCorrelator;
   fhEnergyEnergyCorrelatorUncorrected = in.fhEnergyEnergyCorrelatorUncorrected;
   fhEnergyEnergyCorrelatorJetPt = in.fhEnergyEnergyCorrelatorJetPt;
@@ -153,6 +165,9 @@ EECHistograms::~EECHistograms(){
   delete fhParticleDensityAroundJet;
   delete fhParticlePtDensityAroundJet;
   delete fhParticleMultiplicityInJet;
+  delete fhParticleMultiplicityInReflectedCone;
+  delete fhParticleMultiplicityInJetUncorrected;
+  delete fhParticleMultiplicityInReflectedConeUncorrected;
   delete fhEnergyEnergyCorrelator;
   delete fhEnergyEnergyCorrelatorUncorrected;
   delete fhEnergyEnergyCorrelatorJetPt;
@@ -388,37 +403,51 @@ void EECHistograms::CreateHistograms(){
   
   // ======== THnSparse for multiplicity within the jet cone ========
   
-  // Axis 0 for the multiplicity in jets histogram: non-corrected multiplicity
+  // Axis 0 for the multiplicity in jets histogram: multiplicity
   nBinsMultiplicityInJets[0] = nMultiplicityInJetsBins;       // nBins for non-corrected multiplicity
   lowBinBorderMultiplicityInJets[0] = minMultiplicityInJets;  // low bin border for non-corrected multiplicity
   highBinBorderMultiplicityInJets[0] = maxMultiplicityInJets; // high bin border for non-corrected multiplicity
   
-  // Axis 1 for the multiplicity in jets histogram: tracking efficiency corrected multiplicity
-  nBinsMultiplicityInJets[1] = nMultiplicityInJetsBins;       // nBins for tracking efficiency corrected multiplicity
-  lowBinBorderMultiplicityInJets[1] = minMultiplicityInJets;  // low bin border for tracking efficiency corrected multiplicity
-  highBinBorderMultiplicityInJets[1] = maxMultiplicityInJets; // high bin border for tracking efficiency corrected multiplicity
+  // Axis 1 for the multiplicity in jets histogram: jet pT
+  nBinsMultiplicityInJets[1] = nJetPtBinsEEC;         // nBins for jet pT in energy-energy correlator histograms
+  lowBinBorderMultiplicityInJets[1] = minJetPtEEC;    // low bin border for jet pT in energy-energy correlator histograms
+  highBinBorderMultiplicityInJets[1] = maxJetPtEEC;   // high bin border for jet pT in energy-energy correlator histograms
   
-  // Axis 2 for the multiplicity in jets histogram: jet pT
-  nBinsMultiplicityInJets[2] = nJetPtBinsEEC;         // nBins for jet pT in energy-energy correlator histograms
-  lowBinBorderMultiplicityInJets[2] = minJetPtEEC;    // low bin border for jet pT in energy-energy correlator histograms
-  highBinBorderMultiplicityInJets[2] = maxJetPtEEC;   // high bin border for jet pT in energy-energy correlator histograms
+  // Axis 2 for the multiplicity in jets histogram: track pT
+  nBinsMultiplicityInJets[2] = nTrackPtBinsEEC;        // nBins for track pT in energy-energy correlator histograms
+  lowBinBorderMultiplicityInJets[2] = minTrackPtEEC;   // low bin border for track pT in energy-energy correlator histograms
+  highBinBorderMultiplicityInJets[2] = maxTrackPtEEC;  // high bin border for track pT in energy-energy correlator histograms
   
-  // Axis 3 for the multiplicity in jets histogram: track pT
-  nBinsMultiplicityInJets[3] = nTrackPtBinsEEC;        // nBins for track pT in energy-energy correlator histograms
-  lowBinBorderMultiplicityInJets[3] = minTrackPtEEC;   // low bin border for track pT in energy-energy correlator histograms
-  highBinBorderMultiplicityInJets[3] = maxTrackPtEEC;  // high bin border for track pT in energy-energy correlator histograms
+  // Axis 3 for the multiplicity in jets histogram: centrality
+  nBinsMultiplicityInJets[3] = nWideCentralityBins;    // nBins for wide centrality bins
+  lowBinBorderMultiplicityInJets[3] = minCentrality;   // low bin border for centrality
+  highBinBorderMultiplicityInJets[3] = maxCentrality;  // high bin border for centrality
   
-  // Axis 4 for the multiplicity in jets histogram: centrality
-  nBinsMultiplicityInJets[4] = nWideCentralityBins;     // nBins for wide centrality bins
-  lowBinBorderMultiplicityInJets[4] = minCentrality;    // low bin border for centrality
-  highBinBorderMultiplicityInJets[4] = maxCentrality;   // high bin border for centrality
+  // Axis 4 for the multiplicity in jets histogram: track subevent (only relevant for Monte Carlo)
+  nBinsMultiplicityInJets[4] = nSubeventTypeBins+1;    // nBins for subevent types (Pythia/Hydjet/Combined)
+  lowBinBorderMultiplicityInJets[4] = minSubeventType;       // low bin border for subevent types
+  highBinBorderMultiplicityInJets[4] = maxSubeventType+1;    // high bin border for subevent types
   
-  // Create the histograms for leading and subleading jets using the above binning information
-  fhParticleMultiplicityInJet = new THnSparseF("multiplicityInJets", "multiplicityInJets", nAxesMultiplicityInJets, nBinsMultiplicityInJets, lowBinBorderMultiplicityInJets, highBinBorderMultiplicityInJets); fhParticleMultiplicityInJet->Sumw2();
+  // Create the multiplicity in jets histrograms using the above binning information
+  fhParticleMultiplicityInJet = new THnSparseF("multiplicityInJetCone", "multiplicityInJetCone", nAxesMultiplicityInJets, nBinsMultiplicityInJets, lowBinBorderMultiplicityInJets, highBinBorderMultiplicityInJets); fhParticleMultiplicityInJet->Sumw2();
+  fhParticleMultiplicityInReflectedCone = new THnSparseF("multiplicityInReflectedCone", "multiplicityInReflectedCone", nAxesMultiplicityInJets, nBinsMultiplicityInJets, lowBinBorderMultiplicityInJets, highBinBorderMultiplicityInJets); fhParticleMultiplicityInReflectedCone->Sumw2();
+  fhParticleMultiplicityInJetUncorrected = new THnSparseF("multiplicityInJetConeUncorrected", "multiplicityInJetConeUncorrected", nAxesMultiplicityInJets, nBinsMultiplicityInJets, lowBinBorderMultiplicityInJets, highBinBorderMultiplicityInJets); fhParticleMultiplicityInJetUncorrected->Sumw2();
+  fhParticleMultiplicityInReflectedConeUncorrected = new THnSparseF("multiplicityInReflectedConeUncorrected", "multiplicityInReflectedConeUncorrected", nAxesMultiplicityInJets, nBinsMultiplicityInJets, lowBinBorderMultiplicityInJets, highBinBorderMultiplicityInJets); fhParticleMultiplicityInReflectedConeUncorrected->Sumw2();
   
-  fhParticleMultiplicityInJet->SetBinEdges(2,jetPtBinsEEC);          // Jet pT bins
-  fhParticleMultiplicityInJet->SetBinEdges(3,trackPtBinsEEC);        // Track pT bins
-  fhParticleMultiplicityInJet->SetBinEdges(4,wideCentralityBins);    // Centrality bins
+  fhParticleMultiplicityInJet->SetBinEdges(1,jetPtBinsEEC);                              // Jet pT bins
+  fhParticleMultiplicityInReflectedCone->SetBinEdges(1,jetPtBinsEEC);                    // Jet pT bins
+  fhParticleMultiplicityInJetUncorrected->SetBinEdges(1,jetPtBinsEEC);                   // Jet pT bins
+  fhParticleMultiplicityInReflectedConeUncorrected->SetBinEdges(1,jetPtBinsEEC);         // Jet pT bins
+  
+  fhParticleMultiplicityInJet->SetBinEdges(2,trackPtBinsEEC);                            // Track pT bins
+  fhParticleMultiplicityInReflectedCone->SetBinEdges(2,trackPtBinsEEC);                  // Track pT bins
+  fhParticleMultiplicityInJetUncorrected->SetBinEdges(2,trackPtBinsEEC);                 // Track pT bins
+  fhParticleMultiplicityInReflectedConeUncorrected->SetBinEdges(2,trackPtBinsEEC);       // Track pT bins
+  
+  fhParticleMultiplicityInJet->SetBinEdges(3,wideCentralityBins);                        // Centrality bins
+  fhParticleMultiplicityInReflectedCone->SetBinEdges(3,wideCentralityBins);              // Centrality bins
+  fhParticleMultiplicityInJetUncorrected->SetBinEdges(3,wideCentralityBins);             // Centrality bins
+  fhParticleMultiplicityInReflectedConeUncorrected->SetBinEdges(3,wideCentralityBins);   // Centrality bins
   
   // ======== THnSparse for all jets ========
   
@@ -649,6 +678,9 @@ void EECHistograms::Write() const{
   fhParticleDensityAroundJet->Write();
   fhParticlePtDensityAroundJet->Write();
   fhParticleMultiplicityInJet->Write();
+  fhParticleMultiplicityInReflectedCone->Write();
+  fhParticleMultiplicityInJetUncorrected->Write();
+  fhParticleMultiplicityInReflectedConeUncorrected->Write();
   fhEnergyEnergyCorrelator->Write();
   fhEnergyEnergyCorrelatorUncorrected->Write();
   fhEnergyEnergyCorrelatorJetPt->Write();

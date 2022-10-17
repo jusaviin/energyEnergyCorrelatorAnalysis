@@ -27,7 +27,7 @@ public:
   enum enumTrackHistograms{kTrack, kUncorrectedTrack, knTrackCategories};
   
   // Indices for different multiplicity within the jet cone histogram categories
-  enum enumMultiplicityInJetCone{kMultiplicityInJetCone, kMultiplicityInJetConeUncorrected, knMultiplicityInJetConeTypes};
+  enum enumMultiplicityInJetCone{kMultiplicityInJetCone, kMultiplicityInReflectedCone, kMultiplicityInJetConeUncorrected, kMultiplicityInReflectedConeUncorrected, knMultiplicityInJetConeTypes};
   
   // Indices for different particle density types measured around the jet axis
   enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, knParticleDensityAroundJetAxisTypes};
@@ -54,8 +54,8 @@ private:
   const char* fJetAxisName = "Jet";
   
   // Naming for multiplicity within the jet cone histograms
-  const char* fMultiplicityInJetsHistogramNames[knMultiplicityInJetConeTypes] = {"multiplicityInJetCone", "multiplicityInJetConeUncorrected"};
-  const char* fMultiplicityInJetsAxisNames[knMultiplicityInJetConeTypes] = {"Multiplicity within jet cone", "UC multiplicity within jet cone"};
+  const char* fMultiplicityInJetsHistogramNames[knMultiplicityInJetConeTypes] = {"multiplicityInJetCone", "multiplicityInReflectedCone", "multiplicityInJetConeUncorrected", "multiplicityInReflectedConeUncorrected"};
+  const char* fMultiplicityInJetsAxisNames[knMultiplicityInJetConeTypes] = {"Multiplicity in jet cone", "Multiplicity in reflected cone", "UC multiplicity in jet cone", "UC multiplicity in reflected cone"};
   
   // Naming for particle density around the jet axis histograms
   const char* fParticleDensityAroundJetsHistogramNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity"};
@@ -193,7 +193,7 @@ public:
   TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
   
   // Getters for multiplicity and particle density histograms within the jet cones
-  TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone) const; // Multiplicity within the jet cone
+  TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes) const; // Multiplicity within the jet cone
   TH1D* GetHistogramParticleDensityAroundJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet cone
   
   // Getters for energy-energy correlator histograms
@@ -307,7 +307,7 @@ private:
   TH2D *fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1]; // 2D eta-phi histogram for track
   
   // Histograms for multiplicity and particle density within the jet cones
-  TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes];
+  TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
   TH1D *fhParticleDensityAroundJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
   
   // Histograms for energy-energy correlators

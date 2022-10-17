@@ -24,6 +24,8 @@ public:
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
   enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventCombinations};
   
+  // Naming for the multiplicity histograms
+  
   
   // Constructors and destructor
   EECHistograms(); // Default constructor
@@ -54,7 +56,10 @@ public:
   THnSparseF *fhTrackUncorrected;  // Track histogram for uncorrected tracks. Axes: [uc pT][uc phi][uc eta][cent][same/mixed]
   THnSparseF *fhParticleDensityAroundJet;   // Particle density around the studied jets
   THnSparseF *fhParticlePtDensityAroundJet; // pT weighted particle density around the studied jets
-  THnSparseF *fhParticleMultiplicityInJet;  // Multiplicity of particles within the studied jet cones
+  THnSparseF *fhParticleMultiplicityInJet;                      // Multiplicity of particles within the studied jet cones
+  THnSparseF *fhParticleMultiplicityInReflectedCone;            // Multiplicity of particles within the reflected jet cones
+  THnSparseF *fhParticleMultiplicityInJetUncorrected;           // Uncorrected multiplicity of particles within the studied jet cones
+  THnSparseF *fhParticleMultiplicityInReflectedConeUncorrected; // Uncorrected multiplicity of particles within the reflected jet cones
   THnSparseF *fhEnergyEnergyCorrelator;            // Histogram for energy-energy correlator. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorUncorrected; // Histogram for energy-energy correlator with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorJetPt;            // Histogram for energy-energy correlator with jet pT normalization. Axes: [dR][jetPt][trackPt][centrality]

@@ -118,7 +118,9 @@ EECHistogramManager::EECHistogramManager() :
     for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
       for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
         for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
-          fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType] = NULL;
+          for(int iSubeventType = 0; iSubeventType < EECHistograms::knSubeventTypes+1; iSubeventType++){
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubeventType] = NULL;
+          } // Subevent loop
         } // Multiplicity type loop
         for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
           for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -340,7 +342,9 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
       for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
         for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
-          fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType] = in.fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType];
+          for(int iSubeventType = 0; iSubeventType < EECHistograms::knSubeventTypes+1; iSubeventType++){
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubeventType] = in.fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubeventType];
+          } // Subevent loop
         } // Multiplicity type loop
         for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
           for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -636,22 +640,22 @@ void EECHistogramManager::LoadTrackHistograms(){
  *
  *   Histogram name: multiplicityInJets
  *
- *     Axis index       Content of axis               Note
- * -----------------------------------------------------------------
+ *     Axis index       Content of axis                       Note
+ * ---------------------------------------------------------------------------------
  *       Axis 0           Multiplicity
- *       Axis 1      Uncorrected multiplicity
- *       Axis 2              Jet pT
- *       Axis 3           Track pT cut
- *       Axis 4            Centrality
+ *       Axis 1              Jet pT
+ *       Axis 2           Track pT cut
+ *       Axis 3            Centrality
+ *       Axis 4             Subevent          (0 = Pythia, 1 = Hydjet, 2 = Combined)
  */
 void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
   
   if(!fLoadMultiplicityInJetHistograms) return; // Do not load the histograms if they are not selected for loading
   
   // Define arrays to help find the histograms
-  int axisIndices[3] = {0};
-  int lowLimits[3] = {0};
-  int highLimits[3] = {0};
+  int axisIndices[4] = {0};
+  int lowLimits[4] = {0};
+  int highLimits[4] = {0};
   
   // Define helper variables
   int duplicateRemover = -1;
@@ -662,48 +666,70 @@ void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
   
-  // Loop over centrality bins
-  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+  // Loop over multiplicity types
+  for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
     
-    // Select the centrality bin indices
-    lowerCentralityBin = fCentralityBinIndices[iCentrality];
-    higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
-    
-    // Setup axes with restrictions (4 = centrality)
-    axisIndices[0] = 4; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
-    
-    // Loop over track pT bins
-    for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+    // Loop over centrality bins
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
       
-      // Select the track pT bin indices. Each bin has the total multiplicity above the lower threshold
-      lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
-      higherTrackPtBin = fTrackPtIndicesEEC[iTrackPt+1]+duplicateRemover;
+      // Select the centrality bin indices
+      lowerCentralityBin = fCentralityBinIndices[iCentrality];
+      higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
       
-      // Add restriction for track pT axis (3 = track pT)
-      axisIndices[1] = 3; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+      // Setup axes with restrictions (3 = centrality)
+      axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
       
-      // Read the multiplicity histograms within the jet cone without jet pT restrictions
-      fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][kMultiplicityInJetCone] = FindHistogram(fInputFile, "multiplicityInJets", 1, 2, axisIndices, lowLimits, highLimits);
-      fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][kMultiplicityInJetConeUncorrected] = FindHistogram(fInputFile, "multiplicityInJets", 0, 2, axisIndices, lowLimits, highLimits);
-      
-      // Loop over jet pT bins
-      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+      // Loop over track pT bins
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
         
-        // Select the jet pT bin indices
-        lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
-        higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+        // Select the track pT bin indices. Each bin has the total multiplicity above the lower threshold
+        lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+        higherTrackPtBin = fTrackPtIndicesEEC[iTrackPt+1]+duplicateRemover;
         
-        // Add restriction for jet pT axis (2 = jet pT)
-        axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+        // Add restriction for track pT axis (2 = track pT)
+        axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
         
-        // Read the multiplicity histograms within the jet cone
-        fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][kMultiplicityInJetCone] = FindHistogram(fInputFile, "multiplicityInJets", 1, 3, axisIndices, lowLimits, highLimits);
-        fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][kMultiplicityInJetConeUncorrected] = FindHistogram(fInputFile, "multiplicityInJets", 0, 3, axisIndices, lowLimits, highLimits);
+        // Loop over subevent types
+        for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
+          
+          // Only do Pythia and Hydjet subevents for Pythia+Hydjet simulation
+          if(!fSystemAndEnergy.Contains("PbPb MC") && iSubevent < EECHistograms::knSubeventTypes) continue;
+          
+          // Add a restriction for the subevent axis (4 = subevent)
+          axisIndices[2] = 4; lowLimits[2] = iSubevent+1; highLimits[2] = iSubevent+1;
+          
+          // Read the multiplicity histograms within the jet cone without jet pT restrictions
+          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(fInputFile, fMultiplicityInJetsHistogramNames[iMultiplicityType], 0, 3, axisIndices, lowLimits, highLimits);
+          
+        } // Subevent loop
         
-        
-      } // Jet pT loop
-    } // Track pT loop
-  } // Centrality loop
+        // Loop over jet pT bins
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+          
+          // Select the jet pT bin indices
+          lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+          higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+          
+          // Add restriction for jet pT axis (1 = jet pT)
+          axisIndices[2] = 1; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+          
+          // Loop over subevent types
+          for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
+            
+            // Only do Pythia and Hydjet subevents for Pythia+Hydjet simulation
+            if(!fSystemAndEnergy.Contains("PbPb MC") && iSubevent < EECHistograms::knSubeventTypes) continue;
+            
+            // Add a restriction for the subevent axis (4 = subevent)
+            axisIndices[3] = 4; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+            
+            // Read the multiplicity histograms within the jet cone without jet pT restrictions
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(fInputFile, fMultiplicityInJetsHistogramNames[iMultiplicityType], 0, 4, axisIndices, lowLimits, highLimits);
+            
+          } // Subevent loop
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // Multiplicity type loop
 }
 
 /*
@@ -1402,15 +1428,36 @@ void EECHistogramManager::WriteMultiplicityInJetConeHistograms(){
           
           // Write histograms without jet pT binning
           sprintf(histogramNamer,"%s_C%dT%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt);
-          if(fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType]) fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType]->Write(histogramNamer, TObject::kOverwrite);
+          if(fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes]) fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
+          
+          // For PbPb MC, write histograms without jet pT and with subevent type binning
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+              
+              // Write the energy-energy correlator histograms with subevent binning
+              sprintf(histogramNamer,"%s_C%dT%dS%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iSubevent);
+              if(fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent]) fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+              
+            } // Subevent type loop
+          } // Data is PbPb MC
           
           // Loop over jet pT
           for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
             
             // Write the energy-energy correlator histograms
             sprintf(histogramNamer,"%s_C%dT%dJ%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt);
-            if(fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]) fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]->Write(histogramNamer, TObject::kOverwrite);
+            if(fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes]) fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes]->Write(histogramNamer, TObject::kOverwrite);
             
+            // For PbPb MC, write histograms without jet pT and with subevent type binning
+            if(fSystemAndEnergy.Contains("PbPb MC")){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+                
+                // Write the energy-energy correlator histograms with subevent binning
+                sprintf(histogramNamer,"%s_C%dT%dJ%dS%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt, iSubevent);
+                if(fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent]) fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent]->Write(histogramNamer, TObject::kOverwrite);
+                
+              } // Subevent type loop
+            } // Data is PbPb MC
             
           } // Loop over jet pT bins
         } // Loop over track pT bins
@@ -1733,7 +1780,18 @@ void EECHistogramManager::LoadProcessedHistograms(){
           
           // Load the histograms without jet pT binning
           sprintf(histogramNamer,"%s/%s_C%dT%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt);
-          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType] = (TH1D*) fInputFile->Get(histogramNamer);
+          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes] = (TH1D*) fInputFile->Get(histogramNamer);
+          
+          // For PbPb MC, load histograms without jet pT and with subevent type binning
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+
+              // Load the particle density histograms with subevent binning
+              sprintf(histogramNamer,"%s/%s_C%dT%dS%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iSubevent);
+              fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+
+            } // Subevent type loop
+          } // Data is PbPb MC
           
           // Loop over jet pT
           for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
@@ -1743,7 +1801,18 @@ void EECHistogramManager::LoadProcessedHistograms(){
             
             // Load the multiplicity within the jet cone histograms
             sprintf(histogramNamer,"%s/%s_C%dT%dJ%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt);
-            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType]  = (TH1D*) fInputFile->Get(histogramNamer);
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][EECHistograms::knSubeventTypes]  = (TH1D*) fInputFile->Get(histogramNamer);
+            
+            // For PbPb MC, load histograms without jet pT and with subevent type binning
+            if(fSystemAndEnergy.Contains("PbPb MC")){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
+
+                // Load the particle density histograms with subevent binning
+                sprintf(histogramNamer,"%s/%s_C%dT%dJ%dS%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt, iJetPt, iSubevent);
+                fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer);
+
+              } // Subevent type loop
+            } // Data is PbPb MC
             
           } // Jet pT loop
         } // Track pT loop
@@ -2380,8 +2449,8 @@ TH2D* EECHistogramManager::GetHistogramTrackEtaPhi(const int iTrackType, const i
 }
 
 // Getter for multiplicity histogram within the jet cone
-TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iMultiplicityType) const{
-  return fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType];
+TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iMultiplicityType, const int iSubevent) const{
+  return fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent];
 }
 
 // Getter for particle density histogram around the jet cone
@@ -2427,7 +2496,7 @@ TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, in
   if(name.EqualTo("trackpt",TString::kIgnoreCase) || name.EqualTo("fhtrackpt",TString::kIgnoreCase)) return GetHistogramTrackPt(bin1,bin2);
   if(name.EqualTo("trackphi",TString::kIgnoreCase) || name.EqualTo("fhtrackphi",TString::kIgnoreCase)) return GetHistogramTrackPhi(bin1,bin2,bin3);
   if(name.EqualTo("tracketa",TString::kIgnoreCase) || name.EqualTo("fhtracketa",TString::kIgnoreCase)) return GetHistogramTrackEta(bin1,bin2,bin3);
-  if(name.EqualTo("multiplicityinjetcone",TString::kIgnoreCase) || name.EqualTo("fhmultiplicityinjetcone",TString::kIgnoreCase)) return GetHistogramMultiplicityInJetCone(bin1,bin2,bin3,bin4);
+  if(name.EqualTo("multiplicityinjetcone",TString::kIgnoreCase) || name.EqualTo("fhmultiplicityinjetcone",TString::kIgnoreCase)) return GetHistogramMultiplicityInJetCone(bin1,bin2,bin3,bin4,bin5);
   if(name.EqualTo("particledensityaroundjetcone",TString::kIgnoreCase) || name.EqualTo("fhparticledensityaroundjetcone",TString::kIgnoreCase)) return GetHistogramParticleDensityAroundJetCone(bin1,bin2,bin3,bin4,bin5,bin6);
   if(name.EqualTo("energyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("fhenergyenergycorrelator",TString::kIgnoreCase) || name.EqualTo("eec",TString::kIgnoreCase)) return GetHistogramEnergyEnergyCorrelator(bin1,bin2,bin3,bin4,bin5,bin6);
   return NULL;

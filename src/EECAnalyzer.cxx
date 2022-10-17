@@ -487,6 +487,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t trackMultiplicity = 0;         // Multiplicity
   Double_t trackMultiplicityWeighted = 0; // Weighted multiplicity
   Int_t trackSubevent = 0;                // Subevent index in Pythia+Hydjet simulation
+  Int_t trackSubeventIndex = 0;           // Simplified subevent index
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
@@ -494,8 +495,8 @@ void EECAnalyzer::RunAnalysis(){
   for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
     trackPtBinsEEC[iTrackPt] = fCard->Get("TrackPtBinEdgesEEC",iTrackPt);
   }
-  Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC]; // Particle multiplicity within a jet cone, no tracking efficiency correction
-  Double_t multiplicityInJetCone[nTrackPtBinsEEC];         // Efficiency corrected particle multiplicity within a jet cone
+  Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1]; // Particle multiplicity within a jet cone, no tracking efficiency correction
+  Double_t multiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];;        // Efficiency corrected particle multiplicity within a jet cone
   
   // Variables for energy-energy correlators
   vector<double> selectedTrackPt[2];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet)
@@ -842,8 +843,12 @@ void EECAnalyzer::RunAnalysis(){
           
           // Clear the multiplicity arrays
           for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-            uncorrectedMultiplicityInJetCone[iTrackPt] = 0;
-            multiplicityInJetCone[iTrackPt] = 0;
+            for(int iJetCone = 0; iJetCone < EECHistograms::knJetConeTypes; iJetCone++){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
+                uncorrectedMultiplicityInJetCone[iTrackPt][iJetCone][iSubevent] = 0;
+                multiplicityInJetCone[iTrackPt][iJetCone][iSubevent] = 0;
+              }
+            }
           }
           
           // Loop over tracks and check which are within the jet radius
@@ -859,6 +864,7 @@ void EECAnalyzer::RunAnalysis(){
             trackPhi = fTrackReader->GetTrackPhi(iTrack);
             trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
             trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
+            trackSubeventIndex = GetSubeventIndex(trackSubevent);
             
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
@@ -874,23 +880,27 @@ void EECAnalyzer::RunAnalysis(){
               if(fFillJetConeHistograms){
                 for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                   if(trackPt < trackPtBinsEEC[iTrackPt]) break;
-                  uncorrectedMultiplicityInJetCone[iTrackPt]++;
-                  multiplicityInJetCone[iTrackPt] += trackEfficiencyCorrection;
-                }
-              }
+                  uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]++;
+                  multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                  if(trackSubeventIndex >= 0){
+                    uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][trackSubeventIndex]++;
+                    multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                  }
+                } // Track pT loop
+              } // Fill jet cone histograms
               
-            }
+            } // Track close to jet
             
             // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
             if(fFillJetConeHistograms){
               
               if(deltaRTrackJet < 0.8){
-                fillerParticleDensityInJetCone[0] = deltaRTrackJet; // Axis 0: DeltaR between the track and the jet
-                fillerParticleDensityInJetCone[1] = jetPt;          // Axis 1: jet pT
-                fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
-                fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
-                fillerParticleDensityInJetCone[4] = 0;              // Axis 4: 0 is the index for signal cone
-                fillerParticleDensityInJetCone[5] = GetSubeventIndex(trackSubevent);  // Axis 5: Subevent index for the track
+                fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
+                fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
+                fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
+                fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
+                fillerParticleDensityInJetCone[4] = 0;                  // Axis 4: 0 is the index for signal cone
+                fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
                 fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                 fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
               }
@@ -906,17 +916,30 @@ void EECAnalyzer::RunAnalysis(){
                 // Also remember track pT and subevent
                 selectedTrackPt[1].push_back(trackPt);
                 selectedTrackSubevent[1].push_back(trackSubevent);
+                
+                // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
+                if(fFillJetConeHistograms){
+                  for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                    if(trackPt < trackPtBinsEEC[iTrackPt]) break;
+                    uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]++;
+                    multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                    if(trackSubeventIndex >= 0){
+                      uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][trackSubeventIndex]++;
+                      multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                    }
+                  } // Track pT loop
+                } // Fill jet cone histograms
               }
               
               // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
               if(fFillJetConeHistograms){
                 if(deltaRTrackJet < 0.8){
-                  fillerParticleDensityInJetCone[0] = deltaRTrackJet; // Axis 0: DeltaR between the track and the jet
-                  fillerParticleDensityInJetCone[1] = jetPt;          // Axis 1: jet pT
-                  fillerParticleDensityInJetCone[2] = trackPt;        // Axis 2: track pT
-                  fillerParticleDensityInJetCone[3] = centrality;     // Axis 3: centrality
-                  fillerParticleDensityInJetCone[4] = 1;              // Axis 4: 1 is the index for reflected cone
-                  fillerParticleDensityInJetCone[5] = GetSubeventIndex(trackSubevent);  // Axis 5: Subevent index for the track
+                  fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
+                  fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
+                  fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
+                  fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
+                  fillerParticleDensityInJetCone[4] = 1;                  // Axis 4: 1 is the index for reflected cone
+                  fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
                   fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                   fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
                 }
@@ -927,15 +950,31 @@ void EECAnalyzer::RunAnalysis(){
           
           // Fill the multiplicity histograms within the jet
           if(fFillJetConeHistograms){
-            fillerMultiplicityInJetCone[2] = jetPt;      // Axis 2: Jet pT
-            fillerMultiplicityInJetCone[4] = centrality; // Axis 4: centrality
-            for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-              fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt]; // Axis 0: Uncorrected multiplicity
-              fillerMultiplicityInJetCone[1] = multiplicityInJetCone[iTrackPt];            // Axis 1: Tracking efficiency corrected multiplicity
-              fillerMultiplicityInJetCone[3] = trackPtBinsEEC[iTrackPt]+0.01;              // Axis 3: Track pT
-              fHistograms->fhParticleMultiplicityInJet->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);  // Fill the multiplicity within the jet cone histogram
-            }
-          }
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
+              
+              // Fill the subevent hisotgrams only for Pythia+Hydjet simulation
+              if(fDataType != ForestReader::kPbPbMC && iSubevent < EECHistograms::knSubeventTypes) continue;
+              
+              fillerMultiplicityInJetCone[1] = jetPt;      // Axis 1: Jet pT
+              fillerMultiplicityInJetCone[3] = centrality; // Axis 3: centrality
+              fillerMultiplicityInJetCone[4] = iSubevent;  // Axis 4: Subevent index
+              for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][iSubevent]; // Axis 0: Multiplicity
+                fillerMultiplicityInJetCone[2] = trackPtBinsEEC[iTrackPt]+0.01;                                          // Axis 2: Track pT
+                fHistograms->fhParticleMultiplicityInJet->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);           // Fill the multiplicity within the jet cone histogram
+                
+                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][iSubevent]; // Axis 0: Multiplicity
+                fHistograms->fhParticleMultiplicityInReflectedCone->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);    // Fill the multiplicity within the reflected cone histogram
+                
+                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][iSubevent]; // Axis 0: Multiplicity
+                fHistograms->fhParticleMultiplicityInJetUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);           // Fill the uncorrected multiplicity within the jet cone histogram
+                
+                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][iSubevent]; // Axis 0: Multiplicity
+                fHistograms->fhParticleMultiplicityInReflectedConeUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);              // Fill the uncorrected multiplicity within the reflected cone histogram
+              }
+              
+            } // Subevent loop
+          } // Fill multiplicity in jets histograms
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
