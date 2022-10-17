@@ -46,6 +46,12 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   for(int iTrackType = 0; iTrackType < EECHistogramManager::knTrackCategories; iTrackType++){
     fDrawTracks[iTrackType] = false;
   }
+  for(int iMultiplicityType = 0; iMultiplicityType < EECHistogramManager::knMultiplicityInJetConeTypes; iMultiplicityType++){
+    fDrawMultiplicityInJetCone[iMultiplicityType] = false;
+  }
+  for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+    fDrawParticleDensityAroundJets[iParticleDensityType] = false;
+  }
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
     fDrawEnergyEnergyCorrelators[iEnergyEnergyCorrelator] = false;
   }
@@ -54,9 +60,13 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   }
   
   // By default, only draw the energy-energy correlators without subevent selection
-  fDrawSubeventType[EECHistograms::knSubeventCombinations] = true;
-  for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
+  fDrawSubeventType[EECHistograms::knSubeventTypes] = true;
+  for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
     fDrawSubeventType[iSubevent] = false;
+  }
+  fDrawSubeventCombination[EECHistograms::knSubeventCombinations] = true;
+  for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
+    fDrawSubeventCombination[iSubevent] = false;
   }
 
   // Setup the centrality, track pT and energy-energy correlator jet and track pT bins to be drawn
@@ -91,6 +101,12 @@ void EECDrawer::DrawHistograms(){
   
   // Draw the track histograms
   DrawTrackHistograms();
+  
+  // Draw the mulplicity within the jet cone
+  DrawMultiplicityInJetCone();
+  
+  // Draw the particle density around the jet axis
+  DrawParticleDensityAroundJetAxis();
   
   // Draw the energy-energy correlation histograms
   DrawEnergyEnergyCorrelationHistograms();
@@ -375,6 +391,155 @@ void EECDrawer::DrawTrackHistograms(){
 }
 
 /*
+ * Draw multiplicity in the jet cone histograms
+ */
+void EECDrawer::DrawMultiplicityInJetCone(){
+
+  // Helper variables for histogram drawing
+  TH1D *drawnHistogram;
+  TLegend *legend;
+
+  // Helper variables for naming in figures
+  TString centralityString;
+  TString compactCentralityString;
+  TString trackPtString;
+  TString compactTrackPtString;
+  TString jetPtString;
+  TString compactJetPtString;
+  TString subeventString;
+  char namerX[100];
+
+  // Loop over multiplicity types
+  for(int iMultiplicityType = 0; iMultiplicityType < EECHistogramManager::knMultiplicityInJetConeTypes; iMultiplicityType++){
+
+    // Only draw the selected multiplicity types
+    if(!fDrawMultiplicityInJetCone[iMultiplicityType]) continue;
+
+    // Loop over centrality
+    for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+
+      centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+      compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+
+      // Loop over different subevent combinations
+      for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventTypes; iSubevent++){
+        
+        // Only draw selected subevent combinations
+        if(!fDrawSubeventType[iSubevent]) continue;
+        
+        subeventString = fHistograms->GetSubeventType(iSubevent);
+        
+        // Loop over track pT bins
+        for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+          
+          trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString.ReplaceAll(".","v");
+          
+          // Loop over jet pT bins
+          for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+            
+            jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            
+            // === Multiplicity within the jet ===
+            drawnHistogram = fHistograms->GetHistogramMultiplicityInJetCone(iCentrality, iJetPt, iTrackPt, iMultiplicityType, iSubevent);
+            sprintf(namerX,"%s",fHistograms->GetMultiplicityInJetConeAxisName(iMultiplicityType));
+            fDrawer->DrawHistogram(drawnHistogram,namerX,"Counts"," ");
+            legend = new TLegend(0.62,0.75,0.82,0.9);
+            SetupLegend(legend,centralityString,subeventString,jetPtString,trackPtString);
+            legend->Draw();
+            
+            // Save the figure to a file
+            sprintf(namerX,"%s%s",fHistograms->GetJetHistogramName(), subeventString.Data());
+            SaveFigure(namerX,compactCentralityString, compactJetPtString, compactTrackPtString);
+            
+          } // Jet pT loop
+        } // Track pT loop
+      } // Subevent loop
+    } // Centrality loop
+  } // Multiplicity type loop
+}
+
+/*
+ * Draw multiplicity in the jet cone histograms
+ */
+void EECDrawer::DrawParticleDensityAroundJetAxis(){
+  
+  // Helper variables for histogram drawing
+  TH1D *drawnHistogram;
+  TLegend *legend;
+
+  // Helper variables for naming in figures
+  TString centralityString;
+  TString compactCentralityString;
+  TString trackPtString;
+  TString compactTrackPtString;
+  TString jetPtString;
+  TString compactJetPtString;
+  TString subeventString;
+  TString jetConeTypeString;
+  char namerY[100];
+
+  // Loop over multiplicity types
+  for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
+
+    // Only draw the selected multiplicity types
+    if(!fDrawParticleDensityAroundJets[iParticleDensityType]) continue;
+
+    for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+      
+      jetConeTypeString = fHistograms->GetJetConeTypeSaveName(iJetConeType);
+      
+      // Loop over centrality
+      for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+        
+        centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+        compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+        
+        // Loop over different subevent combinations
+        for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventTypes; iSubevent++){
+          
+          // Only draw selected subevent combinations
+          if(!fDrawSubeventType[iSubevent]) continue;
+          
+          subeventString = fHistograms->GetSubeventType(iSubevent);
+          
+          // Loop over track pT bins
+          for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+            
+            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".","v");
+            
+            // Loop over jet pT bins
+            for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+              
+              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              
+              // === Particle density around the jet axis ===
+              drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+              sprintf(namerY,"%s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+              legend = new TLegend(0.62,0.75,0.82,0.9);
+              SetupLegend(legend,centralityString,jetConeTypeString,subeventString,jetPtString,trackPtString);
+              legend->Draw();
+              
+              // Save the figure to a file
+              sprintf(namerY,"%s%s%s",fHistograms->GetJetHistogramName(), jetConeTypeString.Data(), subeventString.Data());
+              SaveFigure(namerY,compactCentralityString, compactJetPtString, compactTrackPtString);
+              
+            } // Jet pT loop
+          } // Track pT loop
+        } // Subevent loop
+      } // Centrality loop
+    } // Jet cone tpye loop
+  } // Particle density type loop
+}
+
+
+/*
  * Draw energy-energy correlator histograms
  */
 void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
@@ -426,10 +591,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
             
             // Only draw selected subevent combinations
-            if(!fDrawSubeventType[iSubevent]) continue;
+            if(!fDrawSubeventCombination[iSubevent]) continue;
             
-            subeventString = fHistograms->GetSubeventType(iSubevent);
-            compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
+            subeventString = fHistograms->GetSubeventCombination(iSubevent);
+            compactSubeventString = fHistograms->GetSubeventCombinationSaveName(iSubevent);
 
             // Loop over track pT bins
             for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
@@ -479,10 +644,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
             
             // Only draw selected subevent combinations
-            if(!fDrawSubeventType[iSubevent]) continue;
+            if(!fDrawSubeventCombination[iSubevent]) continue;
             
-            subeventString = fHistograms->GetSubeventType(iSubevent);
-            compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
+            subeventString = fHistograms->GetSubeventCombination(iSubevent);
+            compactSubeventString = fHistograms->GetSubeventCombinationSaveName(iSubevent);
             
             // Only one legend for the plot
             legend = new TLegend(0.62,0.35,0.82,0.9);
@@ -540,10 +705,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
               
               // Only draw selected subevent combinations
-              if(!fDrawSubeventType[iSubevent]) continue;
+              if(!fDrawSubeventCombination[iSubevent]) continue;
               
-              subeventString = fHistograms->GetSubeventType(iSubevent);
-              compactSubeventString = fHistograms->GetSubeventTypeSaveName(iSubevent);
+              subeventString = fHistograms->GetSubeventCombination(iSubevent);
+              compactSubeventString = fHistograms->GetSubeventCombinationSaveName(iSubevent);
               
               // Only one legend for the plot
               legend = new TLegend(0.62,0.35,0.82,0.9);
@@ -636,7 +801,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram->SetLineColor(color[iSubevent+1]);
                 drawnHistogram->Draw("same");
                 
-                legend->AddEntry(drawnHistogram, fHistograms->GetSubeventType(iSubevent), "l");
+                legend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "l");
               } // Subevent type loop
               
               // Draw the legend
@@ -666,15 +831,19 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
  *
  *  TLegend *legend = Pointer to legend that needs setup
  *  TString centralityString = Collision centrality
+ *  TString jetString = Jet pT information
  *  TString trackString = Track pT information
  *  TString extraString = Additional line to be put into the legend
+ *  TString anotherString = Another string to be put to the legend
  */
-void EECDrawer::SetupLegend(TLegend *legend, TString centralityString, TString trackString, TString extraString){
+void EECDrawer::SetupLegend(TLegend *legend, TString centralityString, TString jetString, TString trackString, TString extraString, TString anotherString){
   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62); // Size: 0.05
   legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
   if(fSystemAndEnergy.Contains("PbPb")) legend->AddEntry((TObject*) 0,centralityString.Data(),"");
+  if(jetString != "") legend->AddEntry((TObject*) 0,jetString.Data(),"");
   if(trackString != "") legend->AddEntry((TObject*) 0,trackString.Data(),"");
   if(extraString != "") legend->AddEntry((TObject*) 0,extraString.Data(),"");
+  if(anotherString != "") legend->AddEntry((TObject*) 0,anotherString.Data(),"");
 }
 
 /*
@@ -720,6 +889,50 @@ void EECDrawer::SetDrawTracks(const bool drawOrNot){
 // Setter for drawing uncorrected tracks
 void EECDrawer::SetDrawTracksUncorrected(const bool drawOrNot){
   fDrawTracks[EECHistogramManager::kUncorrectedTrack] = drawOrNot;
+}
+
+// Setter for drawing multiplicity within the jet cone
+void EECDrawer::SetDrawMultiplicityInJetCone(const bool drawOrNot){
+  fDrawMultiplicityInJetCone[EECHistogramManager::kMultiplicityInJetCone] = drawOrNot;
+}
+
+// Setter for drawing multiplicity within the reflected cone
+void EECDrawer::SetDrawMultiplicityInReflectedCone(const bool drawOrNot){
+  fDrawMultiplicityInJetCone[EECHistogramManager::kMultiplicityInReflectedCone] = drawOrNot;
+}
+
+// Setter for drawing uncorrected multiplicity within the jet cone
+void EECDrawer::SetDrawMultiplicityInJetConeUncorrected(const bool drawOrNot){
+  fDrawMultiplicityInJetCone[EECHistogramManager::kMultiplicityInJetConeUncorrected] = drawOrNot;
+}
+
+// Setter for drawing uncorrected multiplicity within the reflected cone
+void EECDrawer::SetDrawMultiplicityInReflectedConeUncorrected(const bool drawOrNot){
+  fDrawMultiplicityInJetCone[EECHistogramManager::kMultiplicityInReflectedConeUncorrected] = drawOrNot;
+}
+
+// Setter for drawing all multiplicity histograms within the jet cone
+void EECDrawer::SetDrawAllMultiplicitiesInJetCone(const bool regular, const bool reflectedCone, const bool regularUncorrected, const bool reflectedConeUncorrected){
+  SetDrawMultiplicityInJetCone(regular);
+  SetDrawMultiplicityInReflectedCone(reflectedCone);
+  SetDrawMultiplicityInJetConeUncorrected(regularUncorrected);
+  SetDrawMultiplicityInReflectedConeUncorrected(reflectedConeUncorrected);
+}
+
+// Setter for drawing particle density around jet axis
+void EECDrawer::SetDrawParticleDensityAroundJetAxis(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticleDensityAroundJetAxis] = drawOrNot;
+}
+
+// Setter for drawing particle pT density around jet axis
+void EECDrawer::SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticlePtDensityAroundJetAxis] = drawOrNot;
+}
+
+// Setter for drawing all particle densities around jet axis
+void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt){
+  SetDrawParticleDensityAroundJetAxis(drawRegular);
+  SetDrawParticlePtDensityAroundJetAxis(drawPt);
 }
 
 // Setter for drawing track histograms
@@ -798,28 +1011,50 @@ void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSame
   SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnly);
 }
 
+// Setter for drawing histograms without subevent selection
+void EECDrawer::SetDrawAllSubevents(const bool drawOrNot){
+  fDrawSubeventType[EECHistograms::knSubeventTypes] = drawOrNot;
+}
+
+// Setter for drawing only Pythia histograms
+void EECDrawer::SetDrawPythiaOnly(const bool drawOrNot){
+  fDrawSubeventType[EECHistograms::kPythia] = drawOrNot;
+}
+
+// Setter for drawing only Hydjet histograms
+void EECDrawer::SetDrawHydjetOnly(const bool drawOrNot){
+  fDrawSubeventType[EECHistograms::kHydjet] = drawOrNot;
+}
+
+// Setter for drawing all subevent types
+void EECDrawer::SetDrawAllSubeventTypes(const bool drawAll, const bool drawPythia, const bool drawHydjet){
+  SetDrawAllSubevents(drawAll);
+  SetDrawPythiaOnly(drawPythia);
+  SetDrawHydjetOnly(drawHydjet);
+}
+
 // Setter for drawing all pairing combinations
 void EECDrawer::SetDrawAllCombinations(const bool drawOrNot){
-  fDrawSubeventType[EECHistograms::knSubeventCombinations] = drawOrNot;
+  fDrawSubeventCombination[EECHistograms::knSubeventCombinations] = drawOrNot;
 }
 
 // Setter for drawing Pythia+Pythia correlations for simulation
 void EECDrawer::SetDrawSignalOnly(const bool drawOrNot){
-  fDrawSubeventType[EECHistograms::kPythiaPythia] = drawOrNot;
+  fDrawSubeventCombination[EECHistograms::kPythiaPythia] = drawOrNot;
 }
 
 // Setter for drawing Pythia+Hydjet correlations for simulation
 void EECDrawer::SetDrawSignalFake(const bool drawOrNot){
-  fDrawSubeventType[EECHistograms::kPythiaHydjet] = drawOrNot;
+  fDrawSubeventCombination[EECHistograms::kPythiaHydjet] = drawOrNot;
 }
 
 // Setter for drawing Hydjet+Hydjet correlations for simulation
 void EECDrawer::SetDrawFakeFake(const bool drawOrNot){
-  fDrawSubeventType[EECHistograms::kHydjetHydjet] = drawOrNot;
+  fDrawSubeventCombination[EECHistograms::kHydjetHydjet] = drawOrNot;
 }
 
-// Setter for drawing all subevent types for energy-energy correlators
-void EECDrawer::SetDrawAllSubeventTypes(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake){
+// Setter for drawing all subevent combinations for energy-energy correlators
+void EECDrawer::SetDrawAllSubeventCombinations(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake){
   SetDrawAllCombinations(drawAll);
   SetDrawSignalOnly(drawSignal);
   SetDrawSignalFake(drawSignalFake);

@@ -2293,18 +2293,25 @@ const char* EECHistogramManager::GetEnergyEnergyCorrelatorAxisName(int iEnergyEn
   return fEnergyEnergyCorrelatorAxisNames[iEnergyEnergyCorrelatorType];
 }
 
-// Getter for subevent types
+// Getter for subevent type
 const char* EECHistogramManager::GetSubeventType(const int iSubeventType) const{
-  if(iSubeventType < 0) return "All combinations";
-  if(iSubeventType >= EECHistograms::knSubeventCombinations) return "All combinations";
+  if(iSubeventType < 0) return "";
+  if(iSubeventType >= EECHistograms::knSubeventTypes) return "";
   return fSubeventTypeName[iSubeventType];
 }
 
-// Getter for a well thought save name for subevent types
-TString EECHistogramManager::GetSubeventTypeSaveName(const int iSubeventType) const{
+// Getter for subevent combination
+const char* EECHistogramManager::GetSubeventCombination(const int iSubeventType) const{
+  if(iSubeventType < 0) return "All combinations";
+  if(iSubeventType >= EECHistograms::knSubeventCombinations) return "All combinations";
+  return fSubeventCombinationName[iSubeventType];
+}
+
+// Getter for a well thought save name for subevent combination
+TString EECHistogramManager::GetSubeventCombinationSaveName(const int iSubeventType) const{
   if(iSubeventType < 0) return "";
   if(iSubeventType >= EECHistograms::knSubeventCombinations) return "";
-  TString niceSaveName = fSubeventTypeName[iSubeventType];
+  TString niceSaveName = fSubeventCombinationName[iSubeventType];
   niceSaveName.ReplaceAll("-","");
   return niceSaveName;
 }

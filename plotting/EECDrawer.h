@@ -41,6 +41,18 @@ public:
   void SetDrawTracksUncorrected(const bool drawOrNot); // Setter for drawing uncorrected tracks
   void SetDrawAllTracks(const bool drawTracks, const bool drawUncorrected); // Setter for drawing all track histograms
   
+  // Setters for multiplicity within the jet cone
+  void SetDrawMultiplicityInJetCone(const bool drawOrNot);                  // Setter for drawing multiplicity within the jet cone
+  void SetDrawMultiplicityInReflectedCone(const bool drawOrNot);            // Setter for drawing multiplicity within the reflected cone
+  void SetDrawMultiplicityInJetConeUncorrected(const bool drawOrNot);       // Setter for drawing uncorrected multiplicity within the jet cone
+  void SetDrawMultiplicityInReflectedConeUncorrected(const bool drawOrNot); // Setter for drawing uncorrected multiplicity within the reflected cone
+  void SetDrawAllMultiplicitiesInJetCone(const bool regular, const bool reflectedCone, const bool regularUncorrected, const bool reflectedConeUncorrected); // Setter for drawing all multiplicity histograms within the jet cone
+  
+  // Setters for particle density around the jet axis
+  void SetDrawParticleDensityAroundJetAxis(const bool drawOrNot);   // Setter for drawing particle density around jet axis
+  void SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot); // Setter for drawing particle pT density around jet axis
+  void SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt); // Setter for drawing all particle densities around jet axis
+  
   // Setters for energy-energy correlators
   void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                  // Setter for drawing energy-energy correlator
   void SetDrawEnergyEnergyCorrelorJetPt(const bool drawOrNot);             // Setter for drawing jet pT weighted energy-energy correlator
@@ -61,11 +73,16 @@ public:
   void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawSignalReflectedCone, const bool drawReflectedConeOnly); // Setter for drawing all different energy-energy correlator pairing types
   
   // Setters for drawing different subevent types
+  void SetDrawAllSubevents(const bool drawOrNot); // Setter for drawing histograms without subevent selection
+  void SetDrawPythiaOnly(const bool drawOrNot);   // Setter for drawing only Pythia histograms
+  void SetDrawHydjetOnly(const bool drawOrNot);   // Setter for drawing only Hydjet histograms
+  void SetDrawAllSubeventTypes(const bool drawAll, const bool drawPythia, const bool drawHydjet); // Setter for drawing all subevent types
+  
   void SetDrawAllCombinations(const bool drawOrNot); // Setter for drawing all pairing combinations
   void SetDrawSignalOnly(const bool drawOrNot);      // Setter for drawing Pythia+Pythia correlations for simulation
   void SetDrawSignalFake(const bool drawOrNot);      // Setter for drawing Pythia+Hydjet correlations for simulation
   void SetDrawFakeFake(const bool drawOrNot);        // Setter for drawing Hydjet+Hydjet correlations for simulation
-  void SetDrawAllSubeventTypes(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake); // Setter for drawing all subevent types for energy-energy correlators
+  void SetDrawAllSubeventCombinations(const bool drawAll, const bool drawSignal, const bool drawSignalFake, const bool drawFakeFake); // Setter for drawing all subevent combinations for energy-energy correlators
   
   // Setters for figure saving and logarithmic axes
   void SetSaveFigures(const bool saveOrNot, const char *format, const TString suffix);  // Setter for saving the figures to a file
@@ -92,18 +109,21 @@ private:
   // ======== Flags for histograms to draw ========
   // ==============================================
   
-  bool fDrawEventInformation;                                                            // Draw the event information histograms
-  bool fDrawJets;                                                                        // Draw the jet histograms
-  bool fDrawTracks[EECHistogramManager::knTrackCategories];                              // Draw the track histograms
-  bool fDrawEnergyEnergyCorrelators[EECHistogramManager::knEnergyEnergyCorrelatorTypes]; // Draw the energy-energy correlator histograms
+  bool fDrawEventInformation;                                                                     // Draw the event information histograms
+  bool fDrawJets;                                                                                 // Draw the jet histograms
+  bool fDrawTracks[EECHistogramManager::knTrackCategories];                                       // Draw the track histograms
+  bool fDrawMultiplicityInJetCone[EECHistogramManager::knMultiplicityInJetConeTypes];             // Draw the multiplicity in jet cone histograms
+  bool fDrawParticleDensityAroundJets[EECHistogramManager::knParticleDensityAroundJetAxisTypes];  // Draw the particle densities around jet axis
+  bool fDrawEnergyEnergyCorrelators[EECHistogramManager::knEnergyEnergyCorrelatorTypes];          // Draw the energy-energy correlator histograms
   
   bool fDrawIndividualEnergyEnergyCorrelators;          // Draw the individual energy-energy correlator histograms
   bool fDrawEnergyEnergyCorrelatorsForConstantJetPt;    // Draw all track pT cuts to the same figure for constant jet pT selection
   bool fDrawEnergyEnergyCorrelatorsForConstantTrackPt;  // Draw all jet pT selections to the same figure for constant track pT cut
   bool fDrawEnergyEnergyCorrelatorsSubevents;           // Draw subevent decomposition of energy-energy correlators
   
-  bool fDrawPairingType[EECHistograms::knPairingTypes];           // Select which pairing types to draw
-  bool fDrawSubeventType[EECHistograms::knSubeventCombinations+1]; // Select which subevent types to draw
+  bool fDrawPairingType[EECHistograms::knPairingTypes];                   // Select which pairing types to draw
+  bool fDrawSubeventType[EECHistograms::knSubeventTypes+1];               // Select which subevent types to draw
+  bool fDrawSubeventCombination[EECHistograms::knSubeventCombinations+1]; // Select which subevent combinations to draw
   
   // ==============================================
   // ============== Drawing settings ==============
@@ -134,11 +154,13 @@ private:
   int fLastDrawnTrackPtBinEEC;   // Last energy-energy correlator track pT bin that is drawn
   
   // Methods for drawing
-  void DrawEventInformation();    // Draw the event information histograms
-  void DrawJetHistograms();       // Draw jet histograms
-  void DrawTrackHistograms();     // Draw track histograms
+  void DrawEventInformation();              // Draw the event information histograms
+  void DrawJetHistograms();                 // Draw jet histograms
+  void DrawMultiplicityInJetCone();         // Draw the multiplicities within the jet cone
+  void DrawParticleDensityAroundJetAxis();  // Draw particle densities around the jet axis
+  void DrawTrackHistograms();               // Draw track histograms
   void DrawEnergyEnergyCorrelationHistograms();     // Draw the energy-energy correlation histograms
-  void SetupLegend(TLegend *legend, TString centralityString = "", TString trackString = "", TString extraString = ""); // Common legend style setup for figures
+  void SetupLegend(TLegend *legend, TString centralityString = "", TString jetString = "", TString trackString = "", TString extraString = "", TString anotherString = ""); // Common legend style setup for figures
   void SaveFigure(TString figureName, TString centralityString = "", TString trackPtString = "", TString correlationTypeString = "", TString deltaPhiString = ""); // Save the figure from current canvas to file
   
 };

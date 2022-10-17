@@ -69,7 +69,8 @@ private:
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
   
   // Naming for subevent types
-  const char* fSubeventTypeName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
+  const char* fSubeventTypeName[EECHistograms::knSubeventTypes] = {"Pythia", "Hydjet"};
+  const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
   
   // Naming for pairing types
   const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","SignalReflectedConePair","ReflectedConePair"};
@@ -158,8 +159,9 @@ public:
   const char* GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const; // Getter for energy-energy correlator histogram name
   const char* GetEnergyEnergyCorrelatorAxisName(int iEnergyEnergyCorrelatorType) const;      // Getter for energy-energy correlator axis name
   
-  const char* GetSubeventType(const int iSubeventType) const; // Getter for subevent types
-  TString GetSubeventTypeSaveName(const int iSubeventType) const; // Getter for a well thought save name for subevent types
+  const char* GetSubeventType(const int iSubeventType) const;            // Getter for subevent type
+  const char* GetSubeventCombination(const int iSubeventType) const;     // Getter for subevent combination
+  TString GetSubeventCombinationSaveName(const int iSubeventType) const; // Getter for a well thought save name for subevent combination
   
   const char* GetPairingTypeSaveName(const int iPairingType) const; // Getter for pairing type save names
   

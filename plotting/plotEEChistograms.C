@@ -32,6 +32,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
+  bool drawMultiplicityHistograms = false;
+  bool drawParticleDensityAroundJets = false;
+  bool drawParticlePtDensityAroundJets = false;
   
   /*
    * Drawing only selected histograms. Done with bitwise check of an integer
@@ -44,9 +47,12 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
    *  Bit 5 = Load jet pT weighted energy-energy correlator histograms (to set: 32)
    *  Bit 6 = Load uncorrected energy-energy correlator histograms (to set: 64)
    *  Bit 7 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 128)
+   *  Bit 8 = Load multiplicity histograms (to set: 256)
+   *  Bit 9 = Load particle density around jet axis histograms (to set: 512)
+   *  Bit 10 = Load particle pT density around jet axis histograms (to set: 1024)
    */
   if(histogramSelection > 0){
-    std::bitset<8> bitChecker(histogramSelection);
+    std::bitset<11> bitChecker(histogramSelection);
     drawEventInformation = bitChecker.test(0);
     drawJets = bitChecker.test(1);
     drawTracks = bitChecker.test(2);
@@ -55,6 +61,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
     drawEnergyEnergyCorrelatorsJetPt = bitChecker.test(5);
     drawEnergyEnergyCorrelatorsUncorrected = bitChecker.test(6);
     drawEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(7);
+    drawMultiplicityHistograms = bitChecker.test(8);
+    drawParticleDensityAroundJets = bitChecker.test(9);
+    drawParticlePtDensityAroundJets = bitChecker.test(10);
   }
   
   // Open the input file
@@ -94,16 +103,22 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 0;
+  int firstDrawnJetPtBinEEC = 2;
   int lastDrawnJetPtBinEEC = 2; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 0;
+  int lastDrawnTrackPtBinEEC = 0;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
     lastDrawnCentralityBin = 0;
   }
+  
+  // Select with multiplicity histograms to draw from all possible ones
+  bool drawMultiplicityInJetCone = true && drawMultiplicityHistograms;
+  bool drawMultiplicityInReflectedCone = false && drawMultiplicityHistograms;
+  bool drawMultiplicityInJetConeUncorrected = false && drawMultiplicityHistograms;
+  bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
   const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
@@ -111,7 +126,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   const char* figureFormat = "png";
   TString figureNameSuffix = "_test";
   
@@ -132,18 +147,27 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // Select which subevents to draw
-  bool drawAllSubevents = false;  // Draw energy-energy correlators without subevent selection
-  bool drawSignalOnly = false;    // Draw Pythia+Pythia correlations from MC
-  bool drawSignalFake = true;     // Draw Pythia+Hydjet correlations from MC
-  bool drawFakeFake = false;      // Draw Hydjet+Hydjet correlations from MC
+  bool drawAllSubevents = true;   // Draw histograms without subevent selection
+  bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
+  bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
+  
+  bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
+  bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
+  bool drawSignalFake = false;        // Draw Pythia+Hydjet correlations from MC
+  bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // If the collision system in not PbPb MC, we cannot draw subevent decomposition
   if(!collisionSystem.Contains("PbPb MC")){
     drawEnergyEnergyCorrelatorsSubevent = false;
+    
+    drawPythiaOnly = false;
+    drawHydjetOnly = false;
+    drawAllSubevents = true;
+    
     drawSignalOnly = false;
     drawSignalFake = false;
     drawFakeFake = false;
-    drawAllSubevents = true;
+    drawAllSubeventPairs = true;
   }
 
   // ==================================================================
@@ -162,6 +186,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   histograms->SetLoadJetHistograms(drawJets);
   histograms->SetLoadTracks(drawTracks);
   histograms->SetLoadTracksUncorrected(drawUncorrectedTracks);
+  histograms->SetLoadMultiplicityInJets(drawMultiplicityHistograms);
+  histograms->SetLoadParticleDensityAroundJets(drawParticleDensityAroundJets);
+  histograms->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
@@ -194,6 +221,14 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawEnergyEnergyCorrelorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
   resultDrawer->SetDrawEnergyEnergyCorrelorJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
   
+  resultDrawer->SetDrawMultiplicityInJetCone(drawMultiplicityInJetCone);
+  resultDrawer->SetDrawMultiplicityInReflectedCone(drawMultiplicityInReflectedCone);
+  resultDrawer->SetDrawMultiplicityInJetConeUncorrected(drawMultiplicityInJetConeUncorrected);
+  resultDrawer->SetDrawMultiplicityInReflectedConeUncorrected(drawMultiplicityInReflectedConeUncorrected);
+  
+  resultDrawer->SetDrawParticleDensityAroundJetAxis(drawParticleDensityAroundJets);
+  resultDrawer->SetDrawParticlePtDensityAroundJetAxis(drawParticlePtDensityAroundJets);
+  
   resultDrawer->SetDrawSingleEnergyEnergyCorrelators(drawIndividualEnergyEnergyCorrelators);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantJetPt(drawEnergyEnergyCorrelatorsForConstantJetPt);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantTrackPt(drawEnergyEnergyCorrelatorsForConstantTrackPt);
@@ -203,7 +238,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   resultDrawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);
   resultDrawer->SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnlyEnergyEnergyCorrelator);
   
-  resultDrawer->SetDrawAllSubeventTypes(drawAllSubevents, drawSignalOnly, drawSignalFake, drawFakeFake);
+  resultDrawer->SetDrawAllSubeventTypes(drawAllSubevents, drawPythiaOnly, drawHydjetOnly);
+  resultDrawer->SetDrawAllSubeventCombinations(drawAllSubeventPairs, drawSignalOnly, drawSignalFake, drawFakeFake);
   
   resultDrawer->SetSaveFigures(saveFigures,figureFormat,figureNameSuffix);
   resultDrawer->SetLogPt(logPt);
