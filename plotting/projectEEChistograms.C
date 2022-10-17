@@ -86,7 +86,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   const int nTrackPtBinsEEC = 6;
   double centralityBinBorders[nCentralityBins+1] = {0,10,30,50,90};   // Bin borders for centrality
   double trackPtBinBorders[nTrackPtBins+1] = {0.7,1,2,3,4,8,12,300};  // Bin borders for track pT
-  double jetPtBinBordersEEC[nJetPtBinsEEC+1] = {120,140,160,180,200,300,500,5030}; // Bin borders for jet pT in energy-energy correlator histograms
+  double jetPtBinBordersEEC[nJetPtBinsEEC+1] = {120,140,160,180,200,300,500,5020}; // Bin borders for jet pT in energy-energy correlator histograms
   double trackPtBinBordersEEC[nTrackPtBinsEEC+1] = {0.7,1,2,3,4,6,300}; // Bin borders for track pT in energy-energy correlator histograms
   
   // Projected bin range
@@ -139,6 +139,10 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   
   // Add information about the used input files to the card
   card->AddFileName(EECCard::kInputFileName,inputFileName);
+  
+  // The git hash here will be replaced by the latest commit hash by projectHistogramsInSteps.sh script
+  const char* gitHash = "GITHASHHERE";
+  card->AddProjectionGitHash(gitHash);
   
   // ============================ //
   //     EECHistogramManager    //

@@ -11,6 +11,12 @@ fi
 INPUT=$1    # Name of the input file
 OUTPUT=$2   # Name of the output file
 
+# Find the git hash of the current commit
+GITHASH=`git rev-parse HEAD`
+
+# Replace the placeholder string in the projection code by git hash
+sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
+
 # Project event information and jet histograms
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",3)'
 
@@ -42,4 +48,7 @@ root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
 
 # Project jet pT closure histograms
-# root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'
+# root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",2048)'
+
+# Put the placeholder string back to the histogram projection file
+sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/projectEEChistograms.C

@@ -79,6 +79,7 @@ private:
   
   // String for git hash
   TObjString *fGitHash;
+  TObjString *fProjectionGitHash;
   
   // Vectors for all the lines inside the card
   TVectorT<float> *fCardEntries[knEntries];   // Array of all the vectors in the card
@@ -124,6 +125,7 @@ public:
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double *contents); // Add a vector to the card
   void AddFileName(int entryIndex, TString fileName); // Add a file name to the card
+  void AddProjectionGitHash(const char* gitHash); // Add a git hash used to project the histograms to the file
   
 };
 

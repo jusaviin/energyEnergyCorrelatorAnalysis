@@ -16,16 +16,10 @@ EECCard::EECCard(TFile *inFile):
   fDataType(-1),
   fDataTypeString(""),
   fAlternativeDataTypeString(""),
-  fGitHash(0)
+  fGitHash(0),
+  fProjectionGitHash(0)
 {
-  // Initialize all arrays to null
-  for(int iEntry = 0; iEntry < knEntries; iEntry++){
-    fCardEntries[iEntry] = NULL;
-  }
-  for(int iFileName = 0; iFileName < knFileNames; iFileName++){
-    fFileNames[iFileName] = NULL;
-  }
-  
+
   // Read the vectors from the input file
   fInputFile->cd(fCardDirectory.Data());
   ReadVectors();
@@ -56,10 +50,16 @@ void EECCard::ReadVectors(){
   
   // Read the git hash
   fGitHash = (TObjString*) gDirectory->Get("GitHash");
+  fProjectionGitHash = (TObjString*) gDirectory->Get("ProjectionGitHash");
 
   // Read the TVectorT<float>:s
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
     fCardEntries[iEntry] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[iEntry]);
+  }
+  
+  // Read the file names
+  for(int iFileName = 0; iFileName < knFileNames; iFileName++){
+    fFileNames[iFileName] = (TObjString*) gDirectory->Get(fFileNameSaveName[iFileName]);
   }
 
 }
@@ -326,6 +326,19 @@ void EECCard::AddFileName(int entryIndex, TString fileName){
 }
 
 /*
+ * Add git hash for the projecting code used to project the histograms to the card
+ *
+ * Arguments:
+ *  const char* gitHash = Git hash to be added for projection
+ */
+void EECCard::AddProjectionGitHash(const char* gitHash){
+  
+  // Make convert the string to TObjString and add it to the file name array
+  fProjectionGitHash = new TObjString(gitHash);
+  
+}
+
+/*
  * Print the contents of the card to the console
  */
 void EECCard::Print() const{
@@ -347,6 +360,11 @@ void EECCard::Print() const{
     }
   }
   std::cout << std::endl;
+  
+  gitHash = "Unknown";
+  if(fProjectionGitHash != NULL) gitHash = fProjectionGitHash->String().Data();
+  std::cout << "Git hash for projections: " << gitHash << std::endl;
+  
   for(int iFileName = 0; iFileName < knFileNames; iFileName++){
     if(fFileNames[iFileName]){
       std::cout << "Used " << fFileNameType[iFileName] << " file: " << fFileNames[iFileName]->String().Data() << std::endl;
@@ -363,7 +381,7 @@ void EECCard::Write(TDirectory *file){
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
   file->cd("JCard");
   
-  // Write the git hask to the file
+  // Write the git hash to the file
   if(fGitHash) fGitHash->Write("GitHash");
   
   // Write all the vectors to the file. Not all of these exist in older versions of cards, thus check if exists before writing.
@@ -371,6 +389,9 @@ void EECCard::Write(TDirectory *file){
     if(fCardEntries[iEntry])  fCardEntries[iEntry]->Write(fCardEntryNames[iEntry]);
   }
    
+  // Write the git hash used for projections to the file
+  if(fProjectionGitHash) fProjectionGitHash->Write("ProjectionGitHash");
+  
   // Write all the data names to the file.
   for(int iFileName = 0; iFileName < knFileNames; iFileName++){
     if(fFileNames[iFileName]) fFileNames[iFileName]->Write(fFileNameSaveName[iFileName]);
