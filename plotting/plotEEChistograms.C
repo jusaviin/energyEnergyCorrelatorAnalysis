@@ -103,8 +103,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 2;
-  int lastDrawnJetPtBinEEC = 2; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 0;
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = 0;
@@ -121,9 +121,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
-  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Figure saving
   const bool saveFigures = false;
@@ -141,9 +141,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = true;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
+  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
   bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // Select which subevents to draw

@@ -13,14 +13,14 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root"};
-  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root
-  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root
+  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root"};
+  // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
+  // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"EScheme","WTA"};
+  TString legendComment[] = {"Escheme","WTA"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -43,10 +43,37 @@ void compareEEChistograms(){
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
+  
+  // Multiplicity in jet cone
+  bool drawMultiplicityInJetCone = false;
+  bool drawMultiplicityInReflectedCone = false;
+  bool drawMultiplicityInJetConeUncorrected = false;
+  bool drawMultiplicityInReflectedConeUncorrected = false;
+  
+  // Particle density around jets
+  bool drawParticleDensityAroundJets = false;
+  bool drawParticlePtDensityAroundJets = false;
+  
+  // Energy-energy correlators
   bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
+  
+  // Select which pairing types to draw
+  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
+  
+  // Select which subevents to draw
+  bool drawAllSubevents = true;   // Draw histograms without subevent selection
+  bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
+  bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
+  
+  bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
+  bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
+  bool drawSignalFake = false;        // Draw Pythia+Hydjet correlations from MC
+  bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
@@ -67,7 +94,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.1;
   double maxZoom = 1.9;
-  TString ratioLabel = "Data / MC";
+  TString ratioLabel = "EScheme / WTA";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   
   // Scaling for histograms
@@ -98,10 +125,10 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 0;
+  int lastDrawnTrackPtBinEEC = 0;
   
   // ==================================================================
   // ===================== Configuration ready ========================
@@ -122,6 +149,9 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadJetHistograms(drawJets);
     histograms[iDataset]->SetLoadTracks(drawTracks);
     histograms[iDataset]->SetLoadTracksUncorrected(drawUncorrectedTracks);
+    histograms[iDataset]->SetLoadMultiplicityInJets(drawMultiplicityInJetCone || drawMultiplicityInReflectedCone || drawMultiplicityInJetConeUncorrected || drawMultiplicityInReflectedConeUncorrected);
+    histograms[iDataset]->SetLoadParticleDensityAroundJets(drawParticleDensityAroundJets);
+    histograms[iDataset]->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
@@ -151,10 +181,26 @@ void compareEEChistograms(){
   drawer->SetDrawEventInformation(drawEventInformation);
   drawer->SetDrawJets(drawJets);
   drawer->SetDrawAllTracks(drawTracks,drawUncorrectedTracks);
+  
+  drawer->SetDrawMultiplicityInJetCone(drawMultiplicityInJetCone);
+  drawer->SetDrawMultiplicityInReflectedCone(drawMultiplicityInReflectedCone);
+  drawer->SetDrawMultiplicityInJetConeUncorrected(drawMultiplicityInJetConeUncorrected);
+  drawer->SetDrawMultiplicityInReflectedConeUncorrected(drawMultiplicityInReflectedConeUncorrected);
+  
+  drawer->SetDrawParticleDensityAroundJetAxis(drawParticleDensityAroundJets);
+  drawer->SetDrawParticlePtDensityAroundJetAxis(drawParticlePtDensityAroundJets);
+  
   drawer->SetDrawEnergyEnergyCorrelator(drawEnergyEnergyCorrelators);
   drawer->SetDrawEnergyEnergyCorrelatorJetPt(drawEnergyEnergyCorrelatorsJetPt);
   drawer->SetDrawEnergyEnergyCorrelatorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
   drawer->SetDrawEnergyEnergyCorrelatorJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
+  
+  drawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
+  drawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);
+  drawer->SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnlyEnergyEnergyCorrelator);
+  
+  drawer->SetDrawAllSubeventTypes(drawAllSubevents, drawPythiaOnly, drawHydjetOnly);
+  drawer->SetDrawAllSubeventCombinations(drawAllSubeventPairs, drawSignalOnly, drawSignalFake, drawFakeFake);
   
   drawer->SetSaveFigures(saveFigures,figureFormat,figureComment);
   drawer->SetLogAxes(logPt, logDeltaR, logEEC);

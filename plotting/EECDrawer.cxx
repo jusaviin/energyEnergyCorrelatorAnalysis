@@ -439,8 +439,14 @@ void EECDrawer::DrawMultiplicityInJetCone(){
           // Loop over jet pT bins
           for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
             
-            jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
-            compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            // Set the jet pT information for legends and figure saving
+            if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
+              jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+              compactJetPtString = "";
+            } else {
+              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            }
             
             // === Multiplicity within the jet ===
             drawnHistogram = fHistograms->GetHistogramMultiplicityInJetCone(iCentrality, iJetPt, iTrackPt, iMultiplicityType, iSubevent);
@@ -451,7 +457,7 @@ void EECDrawer::DrawMultiplicityInJetCone(){
             legend->Draw();
             
             // Save the figure to a file
-            sprintf(namerX,"%s%s",fHistograms->GetJetHistogramName(), subeventString.Data());
+            sprintf(namerX,"%s%s",fHistograms->GetMultiplicityInJetConeHistogramName(iMultiplicityType), subeventString.Data());
             SaveFigure(namerX,compactCentralityString, compactJetPtString, compactTrackPtString);
             
           } // Jet pT loop
@@ -462,7 +468,7 @@ void EECDrawer::DrawMultiplicityInJetCone(){
 }
 
 /*
- * Draw multiplicity in the jet cone histograms
+ * Draw histograms from particle density around the jet axis
  */
 void EECDrawer::DrawParticleDensityAroundJetAxis(){
   
@@ -480,6 +486,9 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
   TString subeventString;
   TString jetConeTypeString;
   char namerY[100];
+  
+  // Helper variables for histogram normalization
+  double normalizationFactor = 1;
 
   // Loop over multiplicity types
   for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -515,19 +524,28 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
             // Loop over jet pT bins
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
               
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
-              compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              // Set the jet pT information for legends and figure saving
+              if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
+                jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+                compactJetPtString = "";
+                normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality);
+              } else {
+                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality, fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              }
               
               // === Particle density around the jet axis ===
               drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
-              sprintf(namerY,"%s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+              drawnHistogram->Scale(1/normalizationFactor);
+              sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
               legend = new TLegend(0.62,0.75,0.82,0.9);
               SetupLegend(legend,centralityString,jetConeTypeString,subeventString,jetPtString,trackPtString);
               legend->Draw();
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%s",fHistograms->GetJetHistogramName(), jetConeTypeString.Data(), subeventString.Data());
+              sprintf(namerY,"%s%s%s",fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
               SaveFigure(namerY,compactCentralityString, compactJetPtString, compactTrackPtString);
               
             } // Jet pT loop
@@ -891,6 +909,12 @@ void EECDrawer::SetDrawTracksUncorrected(const bool drawOrNot){
   fDrawTracks[EECHistogramManager::kUncorrectedTrack] = drawOrNot;
 }
 
+// Setter for drawing track histograms
+void EECDrawer::SetDrawAllTracks(const bool drawTracks, const bool drawUncorrected){
+  SetDrawTracks(drawTracks);
+  SetDrawTracksUncorrected(drawUncorrected);
+}
+
 // Setter for drawing multiplicity within the jet cone
 void EECDrawer::SetDrawMultiplicityInJetCone(const bool drawOrNot){
   fDrawMultiplicityInJetCone[EECHistogramManager::kMultiplicityInJetCone] = drawOrNot;
@@ -933,12 +957,6 @@ void EECDrawer::SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot){
 void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt){
   SetDrawParticleDensityAroundJetAxis(drawRegular);
   SetDrawParticlePtDensityAroundJetAxis(drawPt);
-}
-
-// Setter for drawing track histograms
-void EECDrawer::SetDrawAllTracks(const bool drawTracks, const bool drawUncorrected){
-  SetDrawTracks(drawTracks);
-  SetDrawTracksUncorrected(drawUncorrected);
 }
 
 // Setter for drawing energy-energy correlator
