@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root"};
+  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root", "data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
@@ -84,11 +84,15 @@ void compareEEChistograms(){
   bool logPt = true;       // pT axis for jet
   bool logDeltaR = true;   // deltaR axis for energy-energy correlators
   bool logEEC = true;      // EEC axis for energy-energy correlators
+  bool logParticleDensity = true;  // Logarithmic y-axis for particle densities
   
   // Plotting style for 2D and 3D plots
   int colorPalette = kRainBow;
   const char* style2D = "colz";
   const char* style3D = "surf1";
+  
+  // Drawing style for the histograms
+  const int lineWidth = 1; // Line width for the drawn histograms
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
@@ -96,6 +100,8 @@ void compareEEChistograms(){
   double maxZoom = 1.9;
   TString ratioLabel = "EScheme / WTA";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
+  bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
+  bool addEnergyToLegend = true;  // Add the collision energy from the first file to legend. Useful if all files are from same system
   
   // Scaling for histograms
   int scaleHistograms = 1; // 0 = Do not scale histograms. 1 = Scale integral to one. 2 = Scale average to one
@@ -125,10 +131,10 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = 0;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
   // ===================== Configuration ready ========================
@@ -204,6 +210,7 @@ void compareEEChistograms(){
   
   drawer->SetSaveFigures(saveFigures,figureFormat,figureComment);
   drawer->SetLogAxes(logPt, logDeltaR, logEEC);
+  drawer->SetLogParticleDensity(logParticleDensity);
   drawer->SetDrawingStyles(colorPalette,style2D,style3D);
   drawer->SetUseDifferenceInRatioPlot(useDifferenceInsteadOfRatio);
   drawer->SetRatioZoom(minZoom,maxZoom);
@@ -211,6 +218,10 @@ void compareEEChistograms(){
   drawer->SetApplyScaling(scaleHistograms);
   drawer->SetJetPtRebin(rebinJetPt);
   drawer->SetManualLegend(manualLegend);
+  drawer->SetAddSystemToLegend(addSystemToLegend);
+  drawer->SetAddEnergyToLegend(addEnergyToLegend);
+  
+  drawer->SetLineWidth(lineWidth);
 
   // Draw the selected histograms
   drawer->DrawHistograms();

@@ -29,6 +29,7 @@ EECComparingDrawer::EECComparingDrawer(EECHistogramManager *fBaseHistograms) :
   fLogPt(true),
   fLogDeltaR(true),
   fLogEEC(true),
+  fLogParticleDensity(false),
   fUseDifferenceInsteadOfRatio(false),
   fRatioZoomMin(0.6),
   fRatioZoomMax(1.4),
@@ -36,7 +37,10 @@ EECComparingDrawer::EECComparingDrawer(EECHistogramManager *fBaseHistograms) :
   fColorPalette(kRainBow),
   fStyle2D("colz"),
   fStyle3D("surf1"),
-  fRebinJetPt(false)
+  fRebinJetPt(false),
+  fAddSystemToLegend(false),
+  fAddEnergyToLegend(false),
+  fLineWidth(1)
 {
   
   // Create a new drawer
@@ -511,10 +515,10 @@ void EECComparingDrawer::DrawMultiplicityInJetCone(){
 
   // Helper variables for legend
   TLegend *legend;
-  double legendX1 = 0.37; // Default x1 location for the legend
-  double legendY1 = 0.1;  // Default y1 location for the legend
-  double legendX2 = 0.57; // Default x2 location for the legend
-  double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
+  double legendX1 = 0.52; // Default x1 location for the legend
+  double legendY1 = 0.4;  // Default y1 location for the legend
+  double legendX2 = 0.72; // Default x2 location for the legend
+  double legendY2 = 0.64 + 0.06*fnAddedHistograms; // Default y2 location for the legend
 
   // Helper variables for naming in figures
   TString centralityString;
@@ -603,10 +607,10 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
   
   // Helper variables for histogram drawing
   TLegend *legend;
-  double legendX1 = 0.37; // Default x1 location for the legend
-  double legendY1 = 0.1;  // Default y1 location for the legend
-  double legendX2 = 0.57; // Default x2 location for the legend
-  double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
+  double legendX1 = 0.56; // Default x1 location for the legend
+  double legendY1 = 0.56 - 0.06*fnAddedHistograms -0.06*(fAddSystemToLegend || fAddEnergyToLegend);  // Default y1 location for the legend
+  double legendX2 = 0.76; // Default x2 location for the legend
+  double legendY2 = 0.8; // Default y2 location for the legend
 
   // Helper variables for naming in figures
   TString centralityString;
@@ -675,7 +679,7 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
               }
               
               // Prepare the multiplicity histograms to be drawn
-              PrepareRatio("particleDensityAroundJetCone", 1, iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+              PrepareRatio("particleDensityAroundJetCone", 1, iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent, 0, 0.6);
               
               // Draw the track phi distributions to the upper panel of a split canvas plot
               if(fApplyScaling){
@@ -683,7 +687,7 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
               } else {
                 sprintf(namerY,"%s",fBaseHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
               }
-              DrawToUpperPad("#Deltar",namerY);
+              DrawToUpperPad("#Deltar",namerY,false,fLogParticleDensity);
               
               // Add a legend to the plot
               legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
@@ -934,6 +938,7 @@ void EECComparingDrawer::DrawToUpperPad(const char* xTitle, const char* yTitle, 
 
   // Define some nice colors for histograms
   fMainHistogram->SetLineColor(kBlack);
+  fMainHistogram->SetLineWidth(fLineWidth);
 
   // Create a split canvas and draw the histograms to the upped part of the canvas
   fDrawer->SetDefaultAppearanceSplitCanvas();
@@ -946,6 +951,7 @@ void EECComparingDrawer::DrawToUpperPad(const char* xTitle, const char* yTitle, 
   
   for(int iAdditional = 0; iAdditional < fnAddedHistograms; iAdditional++){
     fComparisonHistogram[iAdditional]->SetLineColor(fColors[iAdditional]);
+    fComparisonHistogram[iAdditional]->SetLineWidth(fLineWidth);
     fComparisonHistogram[iAdditional]->Draw("same");
   }
   
@@ -972,11 +978,13 @@ void EECComparingDrawer::DrawToLowerPad(const char* xTitle, const char* yTitle, 
   // Draw theratio histograms
   if(fnAddedHistograms > 0){
     fRatioHistogram[0]->SetLineColor(fColors[0]);
+    fRatioHistogram[0]->SetLineWidth(fLineWidth);
     fRatioHistogram[0]->GetYaxis()->SetRangeUser(zoomMin,zoomMax);
     fDrawer->DrawHistogramToLowerPad(fRatioHistogram[0],xTitle,yTitle, " ");
   }
   for(int iAdditional = 1; iAdditional < fnAddedHistograms; iAdditional++){
     fRatioHistogram[iAdditional]->SetLineColor(fColors[iAdditional]);
+    fRatioHistogram[iAdditional]->SetLineWidth(fLineWidth);
     fRatioHistogram[iAdditional]->Draw("same");
   }
   
@@ -1090,6 +1098,11 @@ std::tuple<double,double> EECComparingDrawer::GetHistogramAverageAndDifferenceIn
  */
 void EECComparingDrawer::SetupLegend(TLegend *legend, TString centralityString, TString trackString, TString asymmetryString, TString extraString, TString additionalString){
   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+  if(fAddSystemToLegend || fAddEnergyToLegend){
+    TString systemAndEnergy = Form("%s 5.02 TeV", fBaseHistograms->GetCard()->GetAlternativeDataType().Data());
+    if(!fAddEnergyToLegend) systemAndEnergy = fBaseHistograms->GetCard()->GetAlternativeDataType();
+    legend->AddEntry((TObject*) 0,systemAndEnergy.Data(),"");
+  }
   if(fBaseHistograms->GetSystem().Contains("PbPb")) legend->AddEntry((TObject*) 0,centralityString.Data(),"");
   if(trackString != "") legend->AddEntry((TObject*) 0,trackString.Data(),"");
   if(asymmetryString != "") legend->AddEntry((TObject*) 0,asymmetryString.Data(),"");
@@ -1349,11 +1362,31 @@ void EECComparingDrawer::SetLogEEC(const bool isLog){
   fLogEEC = isLog;
 }
 
+// Setter for logarithmic y-axis in particle density histograms
+void EECComparingDrawer::SetLogParticleDensity(const bool isLog){
+  fLogParticleDensity = isLog;
+}
+
 // Setter for logarithmix axes
 void EECComparingDrawer::SetLogAxes(const bool pt, const bool deltaR, const bool eec){
   SetLogPt(pt);
   SetLogDeltaR(deltaR);
   SetLogEEC(eec);
+}
+
+// Setter for line width in histograms
+void EECComparingDrawer::SetLineWidth(const int lineWidth){
+  fLineWidth = lineWidth;
+}
+
+// Setter for adding collision system to the legend
+void EECComparingDrawer::SetAddSystemToLegend(const bool addSystem){
+  fAddSystemToLegend = addSystem;
+}
+
+// Setter for adding collision energy to the legend
+void EECComparingDrawer::SetAddEnergyToLegend(const bool addEnergy){
+  fAddEnergyToLegend = addEnergy;
 }
 
 // Setter for manual legend setting

@@ -96,7 +96,13 @@ public:
   void SetLogDeltaR(const bool isLog);  // Setter for logarithmic deltaR axis in energy-energy correlators
   void SetLogEEC(const bool isLog);     // Setter for logarithmic EEC axis in energy-energy correlators
   void SetLogAxes(const bool pt, const bool deltaR, const bool eec);  // Setter for logarithmic axes
+  void SetLogParticleDensity(const bool isLog); // Setter for logarithmic y-axis in particle density histograms
   void SetManualLegend(const bool manualLegend);  // Setter for manual legend setting
+  void SetAddSystemToLegend(const bool addSystem); // Setter for adding collision system to the legend
+  void SetAddEnergyToLegend(const bool addSystem); // Setter for adding collision energy to the legend
+  
+  // Setters for drawing style
+  void SetLineWidth(const int lineWidth); // Setter for line width in histograms
   
   // Setter for scaling and rebinning the histograms
   void SetApplyScaling(const int applyScaling); // Set if we should scale the histograms with their integral before comparing them
@@ -165,6 +171,7 @@ private:
   bool fLogPt;          // jet pT distributions
   bool fLogDeltaR;      // logarithmic deltaR axis for the energy-energy correlators
   bool fLogEEC;         // logarithmic EEC axis for the energy-energy correaltors
+  bool fLogParticleDensity; // logarithmic y-axis for particle densities
   
   // Zooming for ratio plots
   bool fUseDifferenceInsteadOfRatio;  // Instead of ratio, draw the difference of the two distributions
@@ -179,6 +186,11 @@ private:
   
   // Rebinning
   bool fRebinJetPt;       // Rebin the single jet pT distributions
+  
+  // Drawing style
+  bool fAddSystemToLegend; // Add the collision system to the legend
+  bool fAddEnergyToLegend; // Add the collision energy to the legend
+  int fLineWidth;          // Line width for the drawn histgrams
   
   // Drawn bins
   int fFirstDrawnCentralityBin;  // First centrality bin that is drawn

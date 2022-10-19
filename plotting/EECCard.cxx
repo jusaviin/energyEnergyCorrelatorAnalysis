@@ -361,9 +361,7 @@ void EECCard::Print() const{
   }
   std::cout << std::endl;
   
-  gitHash = "Unknown";
-  if(fProjectionGitHash != NULL) gitHash = fProjectionGitHash->String().Data();
-  std::cout << "Git hash for projections: " << gitHash << std::endl;
+  if(fProjectionGitHash != NULL) std::cout << "Git hash for projections: " << fProjectionGitHash->String().Data() << std::endl;
   
   for(int iFileName = 0; iFileName < knFileNames; iFileName++){
     if(fFileNames[iFileName]){
