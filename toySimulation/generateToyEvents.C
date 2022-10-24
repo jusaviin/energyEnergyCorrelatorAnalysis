@@ -29,10 +29,11 @@ double getDeltaR(const double eta1, const double phi1, const double eta2, const 
  *
  *  Arguments:
  *    int nEvent = Number of events that is generated
+ *    double ptCut = Apply a lower pT cut for the simulated particles
  *    double slope = Slope for particle density. This says how much more probable it is to generate particle to deltaR = 0 compared to deltaR = 0.4
  *    double jetR = Used jet radius
  */
-void generateToyEvents(int nEvent = 100000, double slope = 0.1, double jetR = 0.4){
+void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0.0, double jetR = 0.4){
   
   // Read the track pT and multiplicity distributions from a file
   TFile *inputFile = TFile::Open("../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root");
@@ -57,6 +58,10 @@ void generateToyEvents(int nEvent = 100000, double slope = 0.1, double jetR = 0.
   
   TH1D *hEnergyEnergyCorrelator = new TH1D("energyEnergyCorrelator", "energyEnergyCorrelator", nDeltaRBinsEEC, deltaRBinsEEC);
   TH1D *hMultiplicityOut = new TH1D("multiplicity", "multiplicity", 150, -0.5, 149.5);
+  TH1D *hTrackPtOut = (TH1D*) hTrackPt->Clone("trackPt");
+  TH2D *hEtaPhi = new TH2D("etaPhi", "etaPhi", 100, -0.5, 0.5, 100, -0.5, 0.5);
+  TH1D *hFlowPhase = new TH1D("flowPhase","flowPhase",64,-3.2,3.2);
+  hTrackPtOut->Reset("M");
   
   // Create a random number generator
   TRandom3 *rng = new TRandom3();
@@ -70,15 +75,40 @@ void generateToyEvents(int nEvent = 100000, double slope = 0.1, double jetR = 0.
   std::vector<double> particlePhi;
   double correlatorWeight, currentDeltaR;
   
+  // Function for inducing a flow modulation for the particles
+  TF1 *flowFunction = new TF1("flowFunction", "[1]*cos(2*x+[0])+1", -TMath::Pi(), TMath::Pi());
+  flowFunction->SetParameter(0,0);
+  flowFunction->SetParameter(1,0.1);
+  
+  // Function to induce a bias that the upwards flow fluctuation coindiced with the jet axis
+  double biasPercentage = 0.1;
+  TF1 *flowBiasFunction = new TF1("flowBias", "1-TMath::Abs(x)*[0]", -TMath::Pi(), TMath::Pi());
+  flowBiasFunction->SetParameter(0, biasPercentage*2/TMath::Pi());
+  
   // Function for inducing a slope to the particle density distribution
   TF1* slopeFunction = new TF1("slopeFunction", "pol1", 0, 0.4);
   slopeFunction->SetParameter(0,0);
   slopeFunction->SetParameter(1,slope/jetR);
     
+  // Apply a lower pT cut to the generated particle distribution
+  for(int iBin = 1; iBin <= hTrackPt->GetNbinsX(); iBin++){
+    if(hTrackPt->GetXaxis()->GetBinUpEdge(iBin) < ptCut){
+      hTrackPt->SetBinContent(iBin,0);
+      hTrackPt->SetBinError(iBin,0);
+    } else {
+      break;
+    }
+  }
+  
+  // Do not allow 0 and 1 particles in the multiplicity distribution
+  hMultiplicity->SetBinContent(1,0);
+  hMultiplicity->SetBinContent(2,0);
+  hMultiplicity->SetBinError(1,0);
+  hMultiplicity->SetBinError(2,0);
+  
   // Generate nEvent toy events
-  cout << "Generating " << nEvent << " events" << endl;
+  double flowPhase;
   for(int iEvent = 0; iEvent < nEvent; iEvent++){
-    
     if(iEvent % 10000 == 0) cout << "Generating event " << iEvent << endl;
     
     // Clear the particle vectors from the previous event
@@ -87,24 +117,39 @@ void generateToyEvents(int nEvent = 100000, double slope = 0.1, double jetR = 0.
     particleEta.clear();
     
     // First, determine the particle multiplicity within the jet cone
-    currentMultiplicity = TMath::Nint(hMultiplicity->GetRandom(rng));
+    currentMultiplicity = TMath::Nint(hMultiplicity->GetRandom(rng));  // Multiplicity sampled from data distribution
+    //currentMultiplicity = TMath::Nint(rng->Uniform(2,140));          // Unoform multiplicity
     hMultiplicityOut->Fill(currentMultiplicity);
+    
+    // Find the phase for the flow for this event
+    //flowPhase = rng->Uniform(-TMath::Pi()/2,TMath::Pi()/2);  // Completely random flow
+    //flowPhase = flowBiasFunction->GetRandom(-TMath::Pi()/2,TMath::Pi()/2,rng);  // Make it more likely for an upwards fluctuation to be aligned with jet axis
+    flowPhase = -TMath::Pi()/4;
+    flowFunction->SetParameter(0, flowPhase);
+    hFlowPhase->Fill(flowPhase);
     
     // Create particles uniformly until we have the required number of particles
     for(int iParticle = 0; iParticle < currentMultiplicity; iParticle++){
       
       // Get the particle pT from the measured track pT distribution
-      currentPt = hTrackPt->GetRandom(rng);
+      currentPt = hTrackPt->GetRandom(rng);  // Track pT distribution sampled from data distribution
+      //currentPt = rng->Uniform(0.7, 20);   // Uniform track pT
       particlePt.push_back(currentPt);
+      hTrackPtOut->Fill(currentPt);
       
       // Get eta and phi from uniform distribution. Require that they are within the jet cone of 0.4
       do {
         currentEta = rng->Uniform(-jetR, jetR);
-        currentPhi = rng->Uniform(-jetR, jetR);
+        //currentPhi = rng->Uniform(-jetR, jetR);  // Uniform phi
+        
+        // Phi with random flow modulation
+        currentPhi = flowFunction->GetRandom(-jetR,jetR,rng);
+        
         currentDeltaR = TMath::Sqrt(currentEta*currentEta + currentPhi*currentPhi);
-      } while ((currentDeltaR > jetR) || (rng->Rndm() < slopeFunction->Eval(currentDeltaR)));
+      } while ((currentDeltaR > jetR)/* || (rng->Rndm() < slopeFunction->Eval(currentDeltaR))*/);
       particlePhi.push_back(currentPhi);
       particleEta.push_back(currentEta);
+      hEtaPhi->Fill(currentPhi, currentEta);
       
       // Fill the particle density histogram
       hParticleDensity[0]->Fill(TMath::Sqrt(currentEta*currentEta + currentPhi*currentPhi));
@@ -152,11 +197,14 @@ void generateToyEvents(int nEvent = 100000, double slope = 0.1, double jetR = 0.
   hEnergyEnergyCorrelator->Scale(1.0,"width");
   
   // After the histograms are normalized, we can save them to a file
-  TFile *outputFile = new TFile("toySimulation100kevents10pSlope.root", "RECREATE");
+  TFile *outputFile = new TFile("toySimulation100kevents10pFlowMaxBiasSlope.root", "RECREATE");
   hParticleDensity[0]->Write();
   hParticleDensity[1]->Write();
   hEnergyEnergyCorrelator->Write();
   hMultiplicityOut->Write();
+  hTrackPtOut->Write();
+  hEtaPhi->Write();
+  hFlowPhase->Write();
   outputFile->Close();
   
 }

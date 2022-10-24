@@ -6,10 +6,11 @@
 void compareToyFiles(){
 
   // Open the data and toy files
-  const int nFiles = 2;
-  TString fileNames[] = {"toySimulation100kevents.root", "toySimulation100keventsSignalMultiplicity.root", "toySimulation100kevents10pSlope.root"};
+  const int nFiles = 4;
+  TString fileNames[] = {"toySimulation100kevents.root", "toySimulation100kevents10pFlow.root", "toySimulation100kevents10pFlow30pBias.root", "toySimulation100kevents10pFlowMaxBiasSlope.root"};
   
-  TString legendComment[] = {"Signal multi", "Reflected multi", "10% sloped density"};
+  TString legendComment[] = {"Nominal", "10% v_{2}", "10% v_{2}, 30% bias", "10% v_{2}, max bias"};
+  TString ratioName = "#frac{Flow}{Nominal}";
   
   int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure+5, kOrange-2, kGray};
   
@@ -22,15 +23,23 @@ void compareToyFiles(){
   // Read the energy-energy correlators and particle densities from the files
   TH1D *hEnergyEnergyCorrelator[nFiles];
   TH1D *hParticleDensity[nFiles][2];
-  TH1D* hEnergyEnergyCorrelatorRatio[nFiles-1];
-  TH1D* hParticleDensityRatio[nFiles-1][2];
+  TH1D *hMultiplicity[nFiles];
+  TH1D *hTrackPt[nFiles];
+  TH1D *hEnergyEnergyCorrelatorRatio[nFiles-1];
+  TH1D *hParticleDensityRatio[nFiles-1][2];
+  TH1D *hMultiplicityRatio[nFiles-1];
+  TH1D *hTrackPtRatio[nFiles-1];
   for(int iFile = 0; iFile < nFiles; iFile++){
     hEnergyEnergyCorrelator[iFile] = (TH1D*) inputFile[iFile]->Get("energyEnergyCorrelator");
     hParticleDensity[iFile][0] = (TH1D*) inputFile[iFile]->Get("particleDensity");
     hParticleDensity[iFile][1] = (TH1D*) inputFile[iFile]->Get("particlePtDensity");
+    hMultiplicity[iFile] = (TH1D*) inputFile[iFile]->Get("multiplicity");
+    hTrackPt[iFile] = (TH1D*) inputFile[iFile]->Get("trackPt");
     
     // Normalize the histograms to the number of particle-particle pairs
     hEnergyEnergyCorrelator[iFile]->Scale(1.0 / hEnergyEnergyCorrelator[iFile]->Integral("width"));
+    hMultiplicity[iFile]->Scale(1.0 / hMultiplicity[iFile]->Integral("width"));
+    hTrackPt[iFile]->Scale(1.0 / hTrackPt[iFile]->Integral("width"));
     for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
       hParticleDensity[iFile][iParticleDensity]->Scale(1.0 / hParticleDensity[iFile][iParticleDensity]->Integral("width"));
     }
@@ -39,6 +48,12 @@ void compareToyFiles(){
     if(iFile > 0){
       hEnergyEnergyCorrelatorRatio[iFile-1] = (TH1D*) hEnergyEnergyCorrelator[iFile]->Clone(Form("energyEnergyCorrelatorRatio%d",iFile));
       hEnergyEnergyCorrelatorRatio[iFile-1]->Divide(hEnergyEnergyCorrelator[0]);
+      
+      hMultiplicityRatio[iFile-1] = (TH1D*) hMultiplicity[iFile]->Clone(Form("multiplicityRatio%d",iFile));
+      hMultiplicityRatio[iFile-1]->Divide(hMultiplicity[0]);
+      
+      hTrackPtRatio[iFile-1] = (TH1D*) hTrackPt[iFile]->Clone(Form("trackPtRatio%d",iFile));
+      hTrackPtRatio[iFile-1]->Divide(hTrackPt[0]);
       
       for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
         hParticleDensityRatio[iFile-1][iParticleDensity] = (TH1D*) hParticleDensity[iFile][iParticleDensity]->Clone(Form("particleDensityRatio%d%d", iFile, iParticleDensity));
@@ -90,10 +105,10 @@ void compareToyFiles(){
   drawer->SetGridY(true);
   for(int iRatio = 0; iRatio < nFiles-1; iRatio++){
     hEnergyEnergyCorrelatorRatio[iRatio]->GetXaxis()->SetRangeUser(0.001,0.8);
-    hEnergyEnergyCorrelatorRatio[iRatio]->GetYaxis()->SetRangeUser(0.8,1.2);
+    hEnergyEnergyCorrelatorRatio[iRatio]->GetYaxis()->SetRangeUser(0.9,1.1);
     hEnergyEnergyCorrelatorRatio[iRatio]->SetLineColor(color[iRatio+1]);
     if(iRatio == 0){
-      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[iRatio], "#Deltar", "#frac{Color}{Black}", " ");
+      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[iRatio], "#Deltar", ratioName.Data(), " ");
     } else {
       hEnergyEnergyCorrelatorRatio[iRatio]->Draw("same");
     }
@@ -109,7 +124,6 @@ void compareToyFiles(){
     legend = new TLegend(0.58,0.08,0.83,0.44);
     legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
     legend->AddEntry((TObject*) 0, "Cent: 0-10%","");
-    legend->AddEntry((TObject*) 0, "Jet p_{T} > 120 GeV","");
     legend->AddEntry((TObject*) 0, "Track p_{T} > 0.7 GeV","");
     
     // Create a canvas and draw the distributions and the ratio to the canvas
@@ -133,15 +147,94 @@ void compareToyFiles(){
     drawer->SetLogY(false);
     drawer->SetGridY(true);
     for(int iRatio = 0; iRatio < nFiles-1; iRatio++){
-      hParticleDensityRatio[iRatio][iParticleDensity]->GetYaxis()->SetRangeUser(0.8,1.2);
+      hParticleDensityRatio[iRatio][iParticleDensity]->GetYaxis()->SetRangeUser(0.9,1.1);
       hParticleDensityRatio[iRatio][iParticleDensity]->SetLineColor(color[iRatio+1]);
       if(iRatio == 0){
-        drawer->DrawHistogramToLowerPad(hParticleDensityRatio[iRatio][iParticleDensity], "#Deltar", "#frac{Color}{Black}", " ");
+        drawer->DrawHistogramToLowerPad(hParticleDensityRatio[iRatio][iParticleDensity], "#Deltar", ratioName.Data(), " ");
       } else {
         hParticleDensityRatio[iRatio][iParticleDensity]->Draw("same");
       }
     }
     drawer->SetGridY(false);
   }
+  
+  // =======================================
+  // ======    Draw multiplicities    ======
+  // =======================================
+  
+  // Create a legend for the figure
+  legend = new TLegend(0.58,0.48,0.83,0.84);
+  legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+  legend->AddEntry((TObject*) 0, "Toy simulation","");
+  legend->AddEntry((TObject*) 0, "Track p_{T} > 0.7 GeV","");
+  
+  // Create a canvas and draw the distributions and the ratio to the canvas
+  drawer->CreateSplitCanvas();
+  hMultiplicity[0]->SetLineColor(color[0]);
+  drawer->DrawHistogramToUpperPad(hMultiplicity[0], "Multiplicity", "Counts", " ");
+  for(int iFile = 1; iFile < nFiles; iFile++){
+    hMultiplicity[iFile]->SetLineColor(color[iFile]);
+    hMultiplicity[iFile]->Draw("same");
+  }
+  
+  // Draw the legend
+  for(int iFile = 0; iFile < nFiles; iFile++){
+    legend->AddEntry(hMultiplicity[iFile], legendComment[iFile].Data(), "l");
+  }
+  legend->Draw();
+  
+  // For the ratio, do linear y-axis
+  drawer->SetLogY(false);
+  drawer->SetGridY(true);
+  for(int iRatio = 0; iRatio < nFiles-1; iRatio++){
+    hMultiplicityRatio[iRatio]->GetYaxis()->SetRangeUser(0.8,1.2);
+    hMultiplicityRatio[iRatio]->SetLineColor(color[iRatio+1]);
+    if(iRatio == 0){
+      drawer->DrawHistogramToLowerPad(hMultiplicityRatio[iRatio], "Multiplicity", ratioName.Data(), " ");
+    } else {
+      hMultiplicityRatio[iRatio]->Draw("same");
+    }
+  }
+  drawer->SetGridY(false);
+  
+  // =================================
+  // ======    Draw track pT    ======
+  // =================================
+  
+  // Create a legend for the figure
+  legend = new TLegend(0.58,0.48,0.83,0.84);
+  legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+  legend->AddEntry((TObject*) 0, "Toy simulation","");
+  legend->AddEntry((TObject*) 0, "Track p_{T} > 0.7 GeV","");
+  
+  // Create a canvas and draw the distributions and the ratio to the canvas
+  drawer->CreateSplitCanvas();
+  drawer->SetLogY(true);
+  hTrackPt[0]->SetLineColor(color[0]);
+  drawer->DrawHistogramToUpperPad(hTrackPt[0], "Particle p_{T} (GeV)", "Counts", " ");
+  for(int iFile = 1; iFile < nFiles; iFile++){
+    hTrackPt[iFile]->SetLineColor(color[iFile]);
+    hTrackPt[iFile]->Draw("same");
+  }
+  
+  // Draw the legend
+  for(int iFile = 0; iFile < nFiles; iFile++){
+    legend->AddEntry(hTrackPt[iFile], legendComment[iFile].Data(), "l");
+  }
+  legend->Draw();
+  
+  // For the ratio, do linear y-axis
+  drawer->SetLogY(false);
+  drawer->SetGridY(true);
+  for(int iRatio = 0; iRatio < nFiles-1; iRatio++){
+    hTrackPtRatio[iRatio]->GetYaxis()->SetRangeUser(0.8,1.2);
+    hTrackPtRatio[iRatio]->SetLineColor(color[iRatio+1]);
+    if(iRatio == 0){
+      drawer->DrawHistogramToLowerPad(hTrackPtRatio[iRatio], "Particle p_{T} (GeV)", ratioName.Data(), " ");
+    } else {
+      hTrackPtRatio[iRatio]->Draw("same");
+    }
+  }
+  drawer->SetGridY(false);
   
 }

@@ -4,27 +4,48 @@
  * Macro for comparing the results from toy simulation to only reflected cone part of the data
  */
 void compareToyToData(){
-
+  
   // Open the data and toy files
-  TFile *dataFile = TFile::Open("../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root");
-  TFile *toyFile = TFile::Open("toySimulation100kevents2pSlope.root");
+  TFile *dataFile = TFile::Open("../data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root");
+  // ../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
+  
+  const int nToyFiles = 2;
+  TString toyFileNames[] = {"toySimulation100kevents.root","toySimulation100keventsRandomHighFlow.root"};
+  TFile *toyFile[nToyFiles];
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    toyFile[iFile] = TFile::Open(toyFileNames[iFile]);
+  }
+  
+  TString toyLegendComment[] = {"Nominal", "10% v_{2}"};
+  
   
   // Read the correcponding energy-energy correlator histograms from the files
   TH1D *hEnergyEnergyCorrelatorData = (TH1D*) dataFile->Get("energyEnergyCorrelator/energyEnergyCorrelatorReflectedConePair_C0T0");
-  TH1D *hEnergyEnergyCorrelatorToy = (TH1D*) toyFile->Get("energyEnergyCorrelator");
   TH1D *hParticleDensityDataRaw[2];
   hParticleDensityDataRaw[0] = (TH1D*) dataFile->Get("particleDensity/particleDensityReflectedCone_C0T0");
   hParticleDensityDataRaw[1] = (TH1D*) dataFile->Get("particlePtDensity/particlePtDensityReflectedCone_C0T0");
-  TH1D *hParticleDensityToy[2];
-  hParticleDensityToy[0] = (TH1D*) toyFile->Get("particleDensity");
-  hParticleDensityToy[1] = (TH1D*) toyFile->Get("particlePtDensity");
   TH1D *hMultiplicityData = (TH1D*) dataFile->Get("multiplicityInReflectedCone/multiplicityInReflectedCone_C0T0");
-  TH1D *hMultiplicityToy = (TH1D*) toyFile->Get("multiplicity");
+  TH1D *hTrackPtData = (TH1D*) dataFile->Get("track/trackPt_C0");
+  
+  TH1D *hEnergyEnergyCorrelatorToy[nToyFiles];
+  TH1D *hParticleDensityToy[nToyFiles][2];
+  TH1D *hMultiplicityToy[nToyFiles];
+  TH1D *hTrackPtToy[nToyFiles];
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hEnergyEnergyCorrelatorToy[iFile] = (TH1D*) toyFile[iFile]->Get("energyEnergyCorrelator");
+    hParticleDensityToy[iFile][0] = (TH1D*) toyFile[iFile]->Get("particleDensity");
+    hParticleDensityToy[iFile][1] = (TH1D*) toyFile[iFile]->Get("particlePtDensity");
+    hMultiplicityToy[iFile] = (TH1D*) toyFile[iFile]->Get("multiplicity");
+    hTrackPtToy[iFile] = (TH1D*) toyFile[iFile]->Get("trackPt");
+  }
+  
+  
   
   // Particle density in data has more bins, but same bin borders. For comparison with toy, trunkate the data histogram
   TH1D *hParticleDensityData[2];
-  hParticleDensityData[0] = (TH1D*) hParticleDensityToy[0]->Clone("particleDensityForData");
-  hParticleDensityData[1] = (TH1D*) hParticleDensityToy[1]->Clone("particlePtDensityForData");
+  hParticleDensityData[0] = (TH1D*) hParticleDensityToy[0][0]->Clone("particleDensityForData");
+  hParticleDensityData[1] = (TH1D*) hParticleDensityToy[0][1]->Clone("particlePtDensityForData");
   for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
     for(int iBin = 1; iBin <= hParticleDensityData[iParticleDensity]->GetNbinsX(); iBin++){
       hParticleDensityData[iParticleDensity]->SetBinContent(iBin, hParticleDensityDataRaw[iParticleDensity]->GetBinContent(iBin));
@@ -34,26 +55,44 @@ void compareToyToData(){
   
   // Normalize the histograms to the number of particle-particle pairs
   hEnergyEnergyCorrelatorData->Scale(1.0 / hEnergyEnergyCorrelatorData->Integral("width"));
-  hEnergyEnergyCorrelatorToy->Scale(1.0 / hEnergyEnergyCorrelatorToy->Integral("width"));
   for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
     hParticleDensityData[iParticleDensity]->Scale(1.0 / hParticleDensityData[iParticleDensity]->Integral("width"));
-    hParticleDensityToy[iParticleDensity]->Scale(1.0 / hParticleDensityToy[iParticleDensity]->Integral("width"));
   }
   hMultiplicityData->Scale(1.0 / hMultiplicityData->Integral("width"));
-  hMultiplicityToy->Scale(1.0 / hMultiplicityToy->Integral("width"));
+  hTrackPtData->Scale(1.0 / hTrackPtData->Integral("width"));
   
-  // Calculate the ratio between data and toy
-  TH1D* hToyToDataEnergyEnergyCorrelatorRatio = (TH1D*) hEnergyEnergyCorrelatorToy->Clone("energyEnergyCorrelatorRatio");
-  hToyToDataEnergyEnergyCorrelatorRatio->Divide(hEnergyEnergyCorrelatorData);
-  
-  TH1D* hToyToDataParticleDensityRatio[2];
-  for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
-    hToyToDataParticleDensityRatio[iParticleDensity] = (TH1D*) hParticleDensityToy[iParticleDensity]->Clone(Form("particleDensityRatio%d", iParticleDensity));
-    hToyToDataParticleDensityRatio[iParticleDensity]->Divide(hParticleDensityData[iParticleDensity]);
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hEnergyEnergyCorrelatorToy[iFile]->Scale(1.0 / hEnergyEnergyCorrelatorToy[iFile]->Integral("width"));
+    for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
+      hParticleDensityToy[iFile][iParticleDensity]->Scale(1.0 / hParticleDensityToy[iFile][iParticleDensity]->Integral("width"));
+    }
+    
+    hMultiplicityToy[iFile]->Scale(1.0 / hMultiplicityToy[iFile]->Integral("width"));
+    hTrackPtToy[iFile]->Scale(1.0 / hTrackPtToy[iFile]->Integral("width"));
   }
   
-  TH1D* hToyToDataMultiplicityRatio = (TH1D*) hMultiplicityToy->Clone("multiplicityrRatio");
-  hToyToDataMultiplicityRatio->Divide(hMultiplicityData);
+  
+  
+  // Calculate the ratio between data and toy
+  TH1D* hToyToDataEnergyEnergyCorrelatorRatio[nToyFiles];
+  TH1D* hToyToDataParticleDensityRatio[nToyFiles][2];
+  TH1D* hToyToDataMultiplicityRatio[nToyFiles];
+  TH1D* hToyToDataTrackPtRatio[nToyFiles];
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hToyToDataEnergyEnergyCorrelatorRatio[iFile] = (TH1D*) hEnergyEnergyCorrelatorToy[iFile]->Clone(Form("energyEnergyCorrelatorRatio%d", iFile));
+    hToyToDataEnergyEnergyCorrelatorRatio[iFile]->Divide(hEnergyEnergyCorrelatorData);
+    
+    for(int iParticleDensity = 0; iParticleDensity < 2; iParticleDensity++){
+      hToyToDataParticleDensityRatio[iFile][iParticleDensity] = (TH1D*) hParticleDensityToy[iFile][iParticleDensity]->Clone(Form("particleDensityRatio%d%d", iFile, iParticleDensity));
+      hToyToDataParticleDensityRatio[iFile][iParticleDensity]->Divide(hParticleDensityData[iParticleDensity]);
+    }
+    
+    hToyToDataMultiplicityRatio[iFile] = (TH1D*) hMultiplicityToy[iFile]->Clone(Form("multiplicityRatio%d", iFile));
+    hToyToDataMultiplicityRatio[iFile]->Divide(hMultiplicityData);
+    
+    hToyToDataTrackPtRatio[iFile] = (TH1D*) hTrackPtToy[iFile]->Clone(Form("trackPtRatio%d", iFile));
+    hToyToDataTrackPtRatio[iFile]->Divide(hTrackPtData);
+  }
   
   // Configure a JDrawer to do the drawing for us
   JDrawer *drawer = new JDrawer();
@@ -63,6 +102,8 @@ void compareToyToData(){
   drawer->SetTopMargin(0.07);
   drawer->SetTitleOffsetY(1.7);
   drawer->SetTitleOffsetX(1.0);
+  
+  int color[9] = {kRed, kBlue, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure+5, kOrange-2, kGray};
   
   // ======================================
   // === Draw energy-energy correlators ===
@@ -82,21 +123,30 @@ void compareToyToData(){
   hEnergyEnergyCorrelatorData->SetLineColor(kBlack);
   hEnergyEnergyCorrelatorData->GetXaxis()->SetRangeUser(0.001,0.8);
   drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelatorData, "#Deltar", "EEC", " ");
-  hEnergyEnergyCorrelatorToy->SetLineColor(kRed);
-  hEnergyEnergyCorrelatorToy->Draw("same");
+  legend->AddEntry(hEnergyEnergyCorrelatorData, "PbPb, reflected cone", "l");
+  
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hEnergyEnergyCorrelatorToy[iFile]->SetLineColor(color[iFile]);
+    hEnergyEnergyCorrelatorToy[iFile]->Draw("same");
+    legend->AddEntry(hEnergyEnergyCorrelatorToy[iFile], Form("Toy, %s", toyLegendComment[iFile].Data()), "l");
+  }
   
   // Draw the legend
-  legend->AddEntry(hEnergyEnergyCorrelatorData, "PbPb, reflected cone", "l");
-  legend->AddEntry(hEnergyEnergyCorrelatorToy, "Toy simulation", "l");
   legend->Draw();
   
   // For the ratio, do linear y-axis
   drawer->SetLogY(false);
   drawer->SetGridY(true);
-  hToyToDataEnergyEnergyCorrelatorRatio->GetXaxis()->SetRangeUser(0.001,0.8);
-  hToyToDataEnergyEnergyCorrelatorRatio->GetYaxis()->SetRangeUser(0.8,1.2);
-  hToyToDataEnergyEnergyCorrelatorRatio->SetLineColor(kRed);
-  drawer->DrawHistogramToLowerPad(hToyToDataEnergyEnergyCorrelatorRatio, "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hToyToDataEnergyEnergyCorrelatorRatio[iFile]->GetXaxis()->SetRangeUser(0.001,0.8);
+    hToyToDataEnergyEnergyCorrelatorRatio[iFile]->GetYaxis()->SetRangeUser(0.8,1.2);
+    hToyToDataEnergyEnergyCorrelatorRatio[iFile]->SetLineColor(color[iFile]);
+    if(iFile == 0){
+      drawer->DrawHistogramToLowerPad(hToyToDataEnergyEnergyCorrelatorRatio[iFile], "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+    } else {
+      hToyToDataEnergyEnergyCorrelatorRatio[iFile]->Draw("same");
+    }
+  }
   drawer->SetGridY(false);
 
   // =====================================
@@ -117,20 +167,29 @@ void compareToyToData(){
     drawer->SetLogX(false);
     hParticleDensityData[iParticleDensity]->SetLineColor(kBlack);
     drawer->DrawHistogramToUpperPad(hParticleDensityData[iParticleDensity], "#Deltar", densityAxisString[iParticleDensity], " ");
-    hParticleDensityToy[iParticleDensity]->SetLineColor(kRed);
-    hParticleDensityToy[iParticleDensity]->Draw("same");
+    legend->AddEntry(hParticleDensityData[iParticleDensity], "PbPb, reflected cone", "l");
+    
+    for(int iFile = 0; iFile < nToyFiles; iFile++){
+      hParticleDensityToy[iFile][iParticleDensity]->SetLineColor(color[iFile]);
+      hParticleDensityToy[iFile][iParticleDensity]->Draw("same");
+      legend->AddEntry(hParticleDensityToy[iFile][iParticleDensity], Form("Toy, %s", toyLegendComment[iFile].Data()), "l");
+    }
     
     // Draw the legend
-    legend->AddEntry(hParticleDensityData[iParticleDensity], "PbPb, reflected cone", "l");
-    legend->AddEntry(hParticleDensityToy[iParticleDensity], "Toy simulation", "l");
     legend->Draw();
     
     // For the ratio, do linear y-axis
     drawer->SetLogY(false);
     drawer->SetGridY(true);
-    hToyToDataParticleDensityRatio[iParticleDensity]->GetYaxis()->SetRangeUser(0.8,1.2);
-    hToyToDataParticleDensityRatio[iParticleDensity]->SetLineColor(kRed);
-    drawer->DrawHistogramToLowerPad(hToyToDataParticleDensityRatio[iParticleDensity], "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+    for(int iFile = 0; iFile < nToyFiles; iFile++){
+      hToyToDataParticleDensityRatio[iFile][iParticleDensity]->GetYaxis()->SetRangeUser(0.8,1.2);
+      hToyToDataParticleDensityRatio[iFile][iParticleDensity]->SetLineColor(color[iFile]);
+      if(iFile == 0){
+        drawer->DrawHistogramToLowerPad(hToyToDataParticleDensityRatio[iFile][iParticleDensity], "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+      } else {
+        hToyToDataParticleDensityRatio[iFile][iParticleDensity]->Draw("same");
+      }
+    }
     drawer->SetGridY(false);
   }
   
@@ -151,19 +210,28 @@ void compareToyToData(){
   drawer->SetLogX(false);
   hMultiplicityData->SetLineColor(kBlack);
   drawer->DrawHistogramToUpperPad(hMultiplicityData, "Multiplicity", "Counts", " ");
-  hMultiplicityToy->SetLineColor(kRed);
-  hMultiplicityToy->Draw("same");
+  legend->AddEntry(hMultiplicityData, "PbPb, reflected cone", "l");
+  
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hMultiplicityToy[iFile]->SetLineColor(color[iFile]);
+    hMultiplicityToy[iFile]->Draw("same");
+    legend->AddEntry(hMultiplicityToy[iFile], Form("Toy, %s", toyLegendComment[iFile].Data()), "l");
+  }
   
   // Draw the legend
-  legend->AddEntry(hMultiplicityData, "PbPb, reflected cone", "l");
-  legend->AddEntry(hMultiplicityToy, "Toy simulation", "l");
   legend->Draw();
   
   // For the ratio, do linear y-axis
   drawer->SetLogY(false);
   drawer->SetGridY(true);
-  hToyToDataMultiplicityRatio->GetYaxis()->SetRangeUser(0,2);
-  hToyToDataMultiplicityRatio->SetLineColor(kRed);
-  drawer->DrawHistogramToLowerPad(hToyToDataMultiplicityRatio, "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+  for(int iFile = 0; iFile < nToyFiles; iFile++){
+    hToyToDataMultiplicityRatio[iFile]->GetYaxis()->SetRangeUser(0,2);
+    hToyToDataMultiplicityRatio[iFile]->SetLineColor(color[iFile]);
+    if(iFile == 0){
+      drawer->DrawHistogramToLowerPad(hToyToDataMultiplicityRatio[iFile], "#Deltar", "#frac{Toy result}{Reflected cone}", " ");
+    } else {
+      hToyToDataMultiplicityRatio[iFile]->Draw("same");
+    }
+  }
   drawer->SetGridY(false);
 }
