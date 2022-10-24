@@ -16,6 +16,8 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   fFigureSaveNameAppend(""),
   fDrawEventInformation(false),
   fDrawJets(false),
+  fDrawIndividualParticleDensities(true),
+  fDrawParticleDensitiesForConstantJetPt(false),
   fDrawIndividualEnergyEnergyCorrelators(true),
   fDrawEnergyEnergyCorrelatorsForConstantJetPt(false),
   fDrawEnergyEnergyCorrelatorsForConstantTrackPt(false),
@@ -489,6 +491,7 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
   
   // Helper variables for histogram normalization
   double normalizationFactor = 1;
+  int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
 
   // Loop over multiplicity types
   for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -514,12 +517,48 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
           
           subeventString = fHistograms->GetSubeventType(iSubevent);
           
-          // Loop over track pT bins
-          for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+          if(fDrawIndividualParticleDensities){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString.ReplaceAll(".","v");
+            // Loop over track pT bins
+            for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+              
+              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString.ReplaceAll(".","v");
+              
+              // Loop over jet pT bins
+              for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+                
+                // Set the jet pT information for legends and figure saving
+                if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
+                  jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+                  compactJetPtString = "";
+                  normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality);
+                } else {
+                  jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                  compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                  normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality, fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                }
+                
+                // === Particle density around the jet axis ===
+                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+                drawnHistogram->Scale(1/normalizationFactor);
+                sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                legend = new TLegend(0.62,0.75,0.82,0.9);
+                SetupLegend(legend,centralityString,jetConeTypeString,subeventString,jetPtString,trackPtString);
+                legend->Draw();
+                
+                // Save the figure to a file
+                sprintf(namerY,"%s%s%s",fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
+                SaveFigure(namerY,compactCentralityString, compactJetPtString, compactTrackPtString);
+                
+              } // Jet pT loop
+            } // Track pT loop
+          } // Draw individual particle density histograms
+          
+          // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
+          if(fDrawParticleDensitiesForConstantJetPt){
             
             // Loop over jet pT bins
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
@@ -527,29 +566,51 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
               // Set the jet pT information for legends and figure saving
               if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
                 jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
-                compactJetPtString = "";
-                normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality);
+                compactJetPtString = Form("%.0f", fHistograms->GetCard()->GetJetPtCut());
               } else {
                 jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
-                normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality, fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               }
               
-              // === Particle density around the jet axis ===
-              drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
-              drawnHistogram->Scale(1/normalizationFactor);
-              sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
-              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
-              legend = new TLegend(0.62,0.75,0.82,0.9);
-              SetupLegend(legend,centralityString,jetConeTypeString,subeventString,jetPtString,trackPtString);
+              // Only one legend for the plot
+              legend = new TLegend(0.62,0.35,0.82,0.9);
+              legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+              legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
+              if(iSubevent < EECHistograms::knSubeventTypes) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
+              if(jetConeTypeString != "") legend->AddEntry((TObject*) 0, jetConeTypeString.Data(), "");
+              legend->AddEntry((TObject*) 0, centralityString.Data(), "");
+              legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
+              
+              
+              // Loop over track pT bins
+              for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+                
+                trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                
+                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+                drawnHistogram->Scale(1/drawnHistogram->Integral(1, drawnHistogram->FindBin(0.3999), "width")); // To compare shapes, just normalize everything to one within 0 < DeltaR < 0.4
+                drawnHistogram->SetLineColor(color[iTrackPt]);
+                
+                if(iTrackPt == fFirstDrawnTrackPtBinEEC){
+                  sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                } else {
+                  drawnHistogram->Draw("same");
+                }
+                
+                legend->AddEntry(drawnHistogram, trackPtString.Data(), "l");
+                
+              } // Track pT loop
+              
               legend->Draw();
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%s",fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
-              SaveFigure(namerY,compactCentralityString, compactJetPtString, compactTrackPtString);
+              sprintf(namerY,"%s%s%sConstantJetPt%s", fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data(), compactJetPtString.Data());
+              SaveFigure(namerY, compactCentralityString);
               
             } // Jet pT loop
-          } // Track pT loop
+          } // Draw all track pT cuts in the same plot with a constant jet pT histogram
+          
         } // Subevent loop
       } // Centrality loop
     } // Jet cone tpye loop
@@ -957,6 +1018,16 @@ void EECDrawer::SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot){
 void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt){
   SetDrawParticleDensityAroundJetAxis(drawRegular);
   SetDrawParticlePtDensityAroundJetAxis(drawPt);
+}
+
+// Setter for drawing the individual particle density histograms
+void EECDrawer::SetDrawSingleParticleDensityHistograms(const bool drawOrNot){
+  fDrawIndividualParticleDensities = drawOrNot;
+}
+
+// Setter for drawing all track pT cuts to the same figure for constant jet pT selection
+void EECDrawer::SetDrawParticleDensityForConstantJetPt(const bool drawOrNot){
+  fDrawParticleDensitiesForConstantJetPt = drawOrNot;
 }
 
 // Setter for drawing energy-energy correlator

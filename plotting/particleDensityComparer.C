@@ -115,8 +115,8 @@ void particleDensityComparer(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
   int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 0;
+  int lastStudiedTrackPtBinEEC = 0;
   
   // Select the types of energy-energy correlators are studied
   bool studyParticleDensityType[EECHistogramManager::knParticleDensityAroundJetAxisTypes];
@@ -124,14 +124,14 @@ void particleDensityComparer(){
   studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxis] = false;
   
   // Select which plots to draw
-  const bool drawReflectedConeToHydjetRatio = false;
-  const bool drawReflectedConeToSignalRatio = false;
+  const bool drawReflectedConeToHydjetRatio = true;
+  const bool drawReflectedConeToSignalRatio = true;
   const bool drawSubeventWithinSignalConeRatio = false;
   
   bool drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes+1];
   drawMinBiasToRegularRatio[EECHistograms::kPythia] = false;
   drawMinBiasToRegularRatio[EECHistograms::kHydjet] = false;
-  drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes] = true;
+  drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes] = false;
   
   // Logarithmic axes
   const bool logY = true;

@@ -53,6 +53,10 @@ public:
   void SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot); // Setter for drawing particle pT density around jet axis
   void SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt); // Setter for drawing all particle densities around jet axis
   
+  // Setters for drawing different figures for particle density around the jet axis
+  void SetDrawSingleParticleDensityHistograms(const bool drawOrNot);   // Setter for drawing the individual particle density histograms
+  void SetDrawParticleDensityForConstantJetPt(const bool drawOrNot);   // Setter for drawing all track pT cuts to the same figure for constant jet pT selection
+  
   // Setters for energy-energy correlators
   void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                  // Setter for drawing energy-energy correlator
   void SetDrawEnergyEnergyCorrelorJetPt(const bool drawOrNot);             // Setter for drawing jet pT weighted energy-energy correlator
@@ -115,6 +119,9 @@ private:
   bool fDrawMultiplicityInJetCone[EECHistogramManager::knMultiplicityInJetConeTypes];             // Draw the multiplicity in jet cone histograms
   bool fDrawParticleDensityAroundJets[EECHistogramManager::knParticleDensityAroundJetAxisTypes];  // Draw the particle densities around jet axis
   bool fDrawEnergyEnergyCorrelators[EECHistogramManager::knEnergyEnergyCorrelatorTypes];          // Draw the energy-energy correlator histograms
+  
+  bool fDrawIndividualParticleDensities;        // Draw the individual particle density histograms
+  bool fDrawParticleDensitiesForConstantJetPt;  // Draw the particle density histograms with different track pT cuts for constant jet pT
   
   bool fDrawIndividualEnergyEnergyCorrelators;          // Draw the individual energy-energy correlator histograms
   bool fDrawEnergyEnergyCorrelatorsForConstantJetPt;    // Draw all track pT cuts to the same figure for constant jet pT selection

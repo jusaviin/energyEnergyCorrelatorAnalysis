@@ -90,8 +90,8 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
   int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjetSimulation], nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 7;
+  int lastStudiedTrackPtBinEEC = 7;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -169,7 +169,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[0] = false;
   
   // Index 1: Compare fake+fake to corresponding reflected cone distribution
-  drawComparisonType[1] = false;
+  drawComparisonType[1] = true;
   ratioIndex[1] = std::make_pair(kFakeFakeEEC, kPairOnlyReflectedCone);
   legendTextEnergyEnergyCorrelator[1] = "Fake+fake pairs";
   legendTextReflectedCone[1] = "Ref+ref";
@@ -213,7 +213,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[4] = false;
   
   // Index 5: Compare signal to combined reflected cone subtracted total distribution
-  drawComparisonType[5] = true;
+  drawComparisonType[5] = false;
   ratioIndex[5] = std::make_pair(kSignalEEC, kSubtractCombined);
   legendTextEnergyEnergyCorrelator[5] = "Signal pairs";
   legendTextReflectedCone[5] = "BGsub";
@@ -226,7 +226,7 @@ void studyReflectedConeBackground(){
   // ========================================================================================================================= //
   // Select which ratios should be made from the energy-energy correlators and minimum bias histograms and their configuration //
   // ========================================================================================================================= //
-  const int nMinBiasRatioTypes = 3;
+  const int nMinBiasRatioTypes = 4;
   std::pair<int,int> minBiasRatioIndex[nMinBiasRatioTypes];
   bool drawMinBiasComparisonType[nMinBiasRatioTypes];
   const char* minBiasLegendTextEnergyEnergyCorrelator[nMinBiasRatioTypes];
@@ -273,6 +273,18 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatioMinBias[2] = false;
   addMatchString[2] = true;
   legendX1MinBias[2] = 0.15;
+  
+  // Index 3: Compare total distribution to corresponding minimum bias distributions
+  drawMinBiasComparisonType[3] = false;
+  minBiasRatioIndex[3] = std::make_pair(kTotalEEC, kPureMinBias);
+  minBiasLegendTextEnergyEnergyCorrelator[3] = "All pairs";
+  minBiasRatioText[3] = "MinBias/Total";
+  yRangeMinBias[3] = std::make_pair(0.0005, 2);
+  ratioZoomMinBias[3] = std::make_pair(0, 2);
+  saveNameMinBias[3] = "pureMinBiasToTotal";
+  addSignalToTotalRatioMinBias[3] = false;
+  addMatchString[3] = false;
+  legendX1MinBias[3] = 0.27;
   
   // Energy-energy correlator histograms separated by subevents from the Pythia+Hydjet simulation
   TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][knPairingTypesEEC];
