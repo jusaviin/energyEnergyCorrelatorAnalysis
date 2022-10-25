@@ -724,6 +724,7 @@ void EECAnalyzer::RunAnalysis(){
         //  ========================================
         
         if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
+        if(jetPhi > -0.1 && jetPhi < 1.2) continue; // Cut the area of large inefficiency in tracker
         
         // No jet quality cuts for generator level jets
         if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
