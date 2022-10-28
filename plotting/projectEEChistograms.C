@@ -158,7 +158,9 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadTracksUncorrected(loadUncorrectedTracks);
   histograms->SetLoadMultiplicityInJets(loadMultiplicityInJet);
   histograms->SetLoadParticleDensityAroundJets(loadParticleDensityAroundJet);
+  histograms->SetLoadParticleDensityAroundJetsPtBinned(loadParticleDensityAroundJet);
   histograms->SetLoadParticlePtDensityAroundJets(loadParticlePtDensityAroundJet);
+  histograms->SetLoadParticlePtDensityAroundJetsPtBinned(loadParticlePtDensityAroundJet);
   histograms->SetLoadEnergyEnergyCorrelators(loadEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(loadEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(loadEnergyEnergyCorrelatorsUncorrected);

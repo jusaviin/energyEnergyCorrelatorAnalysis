@@ -522,9 +522,16 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
             // Loop over track pT bins
             for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
               
-              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-              compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-              compactTrackPtString.ReplaceAll(".","v");
+              // Track pT binning is different depending on the particle density type
+              if(iParticleDensityType == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
+                trackPtString = Form("%.1f < track p_{T} < %.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+                compactTrackPtString = Form("_T%.1f-%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+                compactTrackPtString.ReplaceAll(".","v");
+              } else {
+                trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                compactTrackPtString.ReplaceAll(".","v");
+              }
               
               // Loop over jet pT bins
               for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
@@ -541,7 +548,7 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
                 }
                 
                 // === Particle density around the jet axis ===
-                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
                 drawnHistogram->Scale(1/normalizationFactor);
                 sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
                 fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
@@ -585,9 +592,14 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
               // Loop over track pT bins
               for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
                 
-                trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                // Track pT binning is different depending on the particle density type
+                if(iParticleDensityType == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
+                  trackPtString = Form("%.1f < track p_{T} < %.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+                } else {
+                  trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                }
                 
-                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
+                drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
                 drawnHistogram->Scale(1/drawnHistogram->Integral(1, drawnHistogram->FindBin(0.3999), "width")); // To compare shapes, just normalize everything to one within 0 < DeltaR < 0.4
                 drawnHistogram->SetLineColor(color[iTrackPt]);
                 
@@ -1014,12 +1026,23 @@ void EECDrawer::SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot){
   fDrawParticleDensityAroundJets[EECHistogramManager::kParticlePtDensityAroundJetAxis] = drawOrNot;
 }
 
-// Setter for drawing all particle densities around jet axis
-void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt){
-  SetDrawParticleDensityAroundJetAxis(drawRegular);
-  SetDrawParticlePtDensityAroundJetAxis(drawPt);
+// Setter for drawing pT binned particle density around jet axis
+void EECDrawer::SetDrawParticleDensityAroundJetAxisPtBinned(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticleDensityAroundJetAxisPtBinned] = drawOrNot;
 }
 
+// Setter for drawing pT binned particle pT density around jet axis
+void EECDrawer::SetDrawParticlePtDensityAroundJetAxisPtBinned(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = drawOrNot;
+}
+
+// Setter for drawing all particle densities around jet axis
+void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt, const bool drawPtBinned, const bool drawPtWeightedPtBinned){
+  SetDrawParticleDensityAroundJetAxis(drawRegular);
+  SetDrawParticlePtDensityAroundJetAxis(drawPt);
+  SetDrawParticleDensityAroundJetAxisPtBinned(drawPtBinned);
+  SetDrawParticlePtDensityAroundJetAxisPtBinned(drawPtWeightedPtBinned);
+}
 // Setter for drawing the individual particle density histograms
 void EECDrawer::SetDrawSingleParticleDensityHistograms(const bool drawOrNot){
   fDrawIndividualParticleDensities = drawOrNot;

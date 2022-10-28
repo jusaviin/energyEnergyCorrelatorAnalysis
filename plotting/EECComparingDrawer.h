@@ -63,7 +63,9 @@ public:
   // Setters for particle density around the jet axis
   void SetDrawParticleDensityAroundJetAxis(const bool drawOrNot);   // Setter for drawing particle density around jet axis
   void SetDrawParticlePtDensityAroundJetAxis(const bool drawOrNot); // Setter for drawing particle pT density around jet axis
-  void SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt); // Setter for drawing all particle densities around jet axis
+  void SetDrawParticleDensityAroundJetAxisPtBinned(const bool drawOrNot);   // Setter for drawing pT binned particle density around jet axis
+  void SetDrawParticlePtDensityAroundJetAxisPtBinned(const bool drawOrNot); // Setter for drawing pT binned particle pT density around jet axis
+  void SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt, const bool drawPtBinned, const bool drawPtWeightedPtBinned); // Setter for drawing all particle densities around jet axis
   
   // Setters for energy-energy correaltors
   void SetDrawEnergyEnergyCorrelator(const bool drawOrNot);                 // Setter for drawing energy-energy correlators

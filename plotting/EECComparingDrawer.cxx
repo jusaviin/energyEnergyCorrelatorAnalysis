@@ -650,9 +650,16 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString = Form("_T>%.1f",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-            compactTrackPtString.ReplaceAll(".","v");
+            // Track pT binning is different depending on the particle density type
+            if(iParticleDensityType == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
+              trackPtString = Form("%.1f < track p_{T} < %.1f",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt), fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+              compactTrackPtString = Form("_T%.1f-%.1f",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt), fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+              compactTrackPtString.ReplaceAll(".","v");
+            } else {
+              trackPtString = Form("%.1f < track p_{T}",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString = Form("_T>%.1f",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              compactTrackPtString.ReplaceAll(".","v");
+            }
             
             // Loop over jet pT bins
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
@@ -679,7 +686,7 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
               }
               
               // Prepare the multiplicity histograms to be drawn
-              PrepareRatio("particleDensityAroundJetCone", 1, iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent, 0, 0.6);
+              PrepareRatio("particleDensityAroundJetAxis", 1, iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent, 0, 0.6);
               
               // Draw the track phi distributions to the upper panel of a split canvas plot
               if(fApplyScaling){
@@ -1220,10 +1227,22 @@ void EECComparingDrawer::SetDrawParticlePtDensityAroundJetAxis(const bool drawOr
   fDrawParticleDensityAroundJets[EECHistogramManager::kParticlePtDensityAroundJetAxis] = drawOrNot;
 }
 
+// Setter for drawing pT binned particle density around jet axis
+void EECComparingDrawer::SetDrawParticleDensityAroundJetAxisPtBinned(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticleDensityAroundJetAxisPtBinned] = drawOrNot;
+}
+
+// Setter for drawing pT binned particle pT density around jet axis
+void EECComparingDrawer::SetDrawParticlePtDensityAroundJetAxisPtBinned(const bool drawOrNot){
+  fDrawParticleDensityAroundJets[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = drawOrNot;
+}
+
 // Setter for drawing all particle densities around jet axis
-void EECComparingDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt){
+void EECComparingDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt, const bool drawPtBinned, const bool drawPtWeightedPtBinned){
   SetDrawParticleDensityAroundJetAxis(drawRegular);
   SetDrawParticlePtDensityAroundJetAxis(drawPt);
+  SetDrawParticleDensityAroundJetAxisPtBinned(drawPtBinned);
+  SetDrawParticlePtDensityAroundJetAxisPtBinned(drawPtWeightedPtBinned);
 }
 
 // Setter for drawing energy-energy correlators

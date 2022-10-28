@@ -30,7 +30,7 @@ public:
   enum enumMultiplicityInJetCone{kMultiplicityInJetCone, kMultiplicityInReflectedCone, kMultiplicityInJetConeUncorrected, kMultiplicityInReflectedConeUncorrected, knMultiplicityInJetConeTypes};
   
   // Indices for different particle density types measured around the jet axis
-  enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, knParticleDensityAroundJetAxisTypes};
+  enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, kParticleDensityAroundJetAxisPtBinned, kParticlePtDensityAroundJetAxisPtBinned, knParticleDensityAroundJetAxisTypes};
   
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
@@ -58,8 +58,9 @@ private:
   const char* fMultiplicityInJetsAxisNames[knMultiplicityInJetConeTypes] = {"Multiplicity in jet cone", "Multiplicity in reflected cone", "UC multiplicity in jet cone", "UC multiplicity in reflected cone"};
   
   // Naming for particle density around the jet axis histograms
-  const char* fParticleDensityAroundJetsHistogramNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity"};
-  const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})"};
+  const char* fParticleDensityAroundJetsHistogramNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity", "particleDensity", "particlePtDensity"};
+  const char* fParticleDensityAroundJetsSaveNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity", "particleDensityPtBinned", "particlePtDensityPtBinned"};
+  const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})", "#rho(N_{ch})", "#rho(p_{T}^{ch})"};
   
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
@@ -111,7 +112,9 @@ public:
   void SetLoadMultiplicityInJets(const bool loadOrNot);          // Setter for loading track multiplicity within the jet cone
   void SetLoadParticleDensityAroundJets(const bool loadOrNot);   // Setter for loading particle density histograms around the jet axis
   void SetLoadParticlePtDensityAroundJets(const bool loadOrNot); // Setter for loading particle pT density histograms around the jet axis
-  void SetLoadAllParticleDensitiesAroundJets(const bool loadRegular, const bool loadPtWeighted); // Setter for loading all particle density histograms around the jet axis
+  void SetLoadParticleDensityAroundJetsPtBinned(const bool loadOrNot);   // Setter for loading pT binned particle density histograms around the jet axis
+  void SetLoadParticlePtDensityAroundJetsPtBinned(const bool loadOrNot); // Setter for loading pT binned particle pT density histograms around the jet axis
+  void SetLoadAllParticleDensitiesAroundJets(const bool loadRegular, const bool loadPtWeighted, const bool loadPtBinned, const bool loadPtBinnedPtWeighted); // Setter for loading all particle density histograms around the jet axis
   
   // Setters for energy-energy correlator histograms
   void SetLoadEnergyEnergyCorrelators(const bool loadOrNot);                 // Setter for loading energy-energy correlators
@@ -154,6 +157,7 @@ public:
   const char* GetMultiplicityInJetConeAxisName(int iMultiplicityType) const;      // Getter for multiplicity in jet cone axis name
   
   const char* GetParticleDensityAroundJetAxisHistogramName(int iParticleDensityType) const; // Getter for the particle density around jet axis histogram name
+  const char* GetParticleDensityAroundJetAxisSaveName(int iParticleDensityType) const; // Getter for the particle density around jet axis save name
   const char* GetParticleDensityAroundJetAxisAxisName(int iParticleDensityType) const; // Getter for the particle density around jet axis axis name
   
   const char* GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const; // Getter for energy-energy correlator histogram name
@@ -196,7 +200,7 @@ public:
   
   // Getters for multiplicity and particle density histograms within the jet cones
   TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes) const; // Multiplicity within the jet cone
-  TH1D* GetHistogramParticleDensityAroundJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet cone
+  TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet axis
   
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
@@ -310,7 +314,7 @@ private:
   
   // Histograms for multiplicity and particle density within the jet cones
   TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
-  TH1D *fhParticleDensityAroundJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
+  TH1D *fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
   
   // Histograms for energy-energy correlators
   TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];
@@ -329,10 +333,10 @@ private:
   void SetBinBordersAndIndices(const char* histogramName, const int nBins, double *copyBinBorders, int *binIndices, const double *binBorders, const int iAxis, const bool setIndices); // Read the bin indices for given bin borders
   
   // Finders for histograms with different amount of restrictions
-  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex); // Extract a histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0); // Extract a histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
   
   // Loaders for different groups of histograms
   void LoadMultiplicityHistograms(); // Loader for multiplicity histograms

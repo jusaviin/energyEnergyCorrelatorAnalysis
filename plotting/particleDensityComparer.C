@@ -35,9 +35,10 @@ void particleDensityComparer(){
   enum enumDataType{kPythiaHydjet, kMinBiasHydjet, knDataTypes};
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-19.root"};
+  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
+  // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   
@@ -113,18 +114,20 @@ void particleDensityComparer(){
   int lastStudiedCentralityBin = 0;
   
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
-  int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstStudiedTrackPtBinEEC = 0;
-  int lastStudiedTrackPtBinEEC = 0;
+  int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
   bool studyParticleDensityType[EECHistogramManager::knParticleDensityAroundJetAxisTypes];
-  studyParticleDensityType[EECHistogramManager::kParticleDensityAroundJetAxis] = true;
+  studyParticleDensityType[EECHistogramManager::kParticleDensityAroundJetAxis] = false;
   studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxis] = false;
+  studyParticleDensityType[EECHistogramManager::kParticleDensityAroundJetAxisPtBinned] = true;
+  studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = false;
   
   // Select which plots to draw
-  const bool drawReflectedConeToHydjetRatio = true;
+  const bool drawReflectedConeToHydjetRatio = false;
   const bool drawReflectedConeToSignalRatio = true;
   const bool drawSubeventWithinSignalConeRatio = false;
   
@@ -134,7 +137,8 @@ void particleDensityComparer(){
   drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes] = false;
   
   // Logarithmic axes
-  const bool logY = true;
+  const bool logY = false;
+  const double maxX = 0.6;
   
   // Axis zooming
   std::pair<double,double> ratioZoom = std::make_pair(0, 2);
@@ -149,9 +153,11 @@ void particleDensityComparer(){
   for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
     histograms[iDataType] = new EECHistogramManager(inputFile[iDataType],card[iDataType]);
     
-    // Choose the energy-energy correlator types to load
+    // Choose the particle density types to load
     histograms[iDataType]->SetLoadParticleDensityAroundJets(studyParticleDensityType[EECHistogramManager::kParticleDensityAroundJetAxis]);
     histograms[iDataType]->SetLoadParticlePtDensityAroundJets(studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxis]);
+    histograms[iDataType]->SetLoadParticleDensityAroundJetsPtBinned(studyParticleDensityType[EECHistogramManager::kParticleDensityAroundJetAxisPtBinned]);
+    histograms[iDataType]->SetLoadParticlePtDensityAroundJetsPtBinned(studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned]);
     
     // Choose the bin ranges
     histograms[iDataType]->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
@@ -202,7 +208,7 @@ void particleDensityComparer(){
         } // Jet pT loop
       } // Track pT loop
     } // Centrality loop
-  } // Energy-energy correlator loop
+  } // Particle density type loop
   
   double normalizationFactor;
   
@@ -216,6 +222,10 @@ void particleDensityComparer(){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
         for(int iJetCone = 0; iJetCone < EECHistograms::knJetConeTypes; iJetCone++){
           for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
+            
+            // Load different subevents only for Pythia+Hydjet simulation
+            if(!card[kPythiaHydjet]->GetAlternativeDataType().Contains("Hydjet") && iSubevent != EECHistograms::knSubeventTypes) continue;
+              
             for(int iJetPt = firstStudiedJetPtBinEEC[kPythiaHydjet]; iJetPt <= lastStudiedJetPtBinEEC[kPythiaHydjet]; iJetPt++){
               
               // Find the jet pT normalization factor
@@ -226,7 +236,7 @@ void particleDensityComparer(){
               }
               
               // Read the particle density histograms and normalize everything to the number of jets
-              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone][iSubevent] = histograms[kPythiaHydjet]->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPt, iTrackPt, iJetCone, iParticleDensity, iSubevent);
+              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone][iSubevent] = histograms[kPythiaHydjet]->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPt, iTrackPt, iJetCone, iParticleDensity, iSubevent);
               hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone][iSubevent]->Scale(1/normalizationFactor);
               
             } // Pythia+Hydjet jet pT loop
@@ -241,7 +251,7 @@ void particleDensityComparer(){
               }
               
               // Read the particle density histograms and normalize everything to the number of jets
-              hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][iJetCone][iSubevent] = histograms[kMinBiasHydjet]->GetHistogramParticleDensityAroundJetCone(iCentrality, iJetPtMinBias, iTrackPt, iJetCone, iParticleDensity, iSubevent);
+              hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][iJetCone][iSubevent] = histograms[kMinBiasHydjet]->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPtMinBias, iTrackPt, iJetCone, iParticleDensity, iSubevent);
               hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][iJetCone][iSubevent]->Scale(1/normalizationFactor);
                             
             } // Min bias Hydjet jet pT loop
@@ -348,10 +358,16 @@ void particleDensityComparer(){
         // Loop over track pT bins
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
           
-          // Set the track pT information
-          trackPtString = Form("%.1f < track p_{T}",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt));
-          compactTrackPtString = Form("_T%.1f",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt));
-          compactTrackPtString.ReplaceAll(".","v");
+          // Track pT binning is different depending on the particle density type
+          if(iParticleDensity == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensity == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
+            trackPtString = Form("%.1f < track p_{T} < %.1f",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt), histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt+1));
+            compactTrackPtString = Form("_T%.1f-%.1f",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt), histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt+1));
+            compactTrackPtString.ReplaceAll(".","v");
+          } else {
+            trackPtString = Form("%.1f < track p_{T}",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString = Form("_T>%.1f",histograms[kPythiaHydjet]->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".","v");
+          }
           
           // =============================================================================================================
           // ===   Draw ratio between particle density in reflected cone and the hydjet particles in the signal cone   ===
@@ -373,8 +389,8 @@ void particleDensityComparer(){
             if(logY) drawer->SetLogY(true);
 
             // Set the x-axis ranges
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, 0.5);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, 0.5);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             // Find good y-ranges for plotting
             histogramYrange = std::make_pair(10e10, 0);
@@ -405,7 +421,7 @@ void particleDensityComparer(){
             drawer->SetLogY(false);
             
             // Set the x-axis range for the ratio histogram
-            hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.0, 0.5);
+            hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[1]);
             drawer->SetGridY(true);
@@ -435,8 +451,8 @@ void particleDensityComparer(){
             if(logY) drawer->SetLogY(true);
 
             // Set the x-axis ranges
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, 0.5);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, 0.5);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             // Find good y-ranges for plotting
             histogramYrange = std::make_pair(10e10, 0);
@@ -467,7 +483,7 @@ void particleDensityComparer(){
             drawer->SetLogY(false);
             
             // Set the x-axis range for the ratio histogram
-            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.0, 0.5);
+            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[1]);
             drawer->SetGridY(true);
@@ -499,7 +515,7 @@ void particleDensityComparer(){
             // Set the x-axis ranges and find a good y-axis range
             histogramYrange = std::make_pair(10e10, 0);
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
-              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent]->GetXaxis()->SetRangeUser(0.0, 0.5);
+              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent]->GetXaxis()->SetRangeUser(0.0, maxX);
               
               // Find good y-ranges for plotting
               histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent], histogramYrange);
@@ -536,7 +552,7 @@ void particleDensityComparer(){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
               
               // Set the x-axis range for the ratio histogram
-              hSubeventWithinSignalConeRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iSubevent]->GetXaxis()->SetRangeUser(0.0, 0.5);
+              hSubeventWithinSignalConeRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iSubevent]->GetXaxis()->SetRangeUser(0.0, maxX);
               
               hSubeventWithinSignalConeRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iSubevent]->SetLineColor(color[iSubevent+1]);
               drawer->SetGridY(true);
@@ -581,11 +597,11 @@ void particleDensityComparer(){
             
             // Set the x-axis ranges and find a good y-axis range
             histogramYrange = std::make_pair(10e10, 0);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent]->GetXaxis()->SetRangeUser(0.0, 0.5);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent]->GetXaxis()->SetRangeUser(0.0, maxX);
             histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][iSubevent], histogramYrange);
             
             for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinBiasHydjet]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinBiasHydjet]; iJetPtMinBias++){
-              hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, 0.5);
+              hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
               
               // Find good y-ranges for plotting
               histogramYrange = findHistogramMinMax(hMinBias[iParticleDensity][iCentrality][iJetPtMinBias][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes], histogramYrange);
@@ -631,7 +647,7 @@ void particleDensityComparer(){
             for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinBiasHydjet]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinBiasHydjet]; iJetPtMinBias++){
               
               // Set the x-axis range for the ratio histogram
-              hMinBiasToRegularRatio[iParticleDensity][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iSubevent]->GetXaxis()->SetRangeUser(0.0, 0.5);
+              hMinBiasToRegularRatio[iParticleDensity][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iSubevent]->GetXaxis()->SetRangeUser(0.0, maxX);
               
               hMinBiasToRegularRatio[iParticleDensity][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iSubevent]->SetLineColor(color[iJetPtMinBias+1]);
               drawer->SetGridY(true);

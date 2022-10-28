@@ -6,12 +6,13 @@
 void compareToyToData(){
   
   // Open the data and toy files
-  TFile *dataFile = TFile::Open("../data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root");
+  TFile *dataFile = TFile::Open("../data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root");
   // ../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
+  // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
   
   const int nToyFiles = 2;
-  TString toyFileNames[] = {"toySimulation100kevents.root","toySimulation100keventsRandomHighFlow.root"};
+  TString toyFileNames[] = {"toySimulation100kevents.root","toySimulation100kevents10pFlow.root"};
   TFile *toyFile[nToyFiles];
   for(int iFile = 0; iFile < nToyFiles; iFile++){
     toyFile[iFile] = TFile::Open(toyFileNames[iFile]);
@@ -115,6 +116,7 @@ void compareToyToData(){
   legend->AddEntry((TObject*) 0, "Cent: 0-10%","");
   legend->AddEntry((TObject*) 0, "Jet p_{T} > 120 GeV","");
   legend->AddEntry((TObject*) 0, "Track p_{T} > 0.7 GeV","");
+  //legend->AddEntry((TObject*) 0, "Pythia+Hydjet, GenGen","");
   
   // Create a canvas and draw the distributions and the ratio to the canvas
   drawer->CreateSplitCanvas();

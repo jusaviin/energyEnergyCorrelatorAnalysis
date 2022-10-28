@@ -11,7 +11,7 @@ void fakeFakeBackgroundPlotter(){
   enum enumDataType{kPythiaHydjet, kMinBiasHydjet, knDataTypes};
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-19.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"
@@ -87,11 +87,11 @@ void fakeFakeBackgroundPlotter(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = 0;
   
-  int firstStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]};
-  int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
+  int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjet],0}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 0;
+  int lastStudiedTrackPtBinEEC = 0;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -182,7 +182,7 @@ void fakeFakeBackgroundPlotter(){
         for(int iJetPtFakeFake = firstStudiedJetPtBinEEC[kPythiaHydjet]; iJetPtFakeFake <= lastStudiedJetPtBinEEC[kPythiaHydjet]; iJetPtFakeFake++){
           
           // Read the fake+fake histogram and normalize everything to one
-          hFakeFake[iEnergyEnergyCorrelator][iCentrality][iJetPtFakeFake][iTrackPt] = histograms[kPythiaHydjet]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtFakeFake, iTrackPt, EECHistograms::kSameJetPair, EECHistogramManager::kHydjetHydjet);
+          hFakeFake[iEnergyEnergyCorrelator][iCentrality][iJetPtFakeFake][iTrackPt] = histograms[kPythiaHydjet]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtFakeFake, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kHydjetHydjet);
           hFakeFake[iEnergyEnergyCorrelator][iCentrality][iJetPtFakeFake][iTrackPt]->Scale(1/hFakeFake[iEnergyEnergyCorrelator][iCentrality][iJetPtFakeFake][iTrackPt]->Integral("width"));
           
           // For constant jet pT ratios, calculate the ratio to the lowest shown track pT cut

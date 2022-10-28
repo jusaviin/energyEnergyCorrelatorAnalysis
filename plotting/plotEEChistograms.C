@@ -9,9 +9,8 @@
  *
  *  Arguments:
  *   TString inputFileName = File from which the histograms are read
- *   int histogramSelection = If > 0, select bitwise histograms. Intended to be used for easier production of output files.
  */
-void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", int histogramSelection = 16){
+void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
 
   // Print the file name to console
   cout << "Projecting histograms histograms from " << inputFileName.Data() << endl;
@@ -28,43 +27,15 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
   bool drawMultiplicityHistograms = false;
   bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
-  
-  /*
-   * Drawing only selected histograms. Done with bitwise check of an integer
-   *
-   *  Bit 0 = Load event information histograms (to set: 1)
-   *  Bit 1 = Load jet histograms (to set: 2)
-   *  Bit 2 = Load track histograms (to set: 4)
-   *  Bit 3 = Load uncorrected track histograms (to set: 8)
-   *  Bit 4 = Load energy-energy correlator histograms (to set: 16)
-   *  Bit 5 = Load jet pT weighted energy-energy correlator histograms (to set: 32)
-   *  Bit 6 = Load uncorrected energy-energy correlator histograms (to set: 64)
-   *  Bit 7 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 128)
-   *  Bit 8 = Load multiplicity histograms (to set: 256)
-   *  Bit 9 = Load particle density around jet axis histograms (to set: 512)
-   *  Bit 10 = Load particle pT density around jet axis histograms (to set: 1024)
-   */
-  if(histogramSelection > 0){
-    std::bitset<11> bitChecker(histogramSelection);
-    drawEventInformation = bitChecker.test(0);
-    drawJets = bitChecker.test(1);
-    drawTracks = bitChecker.test(2);
-    drawUncorrectedTracks = bitChecker.test(3);
-    drawEnergyEnergyCorrelators = bitChecker.test(4);
-    drawEnergyEnergyCorrelatorsJetPt = bitChecker.test(5);
-    drawEnergyEnergyCorrelatorsUncorrected = bitChecker.test(6);
-    drawEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(7);
-    drawMultiplicityHistograms = bitChecker.test(8);
-    drawParticleDensityAroundJets = bitChecker.test(9);
-    drawParticlePtDensityAroundJets = bitChecker.test(10);
-  }
+  bool drawParticleDensityAroundJetsPtBinned = true;
+  bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Open the input file
   TFile *inputFile = TFile::Open(inputFileName);
@@ -101,7 +72,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   int lastDrawnCentralityBin = 0;
   
   int firstDrawnTrackPtBin = 0;
-  int lastDrawnTrackPtBin = 0;
+  int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
@@ -193,6 +164,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   histograms->SetLoadMultiplicityInJets(drawMultiplicityHistograms);
   histograms->SetLoadParticleDensityAroundJets(drawParticleDensityAroundJets);
   histograms->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
+  histograms->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
+  histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
@@ -232,6 +205,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root", in
   
   resultDrawer->SetDrawParticleDensityAroundJetAxis(drawParticleDensityAroundJets);
   resultDrawer->SetDrawParticlePtDensityAroundJetAxis(drawParticlePtDensityAroundJets);
+  resultDrawer->SetDrawParticleDensityAroundJetAxisPtBinned(drawParticleDensityAroundJetsPtBinned);
+  resultDrawer->SetDrawParticlePtDensityAroundJetAxisPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   
   resultDrawer->SetDrawSingleParticleDensityHistograms(drawIndividualParticleDensities);
   resultDrawer->SetDrawParticleDensityForConstantJetPt(drawParticleDensitiesForConstantJetPt);

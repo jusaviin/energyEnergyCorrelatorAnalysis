@@ -36,9 +36,10 @@ double getDeltaR(const double eta1, const double phi1, const double eta2, const 
 void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0.0, double jetR = 0.4){
   
   // Read the track pT and multiplicity distributions from a file
-  TFile *inputFile = TFile::Open("../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root");
+  TFile *inputFile = TFile::Open("../data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root");
   TH1D *hTrackPt = (TH1D*) inputFile->Get("track/trackPt_C0");
-  TH1D *hMultiplicity = (TH1D*) inputFile->Get("multiplicityInReflectedCone/multiplicityInReflectedCone_C0T0");
+  //TH1D *hMultiplicityJet = (TH1D*) inputFile->Get("multiplicityInJetCone/multiplicityInJetCone_C0T0S0");
+  TH1D *hMultiplicityBackground = (TH1D*) inputFile->Get("multiplicityInJetCone/multiplicityInJetCone_C0T0S1");
   
   // Define the histograms that are filled in the event loop
   TH1D *hParticleDensity[2];
@@ -101,10 +102,12 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
   }
   
   // Do not allow 0 and 1 particles in the multiplicity distribution
-  hMultiplicity->SetBinContent(1,0);
-  hMultiplicity->SetBinContent(2,0);
-  hMultiplicity->SetBinError(1,0);
-  hMultiplicity->SetBinError(2,0);
+  //hMultiplicityJet->SetBinContent(1,0);
+  //hMultiplicityJet->SetBinError(1,0);
+  hMultiplicityBackground->SetBinContent(1,0);
+  hMultiplicityBackground->SetBinContent(2,0);
+  hMultiplicityBackground->SetBinError(1,0);
+  hMultiplicityBackground->SetBinError(2,0);
   
   // Generate nEvent toy events
   double flowPhase;
@@ -117,7 +120,7 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
     particleEta.clear();
     
     // First, determine the particle multiplicity within the jet cone
-    currentMultiplicity = TMath::Nint(hMultiplicity->GetRandom(rng));  // Multiplicity sampled from data distribution
+    currentMultiplicity = TMath::Nint(hMultiplicityBackground->GetRandom(rng));  // Multiplicity sampled from data distribution
     //currentMultiplicity = TMath::Nint(rng->Uniform(2,140));          // Unoform multiplicity
     hMultiplicityOut->Fill(currentMultiplicity);
     

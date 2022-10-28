@@ -90,8 +90,8 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
   int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjetSimulation], nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 7;
-  int lastStudiedTrackPtBinEEC = 7;
+  int firstStudiedTrackPtBinEEC = 5;
+  int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -110,7 +110,7 @@ void studyReflectedConeBackground(){
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant
-  bool optimalNormalization = false;
+  bool optimalNormalization = true;
   
   // Create and setup a new histogram manager to project and handle the histograms
   EECHistogramManager *histograms[knDataTypes];
@@ -169,7 +169,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[0] = false;
   
   // Index 1: Compare fake+fake to corresponding reflected cone distribution
-  drawComparisonType[1] = true;
+  drawComparisonType[1] = false;
   ratioIndex[1] = std::make_pair(kFakeFakeEEC, kPairOnlyReflectedCone);
   legendTextEnergyEnergyCorrelator[1] = "Fake+fake pairs";
   legendTextReflectedCone[1] = "Ref+ref";
@@ -239,7 +239,7 @@ void studyReflectedConeBackground(){
   double legendX1MinBias[nMinBiasRatioTypes];
   
   // Index 0: Compare fake+fake distribution to corresponding minimum bias distributions
-  drawMinBiasComparisonType[0] = false;
+  drawMinBiasComparisonType[0] = true;
   minBiasRatioIndex[0] = std::make_pair(kFakeFakeEEC, kPureMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
   minBiasRatioText[0] = "MinBias/FakeFake";

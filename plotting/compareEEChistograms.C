@@ -13,14 +13,15 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root", "data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root"};
+  TString inputFileName[] = { "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed2_2022-10-19.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
+  // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Escheme","WTA"};
+  TString legendComment[] = {"Old","New"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -53,6 +54,8 @@ void compareEEChistograms(){
   // Particle density around jets
   bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
+  bool drawParticleDensityAroundJetsPtBinned = false;
+  bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
   bool drawEnergyEnergyCorrelators = true;
@@ -98,7 +101,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.1;
   double maxZoom = 1.9;
-  TString ratioLabel = "EScheme / WTA";
+  TString ratioLabel = "E-scheme / WTA";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool addEnergyToLegend = true;  // Add the collision energy from the first file to legend. Useful if all files are from same system
@@ -158,6 +161,8 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadMultiplicityInJets(drawMultiplicityInJetCone || drawMultiplicityInReflectedCone || drawMultiplicityInJetConeUncorrected || drawMultiplicityInReflectedConeUncorrected);
     histograms[iDataset]->SetLoadParticleDensityAroundJets(drawParticleDensityAroundJets);
     histograms[iDataset]->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
+    histograms[iDataset]->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
+    histograms[iDataset]->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
@@ -195,6 +200,8 @@ void compareEEChistograms(){
   
   drawer->SetDrawParticleDensityAroundJetAxis(drawParticleDensityAroundJets);
   drawer->SetDrawParticlePtDensityAroundJetAxis(drawParticlePtDensityAroundJets);
+  drawer->SetDrawParticleDensityAroundJetAxisPtBinned(drawParticleDensityAroundJetsPtBinned);
+  drawer->SetDrawParticlePtDensityAroundJetAxisPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   
   drawer->SetDrawEnergyEnergyCorrelator(drawEnergyEnergyCorrelators);
   drawer->SetDrawEnergyEnergyCorrelatorJetPt(drawEnergyEnergyCorrelatorsJetPt);
