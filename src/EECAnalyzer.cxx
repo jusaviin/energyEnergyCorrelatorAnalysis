@@ -111,6 +111,9 @@ EECAnalyzer::EECAnalyzer() :
   fJetReader = NULL;
   fTrackReader = NULL;
   
+  // Create a weighter for reflected cone particles
+  fReflectedConeWeighter = new ReflectedConeWeight();
+  
 }
 
 /*
@@ -122,6 +125,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fHistograms(0),
   fJetCorrector2018(),
   fJetUncertainty2018(),
+  fReflectedConeWeighter(),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -184,6 +188,9 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fCentralityWeightFunction = NULL;
     fMultiplicityWeightFunction = NULL;
   }
+  
+  // Create a weighter for reflected cone particles
+  fReflectedConeWeighter = new ReflectedConeWeight();
   
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
@@ -324,6 +331,7 @@ EECAnalyzer::~EECAnalyzer(){
   if(fTrackEfficiencyCorrector2018) delete fTrackEfficiencyCorrector2018;
   if(fJetCorrector2018) delete fJetCorrector2018;
   if(fJetUncertainty2018) delete fJetUncertainty2018;
+  if(fReflectedConeWeighter) delete fReflectedConeWeighter;
   if(fCentralityWeightFunction) delete fCentralityWeightFunction;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
   if(fPtWeightFunction) delete fPtWeightFunction;
@@ -488,6 +496,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t trackMultiplicityWeighted = 0; // Weighted multiplicity
   Int_t trackSubevent = 0;                // Subevent index in Pythia+Hydjet simulation
   Int_t trackSubeventIndex = 0;           // Simplified subevent index
+  Double_t reflectedConeWeight = 1;       // Weight for particles in the reflectee cone
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
@@ -935,14 +944,15 @@ void EECAnalyzer::RunAnalysis(){
               // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
               if(fFillJetConeHistograms){
                 if(deltaRTrackJet < 0.8){
+                  reflectedConeWeight = fReflectedConeWeighter->GetReflectedConeWeight(deltaRTrackJet, centrality, jetPt, trackPt);
                   fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
                   fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
                   fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
                   fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
                   fillerParticleDensityInJetCone[4] = 1;                  // Axis 4: 1 is the index for reflected cone
                   fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
-                  fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
-                  fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
+                  fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * reflectedConeWeight);
+                  fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt * reflectedConeWeight);
                 }
               }
             } // Search for track from reflected cone
@@ -1086,6 +1096,8 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
   Int_t subeventType;      // Subevent type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-hydjet)
   Int_t startIndex;        // First index when looping over the second tracks
+  Int_t reflectedConeWeight1; // Weight given to the first particle if it is from the reflected cone
+  Int_t reflectedConeWeight2; // Weight given to the second particle if it is from the reflected cone
   
   // Variables for the number of tracks
   Int_t nTracks1;
@@ -1111,6 +1123,13 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       
       // Get the efficiency correction for the first track
       trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(trackPt1, trackEta1, hiBin);
+            
+      // Get the reflected cone weight for the first track
+      if(firstParticleType[iPairingType] == EECHistograms::kReflectedCone){
+        reflectedConeWeight1 = fReflectedConeWeighter->GetReflectedConeWeight(TMath::Sqrt(trackEta1*trackEta1 + trackPhi1*trackPhi1), centrality, jetPt, trackPt1);
+      } else {
+        reflectedConeWeight1 = 1;
+      }
       
       // Find the track subevent (only relevant for simulation)
       subeventTrack1 = selectedTrackSubevent[firstParticleType[iPairingType]].at(iFirstTrack);
@@ -1133,6 +1152,13 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         
         // Get the efficiency correction for the second track
         trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
+        
+        // Get the reflected cone weight for the first track
+        if(firstParticleType[iPairingType] == EECHistograms::kReflectedCone){
+          reflectedConeWeight2 = fReflectedConeWeighter->GetReflectedConeWeight(TMath::Sqrt(trackEta2*trackEta2 + trackPhi2*trackPhi2), centrality, jetPt, trackPt2);
+        } else {
+          reflectedConeWeight1 = 1;
+        }
         
         // Find the track subevent (only relevant for simulation)
         subeventTrack2 = selectedTrackSubevent[secondParticleType[iPairingType]].at(iSecondTrack);
@@ -1159,12 +1185,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
         fillerEnergyEnergyCorrelator[5] = subeventType;              // Axis 5: Subevent type
         if(fFillEnergyEnergyCorrelators){
-          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight);  // Fill the energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt);  // Fill the energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
         }
         if(fFillEnergyEnergyCorrelatorsUncorrected) {
-          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeight);  // Fill the uncorrected energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt);  // Fill the uncorrected energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2);  // Fill the uncorrected energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2);  // Fill the uncorrected energy-energy correlator histogram
         }
         
       } // Inner track loop

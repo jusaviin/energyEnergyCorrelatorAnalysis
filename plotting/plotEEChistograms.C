@@ -112,8 +112,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for particle density histograms
-  const bool drawIndividualParticleDensities = false;
-  const bool drawParticleDensitiesForConstantJetPt = true;
+  const bool drawIndividualParticleDensities = true;
+  const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = true;

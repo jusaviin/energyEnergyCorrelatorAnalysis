@@ -35,7 +35,7 @@ void particleDensityComparer(){
   enum enumDataType{kPythiaHydjet, kMinBiasHydjet, knDataTypes};
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
+  TString inputFileName[knDataTypes] = {"eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -117,7 +117,7 @@ void particleDensityComparer(){
   int lastStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjet]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstStudiedTrackPtBinEEC = 0;
-  int lastStudiedTrackPtBinEEC = 5;
+  int lastStudiedTrackPtBinEEC = nTrackPtBinsEEC-1;
   
   // Select the types of energy-energy correlators are studied
   bool studyParticleDensityType[EECHistogramManager::knParticleDensityAroundJetAxisTypes];
@@ -437,7 +437,7 @@ void particleDensityComparer(){
           if(drawReflectedConeToSignalRatio){
             
             // Create a legend for the figure
-            legend = new TLegend(0.58,0.48,0.83,0.84);
+            legend = new TLegend(0.62,0.48,0.87,0.84);
             legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
             legend->AddEntry((TObject*) 0, histograms[kPythiaHydjet]->GetCard()->GetAlternativeDataType().Data(), "");
             legend->AddEntry((TObject*) 0, centralityString.Data(),"");
@@ -490,8 +490,13 @@ void particleDensityComparer(){
             hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
             drawer->DrawHistogramToLowerPad(hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{Reflected cone}{Signal cone}", " ");
             drawer->SetGridY(false);
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%sConeComparison%s%s%s%s.%s", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisSaveName(iParticleDensity), saveComment, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
    
-          } // Drawing reflected cone to hydjet ratio
+          } // Drawing reflected cone to signal cone ratio
           
           // =========================================================================
           // ===   Draw ratio between different subevents within the signal cone   ===
@@ -564,6 +569,11 @@ void particleDensityComparer(){
               }
               drawer->SetGridY(false);
             } // Subevent loop
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%sSubeventDecomposition%s%s%s%s.%s", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisSaveName(iParticleDensity), saveComment, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
             
           } // Draw different subevents within a signal cone
           
