@@ -239,7 +239,7 @@ void studyReflectedConeBackground(){
   double legendX1MinBias[nMinBiasRatioTypes];
   
   // Index 0: Compare fake+fake distribution to corresponding minimum bias distributions
-  drawMinBiasComparisonType[0] = true;
+  drawMinBiasComparisonType[0] = false;
   minBiasRatioIndex[0] = std::make_pair(kFakeFakeEEC, kPureMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
   minBiasRatioText[0] = "MinBias/FakeFake";

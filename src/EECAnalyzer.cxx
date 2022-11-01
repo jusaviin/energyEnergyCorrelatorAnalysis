@@ -948,7 +948,7 @@ void EECAnalyzer::RunAnalysis(){
               // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
               if(fFillJetConeHistograms){
                 if(deltaRTrackJet < 0.8){
-                  reflectedConeWeight = fReflectedConeWeighter->GetReflectedConeWeight(deltaRTrackJet, centrality, jetPt, trackPt);
+                  reflectedConeWeight = fReflectedConeWeighter->GetReflectedConeWeight((fDataType == ForestReader::kPbPb),deltaRTrackJet, centrality, jetPt, trackPt);
                   fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
                   fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
                   fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
@@ -1130,7 +1130,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
             
       // Get the reflected cone weight for the first track
       if(firstParticleType[iPairingType] == EECHistograms::kReflectedCone){
-        reflectedConeWeight1 = fReflectedConeWeighter->GetReflectedConeWeight(TMath::Sqrt(trackEta1*trackEta1 + trackPhi1*trackPhi1), centrality, jetPt, trackPt1);
+        reflectedConeWeight1 = fReflectedConeWeighter->GetReflectedConeWeight((fDataType == ForestReader::kPbPb), TMath::Sqrt(trackEta1*trackEta1 + trackPhi1*trackPhi1), centrality, jetPt, trackPt1);
       } else {
         reflectedConeWeight1 = 1;
       }
@@ -1159,7 +1159,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         
         // Get the reflected cone weight for the first track
         if(secondParticleType[iPairingType] == EECHistograms::kReflectedCone){
-          reflectedConeWeight2 = fReflectedConeWeighter->GetReflectedConeWeight(TMath::Sqrt(trackEta2*trackEta2 + trackPhi2*trackPhi2), centrality, jetPt, trackPt2);
+          reflectedConeWeight2 = fReflectedConeWeighter->GetReflectedConeWeight((fDataType == ForestReader::kPbPb), TMath::Sqrt(trackEta2*trackEta2 + trackPhi2*trackPhi2), centrality, jetPt, trackPt2);
         } else {
           reflectedConeWeight1 = 1;
         }

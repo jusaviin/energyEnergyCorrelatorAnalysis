@@ -1,7 +1,8 @@
 #ifndef REFLECTEDCONEWEIGHT_H
 #define REFLECTEDCONEWEIGHT_H
 
-
+// Root includes
+#include <TF1.h>
 
 /*
  * ReflectedConeWeight class
@@ -13,14 +14,17 @@ class ReflectedConeWeight {
 public:
  
   // Dimensions for the arrays are defined by the files used the obtain the weights. They should be copied from the file to here
-  static const int kNCentralityBins = 4;       // Maximum allowed number of centrality bins
+  static const int kNCentralityBins = 4;      // Maximum allowed number of centrality bins
   static const int kNTrackPtBins = 8;         // Maximum allowed number of track pT bins
   static const int kNJetPtBins = 7;           // Number of generator level jet pT bins for jet pT closures
+  static const int kMaxParameters = 8;        // Maximum number of parameters in the weight functions
   
   ReflectedConeWeight();   // Contructor
   ~ReflectedConeWeight();  // Destructor
   
-  double GetReflectedConeWeight(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
+  double GetReflectedConeWeight(const bool isData, const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
+  double GetReflectedConeWeightData(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
+  double GetReflectedConeWeightMC(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   
 private:
   
@@ -33,7 +37,12 @@ private:
   double fSignalConeMainShape[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fSignalConeKink[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fReflectedConeShape[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
+  double fMonteCarloParameter[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBins]; // Monte Carlo weight obtained from fit to only Hydjet particles
 
+  // Functions that can be initialized using the parameters from the arrays
+  TF1* fMonteCarloPiecewiseLinear;
+  TF1* fMonteCarloExpoLinear;
+  
   // Methods
   void InitializeArrays();
   int FindBinIndex(const double* array, const int nBins, const double value) const; // Find a bin index from a given array
