@@ -32,6 +32,7 @@ public:
     kJetEtaCut,                 // Eta cut for jets
     kMinPtCut,                  // Minimum allowed pT for the inclusive jets
     kMaxPtCut,                  // Maximum allowed pT for the inclusive jets
+    kCutBadPhiRegion,           // Cut the phi region with bad tracked performance from the analysis
     kMinMaxTrackPtFraction,     // Minimum fraction of jet pT taken by the highest pT track in jet
     kMaxMaxTrackPtFraction,     // Maximum fraction of jet pT taken by the highest pT track in jet
     kJetUncertaintyMode,        // 0 = Nominal jet pT, 1 = pT minus uncertainty, 2 = pT plus uncertainty
@@ -63,7 +64,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   

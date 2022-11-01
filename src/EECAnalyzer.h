@@ -113,6 +113,7 @@ private:
   Double_t fJetEtaCut;                 // Eta cut around midrapidity
   Double_t fJetMinimumPtCut;           // Minimum pT cut for jets
   Double_t fJetMaximumPtCut;           // Maximum pT accepted for jets (and tracks)
+  Bool_t fCutBadPhiRegion;             // Cut the phi region with bad tracker performance from the analysis
   Double_t fMinimumMaxTrackPtFraction; // Cut for jets consisting only from soft particles
   Double_t fMaximumMaxTrackPtFraction; // Cut for jets consisting only from one high pT
   Int_t fJetUncertaintyMode;           // Use uncertainty for jet pT. 0 = Nominal, 1 = Minus uncertainty, 2 = Plus uncertainty

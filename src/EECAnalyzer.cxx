@@ -79,6 +79,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetEtaCut(0),
   fJetMinimumPtCut(0),
   fJetMaximumPtCut(0),
+  fCutBadPhiRegion(false),
   fMinimumMaxTrackPtFraction(0),
   fMaximumMaxTrackPtFraction(0),
   fJetUncertaintyMode(0),
@@ -230,6 +231,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetEtaCut(in.fJetEtaCut),
   fJetMinimumPtCut(in.fJetMinimumPtCut),
   fJetMaximumPtCut(in.fJetMaximumPtCut),
+  fCutBadPhiRegion(in.fCutBadPhiRegion),
   fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
   fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
   fJetUncertaintyMode(in.fJetUncertaintyMode),
@@ -294,6 +296,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetEtaCut = in.fJetEtaCut;
   fJetMinimumPtCut = in.fJetMinimumPtCut;
   fJetMaximumPtCut = in.fJetMaximumPtCut;
+  fCutBadPhiRegion = in.fCutBadPhiRegion;
   fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
   fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
   fJetUncertaintyMode = in.fJetUncertaintyMode;
@@ -369,6 +372,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fJetMaximumPtCut = fCard->Get("MaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
   fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
+  fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
   
   //****************************************
@@ -733,7 +737,7 @@ void EECAnalyzer::RunAnalysis(){
         //  ========================================
         
         if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
-        if(jetPhi > -0.1 && jetPhi < 1.2) continue; // Cut the area of large inefficiency in tracker
+        if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
         
         // No jet quality cuts for generator level jets
         if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
@@ -1154,7 +1158,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
         
         // Get the reflected cone weight for the first track
-        if(firstParticleType[iPairingType] == EECHistograms::kReflectedCone){
+        if(secondParticleType[iPairingType] == EECHistograms::kReflectedCone){
           reflectedConeWeight2 = fReflectedConeWeighter->GetReflectedConeWeight(TMath::Sqrt(trackEta2*trackEta2 + trackPhi2*trackPhi2), centrality, jetPt, trackPt2);
         } else {
           reflectedConeWeight1 = 1;

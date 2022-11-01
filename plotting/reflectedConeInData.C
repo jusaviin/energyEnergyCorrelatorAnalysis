@@ -10,9 +10,9 @@ void reflectedConeInData(){
   enum enumDataType{kSignalEvent, kMinimumBias, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
-  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_preprocessed_2022-09-23.root
-  // data/eecAnalysis_akFlowJets_fakeFakeReflectedCone_wtaAxis_preprocessed_2022-10-14.root
+  TString inputFileName[knDataTypes] = {"data/eecAnalysis_akFlowJets_noBadAcc_refConeWeight_wtaAxis_preprocessed_2022-10-31.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
+  // data/eecAnalysis_akFlowJets_noBadAcc_refConeWeight_wtaAxis_preprocessed_2022-10-31.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
@@ -89,7 +89,7 @@ void reflectedConeInData(){
   int lastStudiedCentralityBin = 0;
   
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
-  int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kSignalEvent], nJetPtBinsEEC[kMinimumBias]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinimumBias]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstStudiedTrackPtBinEEC = 0;
   int lastStudiedTrackPtBinEEC = 5;

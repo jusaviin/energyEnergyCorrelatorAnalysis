@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed2_2022-10-17.root"};
+  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_noBadAcc_refConeWeight_wtaAxis_preprocessed_2022-10-31.root", "data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Old","New"};
+  TString legendComment[] = {"New","Old"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -65,8 +65,8 @@ void compareEEChistograms(){
   
   // Select which pairing types to draw
   const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
-  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection
@@ -101,7 +101,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.1;
   double maxZoom = 1.9;
-  TString ratioLabel = "E-scheme / WTA";
+  TString ratioLabel = "New / Old";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool addEnergyToLegend = true;  // Add the collision energy from the first file to legend. Useful if all files are from same system
@@ -136,7 +136,7 @@ void compareEEChistograms(){
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
