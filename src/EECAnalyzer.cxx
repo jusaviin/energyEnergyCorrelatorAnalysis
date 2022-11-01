@@ -1157,11 +1157,11 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         // Get the efficiency correction for the second track
         trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
         
-        // Get the reflected cone weight for the first track
+        // Get the reflected cone weight for the second track
         if(secondParticleType[iPairingType] == EECHistograms::kReflectedCone){
           reflectedConeWeight2 = fReflectedConeWeighter->GetReflectedConeWeight((fDataType == ForestReader::kPbPb), TMath::Sqrt(trackEta2*trackEta2 + trackPhi2*trackPhi2), centrality, jetPt, trackPt2);
         } else {
-          reflectedConeWeight1 = 1;
+          reflectedConeWeight2 = 1;
         }
         
         // Find the track subevent (only relevant for simulation)
