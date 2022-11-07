@@ -39,7 +39,8 @@ double expoLinear(double *x, double *par){
 /*
  * Contructor
  */
-ReflectedConeWeight::ReflectedConeWeight()
+ReflectedConeWeight::ReflectedConeWeight() :
+  fDisableWeight(false)
 {
   fMonteCarloPiecewiseLinear = new TF1("monteCarloPiecewiseLinear", piecewiseLinear, 0, 0.6, 8);
   fMonteCarloExpoLinear = new TF1("monteCarloExpoLinear", expoLinear, 0, 0.6, 6);
@@ -593,6 +594,9 @@ double ReflectedConeWeight::GetReflectedConeWeight(const bool isData, const doub
  */
 double ReflectedConeWeight::GetReflectedConeWeightData(const double deltaR, const double centrality, const double jetPt, const double trackPt) const{
   
+  // If weights are disabled, just return 1
+  if(fDisableWeight) return 1;
+  
   // Find the bin which is used to determine the weight
   const int iCentrality = FindCentralityBin(centrality);
   const int iJetPt = FindJetPtBin(jetPt);
@@ -646,6 +650,9 @@ double ReflectedConeWeight::GetReflectedConeWeightData(const double deltaR, cons
  */
 double ReflectedConeWeight::GetReflectedConeWeightMC(const double deltaR, const double centrality, const double jetPt, const double trackPt) const{
   
+  // If weights are disabled, just return 1
+  if(fDisableWeight) return 1;
+  
   // Find the bin which is used to determine the weight
   const int iCentrality = FindCentralityBin(centrality);
   const int iJetPt = FindJetPtBin(jetPt);
@@ -672,4 +679,9 @@ double ReflectedConeWeight::GetReflectedConeWeightMC(const double deltaR, const 
     return fMonteCarloPiecewiseLinear->Eval(deltaR);
   }
   
+}
+
+// Setter fir disabling the weights flog
+void ReflectedConeWeight::SetDisableWeights(const bool disableWeight){
+  fDisableWeight = disableWeight;
 }

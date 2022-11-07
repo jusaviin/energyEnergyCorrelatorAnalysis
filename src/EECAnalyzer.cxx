@@ -114,6 +114,7 @@ EECAnalyzer::EECAnalyzer() :
   
   // Create a weighter for reflected cone particles
   fReflectedConeWeighter = new ReflectedConeWeight();
+  fReflectedConeWeighter->SetDisableWeights(true);
   
 }
 

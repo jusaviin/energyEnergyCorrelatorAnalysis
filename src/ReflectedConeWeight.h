@@ -26,6 +26,8 @@ public:
   double GetReflectedConeWeightData(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   double GetReflectedConeWeightMC(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   
+  void SetDisableWeights(const bool disableWeight);
+  
 private:
   
   // Binning information in the study used to fit the particle density distributions
@@ -42,6 +44,9 @@ private:
   // Functions that can be initialized using the parameters from the arrays
   TF1* fMonteCarloPiecewiseLinear;
   TF1* fMonteCarloExpoLinear;
+  
+  // Flag for disabling the weights
+  bool fDisableWeight;
   
   // Methods
   void InitializeArrays();
