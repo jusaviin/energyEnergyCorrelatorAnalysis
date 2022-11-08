@@ -193,6 +193,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   
   // Create a weighter for reflected cone particles
   fReflectedConeWeighter = new ReflectedConeWeight();
+  fReflectedConeWeighter->SetDisableWeights(true);
   
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
