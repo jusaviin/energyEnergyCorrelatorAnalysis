@@ -270,8 +270,8 @@ void EECComparingDrawer::DrawJetHistograms(){
   // Helper variables for centrality naming in figures
   TString centralityString;
   TString compactCentralityString;
-  char namerX[100];
-  char namerY[100];
+  TString namerX;
+  TString namerY;
   
   // Rebin borders for jet pT
   const int nJetPtRebin = 25;
@@ -301,13 +301,13 @@ void EECComparingDrawer::DrawJetHistograms(){
     }
     
     // Draw the jet pT distributions to the upper panel of a split canvas plot
-    sprintf(namerX,"%s p_{T}  (GeV)",fBaseHistograms->GetJetAxisName());
+    namerX = Form("%s p_{T}  (GeV)",fBaseHistograms->GetJetAxisName());
     if(fApplyScaling){
-      sprintf(namerY,"#frac{1}{N_{jet}} #frac{dN}{dp_{T}}  (1/GeV)");
+      namerY = "#frac{1}{N_{jet}} #frac{dN}{dp_{T}}  (1/GeV)";
     } else {
-      sprintf(namerY,"#frac{dN}{dp_{T}}  (1/GeV)");
+      namerY = "#frac{dN}{dp_{T}}  (1/GeV)";
     }
-    DrawToUpperPad(namerX, namerY, false, fLogPt);
+    DrawToUpperPad(namerX.Data(), namerY.Data(), false, fLogPt);
     
     // Add a legend to the plot
     legend = new TLegend(0.27,0.05,0.55,0.3);
@@ -318,7 +318,7 @@ void EECComparingDrawer::DrawJetHistograms(){
     DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
     
     // Save the figure to a file
-    sprintf(namerX,"%sPtRatio",fBaseHistograms->GetJetHistogramName());
+    namerX = Form("%sPtRatio",fBaseHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // === Jet phi ===
@@ -327,13 +327,13 @@ void EECComparingDrawer::DrawJetHistograms(){
     PrepareRatio("jetPhi", 1, iCentrality);
     
     // Draw the jet phi distributions to the upper panel of a split canvas plot
-    sprintf(namerX,"%s #varphi",fBaseHistograms->GetJetAxisName());
+    namerX = Form("%s #varphi",fBaseHistograms->GetJetAxisName());
     if(fApplyScaling){
-      sprintf(namerY,"#frac{1}{N_{jet}} #frac{dN}{d#varphi}");
+      namerY = "#frac{1}{N_{jet}} #frac{dN}{d#varphi}";
     } else {
-      sprintf(namerY,"#frac{dN}{d#varphi}");
+      namerY = "#frac{dN}{d#varphi}";
     }
-    DrawToUpperPad(namerX,namerY);
+    DrawToUpperPad(namerX.Data(), namerY.Data());
     
     // Add a legend to the plot
     legend = new TLegend(0.62,0.65,0.82,0.9);
@@ -341,10 +341,10 @@ void EECComparingDrawer::DrawJetHistograms(){
     legend->Draw();
     
     // Draw the ratios to the lower portion of the split canvas
-    DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+    DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
     
     // Save the figure to a file
-    sprintf(namerX,"%sPhiRatio",fBaseHistograms->GetJetHistogramName());
+    namerX = Form("%sPhiRatio",fBaseHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // === Jet eta ===
@@ -353,13 +353,13 @@ void EECComparingDrawer::DrawJetHistograms(){
     PrepareRatio("jetEta", 1, iCentrality);
     
     // Draw the jet eta distributions to the upper panel of a split canvas plot
-    sprintf(namerX,"%s #eta",fBaseHistograms->GetJetAxisName());
+    namerX = Form("%s #eta",fBaseHistograms->GetJetAxisName());
     if(fApplyScaling){
-      sprintf(namerY,"#frac{1}{N_{jet}} #frac{dN}{d#eta}");
+      namerY = "#frac{1}{N_{jet}} #frac{dN}{d#eta}";
     } else {
-      sprintf(namerY,"#frac{dN}{d#eta}");
+      namerY = "#frac{dN}{d#eta}";
     }
-    DrawToUpperPad(namerX,namerY);
+    DrawToUpperPad(namerX.Data(),namerY.Data());
     
     // Add a legend to the plot
     legend = new TLegend(0.42,0.07,0.62,0.32);
@@ -367,10 +367,10 @@ void EECComparingDrawer::DrawJetHistograms(){
     legend->Draw();
     
     // Draw the ratios to the lower portion of the split canvas
-    DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+    DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
     
     // Save the figure to a file
-    sprintf(namerX,"%sEtaRatio",fBaseHistograms->GetJetHistogramName());
+    namerX = Form("%sEtaRatio",fBaseHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
   } // Centrality loop
@@ -395,7 +395,7 @@ void EECComparingDrawer::DrawTrackHistograms(){
   TString compactCentralityString;
   TString trackPtString;
   TString compactTrackPtString;
-  char namerX[100];
+  TString namerX;
   
   // Loop over track types
   for(int iTrackType = 0; iTrackType < EECHistogramManager::knTrackCategories; iTrackType++){
@@ -413,8 +413,8 @@ void EECComparingDrawer::DrawTrackHistograms(){
       PrepareRatio("trackPt", 4, iTrackType, iCentrality);
       
       // Draw the track pT distributions to the upper panel of a split canvas plot
-      sprintf(namerX,"%s p_{T}  (GeV)",fBaseHistograms->GetTrackAxisName(iTrackType));
-      DrawToUpperPad(namerX, "#frac{dN}{dp_{T}}  (1/GeV)", false, fLogPt);
+      namerX = Form("%s p_{T}  (GeV)",fBaseHistograms->GetTrackAxisName(iTrackType));
+      DrawToUpperPad(namerX.Data(), "#frac{dN}{dp_{T}}  (1/GeV)", false, fLogPt);
       
       // Add a legend to the plot
       legend = new TLegend(0.56,0.66,0.76,0.81);
@@ -423,11 +423,11 @@ void EECComparingDrawer::DrawTrackHistograms(){
       
       // Draw the ratios to the lower portion of the split canvas
       fDrawer->SetGridY(true);
-      DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+      DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
       fDrawer->SetGridY(false);
       
       // Save the figure to a file
-      sprintf(namerX,"%sPtRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
+      namerX = Form("%sPtRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
       SaveFigure(namerX,compactCentralityString);
       
       // Loop over track pT bins
@@ -453,8 +453,8 @@ void EECComparingDrawer::DrawTrackHistograms(){
         PrepareRatio("trackPhi", 1, iTrackType, iCentrality, iTrackPt);
         
         // Draw the track phi distributions to the upper panel of a split canvas plot
-        sprintf(namerX,"%s #varphi",fBaseHistograms->GetTrackAxisName(iTrackType));
-        DrawToUpperPad(namerX, "#frac{dN}{d#varphi}");
+        namerX = Form("%s #varphi",fBaseHistograms->GetTrackAxisName(iTrackType));
+        DrawToUpperPad(namerX.Data(), "#frac{dN}{d#varphi}");
         
         // Add a legend to the plot
         legend = new TLegend(0.24,0.11,0.44,0.26);
@@ -463,11 +463,11 @@ void EECComparingDrawer::DrawTrackHistograms(){
         
         // Draw the ratios to the lower portion of the split canvas
         fDrawer->SetGridY(true);
-        DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+        DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
         fDrawer->SetGridY(false);
         
         // Save the figure to a file
-        sprintf(namerX,"%sPhiRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
+        namerX = Form("%sPhiRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
         // === Track eta ===
@@ -486,8 +486,8 @@ void EECComparingDrawer::DrawTrackHistograms(){
         PrepareRatio("trackEta", 1, iTrackType, iCentrality, iTrackPt);
         
         // Draw the track eta distributions to the upper panel of a split canvas plot
-        sprintf(namerX,"%s #eta",fBaseHistograms->GetTrackAxisName(iTrackType));
-        DrawToUpperPad(namerX, "#frac{dN}{d#eta}");
+        namerX = Form("%s #eta",fBaseHistograms->GetTrackAxisName(iTrackType));
+        DrawToUpperPad(namerX.Data(), "#frac{dN}{d#eta}");
         
         // Add a legend to the plot
         legend = new TLegend(legendX1,legendY1,legendX2,legendY2);
@@ -496,11 +496,11 @@ void EECComparingDrawer::DrawTrackHistograms(){
         
         // Draw the ratios to the lower portion of the split canvas
         fDrawer->SetGridY(true);
-        DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+        DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
         fDrawer->SetGridY(false);
         
         // Save the figure to a file
-        sprintf(namerX,"%sEtaRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
+        namerX = Form("%sEtaRatio",fBaseHistograms->GetTrackHistogramName(iTrackType));
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
       } // Track pT loop
@@ -528,7 +528,7 @@ void EECComparingDrawer::DrawMultiplicityInJetCone(){
   TString jetPtString;
   TString compactJetPtString;
   TString subeventString;
-  char namerX[100];
+  TString namerX;
 
   // Loop over multiplicity types
   for(int iMultiplicityType = 0; iMultiplicityType < EECHistogramManager::knMultiplicityInJetConeTypes; iMultiplicityType++){
@@ -576,8 +576,8 @@ void EECComparingDrawer::DrawMultiplicityInJetCone(){
             PrepareRatio("multiplicityInJetCone", 1, iCentrality, iJetPt, iTrackPt, iMultiplicityType, iSubevent);
             
             // Draw the track phi distributions to the upper panel of a split canvas plot
-            sprintf(namerX,"%s",fBaseHistograms->GetMultiplicityInJetConeAxisName(iMultiplicityType));
-            DrawToUpperPad(namerX, "Counts");
+            namerX = Form("%s",fBaseHistograms->GetMultiplicityInJetConeAxisName(iMultiplicityType));
+            DrawToUpperPad(namerX.Data(), "Counts");
             
             // Add a legend to the plot
             legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
@@ -586,11 +586,11 @@ void EECComparingDrawer::DrawMultiplicityInJetCone(){
             
             // Draw the ratios to the lower portion of the split canvas
             fDrawer->SetGridY(true);
-            DrawToLowerPad(namerX,fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
+            DrawToLowerPad(namerX.Data(),fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax);
             fDrawer->SetGridY(false);
             
             // Save the figure to a file
-            sprintf(namerX,"%s%sComparison", fBaseHistograms->GetMultiplicityInJetConeHistogramName(iMultiplicityType), subeventString.Data());
+            namerX = Form("%s%sComparison", fBaseHistograms->GetMultiplicityInJetConeHistogramName(iMultiplicityType), subeventString.Data());
             SaveFigure(namerX, compactCentralityString, compactTrackPtString, compactJetPtString);
             
           } // Jet pT loop
@@ -621,7 +621,7 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
   TString compactJetPtString;
   TString subeventString;
   TString jetConeTypeString;
-  char namerY[100];
+  TString namerY;
   
   // Loop over multiplicity types
   for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -690,11 +690,11 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
               
               // Draw the track phi distributions to the upper panel of a split canvas plot
               if(fApplyScaling){
-                sprintf(namerY,"#frac{1}{N_{jets}} %s",fBaseHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                namerY = Form("#frac{1}{N_{jets}} %s",fBaseHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
               } else {
-                sprintf(namerY,"%s",fBaseHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                namerY = Form("%s",fBaseHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
               }
-              DrawToUpperPad("#Deltar",namerY,false,fLogParticleDensity);
+              DrawToUpperPad("#Deltar",namerY.Data(),false,fLogParticleDensity);
               
               // Add a legend to the plot
               legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
@@ -707,7 +707,7 @@ void EECComparingDrawer::DrawParticleDensityAroundJetAxis(){
               fDrawer->SetGridY(false);
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%sComparison", fBaseHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
+              namerY = Form("%s%s%sComparison", fBaseHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
               SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
               
             } // Jet pT loop
@@ -748,7 +748,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   TString compactJetPtString;
   TString subeventString;
   TString compactSubeventString;
-  char namerY[100];
+  TString namerY;
   
   // Change drawing ranges in case of logarithmic x-axis
   double minRangeX = 0;
@@ -811,8 +811,8 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
               PrepareRatio("energyEnergyCorrelator", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent, minRangeX, maxRangeX);
               
               // Draw the track phi distributions to the upper panel of a split canvas plot
-              sprintf(namerY,"%s %s", fBaseHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fBaseHistograms->GetPairingTypeSaveName(iPairingType));
-              DrawToUpperPad("#Deltar", namerY, fLogDeltaR, fLogEEC);
+              namerY = Form("%s %s", fBaseHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fBaseHistograms->GetPairingTypeSaveName(iPairingType));
+              DrawToUpperPad("#Deltar", namerY.Data(), fLogDeltaR, fLogEEC);
               
               // Add a legend to the plot
               legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
@@ -825,7 +825,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
               fDrawer->SetGridY(false);
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%sComparison", fBaseHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fBaseHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data());
+              namerY = Form("%s%s%sComparison", fBaseHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fBaseHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data());
               SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
               
             } // Jet pT loop
@@ -854,7 +854,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
 void EECComparingDrawer::PrepareRatio(TString name, int rebin, int bin1, int bin2, int bin3, int bin4, int bin5, int bin6, double minRange, double maxRange){
   
   // Helper variables
-  char namer[100];
+  TString namer;
 
   // Read the histograms, do rebinning or normalization if specified, and take the ratio
   fMainHistogram = (TH1D*)fBaseHistograms->GetOneDimensionalHistogram(name,bin1,bin2,bin3,bin4,bin5,bin6)->Clone();
@@ -895,10 +895,10 @@ void EECComparingDrawer::PrepareRatio(TString name, int rebin, int bin1, int bin
       fComparisonHistogram[iAdditional]->Scale(1/fComparisonHistogram[iAdditional]->GetFunction("pol0")->GetParameter(0));
     }
 
-    sprintf(namer,"%sRatio%d",fMainHistogram->GetName(),iAdditional);
+    namer = Form("%sRatio%d",fMainHistogram->GetName(),iAdditional);
     
 
-    fRatioHistogram[iAdditional] = (TH1D*)fMainHistogram->Clone(namer);
+    fRatioHistogram[iAdditional] = (TH1D*)fMainHistogram->Clone(namer.Data());
     if(fUseDifferenceInsteadOfRatio){
       fRatioHistogram[iAdditional]->Add(fComparisonHistogram[iAdditional],-1);
     } else {

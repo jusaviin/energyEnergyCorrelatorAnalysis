@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_noBadAcc_refConeWeight_wtaAxis_preprocessed_2022-11-01.root", "data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root"};
+  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_moreTrackPtBins_noEEC_wtaAxis_noTrigger_processed_2022-11-07.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -52,13 +52,13 @@ void compareEEChistograms(){
   bool drawMultiplicityInReflectedConeUncorrected = false;
   
   // Particle density around jets
-  bool drawParticleDensityAroundJets = false;
+  bool drawParticleDensityAroundJets = true;
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;

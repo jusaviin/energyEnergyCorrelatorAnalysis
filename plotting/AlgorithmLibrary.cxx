@@ -145,8 +145,7 @@ TH2D* AlgorithmLibrary::RebinHistogram(TH2D *histogramInNeedOfRebinning, const i
   double binArea = 1;
   
   // Create the histogram with new binning
-  char newName[200];
-  sprintf(newName,"%sRebinned",histogramInNeedOfRebinning->GetName());
+  TString newName = Form("%sRebinned",histogramInNeedOfRebinning->GetName());
   TH2D *rebinnedHistogram = new TH2D(newName,newName,nBinsX,binBordersX,nBinsY,binBordersY);
   
   // Loop over all the bins in the old histogram and insert the content to the new histogram

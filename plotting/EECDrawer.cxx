@@ -186,8 +186,8 @@ void EECDrawer::DrawJetHistograms(){
   // Helper variables for centrality naming in figures
   TString centralityString;
   TString compactCentralityString;
-  char namerX[100];
-  char namerY[100];
+  TString namerX;
+  TString namerY;
   
   // Loop over centrality
   for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
@@ -200,14 +200,14 @@ void EECDrawer::DrawJetHistograms(){
     
     // === Jet pT ===
     drawnHistogram = fHistograms->GetHistogramJetPt(iCentrality);
-    sprintf(namerX,"%s p_{T}  (GeV)",fHistograms->GetJetAxisName());
-    fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{dN}{dp_{T}}  (1/GeV)"," ");
+    namerX = Form("%s p_{T}  (GeV)",fHistograms->GetJetAxisName());
+    fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{dN}{dp_{T}}  (1/GeV)"," ");
     legend = new TLegend(0.62,0.75,0.82,0.9);
     SetupLegend(legend,centralityString);
     legend->Draw();
     
     // Save the figure to a file
-    sprintf(namerX,"%sPt",fHistograms->GetJetHistogramName());
+    namerX = Form("%sPt",fHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // Set linear drawing
@@ -215,26 +215,26 @@ void EECDrawer::DrawJetHistograms(){
     
     // === Jet phi ===
     drawnHistogram = fHistograms->GetHistogramJetPhi(iCentrality);
-    sprintf(namerX,"%s #varphi",fHistograms->GetJetAxisName());
-    fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{dN}{d#varphi}"," ");
+    namerX = Form("%s #varphi",fHistograms->GetJetAxisName());
+    fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{dN}{d#varphi}"," ");
     legend = new TLegend(0.62,0.75,0.82,0.9);
     SetupLegend(legend,centralityString);
     legend->Draw();
     
     // Save the figure to a file
-    sprintf(namerX,"%sPhi",fHistograms->GetJetHistogramName());
+    namerX = Form("%sPhi",fHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // === Jet eta ===
     drawnHistogram = fHistograms->GetHistogramJetEta(iCentrality);
-    sprintf(namerX,"%s #eta",fHistograms->GetJetAxisName());
-    fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{dN}{d#eta}"," ");
+    namerX = Form("%s #eta",fHistograms->GetJetAxisName());
+    fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{dN}{d#eta}"," ");
     legend = new TLegend(0.4,0.20,0.82,0.35);
     SetupLegend(legend,centralityString);
     legend->Draw();
     
     // Save the figure to a file
-    sprintf(namerX,"%sEta",fHistograms->GetJetHistogramName());
+    namerX = Form("%sEta",fHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // Change the right margin better suited for 2D-drawing
@@ -242,15 +242,15 @@ void EECDrawer::DrawJetHistograms(){
     
     // === Jet eta vs. phi ===
     drawnHistogram2D = fHistograms->GetHistogramJetEtaPhi(iCentrality);
-    sprintf(namerX,"%s #varphi",fHistograms->GetJetAxisName());
-    sprintf(namerY,"%s #eta",fHistograms->GetJetAxisName());
-    fDrawer->DrawHistogram(drawnHistogram2D,namerX,namerY," ",fStyle2D);
+    namerX = Form("%s #varphi",fHistograms->GetJetAxisName());
+    namerY = Form("%s #eta",fHistograms->GetJetAxisName());
+    fDrawer->DrawHistogram(drawnHistogram2D,namerX.Data(),namerY.Data()," ",fStyle2D);
     legend = new TLegend(0.17,0.78,0.37,0.93);
     SetupLegend(legend,centralityString);
     legend->Draw();
     
     // Save the figures to file
-    sprintf(namerX,"%sEtaPhi",fHistograms->GetJetHistogramName());
+    namerX = Form("%sEtaPhi",fHistograms->GetJetHistogramName());
     SaveFigure(namerX,compactCentralityString);
     
     // Change right margin back to 1D-drawing
@@ -278,8 +278,8 @@ void EECDrawer::DrawTrackHistograms(){
   TString compactCentralityString;
   TString trackPtString;
   TString compactTrackPtString;
-  char namerX[100];
-  char namerY[100];
+  TString namerX;
+  TString namerY;
   
   // Number of events for normalization
   int numberOfEvents = fHistograms->GetNEvents();  // Normalize with the number of all events for inclusive histograms. TODO: Fix the normalization, currently not reliable
@@ -300,14 +300,14 @@ void EECDrawer::DrawTrackHistograms(){
       // === Track pT ===
       drawnHistogram = fHistograms->GetHistogramTrackPt(iTrackType,iCentrality);
       drawnHistogram->Scale(1.0/numberOfEvents);  // Normalize with the number of events
-      sprintf(namerX,"%s p_{T}  (GeV)",fHistograms->GetTrackAxisName(iTrackType));
-      fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{1}{N_{event}} #frac{dN}{dp_{T}}  (1/GeV)"," ");
+      namerX = Form("%s p_{T}  (GeV)",fHistograms->GetTrackAxisName(iTrackType));
+      fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{1}{N_{event}} #frac{dN}{dp_{T}}  (1/GeV)"," ");
       legend = new TLegend(0.62,0.75,0.82,0.9);
       SetupLegend(legend,centralityString);
       legend->Draw();
       
       // Save the figure to a file
-      sprintf(namerX,"%sPt",fHistograms->GetTrackHistogramName(iTrackType));
+      namerX = Form("%sPt",fHistograms->GetTrackHistogramName(iTrackType));
       SaveFigure(namerX,compactCentralityString);
       
       // Select linear drawing
@@ -333,14 +333,14 @@ void EECDrawer::DrawTrackHistograms(){
         // === Track phi ===
         drawnHistogram = fHistograms->GetHistogramTrackPhi(iTrackType,iCentrality,iTrackPt);
         drawnHistogram->Scale(1.0/numberOfEvents);  // Normalize with the number of events
-        sprintf(namerX,"%s #varphi",fHistograms->GetTrackAxisName(iTrackType));
-        fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{1}{N_{event}} #frac{dN}{d#varphi}"," ");
+        namerX = Form("%s #varphi",fHistograms->GetTrackAxisName(iTrackType));
+        fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{1}{N_{event}} #frac{dN}{d#varphi}"," ");
         legend = new TLegend(0.17,0.20,0.37,0.35);
         SetupLegend(legend,centralityString,trackPtString);
         legend->Draw();
         
         // Save the figure to a file
-        sprintf(namerX,"%sPhi",fHistograms->GetTrackHistogramName(iTrackType));
+        namerX = Form("%sPhi",fHistograms->GetTrackHistogramName(iTrackType));
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
         // === Track eta ===
@@ -357,14 +357,14 @@ void EECDrawer::DrawTrackHistograms(){
           legendX1 = 0.34; legendX2 = legendX1+0.2;
         }
         
-        sprintf(namerX,"%s #eta",fHistograms->GetTrackAxisName(iTrackType));
-        fDrawer->DrawHistogram(drawnHistogram,namerX,"#frac{1}{N_{event}} #frac{dN}{d#eta}"," ");
+        namerX = Form("%s #eta",fHistograms->GetTrackAxisName(iTrackType));
+        fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"#frac{1}{N_{event}} #frac{dN}{d#eta}"," ");
         legend = new TLegend(legendX1,legendY1,legendX2,legendY2);
         SetupLegend(legend,centralityString,trackPtString);
         legend->Draw();
         
         // Save the figure to a file
-        sprintf(namerX,"%sEta",fHistograms->GetTrackHistogramName(iTrackType));
+        namerX = Form("%sEta",fHistograms->GetTrackHistogramName(iTrackType));
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
         // Change the right margin better suited for 2D-drawing
@@ -373,15 +373,15 @@ void EECDrawer::DrawTrackHistograms(){
         // === Track eta-phi ===
         drawnHistogram2D = fHistograms->GetHistogramTrackEtaPhi(iTrackType,iCentrality,iTrackPt);
         drawnHistogram2D->Scale(1.0/numberOfEvents);  // Normalize with the number of events
-        sprintf(namerX,"%s #varphi",fHistograms->GetTrackAxisName(iTrackType));
-        sprintf(namerY,"%s #eta",fHistograms->GetTrackAxisName(iTrackType));
-        fDrawer->DrawHistogram(drawnHistogram2D,namerX,namerY," ",fStyle2D);
+        namerX = Form("%s #varphi",fHistograms->GetTrackAxisName(iTrackType));
+        namerY = Form("%s #eta",fHistograms->GetTrackAxisName(iTrackType));
+        fDrawer->DrawHistogram(drawnHistogram2D,namerX.Data(),namerY.Data()," ",fStyle2D);
         legend = new TLegend(0.17,0.78,0.37,0.93);
         SetupLegend(legend,centralityString,trackPtString);
         legend->Draw();
         
         // Save the figure to a file
-        sprintf(namerX,"%sEtaPhi",fHistograms->GetTrackHistogramName(iTrackType));
+        namerX = Form("%sEtaPhi",fHistograms->GetTrackHistogramName(iTrackType));
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
         // Change right margin back to 1D-drawing
@@ -409,7 +409,7 @@ void EECDrawer::DrawMultiplicityInJetCone(){
   TString jetPtString;
   TString compactJetPtString;
   TString subeventString;
-  char namerX[100];
+  TString namerX;
 
   // Loop over multiplicity types
   for(int iMultiplicityType = 0; iMultiplicityType < EECHistogramManager::knMultiplicityInJetConeTypes; iMultiplicityType++){
@@ -452,14 +452,14 @@ void EECDrawer::DrawMultiplicityInJetCone(){
             
             // === Multiplicity within the jet ===
             drawnHistogram = fHistograms->GetHistogramMultiplicityInJetCone(iCentrality, iJetPt, iTrackPt, iMultiplicityType, iSubevent);
-            sprintf(namerX,"%s",fHistograms->GetMultiplicityInJetConeAxisName(iMultiplicityType));
-            fDrawer->DrawHistogram(drawnHistogram,namerX,"Counts"," ");
+            namerX = Form("%s",fHistograms->GetMultiplicityInJetConeAxisName(iMultiplicityType));
+            fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),"Counts"," ");
             legend = new TLegend(0.62,0.75,0.82,0.9);
             SetupLegend(legend,centralityString,subeventString,jetPtString,trackPtString);
             legend->Draw();
             
             // Save the figure to a file
-            sprintf(namerX,"%s%s",fHistograms->GetMultiplicityInJetConeHistogramName(iMultiplicityType), subeventString.Data());
+            namerX = Form("%s%s",fHistograms->GetMultiplicityInJetConeHistogramName(iMultiplicityType), subeventString.Data());
             SaveFigure(namerX,compactCentralityString, compactJetPtString, compactTrackPtString);
             
           } // Jet pT loop
@@ -487,7 +487,7 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
   TString compactJetPtString;
   TString subeventString;
   TString jetConeTypeString;
-  char namerY[100];
+  TString namerY;
   
   // Helper variables for histogram normalization
   double normalizationFactor = 1;
@@ -550,14 +550,14 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
                 // === Particle density around the jet axis ===
                 drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
                 drawnHistogram->Scale(1/normalizationFactor);
-                sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
-                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                namerY = Form("#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
                 legend = new TLegend(0.62,0.75,0.82,0.9);
                 SetupLegend(legend,centralityString,jetConeTypeString,subeventString,jetPtString,trackPtString);
                 legend->Draw();
                 
                 // Save the figure to a file
-                sprintf(namerY,"%s%s%s",fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
+                namerY = Form("%s%s%s",fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data());
                 SaveFigure(namerY,compactCentralityString, compactJetPtString, compactTrackPtString);
                 
               } // Jet pT loop
@@ -604,8 +604,8 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
                 drawnHistogram->SetLineColor(color[iTrackPt]);
                 
                 if(iTrackPt == fFirstDrawnTrackPtBinEEC){
-                  sprintf(namerY,"#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
-                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                  namerY = Form("#frac{1}{N_{jets}} %s",fHistograms->GetParticleDensityAroundJetAxisAxisName(iParticleDensityType));
+                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
                 } else {
                   drawnHistogram->Draw("same");
                 }
@@ -617,7 +617,7 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
               legend->Draw();
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%sConstantJetPt%s", fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data(), compactJetPtString.Data());
+              namerY = Form("%s%s%sConstantJetPt%s", fHistograms->GetParticleDensityAroundJetAxisHistogramName(iParticleDensityType), jetConeTypeString.Data(), subeventString.Data(), compactJetPtString.Data());
               SaveFigure(namerY, compactCentralityString);
               
             } // Jet pT loop
@@ -648,7 +648,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   TString compactJetPtString;
   TString subeventString;
   TString compactSubeventString;
-  char namerY[100];
+  TString namerY;
   
   double normalizationFactor;
   int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
@@ -703,12 +703,12 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 // === Energy-energy correlator ===
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(1/drawnHistogram->Integral("width")); // For now, just normalize the integral to one
-                sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
                 
                 // For logarithmic x-axis, cannot go all the way to zero
                 if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
                 
-                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
                 legend = new TLegend(0.62,0.75,0.82,0.9);
                 legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
                 legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
@@ -718,7 +718,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 legend->Draw();
                 
                 // Save the figure to a file
-                sprintf(namerY,"%s%s%s", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data());
+                namerY = Form("%s%s%s", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data());
                 SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
                 
               } // Jet pT loop
@@ -762,8 +762,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
               
               if(iTrackPt == fFirstDrawnTrackPtBinEEC){
-                sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
               } else {
                 drawnHistogram->Draw("same");
               }
@@ -775,7 +775,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             legend->Draw();
             
             // Save the figure to a file
-            sprintf(namerY,"%s%s%sConstantJetPt%.0f", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), fHistograms->GetCard()->GetJetPtCut());
+            namerY = Form("%s%s%sConstantJetPt%.0f", fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), fHistograms->GetCard()->GetJetPtCut());
             SaveFigure(namerY, compactCentralityString);
             
           } // Subevent loop
@@ -822,8 +822,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
                 
                 if(iJetPt == fFirstDrawnJetPtBinEEC){
-                  sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+                  namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
                 } else {
                   drawnHistogram->Draw("same");
                 }
@@ -835,7 +835,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->Draw();
               
               // Save the figure to a file
-              sprintf(namerY,"%s%s%sConstantTrackPt%s",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), compactTrackPtString.Data());
+              namerY = Form("%s%s%sConstantTrackPt%s",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType), compactSubeventString.Data(), compactTrackPtString.Data());
               SaveFigure(namerY, compactCentralityString);
               
             } // Subevent loop
@@ -882,8 +882,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               // For logarithmic x-axis, cannot go all the way to zero
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
               
-              sprintf(namerY,"%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY," ");
+              namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+              fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
               
               // Draw the different subevent contributions to the same canvas
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
@@ -899,7 +899,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->Draw();
               
               // Save the figure to a file
-              sprintf(namerY,"%s%sSubeventDecomposition",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+              namerY = Form("%s%sSubeventDecomposition",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
               SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
               
             } // Jet pT loop

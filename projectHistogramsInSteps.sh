@@ -36,16 +36,16 @@ root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",32)'
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",64)'
 
 # Project regular energy-energy correlator histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'
+#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'
 
 # Project jet pT weighted energy-energy correlator histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
+#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
 
 # Project uncorrected energy-energy correlator histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
+#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
 
 # Project uncorrected jet pT weighted energy-energy correlator histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
+#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
 
 # Project jet pT closure histograms
 # root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",2048)'
