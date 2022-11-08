@@ -11,18 +11,27 @@ void studyReflectedConeBackground(){
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
   TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_wtaAxis_noTrigger_preprocessed_2022-10-14.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
+  const int nAddReflectedConeFiles = 1;
+  TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root"};
+  
+  TString reflectedConeLegendComment[] = {"regular", "weight cone"};
+  
   // Open the input files and read the analysis cards
-  TFile *inputFile[knDataTypes];
-  EECCard *card[knDataTypes];
-  for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
+  TFile *inputFile[knDataTypes+nAddReflectedConeFiles];
+  EECCard *card[knDataTypes+nAddReflectedConeFiles];
+  for(int iDataType = 0; iDataType < knDataTypes+nAddReflectedConeFiles; iDataType++){
     
     // Open the input file
-    inputFile[iDataType] = TFile::Open(inputFileName[iDataType]);
+    if(iDataType < knDataTypes){
+      inputFile[iDataType] = TFile::Open(inputFileName[iDataType]);
+    } else {
+      inputFile[iDataType] = TFile::Open(reflectedConeFileName[iDataType-knDataTypes]);
+    }
     
     if(inputFile[iDataType] == NULL){
       cout << "Error! The file " << inputFileName[iDataType].Data() << " does not exist!" << endl;
@@ -88,10 +97,10 @@ void studyReflectedConeBackground(){
   int lastStudiedCentralityBin = 0;
   
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
-  int lastStudiedJetPtBinEEC[knDataTypes] = {nJetPtBinsEEC[kPythiaHydjetSimulation], nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 0;
+  int lastStudiedTrackPtBinEEC = nTrackPtBinsEEC-1;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -113,8 +122,13 @@ void studyReflectedConeBackground(){
   bool optimalNormalization = true;
   
   // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager *histograms[knDataTypes];
-  for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
+  EECHistogramManager *histograms[knDataTypes+nAddReflectedConeFiles];
+  int iJetPtEEC;
+  for(int iDataType = 0; iDataType < knDataTypes+nAddReflectedConeFiles; iDataType++){
+    
+    iJetPtEEC = iDataType;
+    if(iDataType >= knDataTypes) iJetPtEEC = 0;
+      
     histograms[iDataType] = new EECHistogramManager(inputFile[iDataType],card[iDataType]);
     
     // Choose the energy-energy correlator types to load
@@ -125,7 +139,7 @@ void studyReflectedConeBackground(){
     
     // Choose the bin ranges
     histograms[iDataType]->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
-    histograms[iDataType]->SetJetPtBinRangeEEC(firstStudiedJetPtBinEEC[iDataType],lastStudiedJetPtBinEEC[iDataType]);
+    histograms[iDataType]->SetJetPtBinRangeEEC(firstStudiedJetPtBinEEC[iJetPtEEC],lastStudiedJetPtBinEEC[iJetPtEEC]);
     histograms[iDataType]->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
     
     // Load the histograms from the file
@@ -158,7 +172,7 @@ void studyReflectedConeBackground(){
   bool addSignalToTotalRatio[nRatioTypes];
   
   // Index 0: Compare signal+fake to corresponding reflected cone distribution
-  drawComparisonType[0] = false;
+  drawComparisonType[0] = true;
   ratioIndex[0] = std::make_pair(kSignalFakeEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[0] = "Signal+fake pairs";
   legendTextReflectedCone[0] = "Jet+ref";
@@ -169,13 +183,13 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[0] = false;
   
   // Index 1: Compare fake+fake to corresponding reflected cone distribution
-  drawComparisonType[1] = false;
+  drawComparisonType[1] = true;
   ratioIndex[1] = std::make_pair(kFakeFakeEEC, kPairOnlyReflectedCone);
   legendTextEnergyEnergyCorrelator[1] = "Fake+fake pairs";
   legendTextReflectedCone[1] = "Ref+ref";
   ratioText[1] = "(Ref+ref) / BG";
   yRange[1] = std::make_pair(0.0005, 2);
-  ratioZoom[1] = std::make_pair(0, 50);
+  ratioZoom[1] = std::make_pair(0, 2);
   saveName[1] = "hydjetHydjetToOnlyReflectedCone";
   addSignalToTotalRatio[1] = false;
   
@@ -191,7 +205,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[2] = false;
   
   // Index 3: Compare total background to combined reflected cone
-  drawComparisonType[3] = false;
+  drawComparisonType[3] = true;
   ratioIndex[3] = std::make_pair(kBackgroundEEC, kCombineReflectedCone);
   legendTextEnergyEnergyCorrelator[3] = "All background pairs";
   legendTextReflectedCone[3] = "Reflected";
@@ -290,10 +304,10 @@ void studyReflectedConeBackground(){
   TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][knPairingTypesEEC];
   
   // Reflected cone energy-energy correlators
-  TH1D* hReflectedCone[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][nBackgroundNormalizationBins+knPairingTypesEEC][knReflectedConeTypes];
+  TH1D* hReflectedCone[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][nBackgroundNormalizationBins+knPairingTypesEEC][knReflectedConeTypes][1+nAddReflectedConeFiles];
   
   // Histograms for all different ratios
-  TH1D* hRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][nBackgroundNormalizationBins+knPairingTypesEEC][nRatioTypes];
+  TH1D* hRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][nBackgroundNormalizationBins+knPairingTypesEEC][nRatioTypes][1+nAddReflectedConeFiles];
   TH1D* hSignalToTotalRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC];
   
   // Energy-energy correlators from minimum bias Hydjet simulation
@@ -310,12 +324,14 @@ void studyReflectedConeBackground(){
             hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iPairingType] = NULL;
           } // Pairing type loop
           for(int iNormalization = 0; iNormalization < nBackgroundNormalizationBins+knPairingTypesEEC; iNormalization++){
-            for(int iReflectedConeType = 0; iReflectedConeType < knReflectedConeTypes; iReflectedConeType++){
-              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType] = NULL;
-            } // Reflected cone loop
-            for(int iRatio = 0; iRatio < nRatioTypes; iRatio++){
-              hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio] = NULL;
-            } // Ratio loop
+            for(int iReflectedConeFile = 0; iReflectedConeFile < 1+nAddReflectedConeFiles; iReflectedConeFile++){
+              for(int iReflectedConeType = 0; iReflectedConeType < knReflectedConeTypes; iReflectedConeType++){
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile] = NULL;
+              } // Reflected cone loop
+              for(int iRatio = 0; iRatio < nRatioTypes; iRatio++){
+                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio][iReflectedConeFile] = NULL;
+              } // Ratio loop
+            } // Reflected cone file loop
           } // Normalization region loop
           for(int iJetPtMinBias = 0; iJetPtMinBias < nJetPtBinsEEC[kMinBiasHydjetSimulation]+1; iJetPtMinBias++){
             for(int iNormalization = 0; iNormalization < knNormalizationStyles; iNormalization++){
@@ -339,6 +355,7 @@ void studyReflectedConeBackground(){
   int studiedEnergyEnergyCorrelatorIndex = -1;
   int referenceIndexNormalization;
   double signalFaketoFakeFakeRatio[knNormalizationStyles];
+  int managerIndex;
   
   // Get the histograms from the histogram manager
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -380,60 +397,70 @@ void studyReflectedConeBackground(){
           // Calculate the signal+fake to fake+fake ratio from generator level information
           signalFaketoFakeFakeRatio[kNormalizeToGeneratorLevel] = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kSignalFakeEEC]->Integral("width") / hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kFakeFakeEEC]->Integral("width");
           
-          // The jet cone + reflected cone histogram.
-          helperHistogram = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
-          
-          // The only reflected cone histogram.
-          helperHistogram2 = histograms[kPythiaHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::knSubeventCombinations);
-          
-          // Calculate the signal+fake to fake+fake ratio for the reflected cone histograms
-          signalFaketoFakeFakeRatio[kNormalizeToReflectedCone] = helperHistogram->Integral("width") / helperHistogram2->Integral("width");
-          
-          // Normalize the reflected cone histogram to different DeltaR regions of the tail of the total distribution
-          highIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetNbinsX();
-          for(int iNormalization = 0; iNormalization < nBackgroundNormalizationBins+knPairingTypesEEC; iNormalization++){
-            lowIntegralBin = highIntegralBin - (nBackgroundNormalizationBins - iNormalization - 1);
-            if(iNormalization >= nBackgroundNormalizationBins) {
-              lowIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetXaxis()->FindBin(0.3);
-              highIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetXaxis()->FindBin(0.4);
+          for(int iReflectedConeFile = 0; iReflectedConeFile < 1+nAddReflectedConeFiles; iReflectedConeFile++){
+            
+            // Find the correct histogram manager for the reflected cone estimation
+            if(iReflectedConeFile == 0){
+              managerIndex = kPythiaHydjetSimulation;
+            } else {
+              managerIndex = knDataTypes + iReflectedConeFile - 1;
             }
             
-            // Normalization for jet cone + reflected cone histogram
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairSignalReflectedCone] = (TH1D*) helperHistogram->Clone(Form("reflectedCone%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization));
+            // The jet cone + reflected cone histogram.
+            helperHistogram = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
             
-            // Normalization for only reflected cone histogram
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairOnlyReflectedCone] = (TH1D*) helperHistogram2->Clone(Form("reflectedConeOnly%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization));
+            // The only reflected cone histogram.
+            helperHistogram2 = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::knSubeventCombinations);
             
-            // Normalization for total reflected cone histogram, where all the pairs in went through once in each event
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone] = (TH1D*) helperHistogram->Clone(Form("reflectedConeCombined%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization));
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone]->Add(helperHistogram2);
+            // Calculate the signal+fake to fake+fake ratio for the reflected cone histograms
+            signalFaketoFakeFakeRatio[kNormalizeToReflectedCone] = helperHistogram->Integral("width") / helperHistogram2->Integral("width");
             
-            // Normalization for all reflected cone histograms
-            referenceIndexNormalization = kTotalEEC;
-            if(iNormalization >= nBackgroundNormalizationBins) referenceIndexNormalization = iNormalization - nBackgroundNormalizationBins;
-            for(int iReflectedConeType = kPairSignalReflectedCone; iReflectedConeType <= kCombineReflectedCone; iReflectedConeType++){
-              normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][referenceIndexNormalization]->Integral(lowIntegralBin, highIntegralBin, "width") / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType]->Integral(lowIntegralBin, highIntegralBin, "width");
-              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType]->Scale(normalizationFactor);
-            }
-            
-            // The background subtracted histograms can be calculated from the normalized reflected cone histograms.
-            
-            // First clone the total distribution as the baseline
-            for(int iReflectedConeType = kSubtractSignalReflectedCone; iReflectedConeType <= kSubtractCombined; iReflectedConeType++){
-              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType] = (TH1D*) hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->Clone(Form("backgroundSubtracted%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iReflectedConeType));
-            }
-            
-            // Then subtract the correct reflected cone histogram from the total histogram
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kSubtractSignalReflectedCone]->Add(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairSignalReflectedCone],-1);
-            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kSubtractCombined]->Add(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone],-1);
-            
-            // After all the reflected cone histograms are ready, the defined ratios can be calculated
-            for(int iRatio = 0; iRatio < nRatioTypes; iRatio++){
-              hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio] = (TH1D*) hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][ratioIndex[iRatio].second]->Clone(Form("ratio%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iRatio));
-              hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][ratioIndex[iRatio].first]);
-            }
-            
-          } // Normalization region loop
+            // Normalize the reflected cone histogram to different DeltaR regions of the tail of the total distribution
+            highIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetNbinsX();
+            for(int iNormalization = 0; iNormalization < nBackgroundNormalizationBins+knPairingTypesEEC; iNormalization++){
+              lowIntegralBin = highIntegralBin - (nBackgroundNormalizationBins - iNormalization - 1);
+              if(iNormalization >= nBackgroundNormalizationBins) {
+                lowIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetXaxis()->FindBin(0.3);
+                highIntegralBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->GetXaxis()->FindBin(0.4);
+              }
+              
+              // Normalization for jet cone + reflected cone histogram
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairSignalReflectedCone][iReflectedConeFile] = (TH1D*) helperHistogram->Clone(Form("reflectedCone%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iReflectedConeFile));
+              
+              // Normalization for only reflected cone histogram
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairOnlyReflectedCone][iReflectedConeFile] = (TH1D*) helperHistogram2->Clone(Form("reflectedConeOnly%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iReflectedConeFile));
+              
+              // Normalization for total reflected cone histogram, where all the pairs in went through once in each event
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone][iReflectedConeFile] = (TH1D*) helperHistogram->Clone(Form("reflectedConeCombined%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iReflectedConeFile));
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone][iReflectedConeFile]->Add(helperHistogram2);
+              
+              // Normalization for all reflected cone histograms
+              referenceIndexNormalization = kTotalEEC;
+              if(iNormalization >= nBackgroundNormalizationBins) referenceIndexNormalization = iNormalization - nBackgroundNormalizationBins;
+              for(int iReflectedConeType = kPairSignalReflectedCone; iReflectedConeType <= kCombineReflectedCone; iReflectedConeType++){
+                normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][referenceIndexNormalization]->Integral(lowIntegralBin, highIntegralBin, "width") / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Integral(lowIntegralBin, highIntegralBin, "width");
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Scale(normalizationFactor);
+              }
+              
+              // The background subtracted histograms can be calculated from the normalized reflected cone histograms.
+              
+              // First clone the total distribution as the baseline
+              for(int iReflectedConeType = kSubtractSignalReflectedCone; iReflectedConeType <= kSubtractCombined; iReflectedConeType++){
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile] = (TH1D*) hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTotalEEC]->Clone(Form("backgroundSubtracted%d%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iReflectedConeType, iReflectedConeFile));
+              }
+              
+              // Then subtract the correct reflected cone histogram from the total histogram
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kSubtractSignalReflectedCone][iReflectedConeFile]->Add(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kPairSignalReflectedCone][iReflectedConeFile],-1);
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kSubtractCombined][iReflectedConeFile]->Add(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][kCombineReflectedCone][iReflectedConeFile],-1);
+              
+              // After all the reflected cone histograms are ready, the defined ratios can be calculated
+              for(int iRatio = 0; iRatio < nRatioTypes; iRatio++){
+                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio][iReflectedConeFile] = (TH1D*) hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][ratioIndex[iRatio].second][iReflectedConeFile]->Clone(Form("ratio%d%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iNormalization, iRatio, iReflectedConeFile));
+                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iRatio][iReflectedConeFile]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][ratioIndex[iRatio].first]);
+              }
+              
+            } // Normalization region loop
+          } // Loop over files used for different reflected cone estimations
           
           // ======================================================= //
           // Read the histograms from minimum bias Hydjet simulation //
@@ -448,9 +475,9 @@ void studyReflectedConeBackground(){
               hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias] = (TH1D*) histograms[kMinBiasHydjetSimulation]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPtMinBias, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventCombinations)->Clone(Form("pureMinBiasHistogram%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization));
               
               // Normalize the minimum bias histograms to match the signal+fake to fake+fake ratio with different estimators
-              normalizationFactor = hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone]->Integral("width") / (hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias]->Integral("width") * signalFaketoFakeFakeRatio[iNormalization]);
+              normalizationFactor = hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone][0]->Integral("width") / (hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias]->Integral("width") * signalFaketoFakeFakeRatio[iNormalization]);
               hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias]->Scale(normalizationFactor);
-              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kReflectedConeCombinedMinBias] = (TH1D*) hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone]->Clone(Form("combinedBackground%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization));
+              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kReflectedConeCombinedMinBias] = (TH1D*) hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][kPairSignalReflectedCone][0]->Clone(Form("combinedBackground%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization));
               hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kReflectedConeCombinedMinBias]->Add(hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][kPureMinBias]);
               
               // After the ratio is matched, normalize the distribution such that it matches the generator level background at 0.3 < DeltaR < 0.4
@@ -594,32 +621,40 @@ void studyReflectedConeBackground(){
             lastNormalizationIndex = nBackgroundNormalizationBins-1;
             if(optimalNormalization) lastNormalizationIndex = firstNormalizationIndex;
             
-            // Draw different normalization regions for the reflected cone histogram to the same plot
-            for(int iNormalization = firstNormalizationIndex; iNormalization <= lastNormalizationIndex; iNormalization++){
+            // Draw reflected cone histograms from different files, provided that optimal normalization flag is turned on
+            for(int iReflectedConeFile = 0; iReflectedConeFile < 1 + nAddReflectedConeFiles*optimalNormalization; iReflectedConeFile++){
               
-              // Find the correct index for optimal normalization
-              currentNormalizationIndex = iNormalization;
-              if(optimalNormalization && (iNormalization == lastNormalizationIndex)) {
-                currentNormalizationIndex = nBackgroundNormalizationBins + ratioIndex[iRatio].first;
-                if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
-                if(ratioIndex[iRatio].second == kSubtractCombined) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
-              }
-                            
-              // For logarithmic drawing, cannot go down to zero
-              if(logDeltaR){
-                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
-              }
-              
-              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second]->SetLineColor(color[iNormalization]);
-              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second]->Draw("same");
-              
-              if(optimalNormalization){
-                legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second], Form("%s, match yield", legendTextReflectedCone[iRatio]), "l");
-              } else {
-                legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second], Form("%s, #Deltar > %.3f", legendTextReflectedCone[iRatio], deltaRBinBorders[nDeltaRBins-(nBackgroundNormalizationBins-iNormalization)]), "l");
-              }
-              
-            } // Normalization region loop
+              // Draw different normalization regions for the reflected cone histogram to the same plot
+              for(int iNormalization = firstNormalizationIndex; iNormalization <= lastNormalizationIndex; iNormalization++){
+                
+                // Find the correct index for optimal normalization
+                currentNormalizationIndex = iNormalization;
+                if(optimalNormalization && (iNormalization == lastNormalizationIndex)) {
+                  currentNormalizationIndex = nBackgroundNormalizationBins + ratioIndex[iRatio].first;
+                  if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
+                  if(ratioIndex[iRatio].second == kSubtractCombined) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
+                }
+                
+                // For logarithmic drawing, cannot go down to zero
+                if(logDeltaR){
+                  hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+                }
+                
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile]->SetLineColor(color[iNormalization+iReflectedConeFile]);
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile]->Draw("same");
+                
+                if(optimalNormalization){
+                  if(nAddReflectedConeFiles > 0){
+                    legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, %s", legendTextReflectedCone[iRatio], reflectedConeLegendComment[iReflectedConeFile].Data()), "l");
+                  } else {
+                    legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, match yield", legendTextReflectedCone[iRatio]), "l");
+                  }
+                } else {
+                  legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, #Deltar > %.3f", legendTextReflectedCone[iRatio], deltaRBinBorders[nDeltaRBins-(nBackgroundNormalizationBins-iNormalization)]), "l");
+                }
+                
+              } // Normalization region loop
+            } // Reflected cone file loop
             
             // Draw the legend to the upper pad
             legend->Draw();
@@ -627,45 +662,49 @@ void studyReflectedConeBackground(){
             // Linear scale for the ratio
             drawer->SetLogY(false);
             
-            // Draw the ratios to the lower pad
-            for(int iNormalization = 0; iNormalization <= lastNormalizationIndex; iNormalization++){
+            // Draw reflected cone histograms from different files, provided that optimal normalization flag is turned on
+            for(int iReflectedConeFile = 0; iReflectedConeFile < 1 + nAddReflectedConeFiles*optimalNormalization; iReflectedConeFile++){
               
-              // Find the correct index for optimal normalization
-              currentNormalizationIndex = iNormalization;
-              if(optimalNormalization && (iNormalization == lastNormalizationIndex)) {
-                currentNormalizationIndex = nBackgroundNormalizationBins + ratioIndex[iRatio].first;
-                if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
-                if(ratioIndex[iRatio].second == kSubtractCombined) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
-              }
-              
-              
-              // For logarithmic drawing, cannot go down to zero
-              if(logDeltaR){
-                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
-              }
-              
-              hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio]->SetLineColor(color[iNormalization]);
-              if(iNormalization == 0){
-                drawer->SetGridY(true);
-                if(addSignalToTotalRatio[iRatio]){
-                  
-                  if(logDeltaR){
-                    hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
-                  }
-                  
-                  hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
-                  hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom[iRatio].first, ratioZoom[iRatio].second);
-                  drawer->DrawHistogramToLowerPad(hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt], "#Deltar", ratioText[iRatio], " ");
-                } else {
-                  hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio]->GetYaxis()->SetRangeUser(ratioZoom[iRatio].first, ratioZoom[iRatio].second);
-                  drawer->DrawHistogramToLowerPad(hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio], "#Deltar", ratioText[iRatio], " ");
+              // Draw the ratios to the lower pad
+              for(int iNormalization = 0; iNormalization <= lastNormalizationIndex; iNormalization++){
+                
+                // Find the correct index for optimal normalization
+                currentNormalizationIndex = iNormalization;
+                if(optimalNormalization && (iNormalization == lastNormalizationIndex)) {
+                  currentNormalizationIndex = nBackgroundNormalizationBins + ratioIndex[iRatio].first;
+                  if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
+                  if(ratioIndex[iRatio].second == kSubtractCombined) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
                 }
-                drawer->SetGridY(false);
-              } else {
-                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio]->Draw("same");
-              }
-              
-            } // Normalization region loop
+                
+                
+                // For logarithmic drawing, cannot go down to zero
+                if(logDeltaR){
+                  hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio][iReflectedConeFile]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+                }
+                
+                hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio][iReflectedConeFile]->SetLineColor(color[iNormalization+iReflectedConeFile]);
+                if(iNormalization == 0 && iReflectedConeFile == 0){
+                  drawer->SetGridY(true);
+                  if(addSignalToTotalRatio[iRatio]){
+                    
+                    if(logDeltaR){
+                      hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+                    }
+                    
+                    hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
+                    hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom[iRatio].first, ratioZoom[iRatio].second);
+                    drawer->DrawHistogramToLowerPad(hSignalToTotalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt], "#Deltar", ratioText[iRatio], " ");
+                  } else {
+                    hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio][iReflectedConeFile]->GetYaxis()->SetRangeUser(ratioZoom[iRatio].first, ratioZoom[iRatio].second);
+                    drawer->DrawHistogramToLowerPad(hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio][iReflectedConeFile], "#Deltar", ratioText[iRatio], " ");
+                  }
+                  drawer->SetGridY(false);
+                } else {
+                  hRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][iRatio][iReflectedConeFile]->Draw("same");
+                }
+                
+              } // Normalization region loop
+            } // Reflected cone file loop
             
             // Save the figures to a file
             if(saveFigures){
