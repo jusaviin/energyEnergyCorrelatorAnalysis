@@ -14,8 +14,6 @@
 #include "EECCard.h"
 #include "../src/EECHistograms.h"
 
-class SeagullConfiguration; // Also SeagullConfiguration depends on EECHistogramManager
-
 /*
  * Class for drawing the histograms produced in the dijet analysis
  */
@@ -41,7 +39,7 @@ public:
   static const int knGenJetPtBins = 45;          // Number of generator level jet pT bins for jet pT closures
   static const int knJetEtaBins = 50;            // Number of jet eta bins for jet pT closures
   static const int kMaxJetPtBinsEEC = 12;       // Maximum allowed number of jet pT bins for energy-energy correlators
-  static const int kMaxTrackPtBinsEEC = 10;     // Maximum allowed number of track pT bins for energy-energy correlators
+  static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   
 private:
   
@@ -274,8 +272,8 @@ private:
   double fTrackPtBinBorders[kMaxTrackPtBins+1];       // Track pT bin borders, from which bin indices are obtained
   int fJetPtIndicesEEC[kMaxJetPtBinsEEC+1];           // Indices for jet pT bins in energy-energy correlator histograms
   double fJetPtBinBordersEEC[kMaxJetPtBinsEEC+1];     // Jet pT bin borders in energy-energy correlator histograms
-  int fTrackPtIndicesEEC[kMaxJetPtBinsEEC+1];         // Indices for track pT bins in energy-energy correlator histograms
-  double fTrackPtBinBordersEEC[kMaxJetPtBinsEEC+1];   // Track pT bin borders in energy-energy correlator histograms
+  int fTrackPtIndicesEEC[kMaxTrackPtBinsEEC+1];       // Indices for track pT bins in energy-energy correlator histograms
+  double fTrackPtBinBordersEEC[kMaxTrackPtBinsEEC+1]; // Track pT bin borders in energy-energy correlator histograms
   int fnCentralityBins;                               // Number of centrality bins in the JCard of the data file
   int fnTrackPtBins;                                  // Number of track pT bins in the JCard of the data file
   int fnJetPtBinsEEC;                                 // Number of jet pT bins for the energy-energy correlator histograms
