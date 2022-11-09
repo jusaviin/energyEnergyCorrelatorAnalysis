@@ -126,7 +126,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fHistograms(0),
   fJetCorrector2018(),
   fJetUncertainty2018(),
-  fReflectedConeWeighter(),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -139,6 +138,9 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   // Initialize readers to null
   fJetReader = NULL;
   fTrackReader = NULL;
+  
+  // Create a weighter for reflected cone particles
+  fReflectedConeWeighter = new ReflectedConeWeight();
   
   // Configurure the analyzer from input card
   ReadConfigurationFromCard();
@@ -189,9 +191,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fCentralityWeightFunction = NULL;
     fMultiplicityWeightFunction = NULL;
   }
-  
-  // Create a weighter for reflected cone particles
-  fReflectedConeWeighter = new ReflectedConeWeight();
   
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
