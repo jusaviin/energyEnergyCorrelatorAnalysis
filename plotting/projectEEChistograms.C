@@ -31,6 +31,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadMultiplicityInJet = false;
   bool loadParticleDensityAroundJet = false;
   bool loadParticlePtDensityAroundJet = false;
+  bool loadMaxParticlePtWithinJetCone = false;
   bool loadEnergyEnergyCorrelators = true;
   bool loadEnergyEnergyCorrelatorsJetPt = false;
   bool loadEnergyEnergyCorrelatorsUncorrected = false;
@@ -47,14 +48,15 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 4 = Load multiplicity histograms within jets (to set: 16)
    *  Bit 5 = Load particle density histograms around jet axes (to set: 32)
    *  Bit 6 = Load particle pT density histograms around jet axes (to set: 64)
-   *  Bit 7 = Load energy-energy correlator histograms (to set: 128)
-   *  Bit 8 = Load jet pT weighted energy-energy correlator histograms (to set: 256)
-   *  Bit 9 = Load uncorrected energy-energy correlator histograms (to set: 512)
-   *  Bit 10 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 1024)
-   *  Bit 11 = Load jet pT closure histograms (to set: 2048)
+   *  Bit 7 = Load maximum particle pT within the jet cone histograms (to set: 128)
+   *  Bit 8 = Load energy-energy correlator histograms (to set: 256)
+   *  Bit 9 = Load jet pT weighted energy-energy correlator histograms (to set: 512)
+   *  Bit 10 = Load uncorrected energy-energy correlator histograms (to set: 1024)
+   *  Bit 11 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 2048)
+   *  Bit 12 = Load jet pT closure histograms (to set: 4096)
    */
   if(histogramSelection > 0){
-    std::bitset<12> bitChecker(histogramSelection);
+    std::bitset<13> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);
@@ -62,11 +64,12 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadMultiplicityInJet = bitChecker.test(4);
     loadParticleDensityAroundJet = bitChecker.test(5);
     loadParticlePtDensityAroundJet = bitChecker.test(6);
-    loadEnergyEnergyCorrelators = bitChecker.test(7);
-    loadEnergyEnergyCorrelatorsJetPt = bitChecker.test(8);
-    loadEnergyEnergyCorrelatorsUncorrected = bitChecker.test(9);
-    loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(10);
-    loadJetPtClosure = bitChecker.test(11);
+    loadMaxParticlePtWithinJetCone = bitChecker.test(7);
+    loadEnergyEnergyCorrelators = bitChecker.test(8);
+    loadEnergyEnergyCorrelatorsJetPt = bitChecker.test(9);
+    loadEnergyEnergyCorrelatorsUncorrected = bitChecker.test(10);
+    loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(11);
+    loadJetPtClosure = bitChecker.test(12);
   }
   
   // ====================================================
@@ -161,6 +164,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadParticleDensityAroundJetsPtBinned(loadParticleDensityAroundJet);
   histograms->SetLoadParticlePtDensityAroundJets(loadParticlePtDensityAroundJet);
   histograms->SetLoadParticlePtDensityAroundJetsPtBinned(loadParticlePtDensityAroundJet);
+  histograms->SetLoadMaxParticlePtWithinJetCone(loadMaxParticlePtWithinJetCone);
   histograms->SetLoadEnergyEnergyCorrelators(loadEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(loadEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(loadEnergyEnergyCorrelatorsUncorrected);

@@ -30,6 +30,9 @@ public:
   // Indices for different particle density types measured around the jet axis
   enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, kParticleDensityAroundJetAxisPtBinned, kParticlePtDensityAroundJetAxisPtBinned, knParticleDensityAroundJetAxisTypes};
   
+  // Indices for maximum particle pT within the jet cone types
+  enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
+  
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
   
@@ -40,6 +43,7 @@ public:
   static const int knJetEtaBins = 50;            // Number of jet eta bins for jet pT closures
   static const int kMaxJetPtBinsEEC = 12;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
+  static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
   
 private:
   
@@ -77,6 +81,11 @@ private:
   // Naming for jet cone types
   const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone"};
   
+  // Maximum particle pT within the jet cone study
+  const char* fMaxParticlePtInJetConeHistogramName = "maxParticlePtInJet";
+  const char* fMaxParticlePtInJetConeSaveName[knMaxParticlePtWithinJetConeTypes] = {"maxParticlePtInJet", "maxBackgroundParticlePtInJet"};
+  const double fProjectedMaxParticlePtBinBorders[knProjectedMaxParticlePtBins+1] = {10,15,20,30,40,50,500};
+  
 public:
   
   EECHistogramManager();                                    // Default constructor
@@ -113,6 +122,9 @@ public:
   void SetLoadParticleDensityAroundJetsPtBinned(const bool loadOrNot);   // Setter for loading pT binned particle density histograms around the jet axis
   void SetLoadParticlePtDensityAroundJetsPtBinned(const bool loadOrNot); // Setter for loading pT binned particle pT density histograms around the jet axis
   void SetLoadAllParticleDensitiesAroundJets(const bool loadRegular, const bool loadPtWeighted, const bool loadPtBinned, const bool loadPtBinnedPtWeighted); // Setter for loading all particle density histograms around the jet axis
+  
+  // Setter for loading maximum particle pT within the jet cone histograms
+  void SetLoadMaxParticlePtWithinJetCone(const bool loadOrNot);
   
   // Setters for energy-energy correlator histograms
   void SetLoadEnergyEnergyCorrelators(const bool loadOrNot);                 // Setter for loading energy-energy correlators
@@ -200,6 +212,12 @@ public:
   TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes) const; // Multiplicity within the jet cone
   TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet axis
   
+  // Getters for the maximum particle pT histograms within the jet cone
+  TH1D *GetMaxParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum particle pT in jet cone
+  TH1D *GetMaxParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum particle pT in jet cone with pT cut for background particles
+  TH1D *GetMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum background particle pT in jet cone
+  TH1D *GetMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum background particle pT in jet cone with pT cut for signal particles
+  
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
   
@@ -247,6 +265,7 @@ private:
   bool fLoadJetPtClosureHistograms;                        // Load the jet pT closure histograms
   bool fLoadMultiplicityInJetHistograms;                   // Load the multiplicity histograms within jet cone
   bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
+  bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   
@@ -314,6 +333,10 @@ private:
   TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
   TH1D *fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
   
+  // Histograms for maximum particle pT within the jet cone
+  TH1D *fhMaxParticlePtInJetConePtCut[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins];
+  TH1D *fhMaxParticlePtInJetConePtBin[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins+1];
+  
   // Histograms for energy-energy correlators
   TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];
   
@@ -342,6 +365,7 @@ private:
   void LoadTrackHistograms(); // Loader for track histograms
   void LoadMultiplicityInJetConeHistograms(); // Loader for multiplicity histograms within the jet cone
   void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
+  void LoadMaxParticlePtInJetConeHistograms(); // Loader for maximum particle pT in jet cone histograms
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   
@@ -353,12 +377,13 @@ private:
   int BinIndexCheck(const int nBins, const int binIndex) const; // Check that given index is in defined range
   
   // Methods for histogram writing
-  void WriteJetHistograms();                       // Write the jet histograms to the file that is currently open
-  void WriteTrackHistograms();                     // Write the track histograms to the file that is currently open
-  void WriteMultiplicityInJetConeHistograms();     // Write the multiplicity histograms within the jet cone
-  void WriteParticleDensityAroundJetsHistograms(); // Write the particle density histograms around the jet axes
-  void WriteEnergyEnergyCorrelatorHistograms();    // Write the energy-energy correlator histograms to the file that is currently open
-  void WriteClosureHistograms();                   // Write the closure histograms to the file that is currently open
+  void WriteJetHistograms();                        // Write the jet histograms to the file that is currently open
+  void WriteTrackHistograms();                      // Write the track histograms to the file that is currently open
+  void WriteMultiplicityInJetConeHistograms();      // Write the multiplicity histograms within the jet cone
+  void WriteParticleDensityAroundJetsHistograms();  // Write the particle density histograms around the jet axes
+  void WriteMaxParticlePtWithinJetConeHistograms(); // Write the maximum particle pT within the jet cone histograms
+  void WriteEnergyEnergyCorrelatorHistograms();     // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
   
 };
 

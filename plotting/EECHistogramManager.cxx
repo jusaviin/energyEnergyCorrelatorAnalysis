@@ -22,6 +22,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoad2DHistograms(false),
   fLoadJetPtClosureHistograms(false),
   fLoadMultiplicityInJetHistograms(false),
+  fLoadMaxParticlePtWithinJetConeHistograms(false),
   fJetFlavor(0),
   fFirstLoadedCentralityBin(0),
   fLastLoadedCentralityBin(1),
@@ -131,6 +132,17 @@ EECHistogramManager::EECHistogramManager() :
         } // Jet cone type loop
       } // Track pT bins for energy-energy correlators
     } // Jet pT bins for energy-energy correlators
+    
+    // Maximum particle pT within the jet cone
+    for(int iMaxParticlePtType = 0; iMaxParticlePtType < knMaxParticlePtWithinJetConeTypes; iMaxParticlePtType++){
+      for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+        for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
+          fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = NULL;
+          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = NULL;
+        } // Particle pT selection for the maximum particle pT within the jet
+        fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = NULL;
+      } // Jet pT bins for energy-energy correlators
+    } // Maximum particle pT within jet cone type loop
     
     // Energy-energy correlator histograms
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
@@ -251,6 +263,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoad2DHistograms(in.fLoad2DHistograms),
   fLoadJetPtClosureHistograms(in.fLoadJetPtClosureHistograms),
   fLoadMultiplicityInJetHistograms(in.fLoadMultiplicityInJetHistograms),
+  fLoadMaxParticlePtWithinJetConeHistograms(in.fLoadMaxParticlePtWithinJetConeHistograms),
   fJetFlavor(in.fJetFlavor),
   fFirstLoadedCentralityBin(in.fFirstLoadedCentralityBin),
   fLastLoadedCentralityBin(in.fLastLoadedCentralityBin),
@@ -356,6 +369,17 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
       } // Track pT bins for energy-energy correlators
     } // Jet pT bins for energy-energy correlators
     
+    // Maximum particle pT within the jet cone
+    for(int iMaxParticlePtType = 0; iMaxParticlePtType < knMaxParticlePtWithinJetConeTypes; iMaxParticlePtType++){
+      for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+        for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
+          fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = in.fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt];
+          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = in.fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt];
+        } // Particle pT selection for the maximum particle pT within the jet
+        fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = in.fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins];
+      } // Jet pT bins for energy-energy correlators
+    } // Maximum particle pT within jet cone type loop
+    
     // Energy-energy correlator histograms
     for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
@@ -452,6 +476,9 @@ void EECHistogramManager::LoadHistograms(){
   
   // Load the particle density around the jet axis histograms
   LoadParticleDensityHistograms();
+  
+  // Load the maximum particle pT inside the jet cone histograms
+  LoadMaxParticlePtInJetConeHistograms();
   
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
@@ -864,6 +891,92 @@ void EECHistogramManager::LoadParticleDensityHistograms(){
       } // Centrality loop
     } // Jet cone type loop (signal cone/reflected cone)
   } // Particle density type loop (regular/pT weighted)
+}
+
+/*
+ * Loader for maximum particle pT within the jet cone
+ *
+ * THnSparse for maximum particle pT within the jet cone:
+ *
+ *   Histogram name: maxParticlePtInJet
+ *
+ *     Axis index         Content of axis                      Note
+ * -------------------------------------------------------------------------
+ *       Axis 0               Jet pT
+ *       Axis 1        Maximum signal particle pT
+ *       Axis 2      Maximum background particle pT     Only relevant for MC
+ *       Axis 3             Centrality
+
+ */
+void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
+    
+  if(!fLoadMaxParticlePtWithinJetConeHistograms) return;
+  
+  // Define arrays to help find the histograms
+  int axisIndices[3] = {0};
+  int lowLimits[3] = {0};
+  int highLimits[3] = {0};
+  
+  // Define helper variables
+  int duplicateRemover = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  int highestTrackPtBin = 0;
+  THnSparseD *histogramArray;
+  
+  // Determine the highest track pT bin from the file
+  histogramArray = (THnSparseD*) fInputFile->Get(fMaxParticlePtInJetConeHistogramName);
+  highestTrackPtBin = histogramArray->GetAxis(1)->GetNbins()+1;
+  
+  // Loop over maximum particle pT within jet cone types
+  for(int iMaxParticlePtType = 0; iMaxParticlePtType < knMaxParticlePtWithinJetConeTypes; iMaxParticlePtType++){
+    
+    // Loop over centrality bins
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      
+      // Select the centrality bin indices
+      lowerCentralityBin = fCentralityBinIndices[iCentrality];
+      higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
+      
+      // Setup axes with restrictions, (3 = centrality)
+      axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+      
+      // Loop over jet pT bins
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        
+        // Select the jet pT bin indices
+        lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+        higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+        
+        // Add restriction for jet pT axis (0 = jet pT)
+        axisIndices[1] = 0; lowLimits[1] = lowerJetPtBin; highLimits[1] = higherJetPtBin;
+        
+        // Maximum particle pT within the jet cone histograms without any particle pT restrictions
+        fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 2, axisIndices, lowLimits, highLimits);
+        
+        // Loop over track pT bins
+        for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
+          
+          // Find the bin indices for the bin boundaries
+          lowerTrackPtBin = histogramArray->GetAxis(1)->FindBin(fProjectedMaxParticlePtBinBorders[iTrackPt]+0.01);
+          higherTrackPtBin = histogramArray->GetAxis(1)->FindBin(fProjectedMaxParticlePtBinBorders[iTrackPt+1]-0.01);
+          
+          // Add restriction for particle pT axis (1 = signal particle pT, 2 = background particle pT)
+          axisIndices[2] = 2-iMaxParticlePtType; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
+          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
+          
+          // Add a cut for particle pT axis (1 = signal particle pT, 2 = background particle pT)
+          axisIndices[2] = 2-iMaxParticlePtType; lowLimits[2] = lowerTrackPtBin; highLimits[2] = highestTrackPtBin;
+          fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
+          
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Maximum particle pT within jet cone type loop
 }
 
 /*
@@ -1285,6 +1398,9 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   // Write the particle density histograms around the jet axis to the output file
   WriteParticleDensityAroundJetsHistograms();
   
+  // Write the maximum particle pT within the jet cone histograms to the output file
+  WriteMaxParticlePtWithinJetConeHistograms();
+  
   // Write the energy-energy correlator histograms to the output file
   WriteEnergyEnergyCorrelatorHistograms();
   
@@ -1542,8 +1658,57 @@ void EECHistogramManager::WriteParticleDensityAroundJetsHistograms(){
     // Return back to main directory
     gDirectory->cd("../");
     
-  } // Loop over different energy-energy correlator types
+  } // Loop over different particle density types
   
+}
+
+/*
+ * Write the maximum particle pT within the jet cone histograms to the file that is currently open
+ */
+void EECHistogramManager::WriteMaxParticlePtWithinJetConeHistograms(){
+  
+  // Can only write the histograms if they are loaded
+  if(!fLoadMaxParticlePtWithinJetConeHistograms) return;
+  
+  // Helper variable for histogram naming
+  TString histogramNamer;
+  
+  for(int iMaxParticlePtType = 0; iMaxParticlePtType < knMaxParticlePtWithinJetConeTypes; iMaxParticlePtType++){
+    
+    // Create a directory for the histograms if it does not already exist
+    if(!gDirectory->GetDirectory(fMaxParticlePtInJetConeSaveName[iMaxParticlePtType])) gDirectory->mkdir(fMaxParticlePtInJetConeSaveName[iMaxParticlePtType]);
+    gDirectory->cd(fMaxParticlePtInJetConeSaveName[iMaxParticlePtType]);
+    
+    // Loop over centrality
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      
+      // Loop over jet pT
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        
+        // Write the histograms without track pT selection
+        histogramNamer = Form("%s_C%dJ%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt);
+        if(fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins]) fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins]->Write(histogramNamer.Data(), TObject::kOverwrite);
+        
+        // Loop over track pT
+        for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
+          
+          // Write track pT binned histograms
+          histogramNamer = Form("%s_C%dJ%dT%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt, iTrackPt);
+          if(fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt]) fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          
+          // Write track pT cutted histograms
+          histogramNamer = Form("%sTrackPtCut_C%dJ%dT%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt, iTrackPt);
+          if(fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt]) fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          
+        } // Loop over track pT bins
+      } // Loop over jet pT bins
+    } // Loop over centrality bins
+    
+    // Return back to main directory
+    gDirectory->cd("../");
+    
+  } // Maximum particle pT within jet cone type loop
+
 }
 
 /*
@@ -1871,6 +2036,40 @@ void EECHistogramManager::LoadProcessedHistograms(){
     } // Pairing type loop
   } // Particle density type loop
   
+  // Load the maximum particle pT within the jet cone histograms
+  if(fLoadMaxParticlePtWithinJetConeHistograms){
+    
+    // Loop over maximum particle pT type types
+    for(int iMaxParticlePtType = 0; iMaxParticlePtType < knMaxParticlePtWithinJetConeTypes; iMaxParticlePtType++){
+  
+      // Loop over centrality
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+        // Loop over jet pT
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+          
+          // Load the histograms without track pT selection
+          histogramNamer = Form("%s/%s_C%dJ%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt);
+          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+          
+          // Loop over track pT
+          for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
+            
+            // Write track pT binned histograms
+            histogramNamer = Form("%s/%s_C%dJ%dT%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt, iTrackPt);
+            fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+            
+            // Write track pT cutted histograms
+            histogramNamer = Form("%s/%sTrackPtCut_C%dJ%dT%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], fMaxParticlePtInJetConeSaveName[iMaxParticlePtType], iCentrality, iJetPt, iTrackPt);
+            fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+            
+          } // Loop over track pT bins
+        } // Loop over jet pT bins
+      } // Loop over centrality bins
+    } // Maximum particle pT within jet cone type loop
+    
+  } // Load the maximum particle pT within the jet cone histograms
+  
   // Load the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     
@@ -2136,6 +2335,10 @@ void EECHistogramManager::SetLoadAllParticleDensitiesAroundJets(const bool loadR
   SetLoadParticlePtDensityAroundJetsPtBinned(loadPtBinnedPtWeighted);
 }
 
+// Setter for loading maximum particle pT within the jet cone histograms
+void EECHistogramManager::SetLoadMaxParticlePtWithinJetCone(const bool loadOrNot){
+  fLoadMaxParticlePtWithinJetConeHistograms = loadOrNot;
+}
 
 // Setter for loading energy-energy correlators
 void EECHistogramManager::SetLoadEnergyEnergyCorrelators(const bool loadOrNot){
@@ -2479,6 +2682,26 @@ TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrali
 // Getter for particle density histogram around the jet cone
 TH1D* EECHistogramManager::GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType, const int iParticleDensityType, const int iSubevent) const{
   return fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent];
+}
+
+// Getter for maximum particle pT in jet cone
+TH1D* EECHistogramManager::GetMaxParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtBin[kMaxSignalParticlePt][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for maximum particle pT in jet cone with pT cut for background particles
+TH1D* EECHistogramManager::GetMaxParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtCut[kMaxSignalParticlePt][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for maximum background particle pT in jet cone
+TH1D* EECHistogramManager::GetMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtBin[kMaxBackgroundParticlePt][iCentrality][iJetPt][iTrackPt];
+}
+
+// Maximum background particle pT in jet cone with pT cut for signal particles
+TH1D* EECHistogramManager::GetMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtCut[kMaxBackgroundParticlePt][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for energy-energy correlator histograms
