@@ -503,6 +503,8 @@ void EECAnalyzer::RunAnalysis(){
   Int_t trackSubevent = 0;                // Subevent index in Pythia+Hydjet simulation
   Int_t trackSubeventIndex = 0;           // Simplified subevent index
   Double_t reflectedConeWeight = 1;       // Weight for particles in the reflectee cone
+  Double_t maxTrackPtInJetSignal = 0;     // Maximum signal track pT in the jet
+  Double_t maxTrackPtInJetBackground = 0; // Maximum background track pT in the jet
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
@@ -537,10 +539,12 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillMultiplicity = 3; // 3 is nominal
   const Int_t nFillMultiplicityInJetCone = 5;
   const Int_t nFillParticleDensityInJetCone = 6;
+  const Int_t nFillMaxParticlePtInJetCone = 4;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
   Double_t fillerParticleDensityInJetCone[nFillParticleDensityInJetCone];
+  Double_t fillerMaxParticlePtInJetCone[nFillMaxParticlePtInJetCone];
   
   // For 2018 PbPb and 2017 pp data, we need to correct jet pT
   std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
@@ -867,6 +871,10 @@ void EECAnalyzer::RunAnalysis(){
             }
           }
           
+          // Before entering the track loop, reset the max track pT values to 0
+          maxTrackPtInJetSignal = 0;
+          maxTrackPtInJetBackground = 0;
+          
           // Loop over tracks and check which are within the jet radius
           nTracks = fTrackReader->GetNTracks();
           for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
@@ -903,6 +911,14 @@ void EECAnalyzer::RunAnalysis(){
                     multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][trackSubeventIndex] += trackEfficiencyCorrection;
                   }
                 } // Track pT loop
+                
+                // Also if the jet cone histograms are filled, find the maximum pT within the jet
+                if(trackSubeventIndex > 0){
+                  if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
+                } else {
+                  if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
+                }
+                
               } // Fill jet cone histograms
               
             } // Track close to jet
@@ -965,7 +981,7 @@ void EECAnalyzer::RunAnalysis(){
             
           } // Track loop
           
-          // Fill the multiplicity histograms within the jet
+          // Fill the multiplicity histograms within the jet and maximum track pT within the jet cone histograms
           if(fFillJetConeHistograms){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
               
@@ -991,7 +1007,15 @@ void EECAnalyzer::RunAnalysis(){
               }
               
             } // Subevent loop
-          } // Fill multiplicity in jets histograms
+            
+            // Fill the max particle pT within the jet cone histograms
+            fillerMaxParticlePtInJetCone[0] = jetPt;                     // Axis 0: Jet pT
+            fillerMaxParticlePtInJetCone[1] = maxTrackPtInJetSignal;     // Axis 1: Maximum particle pT for signal particles
+            fillerMaxParticlePtInJetCone[2] = maxTrackPtInJetBackground; // Axis 2: Maximum particle pT for background particles
+            fillerMaxParticlePtInJetCone[3] = centrality;                // Axis 3: centrality
+            fHistograms->fhMaxPtParticleInJet->Fill(fillerMaxParticlePtInJetCone,fTotalEventWeight);
+            
+          } // Fill multiplicity in jets and maximum track pT within the jet cone histograms
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){

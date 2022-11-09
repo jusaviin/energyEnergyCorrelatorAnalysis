@@ -60,6 +60,7 @@ public:
   THnSparseF *fhParticleMultiplicityInReflectedCone;            // Multiplicity of particles within the reflected jet cones
   THnSparseF *fhParticleMultiplicityInJetUncorrected;           // Uncorrected multiplicity of particles within the studied jet cones
   THnSparseF *fhParticleMultiplicityInReflectedConeUncorrected; // Uncorrected multiplicity of particles within the reflected jet cones
+  THnSparseF *fhMaxPtParticleInJet;                // Histogram for maximum pT particle found in the jet
   THnSparseF *fhEnergyEnergyCorrelator;            // Histogram for energy-energy correlator. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorUncorrected; // Histogram for energy-energy correlator with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorJetPt;            // Histogram for energy-energy correlator with jet pT normalization. Axes: [dR][jetPt][trackPt][centrality]
