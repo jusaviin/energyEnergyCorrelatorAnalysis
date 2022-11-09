@@ -114,7 +114,6 @@ EECAnalyzer::EECAnalyzer() :
   
   // Create a weighter for reflected cone particles
   fReflectedConeWeighter = new ReflectedConeWeight();
-  //fReflectedConeWeighter->SetDisableWeights(true);
   
 }
 
@@ -193,7 +192,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   
   // Create a weighter for reflected cone particles
   fReflectedConeWeighter = new ReflectedConeWeight();
-  //fReflectedConeWeighter->SetDisableWeights(true);
   
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
@@ -424,6 +422,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
+  fReflectedConeWeighter->SetDisableWeights((fCard->Get("ApplyReflectedConeWeight") == 0));
   
   //************************************************
   //         Read which histograms to fill

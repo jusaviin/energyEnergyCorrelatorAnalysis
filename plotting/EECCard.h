@@ -56,6 +56,7 @@ public:
     kTrackPtBinEdges,           // Track pT bin edges
     kPtHatBinEdges,             // pT hat bin edges
     kDoReflectedCone,           // 0 = No background estimation, 1 = Estimate background using reflected cone
+    kApplyReflectedConeWeight,  // 0 = Do not weight the reflected cone particles, 1 = Weight the reflected cone particles
     knEntries};                 // Number of entries in the card
   
   // Enumeration for input files used in postprocessing
@@ -64,7 +65,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   
