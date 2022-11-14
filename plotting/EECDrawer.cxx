@@ -54,6 +54,9 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
     fDrawParticleDensityAroundJets[iParticleDensityType] = false;
   }
+  for(int iMaxParticlePtWithinJetCone = 0; iMaxParticlePtWithinJetCone < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iMaxParticlePtWithinJetCone++){
+    fDrawMaxParticlePtWithinJetCone[iMaxParticlePtWithinJetCone] = false;
+  }
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
     fDrawEnergyEnergyCorrelators[iEnergyEnergyCorrelator] = false;
   }
@@ -109,6 +112,9 @@ void EECDrawer::DrawHistograms(){
   
   // Draw the particle density around the jet axis
   DrawParticleDensityAroundJetAxis();
+  
+  // Draw the maximum particle pT within the jet cone histograms
+  DrawMaxParticlePtWithinJetCone();
   
   // Draw the energy-energy correlation histograms
   DrawEnergyEnergyCorrelationHistograms();
@@ -493,10 +499,10 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
   double normalizationFactor = 1;
   int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
 
-  // Loop over multiplicity types
+  // Loop over particle density around the jet axis types
   for(int iParticleDensityType = 0; iParticleDensityType < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
 
-    // Only draw the selected multiplicity types
+    // Only draw the selected particle density around the jet axis types
     if(!fDrawParticleDensityAroundJets[iParticleDensityType]) continue;
 
     for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
@@ -629,6 +635,103 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
   } // Particle density type loop
 }
 
+/*
+ * Draw the maximum particle pT within the jet cone histograms
+ */
+void EECDrawer::DrawMaxParticlePtWithinJetCone(){
+  
+  // Helper variables for histogram drawing
+  TH1D *drawnHistogram;
+  TLegend *legend;
+
+  // Helper variables for naming in figures
+  TString centralityString;
+  TString compactCentralityString;
+  TString trackPtString;
+  TString compactTrackPtString;
+  TString trackPtCutString;
+  TString compactTrackPtCutString;
+  TString jetPtString;
+  TString compactJetPtString;
+  TString namer;
+  TString trackTypeString[] = {"background", "track"};
+  
+  // Loop over maximum particle pT within the jet cone types
+  for(int iMaxParticlePtWithinJetCone = 0; iMaxParticlePtWithinJetCone < EECHistogramManager::knMaxParticlePtWithinJetConeTypes; iMaxParticlePtWithinJetCone++){
+    
+    // Only draw the selected maximum particle pT within the jet cone types
+    if(!fDrawMaxParticlePtWithinJetCone[iMaxParticlePtWithinJetCone]) continue;
+    
+    // Loop over centrality
+    for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+      
+      centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+      compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+        
+        // Loop over jet pT bins
+        for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+          
+          // Set the jet pT information for legends and figure saving
+          if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
+            jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+            compactJetPtString = "";
+          } else {
+            jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+          }
+          
+          // Draw the histogram without any track pT selections
+          drawnHistogram = fHistograms->GetHistogramMaxParticlePtInJetCone(iMaxParticlePtWithinJetCone, iCentrality, iJetPt);
+          drawnHistogram->Scale(1/drawnHistogram->Integral("width")); // Normalize to the number of jets
+          fDrawer->DrawHistogram(drawnHistogram,fHistograms->GetMaxParticlePtWithinJetConeAxisName(iMaxParticlePtWithinJetCone),"#frac{1}{N_{jets}} counts"," ");
+          legend = new TLegend(0.45,0.7,0.82,0.9);
+          SetupLegend(legend,centralityString,jetPtString);
+          legend->Draw();
+          
+          // Save the figure to a file
+          namer = fHistograms->GetMaxParticlePtWithinJetConeSaveName(iMaxParticlePtWithinJetCone);
+          SaveFigure(namer,compactCentralityString, compactJetPtString);
+          
+          // Loop over track pT bins
+          for(int iTrackPt = 0; iTrackPt < EECHistogramManager::knProjectedMaxParticlePtBins; iTrackPt++){
+            
+            // Two different track pT binnings are projected from the histograms
+            trackPtString = Form("%.1f < %s p_{T} < %.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data(), fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt+1));
+            compactTrackPtString = Form("_T%.1f-%.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt+1));
+            compactTrackPtString.ReplaceAll(".","v");
+            trackPtCutString = Form("%.1f < %s p_{T}",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data());
+            compactTrackPtCutString = Form("_T>%.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt));
+            compactTrackPtCutString.ReplaceAll(".","v");
+            
+            // === Track pT in bins ===
+            drawnHistogram = fHistograms->GetHistogramMaxParticlePtInJetCone(iMaxParticlePtWithinJetCone, iCentrality, iJetPt, iTrackPt);
+            drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
+            fDrawer->DrawHistogram(drawnHistogram,fHistograms->GetMaxParticlePtWithinJetConeAxisName(iMaxParticlePtWithinJetCone),"#frac{1}{N_{jets}} counts"," ");
+            legend = new TLegend(0.45,0.65,0.82,0.9);
+            SetupLegend(legend,centralityString,jetPtString,trackPtString);
+            legend->Draw();
+            
+            // Save the figure to a file
+            namer = fHistograms->GetMaxParticlePtWithinJetConeSaveName(iMaxParticlePtWithinJetCone);
+            SaveFigure(namer, compactCentralityString, compactJetPtString, compactTrackPtString);
+            
+            // === Track pT in cuts ===
+            drawnHistogram = fHistograms->GetHistogramMaxParticlePtInJetConePtCut(iMaxParticlePtWithinJetCone, iCentrality, iJetPt, iTrackPt);
+            drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
+            fDrawer->DrawHistogram(drawnHistogram,fHistograms->GetMaxParticlePtWithinJetConeAxisName(iMaxParticlePtWithinJetCone),"#frac{1}{N_{jets}} counts"," ");
+            legend = new TLegend(0.45,0.65,0.82,0.9);
+            SetupLegend(legend,centralityString,jetPtString,trackPtCutString);
+            legend->Draw();
+            
+            // Save the figure to a file
+            namer = fHistograms->GetMaxParticlePtWithinJetConeSaveName(iMaxParticlePtWithinJetCone);
+            SaveFigure(namer, compactCentralityString, compactJetPtString, compactTrackPtCutString);
+            
+          } // Track pT loop
+        } // Jet pT loop
+    } // Centrality loop
+  } // Maximum particle pT within the jet cone type loop
+}
 
 /*
  * Draw energy-energy correlator histograms
@@ -1043,6 +1146,7 @@ void EECDrawer::SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular,
   SetDrawParticleDensityAroundJetAxisPtBinned(drawPtBinned);
   SetDrawParticlePtDensityAroundJetAxisPtBinned(drawPtWeightedPtBinned);
 }
+
 // Setter for drawing the individual particle density histograms
 void EECDrawer::SetDrawSingleParticleDensityHistograms(const bool drawOrNot){
   fDrawIndividualParticleDensities = drawOrNot;
@@ -1051,6 +1155,16 @@ void EECDrawer::SetDrawSingleParticleDensityHistograms(const bool drawOrNot){
 // Setter for drawing all track pT cuts to the same figure for constant jet pT selection
 void EECDrawer::SetDrawParticleDensityForConstantJetPt(const bool drawOrNot){
   fDrawParticleDensitiesForConstantJetPt = drawOrNot;
+}
+
+// Setter for drawing the maximum particle pT within the jet cone histograms
+void EECDrawer::SetDrawMaxParticlePtWithinJetCone(const bool drawOrNot){
+  fDrawMaxParticlePtWithinJetCone[EECHistogramManager::kMaxSignalParticlePt] = drawOrNot;
+}
+
+// Setter for drawing the maximum background particle pT within the jet cone histograms
+void EECDrawer::SetDrawMaxBackgroundParticlePtWithinJetCone(const bool drawOrNot){
+  fDrawMaxParticlePtWithinJetCone[EECHistogramManager::kMaxBackgroundParticlePt] = drawOrNot;
 }
 
 // Setter for drawing energy-energy correlator

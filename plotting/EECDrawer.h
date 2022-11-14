@@ -59,6 +59,10 @@ public:
   void SetDrawSingleParticleDensityHistograms(const bool drawOrNot);   // Setter for drawing the individual particle density histograms
   void SetDrawParticleDensityForConstantJetPt(const bool drawOrNot);   // Setter for drawing all track pT cuts to the same figure for constant jet pT selection
   
+  // Setters for maximum particle pT within the jet cone histograms
+  void SetDrawMaxParticlePtWithinJetCone(const bool drawOrNot);            // Setter for drawing the maximum particle pT within the jet cone histograms
+  void SetDrawMaxBackgroundParticlePtWithinJetCone(const bool drawOrNot);  // Setter for drawing the maximum background particle pT within the jet cone histograms
+  
   // Setters for energy-energy correlators
   void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                  // Setter for drawing energy-energy correlator
   void SetDrawEnergyEnergyCorrelorJetPt(const bool drawOrNot);             // Setter for drawing jet pT weighted energy-energy correlator
@@ -120,6 +124,7 @@ private:
   bool fDrawTracks[EECHistogramManager::knTrackCategories];                                       // Draw the track histograms
   bool fDrawMultiplicityInJetCone[EECHistogramManager::knMultiplicityInJetConeTypes];             // Draw the multiplicity in jet cone histograms
   bool fDrawParticleDensityAroundJets[EECHistogramManager::knParticleDensityAroundJetAxisTypes];  // Draw the particle densities around jet axis
+  bool fDrawMaxParticlePtWithinJetCone[EECHistogramManager::knMaxParticlePtWithinJetConeTypes];   // Draw the maximum particle pT within the jet cone
   bool fDrawEnergyEnergyCorrelators[EECHistogramManager::knEnergyEnergyCorrelatorTypes];          // Draw the energy-energy correlator histograms
   
   bool fDrawIndividualParticleDensities;        // Draw the individual particle density histograms
@@ -167,6 +172,7 @@ private:
   void DrawJetHistograms();                 // Draw jet histograms
   void DrawMultiplicityInJetCone();         // Draw the multiplicities within the jet cone
   void DrawParticleDensityAroundJetAxis();  // Draw particle densities around the jet axis
+  void DrawMaxParticlePtWithinJetCone();    // Draw the maximum particle pT within the jet cone histograms
   void DrawTrackHistograms();               // Draw track histograms
   void DrawEnergyEnergyCorrelationHistograms();     // Draw the energy-energy correlation histograms
   void SetupLegend(TLegend *legend, TString centralityString = "", TString jetString = "", TString trackString = "", TString extraString = "", TString anotherString = ""); // Common legend style setup for figures

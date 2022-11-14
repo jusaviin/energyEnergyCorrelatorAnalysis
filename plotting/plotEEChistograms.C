@@ -27,7 +27,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -36,6 +36,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
+  bool drawMaxParticlePtWithinJetCone = true;
+  bool drawMaxBackgroundParticlePtWithinJetCone = false;
   
   // Open the input file
   TFile *inputFile = TFile::Open(inputFileName);
@@ -69,7 +71,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = nCentralityBins-1;
+  int lastDrawnCentralityBin = 0;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
@@ -77,8 +79,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 2;
-  int lastDrawnTrackPtBinEEC = 2;
+  int firstDrawnTrackPtBinEEC = 0;
+  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -166,6 +168,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   histograms->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
   histograms->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
   histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
+  histograms->SetLoadMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone || drawMaxBackgroundParticlePtWithinJetCone);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
@@ -210,6 +213,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   resultDrawer->SetDrawSingleParticleDensityHistograms(drawIndividualParticleDensities);
   resultDrawer->SetDrawParticleDensityForConstantJetPt(drawParticleDensitiesForConstantJetPt);
+  
+  resultDrawer->SetDrawMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone);
+  resultDrawer->SetDrawMaxBackgroundParticlePtWithinJetCone(drawMaxBackgroundParticlePtWithinJetCone);
   
   resultDrawer->SetDrawSingleEnergyEnergyCorrelators(drawIndividualEnergyEnergyCorrelators);
   resultDrawer->SetDrawEnergyEnergyCorrelatorsForConstantJetPt(drawEnergyEnergyCorrelatorsForConstantJetPt);

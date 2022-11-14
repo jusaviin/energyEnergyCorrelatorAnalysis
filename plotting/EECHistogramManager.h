@@ -31,7 +31,7 @@ public:
   enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, kParticleDensityAroundJetAxisPtBinned, kParticlePtDensityAroundJetAxisPtBinned, knParticleDensityAroundJetAxisTypes};
   
   // Indices for maximum particle pT within the jet cone types
-  enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
+  enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, kMaxSignalParticlePtWithCut, kMaxBackgroundParticlePtWithCut, knMaxParticlePtWithinJetConeTypes};
   
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
@@ -84,6 +84,7 @@ private:
   // Maximum particle pT within the jet cone study
   const char* fMaxParticlePtInJetConeHistogramName = "maxParticlePtInJet";
   const char* fMaxParticlePtInJetConeSaveName[knMaxParticlePtWithinJetConeTypes] = {"maxParticlePtInJet", "maxBackgroundParticlePtInJet"};
+  const char* fMaxParticlePtInJetConeAxisName[knMaxParticlePtWithinJetConeTypes] = {"Max particle p_{T}  (GeV)", "Max background p_{T}  (GeV)"};
   const double fProjectedMaxParticlePtBinBorders[knProjectedMaxParticlePtBins+1] = {10,15,20,30,40,50,500};
   
 public:
@@ -155,6 +156,7 @@ public:
   double GetTrackPtBinBorder(const int iTrackPt) const;        // Getter for i:th track pT bin border
   double GetJetPtBinBorderEEC(const int iJetPt) const;         // Getter for i:th jet pT bin border in energy-energy correlator histograms
   double GetTrackPtBinBorderEEC(const int iTrackPt) const;     // Getter for i:th track pT bin border in energy-energy correlator histograms
+  double GetMaxTrackPtWithinJetConeBinBorder(const int iTrackPt) const; // Getter for i:th track pT bin border in projections for maximum particle pT within the jet cone
   
   // Getters for histogram and axis naming
   const char* GetTrackHistogramName(int iTrackType) const; // Getter for track histogram name
@@ -180,6 +182,9 @@ public:
   const char* GetPairingTypeSaveName(const int iPairingType) const; // Getter for pairing type save names
   
   const char* GetJetConeTypeSaveName(const int iJetConeType) const; // Getter for jet cone type save name
+  
+  const char* GetMaxParticlePtWithinJetConeSaveName(const int iMaxParticlePtWithinJetConeType) const; // Getter for maximum particle pT within jet cone save name
+  const char* GetMaxParticlePtWithinJetConeAxisName(const int iMaxParticlePtWithinJetConeType) const; // Getter for maximum particle pT within jet cone axis name
   
   TString GetSystem() const;  // Getter for collision system
   
@@ -213,10 +218,12 @@ public:
   TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet axis
   
   // Getters for the maximum particle pT histograms within the jet cone
-  TH1D *GetMaxParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum particle pT in jet cone
-  TH1D *GetMaxParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum particle pT in jet cone with pT cut for background particles
-  TH1D *GetMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum background particle pT in jet cone
-  TH1D *GetMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum background particle pT in jet cone with pT cut for signal particles
+  TH1D* GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum particle pT in jet cone
+  TH1D* GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum particle pT in jet cone with pT cut for background particles
+  TH1D* GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum signal particle pT in jet cone
+  TH1D* GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum signal particle pT in jet cone with pT cut for background particles
+  TH1D* GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum background particle pT in jet cone
+  TH1D* GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum background particle pT in jet cone with pT cut for signal particles
   
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms

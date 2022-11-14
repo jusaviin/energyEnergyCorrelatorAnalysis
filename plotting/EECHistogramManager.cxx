@@ -2547,6 +2547,16 @@ const char* EECHistogramManager::GetJetConeTypeSaveName(const int iJetConeType) 
   return fJetConeTypeSaveName[iJetConeType];
 }
 
+// Getter for maximum particle pT within jet cone save name
+const char* EECHistogramManager::GetMaxParticlePtWithinJetConeSaveName(const int iMaxParticlePtWithinJetConeType) const{
+  return fMaxParticlePtInJetConeSaveName[iMaxParticlePtWithinJetConeType];
+}
+
+// Getter for maximum particle pT within jet cone axis name
+const char* EECHistogramManager::GetMaxParticlePtWithinJetConeAxisName(const int iMaxParticlePtWithinJetConeType) const{
+  return fMaxParticlePtInJetConeAxisName[iMaxParticlePtWithinJetConeType];
+}
+
 // Getter for collision system
 TString EECHistogramManager::GetSystem() const{
   return fCard->GetDataType();
@@ -2570,6 +2580,11 @@ double EECHistogramManager::GetJetPtBinBorderEEC(const int iJetPt) const{
 // Getter for i:th track pT bin border in energy-energy correlator histograms
 double EECHistogramManager::GetTrackPtBinBorderEEC(const int iTrackPt) const{
   return fTrackPtBinBordersEEC[iTrackPt];
+}
+
+// Getter for i:th track pT bin border in projections for maximum particle pT within the jet cone
+double EECHistogramManager::GetMaxTrackPtWithinJetConeBinBorder(const int iTrackPt) const{
+  return fProjectedMaxParticlePtBinBorders[iTrackPt];
 }
 
 // Getters for event information histograms
@@ -2684,24 +2699,34 @@ TH1D* EECHistogramManager::GetHistogramParticleDensityAroundJetAxis(const int iC
   return fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent];
 }
 
+// Maximum particle pT in jet cone
+TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtBin[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt];
+}
+
+// Maximum particle pT in jet cone with pT cut for background particles
+TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhMaxParticlePtInJetConePtCut[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt];
+}
+
 // Getter for maximum particle pT in jet cone
-TH1D* EECHistogramManager::GetMaxParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
-  return fhMaxParticlePtInJetConePtBin[kMaxSignalParticlePt][iCentrality][iJetPt][iTrackPt];
+TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return GetHistogramMaxParticlePtInJetCone(kMaxSignalParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for maximum particle pT in jet cone with pT cut for background particles
-TH1D* EECHistogramManager::GetMaxParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
-  return fhMaxParticlePtInJetConePtCut[kMaxSignalParticlePt][iCentrality][iJetPt][iTrackPt];
+TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return GetHistogramMaxParticlePtInJetConePtCut(kMaxSignalParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for maximum background particle pT in jet cone
-TH1D* EECHistogramManager::GetMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
-  return fhMaxParticlePtInJetConePtBin[kMaxBackgroundParticlePt][iCentrality][iJetPt][iTrackPt];
+TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return GetHistogramMaxParticlePtInJetCone(kMaxBackgroundParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Maximum background particle pT in jet cone with pT cut for signal particles
-TH1D* EECHistogramManager::GetMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
-  return fhMaxParticlePtInJetConePtCut[kMaxBackgroundParticlePt][iCentrality][iJetPt][iTrackPt];
+TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return GetHistogramMaxParticlePtInJetConePtCut(kMaxBackgroundParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for energy-energy correlator histograms
