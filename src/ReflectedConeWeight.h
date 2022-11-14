@@ -26,7 +26,9 @@ public:
   double GetReflectedConeWeight(const bool isData, const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   double GetReflectedConeWeightData(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   double GetReflectedConeWeightMC(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
+  double GetReflectedConeWeightFakeInSignalCone(const double deltaR, const double centrality, const double jetPt, const double trackPt) const;
   
+  void SetUseFakeInSignalConeWeight(const bool useFakeInSignalCone);
   void SetDisableWeights(const bool disableWeight);
   
 private:
@@ -42,13 +44,16 @@ private:
   double fSignalConeKink[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fReflectedConeShape[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fMonteCarloParameter[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBinsMC]; // Monte Carlo weight obtained from fit to only Hydjet particles
+  double fMonteCarloParameterDataLike[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBinsMC]; // Monte Carlo weight obtained similarly as for data
 
   // Functions that can be initialized using the parameters from the arrays
-  TF1* fMonteCarloThreePieceLinear;
-  TF1* fMonteCarloTwoPieceLinear;
-  TF1* fMonteCarloExpoLinear;
+  TF1* fThreePieceLinear;
+  TF1* fTwoPieceLinear;
+  TF1* fLinear;
+  TF1* fExpoLinear;
   
-  // Flag for disabling the weights
+  // Flags for selected and disabled weights
+  bool fUseFakeInSignalConeMC;
   bool fDisableWeight;
   
   // Methods

@@ -33,6 +33,15 @@ double twoPieceLinear(double *x, double *par){
 }
 
 /*
+ * Define a  linear function
+ *  parameters: par[0] = Constant
+ *              par[1] = Slope
+ */
+double linear(double *x, double *par){
+  return par[0] + par[1]*x[0];
+}
+
+/*
  * Define a function that is exponential at low DeltaR and linear in high
  *  parameters: par[0] = Divider between linear and exponential components
  *              par[1] = Constant for the exponent
@@ -100,7 +109,10 @@ void particleDensityFitter(){
   drawParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = false;
   
   // Select the distribution that is fitted. Idea is that we can fit only Hydjet in MC for testing purposes. For data this must be knSubeventTypes
-  int subeventIndex = EECHistograms::kHydjet; // kPythia, kHydjet, knSubeventTypes
+  int subeventIndex = EECHistograms::knSubeventTypes; // kPythia, kHydjet, knSubeventTypes
+  
+  // Flag for which distribution is fitted
+  const bool fitFakeInSignalCone = (subeventIndex == EECHistograms::kHydjet);
   
   // Logarithmic axes
   const bool logY = false;
@@ -145,47 +157,69 @@ void particleDensityFitter(){
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = NULL;
             hParticleDensityToFitRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = NULL;
             
-            if(iTrackPt < 5){
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), threePieceLinear, 0, 0.6, 8);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.34);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(1,0.45);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,0);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(5,0);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(7,0);
-            } else if(iTrackPt < 10){
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), twoPieceLinear, 0, 0.6, 5);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.1);
-              if(iTrackPt == 6) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.14);
-              if(iTrackPt == 7 || iTrackPt == 8) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.12);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,0);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,0);
+            // Initialize the fit functions in case we are fitting the fake distributions in signal cone in Monte Carlo
+            if(fitFakeInSignalCone){
+              if(iTrackPt < 5){
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), threePieceLinear, 0, 0.6, 8);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.34);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(1,0.45);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(5,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(7,0);
+              } else if(iTrackPt < 10){
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), twoPieceLinear, 0, 0.6, 5);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.1);
+                if(iTrackPt == 6) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.14);
+                if(iTrackPt == 7 || iTrackPt == 8) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.12);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,0);
+              } else {
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), expoLinear, 0, 0.6, 6);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.1);
+                if(iTrackPt == nTrackPtBinsEEC - 1) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.05);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(5,0);
+                if(iTrackPt == nTrackPtBinsEEC - 1) {
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(5,0);
+                }
+              }
             } else {
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), expoLinear, 0, 0.6, 6);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.1);
-              if(iTrackPt == nTrackPtBinsEEC - 1) fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.05);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1,0);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(5,0);
-              if(iTrackPt == nTrackPtBinsEEC - 1) {
-                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(5,0);
+              // Initialize the fit functions in case we are fitting the total distribution as is done for data
+              if(iTrackPt < 4 && iJetCone == EECHistograms::kSignalCone){
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), threePieceLinear, 0, 0.6, 8);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(0,0.34);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->FixParameter(1,0.45);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(4,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(5,0);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(7,0);
+                
+              } else {
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = new TF1(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt), linear, 0, 0.6, 2);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(0,1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1,0);
               }
             }
-          } // Jet pT loop
-        } // Jet cone type loop
-      } // Track pT loop
-    } // Centrality loop
+            } // Jet pT loop
+          } // Jet cone type loop
+        } // Track pT loop
+      } // Centrality loop
   } // Particle density type loop
   
   double normalizationFactor;
   double lowFitRegion[2] = {0,0.05};
   double highFitRegion[2] = {0.6,0.5};
+  double lowFitValue, highFitValue;
   
   // Get the histograms from the histogram manager and fit them with a constant
   for(int iParticleDensity = 0; iParticleDensity < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensity++){
@@ -206,18 +240,17 @@ void particleDensityFitter(){
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Scale(1/normalizationFactor);
             hParticleDensityToFitRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Clone(Form("distributionToFitRatio%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetCone, iJetPt));
             
-            // Cheat
-            if(iTrackPt == 12 && iJetPt == 0){
-              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetBinError(1,0.001);
-              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetBinError(2,0.1);
-              hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetBinError(3,0.1);
-            }
-            
             // Fit a constant to the tail of the distribution, use region 0.3 < DeltaR < 0.5 for now. This can be optimized later if the approach works
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Fit(fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone],"Q","",lowFitRegion[iJetCone],highFitRegion[iJetCone]);
+            lowFitValue = lowFitRegion[iJetCone];
+            highFitValue = highFitRegion[iJetCone];
+            if(iJetCone == EECHistograms::kSignalCone && !fitFakeInSignalCone && iTrackPt >= 4){
+              lowFitValue = 0.3;
+              highFitValue = 0.5;
+            }
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Fit(fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone],"Q","",lowFitValue,highFitValue);
             
             // Divide the distribution with a with a fit the get the ratio
-            hParticleDensityToFitRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Divide(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetFunction(Form("fitFunction%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetPt, iJetPt)));
+            hParticleDensityToFitRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Divide(fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]);
             
           } // Jet pT loop
         } // Jet cone type loop
@@ -237,69 +270,120 @@ void particleDensityFitter(){
         for(int iJetCone = 0; iJetCone < EECHistograms::knJetConeTypes; iJetCone++){
           for(int iJetPt = 0; iJetPt <= nJetPtBinsEEC; iJetPt++){
             
-            // 1) Ensure that function evaluates to 1 at 0.4
-            targetValue = 1;
-            currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(0.4);
-            neededAdjustment = currentValue / targetValue;
-            
-            // 2) For three piece linear linear function, change the constant values for different pieces such that the function is continuous
-            if(iTrackPt < 5){
-                            
-              // Scale each parameter in the function with the needed adjustment
-              for(int iParameter = 2; iParameter < 8; iParameter++){
-                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
-                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+            // Scaling the function parameters to be weights when doing the study fitting fake distribution in signal cone
+            if(fitFakeInSignalCone){
+              
+              // 1) Ensure that function evaluates to 1 at 0.4
+              targetValue = 1;
+              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(0.4);
+              neededAdjustment = currentValue / targetValue;
+              
+              // 2) For three piece linear linear function, change the constant values for different pieces such that the function is continuous
+              if(iTrackPt < 5){
+                
+                // Scale each parameter in the function with the needed adjustment
+                for(int iParameter = 2; iParameter < 8; iParameter++){
+                  currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+                }
+                
+                // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(2);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2, currentParameter - neededAdjustment);
+                
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(6);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6, currentParameter - neededAdjustment);
+                
+              } else if(iTrackPt < 10){
+                // Mid-high pT behavior
+                
+                // Scale each parameter in the function with the needed adjustment
+                for(int iParameter = 1; iParameter < 5; iParameter++){
+                  currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+                }
+                
+                // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1, currentParameter - neededAdjustment);
+                
+              } else {
+                // Do the same for the exponential+linear fit
+                
+                // Scale each parameter in the function with the needed adjustment
+                for(int iParameter = 1; iParameter < 6; iParameter++){
+                  if(iParameter == 3) continue; // No scaling for parameter number 3, since this is the exponent
+                  currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+                }
+                
+                // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1, currentParameter - neededAdjustment);
+                
               }
-              
-              // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
-              limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
-              targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
-              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
-              neededAdjustment = currentValue - targetValue;
-              currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(2);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2, currentParameter - neededAdjustment);
-              
-              limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
-              targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
-              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
-              neededAdjustment = currentValue - targetValue;
-              currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(6);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6, currentParameter - neededAdjustment);
-           
-            } else if(iTrackPt < 10){
-            // Mid-high pT behavior
-              
-              // Scale each parameter in the function with the needed adjustment
-              for(int iParameter = 1; iParameter < 5; iParameter++){
-                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
-                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
-              }
-              
-              // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
-              limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
-              targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
-              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
-              neededAdjustment = currentValue - targetValue;
-              currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1, currentParameter - neededAdjustment);
-              
             } else {
-            // Do the same for the exponential+linear fit
+              // Scaling the function parameters to be weights when doing the study fitting the tails of the signal cone as in data
               
-              // Scale each parameter in the function with the needed adjustment
-              for(int iParameter = 1; iParameter < 6; iParameter++){
-                if(iParameter == 3) continue; // No scaling for parameter number 3, since this is the exponent
-                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
-                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+              // 1) Ensure that function evaluates to 1 at 0.4
+              targetValue = 1;
+              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(0.4);
+              neededAdjustment = currentValue / targetValue;
+              
+              // 2) For three piece linear linear function, change the constant values for different pieces such that the function is continuous
+              if(iTrackPt < 4 && iJetCone == EECHistograms::kSignalCone){
+                
+                // Scale each parameter in the function with the needed adjustment
+                for(int iParameter = 2; iParameter < 8; iParameter++){
+                  currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+                }
+                
+                // Set the slope of the linear function at low deltaR to the same slope it is at high deltaR
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(7);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(3, currentParameter);
+                
+                // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(2);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(2, currentParameter - neededAdjustment);
+                
+                limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
+                targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
+                currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
+                neededAdjustment = currentValue - targetValue;
+                currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(6);
+                fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(6, currentParameter - neededAdjustment);
+                
+              } else {
+                // Otherwise we are dealing with a simple linear fit, so just the initial scaling is needed
+                
+                // Scale each parameter in the function with the needed adjustment
+                for(int iParameter = 0; iParameter < 2; iParameter++){
+                  currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(iParameter);
+                  fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(iParameter, currentParameter / neededAdjustment);
+                }
+                
               }
-              
-              // Adjust the parts that do not contain 0.4 to match the part that contains it in the place where fit region changes
-              limitValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(0);
-              targetValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue + epsilon);
-              currentValue = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Eval(limitValue - epsilon);
-              neededAdjustment = currentValue - targetValue;
-              currentParameter = fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->GetParameter(1);
-              fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->SetParameter(1, currentParameter - neededAdjustment);
               
             }
           } // Jet pT loop

@@ -173,7 +173,7 @@ void studyReflectedConeBackground(){
   bool addSignalToTotalRatio[nRatioTypes];
   
   // Index 0: Compare signal+fake to corresponding reflected cone distribution
-  drawComparisonType[0] = true;
+  drawComparisonType[0] = false;
   ratioIndex[0] = std::make_pair(kSignalFakeEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[0] = "Signal+fake pairs";
   legendTextReflectedCone[0] = "Jet+ref";
@@ -184,7 +184,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[0] = false;
   
   // Index 1: Compare fake+fake to corresponding reflected cone distribution
-  drawComparisonType[1] = true;
+  drawComparisonType[1] = false;
   ratioIndex[1] = std::make_pair(kFakeFakeEEC, kPairOnlyReflectedCone);
   legendTextEnergyEnergyCorrelator[1] = "Fake+fake pairs";
   legendTextReflectedCone[1] = "Ref+ref";
@@ -206,7 +206,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[2] = false;
   
   // Index 3: Compare total background to combined reflected cone
-  drawComparisonType[3] = true;
+  drawComparisonType[3] = false;
   ratioIndex[3] = std::make_pair(kBackgroundEEC, kCombineReflectedCone);
   legendTextEnergyEnergyCorrelator[3] = "All background pairs";
   legendTextReflectedCone[3] = "Reflected";
@@ -228,7 +228,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[4] = false;
   
   // Index 5: Compare signal to combined reflected cone subtracted total distribution
-  drawComparisonType[5] = false;
+  drawComparisonType[5] = true;
   ratioIndex[5] = std::make_pair(kSignalEEC, kSubtractCombined);
   legendTextEnergyEnergyCorrelator[5] = "Signal pairs";
   legendTextReflectedCone[5] = "BGsub";

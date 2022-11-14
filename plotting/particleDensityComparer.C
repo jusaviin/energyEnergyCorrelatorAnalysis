@@ -35,7 +35,7 @@ void particleDensityComparer(){
   enum enumDataType{kPythiaHydjet, kMinBiasHydjet, knDataTypes};
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -127,14 +127,14 @@ void particleDensityComparer(){
   studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = false;
   
   // Select which plots to draw
-  const bool drawReflectedConeToHydjetRatio = true;
+  const bool drawReflectedConeToHydjetRatio = false;
   const bool drawReflectedConeToSignalRatio = false;
   const bool drawSubeventWithinSignalConeRatio = false;
   
   bool drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes+1];
   drawMinBiasToRegularRatio[EECHistograms::kPythia] = false;
   drawMinBiasToRegularRatio[EECHistograms::kHydjet] = false;
-  drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes] = false;
+  drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes] = true;
   
   // Logarithmic axes
   const bool logY = false;
