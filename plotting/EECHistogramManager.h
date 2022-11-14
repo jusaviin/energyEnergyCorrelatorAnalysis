@@ -31,7 +31,7 @@ public:
   enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, kParticleDensityAroundJetAxisPtBinned, kParticlePtDensityAroundJetAxisPtBinned, knParticleDensityAroundJetAxisTypes};
   
   // Indices for maximum particle pT within the jet cone types
-  enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, kMaxSignalParticlePtWithCut, kMaxBackgroundParticlePtWithCut, knMaxParticlePtWithinJetConeTypes};
+  enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
   
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
