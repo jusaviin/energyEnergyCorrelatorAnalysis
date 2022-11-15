@@ -44,7 +44,7 @@ private:
   double fSignalConeKink[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fReflectedConeShape[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   double fMonteCarloParameter[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBinsMC]; // Monte Carlo weight obtained from fit to only Hydjet particles
-  double fMonteCarloParameterDataLike[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBinsMC]; // Monte Carlo weight obtained similarly as for data
+  double fMonteCarloParameterDataLike[kMaxParameters][kNCentralityBins][kNJetPtBins][kNTrackPtBins]; // Monte Carlo weight obtained similarly as for data
 
   // Functions that can be initialized using the parameters from the arrays
   TF1* fThreePieceLinear;

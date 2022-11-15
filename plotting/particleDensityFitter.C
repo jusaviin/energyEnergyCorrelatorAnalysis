@@ -61,9 +61,10 @@ double expoLinear(double *x, double *par){
 void particleDensityFitter(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_moreTrackPtBins_noEEC_wtaAxis_noTrigger_processed_2022-11-08.root";
+  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root";
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_moreTrackPtBins_noEEC_wtaAxis_noTrigger_processed_2022-11-08.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist

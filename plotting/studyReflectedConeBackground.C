@@ -17,10 +17,10 @@ void studyReflectedConeBackground(){
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  const int nAddReflectedConeFiles = 1;
-  TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root"};
+  const int nAddReflectedConeFiles = 2;
+  TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_dataLikeRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-14.root"};
   
-  TString reflectedConeLegendComment[] = {"regular", "weight cone"};
+  TString reflectedConeLegendComment[] = {"regular", "fake weight", "edge weight"};
   
   // Open the input files and read the analysis cards
   TFile *inputFile[knDataTypes+nAddReflectedConeFiles];
