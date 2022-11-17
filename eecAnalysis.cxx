@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     cout << endl << endl;
     exit(1);
   }
-
+  
   // First, check if we are supposed to run locally or on crab
   bool runLocal = false;
   if(argc >= 6) runLocal = checkBool(argv[5]);
