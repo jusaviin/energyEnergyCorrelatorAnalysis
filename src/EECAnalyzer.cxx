@@ -715,112 +715,126 @@ void EECAnalyzer::RunAnalysis(){
       //    Loop over all jets and find tracks within jets
       //****************************************************
       
+      const Bool_t circleJet = true; // Instead of actual jets, just draw a random circle somewhere to the event to mimic a jet
+      Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
+      
       // Jet loop
-      for(Int_t jetIndex = 0; jetIndex < fJetReader->GetNJets(); jetIndex++) {
-        jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
-        jetPhi = fJetReader->GetJetPhi(jetIndex);
-        jetEta = fJetReader->GetJetEta(jetIndex);
-        jetReflectedEta = GetReflectedEta(jetEta);
-        jetFlavor = 0;
+      for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++) {
         
-        // Smearing for the angles:
-        if(fJetUncertaintyMode == 4){
-          smearingEta = fRng->Gaus(0,smearEtaSigmas[centralityBin]); // Number based on study of Enea
-          smearingPhi = fRng->Gaus(0,smearPhiSigmas[centralityBin]); // Number based on study of Enea
-          jetEta = jetEta + smearingEta;
-          jetPhi = jetPhi + smearingPhi;
-        }
-
-        
-        // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
-        // This is used in one of the systematic checks for long range correlations
-        if((fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) && vz > 0) jetFlavor = 1;
-        
-        //  ========================================
-        //  ======== Apply jet quality cuts ========
-        //  ========================================
-        
-        if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
-        if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
-        
-        // No jet quality cuts for generator level jets
-        if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
-          if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
-          if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
-        }
-        
-        // Jet matching between reconstructed and generator level jets
-        if(fMatchJets && !fJetReader->HasMatchingJet(jetIndex)) {
-          unmatchedCounter++;
-          continue;
-        }
-        
-        
-        // Require also reference parton flavor to be quark [-6,-1] U [1,6] or gluon (21)
-        // We need to match gen jets to reco to get the parton flavor, but for reco jets it is always available in the forest
-        // Here should implement an option if only quark and gluon tagged jets should be allowed in final results!
-        if(fMatchJets){
+        // Only do actual jet stuff with actual jets
+        if(circleJet){
+          jetPt = 125;
+          jetPhi = fRng->Uniform(-TMath::Pi(), TMath::Pi());
+          jetEta = fRng->Uniform(-fJetEtaCut, fJetEtaCut);
+          jetReflectedEta = GetReflectedEta(jetEta);
+          jetFlavor = 0;
+        } else {
+          jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
+          jetPhi = fJetReader->GetJetPhi(jetIndex);
+          jetEta = fJetReader->GetJetEta(jetIndex);
+          jetReflectedEta = GetReflectedEta(jetEta);
+          jetFlavor = 0;
           
-          if(fMatchJets) matchedCounter++; // For debugging purposes, count the number of matched jets
-          jetFlavor = 0;    // Jet flavor. 0 = Quark jet.
-          
-          partonFlavor = fJetReader->GetPartonFlavor(jetIndex);
-          if(partonFlavor == -999) nonSensicalPartonIndex++;
-          //if(partonFlavor < -6 || partonFlavor > 21 || (partonFlavor > 6 && partonFlavor < 21) || partonFlavor == 0) continue;
-          if(TMath::Abs(partonFlavor) == 21) jetFlavor = 1; // 1 = Gluon jet
-          
-        }
-        
-        //  ========================================
-        //  ======= Jet quality cuts applied =======
-        //  ========================================
-        
-        // For 2018 data: do a correction for the jet pT
-        fJetCorrector2018->SetJetPT(jetPt);
-        fJetCorrector2018->SetJetEta(jetEta);
-        fJetCorrector2018->SetJetPhi(jetPhi);
-        
-        fJetUncertainty2018->SetJetPT(jetPt);
-        fJetUncertainty2018->SetJetEta(jetEta);
-        fJetUncertainty2018->SetJetPhi(jetPhi);
-        
-        jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
-        
-        // No jet pT correction for generator level jets
-        if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
-          jetPt = jetPtCorrected;
-          
-          // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
-          if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-          if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
-          
-          // If we are using smearing scenario, modify the jet pT using gaussian smearing
-          if(fJetUncertaintyMode == 3){
-            smearingFactor = GetSmearingFactor(jetPt, centrality);
-            jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+          // Smearing for the angles:
+          if(fJetUncertaintyMode == 4){
+            smearingEta = fRng->Gaus(0,smearEtaSigmas[centralityBin]); // Number based on study of Enea
+            smearingPhi = fRng->Gaus(0,smearPhiSigmas[centralityBin]); // Number based on study of Enea
+            jetEta = jetEta + smearingEta;
+            jetPhi = jetPhi + smearingPhi;
           }
           
-          // Second smearing scenario, where we smear the jet energy based on the uncertainties
-          if(fJetUncertaintyMode == 5){
-            jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
-            jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
-            smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
-            jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+          
+          // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
+          // This is used in one of the systematic checks for long range correlations
+          if((fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) && vz > 0) jetFlavor = 1;
+          
+          //  ========================================
+          //  ======== Apply jet quality cuts ========
+          //  ========================================
+          
+          if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
+          if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
+          
+          // No jet quality cuts for generator level jets
+          if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
+            if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
+            if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
           }
           
+          // Jet matching between reconstructed and generator level jets
+          if(fMatchJets && !fJetReader->HasMatchingJet(jetIndex)) {
+            unmatchedCounter++;
+            continue;
+          }
+          
+          
+          // Require also reference parton flavor to be quark [-6,-1] U [1,6] or gluon (21)
+          // We need to match gen jets to reco to get the parton flavor, but for reco jets it is always available in the forest
+          // Here should implement an option if only quark and gluon tagged jets should be allowed in final results!
+          if(fMatchJets){
+            
+            if(fMatchJets) matchedCounter++; // For debugging purposes, count the number of matched jets
+            jetFlavor = 0;    // Jet flavor. 0 = Quark jet.
+            
+            partonFlavor = fJetReader->GetPartonFlavor(jetIndex);
+            if(partonFlavor == -999) nonSensicalPartonIndex++;
+            //if(partonFlavor < -6 || partonFlavor > 21 || (partonFlavor > 6 && partonFlavor < 21) || partonFlavor == 0) continue;
+            if(TMath::Abs(partonFlavor) == 21) jetFlavor = 1; // 1 = Gluon jet
+            
+          }
+          
+          //  ========================================
+          //  ======= Jet quality cuts applied =======
+          //  ========================================
+          
+          // For 2018 data: do a correction for the jet pT
+          fJetCorrector2018->SetJetPT(jetPt);
+          fJetCorrector2018->SetJetEta(jetEta);
+          fJetCorrector2018->SetJetPhi(jetPhi);
+          
+          fJetUncertainty2018->SetJetPT(jetPt);
+          fJetUncertainty2018->SetJetEta(jetEta);
+          fJetUncertainty2018->SetJetPhi(jetPhi);
+          
+          jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
+          
+          // No jet pT correction for generator level jets
+          if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
+            jetPt = jetPtCorrected;
+            
+            // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+            
+            // If we are using smearing scenario, modify the jet pT using gaussian smearing
+            if(fJetUncertaintyMode == 3){
+              smearingFactor = GetSmearingFactor(jetPt, centrality);
+              jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+            }
+            
+            // Second smearing scenario, where we smear the jet energy based on the uncertainties
+            if(fJetUncertaintyMode == 5){
+              jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
+              jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
+              smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
+              jetPt = jetPt * fRng->Gaus(1,smearingFactor);
+            }
+            
+          }
+          
+          // After the jet pT can been corrected, apply analysis jet pT cuts
+          if(jetPt < fJetMinimumPtCut) continue;
+          if(jetPt > fJetMaximumPtCut) continue;
+          
+          //************************************************
+          //       Fill histograms for jet pT closure
+          //************************************************
+          
+          // Only fill is matching is enabled and histograms are selected for filling
+          if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
+          
         }
-        
-        // After the jet pT can been corrected, apply analysis jet pT cuts
-        if(jetPt < fJetMinimumPtCut) continue;
-        if(jetPt > fJetMaximumPtCut) continue;
-        
-        //************************************************
-        //       Fill histograms for jet pT closure
-        //************************************************
-        
-        // Only fill is matching is enabled and histograms are selected for filling
-        if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
-        
+          
         //************************************************
         //         Fill histograms for all jets
         //************************************************
