@@ -715,7 +715,7 @@ void EECAnalyzer::RunAnalysis(){
       //    Loop over all jets and find tracks within jets
       //****************************************************
       
-      const Bool_t circleJet = true; // Instead of actual jets, just draw a random circle somewhere to the event to mimic a jet
+      const Bool_t circleJet = false; // Instead of actual jets, just draw a random circle somewhere to the event to mimic a jet
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
       
       // Jet loop
@@ -1028,6 +1028,9 @@ void EECAnalyzer::RunAnalysis(){
             fHistograms->fhMaxPtParticleInJet->Fill(fillerMaxParticlePtInJetCone,fTotalEventWeight);
             
           } // Fill multiplicity in jets and maximum track pT within the jet cone histograms
+          
+          // Test to rejects jets where there is higher pT background particle compared to signal particle
+          if(maxTrackPtInJetBackground > maxTrackPtInJetSignal) continue;
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
