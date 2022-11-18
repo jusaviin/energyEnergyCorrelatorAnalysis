@@ -10,17 +10,20 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
+  // data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root
   
-  const int nAddReflectedConeFiles = 2;
-  TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_dataLikeRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-14.root"};
+  const int nAddReflectedConeFiles = 0;
+  TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_newRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-17.root"};
   
   TString reflectedConeLegendComment[] = {"regular", "fake weight", "edge weight"};
+  const bool circleJetMB = true; // Minimum bias file uses random circles instead of jet finder for jets
+  
   
   // Open the input files and read the analysis cards
   TFile *inputFile[knDataTypes+nAddReflectedConeFiles];
@@ -97,7 +100,7 @@ void studyReflectedConeBackground(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = 0;
   
-  int firstStudiedJetPtBinEEC[knDataTypes] = {0,0};
+  int firstStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjetSimulation]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstStudiedTrackPtBinEEC = 0;
@@ -121,6 +124,12 @@ void studyReflectedConeBackground(){
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant
   bool optimalNormalization = true;
+  
+  // For circle jets, there is no meaningful jet pT binning
+  if(circleJetMB){
+    firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation] = nJetPtBinsEEC[kMinBiasHydjetSimulation];
+    lastStudiedJetPtBinEEC[kMinBiasHydjetSimulation] = nJetPtBinsEEC[kMinBiasHydjetSimulation];
+  }
   
   // Create and setup a new histogram manager to project and handle the histograms
   EECHistogramManager *histograms[knDataTypes+nAddReflectedConeFiles];
@@ -171,6 +180,7 @@ void studyReflectedConeBackground(){
   std::pair<double,double> ratioZoom[nRatioTypes];
   const char* saveName[nRatioTypes];
   bool addSignalToTotalRatio[nRatioTypes];
+  
   
   // Index 0: Compare signal+fake to corresponding reflected cone distribution
   drawComparisonType[0] = false;
@@ -228,7 +238,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[4] = false;
   
   // Index 5: Compare signal to combined reflected cone subtracted total distribution
-  drawComparisonType[5] = true;
+  drawComparisonType[5] = false;
   ratioIndex[5] = std::make_pair(kSignalEEC, kSubtractCombined);
   legendTextEnergyEnergyCorrelator[5] = "Signal pairs";
   legendTextReflectedCone[5] = "BGsub";
@@ -241,7 +251,8 @@ void studyReflectedConeBackground(){
   // ========================================================================================================================= //
   // Select which ratios should be made from the energy-energy correlators and minimum bias histograms and their configuration //
   // ========================================================================================================================= //
-  const int nMinBiasRatioTypes = 4;
+  const int nMinBiasRatioTypes = 5;
+  bool compareToReflectedCone[nMinBiasRatioTypes];
   std::pair<int,int> minBiasRatioIndex[nMinBiasRatioTypes];
   bool drawMinBiasComparisonType[nMinBiasRatioTypes];
   const char* minBiasLegendTextEnergyEnergyCorrelator[nMinBiasRatioTypes];
@@ -255,6 +266,7 @@ void studyReflectedConeBackground(){
   
   // Index 0: Compare fake+fake distribution to corresponding minimum bias distributions
   drawMinBiasComparisonType[0] = false;
+  compareToReflectedCone[0] = false;
   minBiasRatioIndex[0] = std::make_pair(kFakeFakeEEC, kPureMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
   minBiasRatioText[0] = "MinBias/FakeFake";
@@ -267,6 +279,7 @@ void studyReflectedConeBackground(){
   
   // Index 1: Compare background distribution to one combined from reflected cone and minimum bias distributions
   drawMinBiasComparisonType[1] = false;
+  compareToReflectedCone[1] = false;
   minBiasRatioIndex[1] = std::make_pair(kBackgroundEEC, kReflectedConeCombinedMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[1] = "Background pairs";
   minBiasRatioText[1] = "Combined/BG";
@@ -279,6 +292,7 @@ void studyReflectedConeBackground(){
   
   // Index 2: Compare fake+fake distribution to corresponding minimum bias distributions
   drawMinBiasComparisonType[2] = false;
+  compareToReflectedCone[2] = false;
   minBiasRatioIndex[2] = std::make_pair(kSignalEEC, kMinBiasBackgroundSubtracted);
   minBiasLegendTextEnergyEnergyCorrelator[2] = "Signal pairs";
   minBiasRatioText[2] = "BG Sub/Signal";
@@ -291,6 +305,7 @@ void studyReflectedConeBackground(){
   
   // Index 3: Compare total distribution to corresponding minimum bias distributions
   drawMinBiasComparisonType[3] = false;
+  compareToReflectedCone[3] = false;
   minBiasRatioIndex[3] = std::make_pair(kTotalEEC, kPureMinBias);
   minBiasLegendTextEnergyEnergyCorrelator[3] = "All pairs";
   minBiasRatioText[3] = "MinBias/Total";
@@ -300,6 +315,45 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatioMinBias[3] = false;
   addMatchString[3] = false;
   legendX1MinBias[3] = 0.27;
+  
+  // Index 4: Compare only reflected cone distribution to corresponding minimum bias distributions
+  drawMinBiasComparisonType[4] = false;
+  compareToReflectedCone[4] = true;
+  minBiasRatioIndex[4] = std::make_pair(kPairOnlyReflectedCone, kPureMinBias);
+  minBiasLegendTextEnergyEnergyCorrelator[4] = "Ref cone pairs";
+  minBiasRatioText[4] = "MinBias/RefCone";
+  yRangeMinBias[4] = std::make_pair(0.0005, 20);
+  ratioZoomMinBias[4] = std::make_pair(0, 2);
+  saveNameMinBias[4] = "pureMinBiasReflectedCone";
+  addSignalToTotalRatioMinBias[4] = false;
+  addMatchString[4] = false;
+  legendX1MinBias[4] = 0.27;
+  
+  // ============================================================================================================================== //
+  // Ratio of three histograms! Energy-energy correlator, reflected cone histogram, and minimum bias histogram. Why settle for two! //
+  // ============================================================================================================================== //
+  
+  const int nTripleRatioTypes = 1;
+  std::tuple<int,int,int> tripleRatioIndex[nTripleRatioTypes];
+  bool drawTripleComparisonType[nTripleRatioTypes];
+  const char* tripleLegendTextEnergyEnergyCorrelator[nTripleRatioTypes];
+  const char* tripleLegendTextReflectedCone[nTripleRatioTypes];
+  const char* tripleRatioText[nTripleRatioTypes];
+  std::pair<double,double> yRangeTriple[nTripleRatioTypes];
+  std::pair<double,double> ratioZoomTriple[nTripleRatioTypes];
+  const char* saveNameTriple[nTripleRatioTypes];
+  double legendX1Triple[nTripleRatioTypes];
+  
+  // Index 0: Comparison of fake+fake, only reflected cone, and pure minimum bias
+  drawTripleComparisonType[0] = true;
+  tripleRatioIndex[0] = std::make_tuple(kFakeFakeEEC, kPairOnlyReflectedCone, kPureMinBias);
+  tripleLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
+  tripleLegendTextReflectedCone[0] = "Reflected cone";
+  tripleRatioText[0] = "Color/FakeFake";
+  yRangeTriple[0] = std::make_pair(0.0005, 20);
+  ratioZoomTriple[0] = std::make_pair(0, 2);
+  saveNameTriple[0] = "fakeFakeReflectedConeMinBias";
+  legendX1Triple[0] = 0.27;
   
   // Energy-energy correlator histograms separated by subevents from the Pythia+Hydjet simulation
   TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nTrackPtBinsEEC][knPairingTypesEEC];
@@ -314,6 +368,9 @@ void studyReflectedConeBackground(){
   // Energy-energy correlators from minimum bias Hydjet simulation
   TH1D* hMinimumBias[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nJetPtBinsEEC[kMinBiasHydjetSimulation]+1][nTrackPtBinsEEC][knNormalizationStyles][knMinBiasHistograms];
   TH1D* hMinimumBiasRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nJetPtBinsEEC[kMinBiasHydjetSimulation]+1][nTrackPtBinsEEC][knNormalizationStyles][nMinBiasRatioTypes];
+  
+  // Triple ratio histograms
+  TH1D* hTripleRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjetSimulation]+1][nJetPtBinsEEC[kMinBiasHydjetSimulation]+1][nTrackPtBinsEEC][nTripleRatioTypes][2];
   
   // Initialize the energy-energy correlator histogram array to NULL
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -342,7 +399,12 @@ void studyReflectedConeBackground(){
               for(int iRatio = 0; iRatio < nMinBiasRatioTypes; iRatio++){
                 hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio] = NULL;
               } // Ratio loop
-            }
+            } // Normalization type loop
+            for(int iTripleRatio = 0; iTripleRatio < nTripleRatioTypes; iTripleRatio++){
+              for(int iRatio = 0; iRatio < 2; iRatio++){
+                hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iTripleRatio][iRatio] = NULL;
+              }
+            } // Triple ratio type loop
           } // Jet pT loop for minimum bias Hydjet
         } // Track pT loop
       } // Jet pT loop for Pythia+Hydjet
@@ -495,11 +557,41 @@ void studyReflectedConeBackground(){
               
               // Calculate all defined ratios with minimum bias histograms
               for(int iRatio = 0; iRatio < nMinBiasRatioTypes; iRatio++){
+                if(!drawMinBiasComparisonType[iRatio]) continue;
                 hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio] = (TH1D*) hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][minBiasRatioIndex[iRatio].second]->Clone(Form("minimumBiasRatio%d%d%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iNormalization, iRatio));
-                hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first]);
+                if(compareToReflectedCone[iRatio]){
+                  // If we are comparing to reflected cone, normalize both integrals to one before comparison
+                  normalizationFactor = hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][minBiasRatioIndex[iRatio].second]->Integral("width");
+                  hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][minBiasRatioIndex[iRatio].second]->Scale(1.0 / normalizationFactor);
+                  hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio]->Scale(1.0 / normalizationFactor);
+                  hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][minBiasRatioIndex[iRatio].first][0]->Scale(1.0 / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][minBiasRatioIndex[iRatio].first][0]->Integral("width"));
+                  
+                  hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio]->Divide(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][minBiasRatioIndex[iRatio].first][0]);
+                } else {
+                  hMinimumBiasRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iNormalization][iRatio]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first]);
+                }
               } // Ratio index loop
               
             } // Normalization style loop
+            
+            // Calculate all defined triple ratios
+            for(int iRatio = 0; iRatio < nTripleRatioTypes; iRatio++){
+              if(!drawTripleComparisonType[iRatio]) continue;
+              
+              // Normalize everything to one for this comparison
+              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]->Scale(1.0 / hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]->Integral("width"));
+              hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0]->Scale(1.0 / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0]->Integral("width"));
+              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->Scale(1.0 / hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->Integral("width"));
+              
+              // Calculate the ratios with respect to the fake+fake correlator
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][0] = (TH1D*) hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0]->Clone(Form("tripleRatio%d%d%d%d%d%d0", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iRatio));
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][0]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]);
+              
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][1] = (TH1D*) hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->Clone(Form("tripleRatio%d%d%d%d%d%d1", iEnergyEnergyCorrelator, iCentrality, iJetPt, iJetPtMinBias, iTrackPt, iRatio));
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][1]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]);
+              
+            }
+            
           } // Jet pT loop for minimum bias hydjet simulation
           
         } // Track pT loop
@@ -531,6 +623,7 @@ void studyReflectedConeBackground(){
   TString compactCentralityString, compactTrackPtString, compactJetPtString, compactJetPtStringMinBias;
   int color[9] = {kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure+5, kOrange-2, kGray};
   int firstNormalizationIndex, lastNormalizationIndex, currentNormalizationIndex;
+  TH1D *referenceHistogram;
   
   // If optimal background matching is done, change the legend size
   double legendY1 = 0.09;
@@ -785,18 +878,25 @@ void studyReflectedConeBackground(){
               // Logarithmic EEC axis
               if(logEEC) drawer->SetLogY(true);
               
+              if(!compareToReflectedCone[iRatio]){
+                referenceHistogram = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first];
+              } else {
+                referenceHistogram = hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][minBiasRatioIndex[iRatio].first][0];
+              }
+              
               // For logarithmic drawing, cannot go down to zero
               if(logDeltaR){
-                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+                referenceHistogram->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
               }
               
               // Set good y-ranges for plotting
-              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first]->GetYaxis()->SetRangeUser(yRangeMinBias[iRatio].first, yRangeMinBias[iRatio].second);
+              referenceHistogram->GetYaxis()->SetRangeUser(yRangeMinBias[iRatio].first, yRangeMinBias[iRatio].second);
               
               // Draw the background histogram to the upper canvas
-              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first]->SetLineColor(kBlack);
-              drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first], "#Deltar", histograms[kPythiaHydjetSimulation]->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), " ");
-              ptLegend->AddEntry(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][minBiasRatioIndex[iRatio].first], minBiasLegendTextEnergyEnergyCorrelator[iRatio], "l");
+              referenceHistogram->SetLineColor(kBlack);
+              drawer->DrawHistogramToUpperPad(referenceHistogram, "#Deltar", histograms[kPythiaHydjetSimulation]->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), " ");
+              ptLegend->AddEntry(referenceHistogram, minBiasLegendTextEnergyEnergyCorrelator[iRatio], "l");
+              
               
               // Option to draw the total distribution to the same figure
               if(addSignalToTotalRatioMinBias[iRatio]){
@@ -816,6 +916,12 @@ void studyReflectedConeBackground(){
                 } else {
                   jetPtStringMinBias = Form("%.0f < jet p_{T} < %.0f", histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias), histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias+1));
                   compactJetPtStringMinBias = Form("_J=%.0f-%.0f", histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias), histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias+1));
+                }
+                
+                // For circle jets, replace the jet pT string as there is no meaningful jet pT
+                if(circleJetMB){
+                  jetPtStringMinBias = "Circle jet";
+                  compactJetPtStringMinBias = "_CircleJet";
                 }
                 
                 // For logarithmic drawing, cannot go down to zero
@@ -882,6 +988,157 @@ void studyReflectedConeBackground(){
       } // Energy-energy correlator loop
       
     } // Normalization type loop [Gen level/reflected cone]
+  } // Ratio type loop
+  
+  // ===========================================
+  // ===   Drawing triple ratio histograms   ===
+  // ===========================================
+  
+  // Loop over all different triple ratio combinations
+  for(int iRatio = 0; iRatio < nTripleRatioTypes; iRatio++){
+    
+    // Only draw the selected ratio types
+    if(!drawTripleComparisonType[iRatio]) continue;
+    
+    // Loop over all selected histograms
+    for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
+      
+      // Only read the selected energy-energy correlator types
+      if(!studyEnergyEnergyCorrelator[iEnergyEnergyCorrelator]) continue;
+      
+      for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+        
+        // Set the centrality information for legends and figure saving
+        centralityString = Form("Cent: %.0f-%.0f%%",histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality),histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality+1));
+        compactCentralityString = Form("_C=%.0f-%.0f",histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality),histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality+1));
+        
+        for(int iJetPt = firstStudiedJetPtBinEEC[kPythiaHydjetSimulation]; iJetPt <= lastStudiedJetPtBinEEC[kPythiaHydjetSimulation]; iJetPt++){
+          
+          // Set the jet pT information for legends and figure saving
+          if(iJetPt == histograms[kPythiaHydjetSimulation]->GetNJetPtBinsEEC()){
+            jetPtString = Form("Jet p_{T} > %.0f", histograms[kPythiaHydjetSimulation]->GetCard()->GetJetPtCut());
+            compactJetPtString = "";
+          } else {
+            jetPtString = Form("%.0f < jet p_{T} < %.0f", histograms[kPythiaHydjetSimulation]->GetJetPtBinBorderEEC(iJetPt), histograms[kPythiaHydjetSimulation]->GetJetPtBinBorderEEC(iJetPt+1));
+            compactJetPtString = Form("_J=%.0f-%.0f", histograms[kPythiaHydjetSimulation]->GetJetPtBinBorderEEC(iJetPt), histograms[kPythiaHydjetSimulation]->GetJetPtBinBorderEEC(iJetPt+1));
+          }
+          
+          for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+            
+            // Set the track pT information for legends and figure saving
+            trackPtString = Form("%.1f < track p_{T}",histograms[kPythiaHydjetSimulation]->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString = Form("_T%.1f",histograms[kPythiaHydjetSimulation]->GetTrackPtBinBorderEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".","v");
+            
+            // Create a legend for the figure
+            legendY1 = 0.04;
+            legendY2 = 0.28;
+            legend = new TLegend(legendX1Triple[iRatio],legendY1,legendX1Triple[iRatio]+0.2,legendY2);
+            legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+            legend->AddEntry((TObject*) 0, histograms[kPythiaHydjetSimulation]->GetCard()->GetAlternativeDataType().Data(), "");
+            legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+            legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
+            legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
+            
+            ptLegend = new TLegend(legendX1Triple[iRatio]+0.33, legendY1, legendX1Triple[iRatio]+0.53, legendY1+0.06*(lastStudiedJetPtBinEEC[kMinBiasHydjetSimulation] + 3 - firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]));
+            ptLegend->SetFillStyle(0);ptLegend->SetBorderSize(0);ptLegend->SetTextSize(0.05);ptLegend->SetTextFont(62);
+            
+            // Create a new canvas for the plot
+            drawer->CreateSplitCanvas();
+            
+            // Logarithmic EEC axis
+            if(logEEC) drawer->SetLogY(true);
+            
+            // For logarithmic drawing, cannot go down to zero
+            if(logDeltaR){
+              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+            }
+            
+            // Set good y-ranges for plotting
+            hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]->GetYaxis()->SetRangeUser(yRangeTriple[iRatio].first, yRangeTriple[iRatio].second);
+            
+            // Draw the background histogram to the upper canvas
+            hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])]->SetLineColor(kBlack);
+            drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])], "#Deltar", histograms[kPythiaHydjetSimulation]->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), " ");
+            ptLegend->AddEntry(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][std::get<0>(tripleRatioIndex[iRatio])], tripleLegendTextEnergyEnergyCorrelator[iRatio], "l");
+            
+            // Add the reflected cone histogram to the plot
+            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0]->SetLineColor(color[0]);
+            hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0]->Draw("same");
+            ptLegend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0][std::get<1>(tripleRatioIndex[iRatio])][0], tripleLegendTextReflectedCone[iRatio], "l");
+            
+            // Draw background subtracted histograms with fake+fake backgrounds estimated from different jet pT ranges
+            for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias++){
+              
+              // Set the jet pT information for legends and figure saving
+              if(iJetPtMinBias == histograms[kMinBiasHydjetSimulation]->GetNJetPtBinsEEC()){
+                jetPtStringMinBias = Form("Jet p_{T} > %.0f", histograms[kMinBiasHydjetSimulation]->GetCard()->GetJetPtCut());
+                compactJetPtStringMinBias = "";
+              } else {
+                jetPtStringMinBias = Form("%.0f < jet p_{T} < %.0f", histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias), histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias+1));
+                compactJetPtStringMinBias = Form("_J=%.0f-%.0f", histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias), histograms[kMinBiasHydjetSimulation]->GetJetPtBinBorderEEC(iJetPtMinBias+1));
+              }
+              
+              // For circle jets, replace the jet pT string as there is no meaningful jet pT
+              if(circleJetMB){
+                jetPtStringMinBias = "Circle jet";
+                compactJetPtStringMinBias = "_CircleJet";
+              }
+              
+              // For logarithmic drawing, cannot go down to zero
+              if(logDeltaR){
+                hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+              }
+              
+              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->SetLineColor(color[iJetPtMinBias - firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation] + 1]);
+              hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])]->Draw("same");
+              
+              ptLegend->AddEntry(hMinimumBias[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][0][std::get<2>(tripleRatioIndex[iRatio])], Form("MB: %s", jetPtStringMinBias.Data()), "l");
+              
+            } // Min bias jet pT loop
+            
+            // Draw the legend to the upper pad
+            legend->Draw();
+            ptLegend->Draw();
+            
+            // Linear scale for the ratio
+            drawer->SetLogY(false);
+            
+            // For logarithmic drawing, cannot go down to zero
+            if(logDeltaR){
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]][iTrackPt][iRatio][0]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+            }
+            
+            hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]][iTrackPt][iRatio][0]->SetLineColor(color[0]);
+            
+            // First, draw the ratio to the reflected cone histogram
+            drawer->SetGridY(true);
+            hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]][iTrackPt][iRatio][0]->GetYaxis()->SetRangeUser(ratioZoomTriple[iRatio].first,ratioZoomTriple[iRatio].second);
+            drawer->DrawHistogramToLowerPad(hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]][iTrackPt][iRatio][0], "#Deltar", tripleRatioText[iRatio], " ");
+            drawer->SetGridY(false);
+            
+            // Draw the minimum bias ratios to the lower pad
+            for(int iJetPtMinBias = firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias <= lastStudiedJetPtBinEEC[kMinBiasHydjetSimulation]; iJetPtMinBias++){
+              
+              // For logarithmic drawing, cannot go down to zero
+              if(logDeltaR){
+                hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][1]->GetXaxis()->SetRangeUser(0.001, deltaRBinBorders[nDeltaRBins]);
+              }
+              
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][1]->SetLineColor(color[iJetPtMinBias - firstStudiedJetPtBinEEC[kMinBiasHydjetSimulation] + 1]);
+              hTripleRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt][iRatio][1]->Draw("same");
+              
+            } // Min bias jet pT loop
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%sComparison%s_%s%s%s%s.%s", saveNameTriple[iRatio], saveComment, histograms[kPythiaHydjetSimulation]->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
+            
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Energy-energy correlator loop
   } // Ratio type loop
   
 }

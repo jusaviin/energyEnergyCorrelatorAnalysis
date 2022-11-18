@@ -27,7 +27,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -36,7 +36,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
-  bool drawMaxParticlePtWithinJetCone = true;
+  bool drawMaxParticlePtWithinJetCone = false;
   bool drawMaxBackgroundParticlePtWithinJetCone = false;
   
   // Open the input file
@@ -76,8 +76,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = nJetPtBinsEEC-1;
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
@@ -119,17 +119,17 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
+  const bool drawEnergyEnergyCorrelatorsForConstantJetPt = true;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = true;
+  bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection
   bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
   bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
   
-  bool drawAllSubeventPairs = false;  // Draw energy-energy correlators without subevent selection
-  bool drawSignalOnly = true;        // Draw Pythia+Pythia correlations from MC
+  bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
+  bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
   bool drawSignalFake = false;        // Draw Pythia+Hydjet correlations from MC
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   

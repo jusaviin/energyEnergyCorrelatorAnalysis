@@ -812,12 +812,13 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
                 
                 fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
-                legend = new TLegend(0.62,0.75,0.82,0.9);
+                legend = new TLegend(0.62,0.7,0.82,0.9);
                 legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
                 legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
                 if(iSubevent < EECHistograms::knSubeventCombinations) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
                 legend->AddEntry((TObject*) 0, centralityString.Data(), "");
                 legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
+                legend->AddEntry((TObject*) 0, trackPtString.Data(), "");
                 legend->Draw();
                 
                 // Save the figure to a file
