@@ -241,12 +241,12 @@ void particleDensityFitter(){
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Scale(1/normalizationFactor);
             hParticleDensityToFitRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Clone(Form("distributionToFitRatio%d%d%d%d%d", iParticleDensity, iCentrality, iTrackPt, iJetCone, iJetPt));
             
-            // Fit a constant to the tail of the distribution, use region 0.3 < DeltaR < 0.5 for now. This can be optimized later if the approach works
+            // Fit a constant to the tail of the distribution, use region 0.45 < DeltaR < 0.6 for now. This can be optimized later if the approach works
             lowFitValue = lowFitRegion[iJetCone];
             highFitValue = highFitRegion[iJetCone];
             if(iJetCone == EECHistograms::kSignalCone && !fitFakeInSignalCone && iTrackPt >= 4){
-              lowFitValue = 0.3;
-              highFitValue = 0.5;
+              lowFitValue = 0.45;
+              highFitValue = 0.6;
             }
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone]->Fit(fitFunction[iParticleDensity][iCentrality][iJetPt][iTrackPt][iJetCone],"Q","",lowFitValue,highFitValue);
             
