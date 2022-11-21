@@ -916,7 +916,7 @@ void EECAnalyzer::RunAnalysis(){
           } // Track loop
           
           // Test to rejects jets where there is higher pT background particle compared to signal particle
-          if(maxTrackPtInJetBackground > maxTrackPtInJetSignal) continue;
+          if(maxTrackPtInJetBackground < maxTrackPtInJetSignal) continue;
           
           // Loop over tracks and check which are within the jet radius
           nTracks = fTrackReader->GetNTracks();
