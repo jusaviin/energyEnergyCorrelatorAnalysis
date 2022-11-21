@@ -368,7 +368,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   
   fJetEtaCut = fCard->Get("JetEtaCut");           // Eta cut around midrapidity
   fJetMinimumPtCut = fCard->Get("MinJetPtCut");   // Minimum pT cut for jets
-  fJetMaximumPtCut = fCard->Get("MaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
+  fJetMaximumPtCut = fCard->Get("src/EECAnalyzer.cxxaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
   fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
@@ -887,6 +887,37 @@ void EECAnalyzer::RunAnalysis(){
           maxTrackPtInJetSignal = 0;
           maxTrackPtInJetBackground = 0;
           
+          // First determine the maximum track pT in from signal and background regions
+          // TODO TODO TODO: This should be removed after the test
+          nTracks = fTrackReader->GetNTracks();
+          for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+            
+            // Check that all the track cuts are passed
+            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+            
+            // Find the track eta and phi
+            trackPt = fTrackReader->GetTrackPt(iTrack);
+            trackEta = fTrackReader->GetTrackEta(iTrack);
+            trackPhi = fTrackReader->GetTrackPhi(iTrack);
+            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+            trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
+            trackSubeventIndex = GetSubeventIndex(trackSubevent);
+            
+            // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+            deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+            if(deltaRTrackJet < fJetRadius){
+              // Find the maximum pT within the jet
+              if(trackSubeventIndex > 0){
+                if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
+              } else {
+                if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
+              }
+            } // Track close to jet
+          } // Track loop
+          
+          // Test to rejects jets where there is higher pT background particle compared to signal particle
+          if(maxTrackPtInJetBackground > maxTrackPtInJetSignal) continue;
+          
           // Loop over tracks and check which are within the jet radius
           nTracks = fTrackReader->GetNTracks();
           for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
@@ -1028,9 +1059,6 @@ void EECAnalyzer::RunAnalysis(){
             fHistograms->fhMaxPtParticleInJet->Fill(fillerMaxParticlePtInJetCone,fTotalEventWeight);
             
           } // Fill multiplicity in jets and maximum track pT within the jet cone histograms
-          
-          // Test to rejects jets where there is higher pT background particle compared to signal particle
-          if(maxTrackPtInJetBackground > maxTrackPtInJetSignal) continue;
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
