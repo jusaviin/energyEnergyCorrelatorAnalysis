@@ -368,7 +368,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   
   fJetEtaCut = fCard->Get("JetEtaCut");           // Eta cut around midrapidity
   fJetMinimumPtCut = fCard->Get("MinJetPtCut");   // Minimum pT cut for jets
-  fJetMaximumPtCut = fCard->Get("src/EECAnalyzer.cxxaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
+  fJetMaximumPtCut = fCard->Get("MaxJetPtCut");   // Maximum pT accepted for jets (and tracks)
   fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
