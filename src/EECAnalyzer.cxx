@@ -833,8 +833,44 @@ void EECAnalyzer::RunAnalysis(){
           // Only fill is matching is enabled and histograms are selected for filling
           if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
           
-        }
+        } // Circle jet if
           
+        // TODO TODO TODO: The following block should be removed after the test
+        
+        // Reset the max track pT values to 0
+        maxTrackPtInJetSignal = 0;
+        maxTrackPtInJetBackground = 0;
+        
+        // First determine the maximum track pT in from signal and background regions
+        nTracks = fTrackReader->GetNTracks();
+        for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+          
+          // Check that all the track cuts are passed
+          if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+          
+          // Find the track eta and phi
+          trackPt = fTrackReader->GetTrackPt(iTrack);
+          trackEta = fTrackReader->GetTrackEta(iTrack);
+          trackPhi = fTrackReader->GetTrackPhi(iTrack);
+          trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+          trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
+          trackSubeventIndex = GetSubeventIndex(trackSubevent);
+          
+          // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+          deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+          if(deltaRTrackJet < fJetRadius){
+            // Find the maximum pT within the jet
+            if(trackSubeventIndex > 0){
+              if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
+            } else {
+              if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
+            }
+          } // Track close to jet
+        } // Track loop
+        
+        // Test to rejects jets where there is higher pT background particle compared to signal particle
+        if(maxTrackPtInJetBackground < maxTrackPtInJetSignal) continue;
+        
         //************************************************
         //         Fill histograms for all jets
         //************************************************
@@ -882,41 +918,6 @@ void EECAnalyzer::RunAnalysis(){
               }
             }
           }
-          
-          // Before entering the track loop, reset the max track pT values to 0
-          maxTrackPtInJetSignal = 0;
-          maxTrackPtInJetBackground = 0;
-          
-          // First determine the maximum track pT in from signal and background regions
-          // TODO TODO TODO: This should be removed after the test
-          nTracks = fTrackReader->GetNTracks();
-          for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
-            
-            // Check that all the track cuts are passed
-            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
-            
-            // Find the track eta and phi
-            trackPt = fTrackReader->GetTrackPt(iTrack);
-            trackEta = fTrackReader->GetTrackEta(iTrack);
-            trackPhi = fTrackReader->GetTrackPhi(iTrack);
-            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
-            trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
-            trackSubeventIndex = GetSubeventIndex(trackSubevent);
-            
-            // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
-            deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
-            if(deltaRTrackJet < fJetRadius){
-              // Find the maximum pT within the jet
-              if(trackSubeventIndex > 0){
-                if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
-              } else {
-                if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
-              }
-            } // Track close to jet
-          } // Track loop
-          
-          // Test to rejects jets where there is higher pT background particle compared to signal particle
-          if(maxTrackPtInJetBackground < maxTrackPtInJetSignal) continue;
           
           // Loop over tracks and check which are within the jet radius
           nTracks = fTrackReader->GetNTracks();
