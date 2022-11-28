@@ -100,8 +100,8 @@ public:
   void SetLogAxes(const bool pt, const bool deltaR, const bool eec);  // Setter for logarithmic axes
   void SetLogParticleDensity(const bool isLog); // Setter for logarithmic y-axis in particle density histograms
   void SetManualLegend(const bool manualLegend);  // Setter for manual legend setting
-  void SetAddSystemToLegend(const bool addSystem); // Setter for adding collision system to the legend
-  void SetAddEnergyToLegend(const bool addSystem); // Setter for adding collision energy to the legend
+  void SetAddSystemToLegend(const bool addSystem, const bool includeMCtype); // Setter for adding collision system to the legend
+  void SetAddEnergyToLegend(const bool addEnergy); // Setter for adding collision energy to the legend
   
   // Setters for drawing style
   void SetLineWidth(const int lineWidth); // Setter for line width in histograms
@@ -191,6 +191,7 @@ private:
   
   // Drawing style
   bool fAddSystemToLegend; // Add the collision system to the legend
+  bool fIncludeMCtype;     // Include MC type in the system
   bool fAddEnergyToLegend; // Add the collision energy to the legend
   int fLineWidth;          // Line width for the drawn histgrams
   

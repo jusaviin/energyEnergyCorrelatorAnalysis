@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 2;
-  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_moreTrackPtBins_noEEC_wtaAxis_noTrigger_processed_2022-11-08.root"};
+  const int nDatasets = 3;
+  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_onlyFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"New","Old"};
+  TString legendComment[] = {"Reco jets","No high p_{T} Hydjet ","Only fake"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -52,26 +52,26 @@ void compareEEChistograms(){
   bool drawMultiplicityInReflectedConeUncorrected = false;
   
   // Particle density around jets
-  bool drawParticleDensityAroundJets = true;
+  bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
   
   // Select which pairing types to draw
   const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
-  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which subevents to draw
-  bool drawAllSubevents = true;   // Draw histograms without subevent selection
-  bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
-  bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
+  bool drawAllSubevents = false;   // Draw histograms without subevent selection
+  bool drawPythiaOnly = true;    // Draw only Pythia histograms in Pythia+Hydjet simulation
+  bool drawHydjetOnly = true;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
   
   bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
   bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
@@ -81,7 +81,7 @@ void compareEEChistograms(){
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_dataMCfirstLook";
+  const char* figureComment = "_fakeFakeStudy";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -101,9 +101,10 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.1;
   double maxZoom = 1.9;
-  TString ratioLabel = "New / Old";
+  TString ratioLabel = "Color / Reco jets";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
+  bool includeMCtype = false;      // Include MC type in the system
   bool addEnergyToLegend = true;  // Add the collision energy from the first file to legend. Useful if all files are from same system
   
   // Scaling for histograms
@@ -225,7 +226,7 @@ void compareEEChistograms(){
   drawer->SetApplyScaling(scaleHistograms);
   drawer->SetJetPtRebin(rebinJetPt);
   drawer->SetManualLegend(manualLegend);
-  drawer->SetAddSystemToLegend(addSystemToLegend);
+  drawer->SetAddSystemToLegend(addSystemToLegend, includeMCtype);
   drawer->SetAddEnergyToLegend(addEnergyToLegend);
   
   drawer->SetLineWidth(lineWidth);

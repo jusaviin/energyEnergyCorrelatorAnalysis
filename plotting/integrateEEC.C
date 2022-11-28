@@ -8,7 +8,7 @@
 void integrateEEC(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_firstLook_2022-09-15_someMissing_processed.root";
+  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root";
   
   // Open the input file
   TFile *inputFile = TFile::Open(inputFileName);
@@ -130,6 +130,7 @@ void integrateEEC(){
   // Do the integrals in the high pT region and print the results to console
   double signalIntegral, backgroundIntegral;
   const char* eecTitle[] = {"Energy-energy correlator", "Energy-energy correlator/jet $p_{\\mathrm{T}}$", "Energy-energy correlator UC", "Energy-energy correlator/jet $p_{\\mathrm{T}}$ UC"};
+  
   
   // Get the histograms from the histogram manager and calculate integrals
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){

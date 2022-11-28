@@ -39,6 +39,7 @@ EECComparingDrawer::EECComparingDrawer(EECHistogramManager *fBaseHistograms) :
   fStyle3D("surf1"),
   fRebinJetPt(false),
   fAddSystemToLegend(false),
+  fIncludeMCtype(true),
   fAddEnergyToLegend(false),
   fLineWidth(1)
 {
@@ -1106,8 +1107,8 @@ std::tuple<double,double> EECComparingDrawer::GetHistogramAverageAndDifferenceIn
 void EECComparingDrawer::SetupLegend(TLegend *legend, TString centralityString, TString trackString, TString asymmetryString, TString extraString, TString additionalString){
   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
   if(fAddSystemToLegend || fAddEnergyToLegend){
-    TString systemAndEnergy = Form("%s 5.02 TeV", fBaseHistograms->GetCard()->GetAlternativeDataType().Data());
-    if(!fAddEnergyToLegend) systemAndEnergy = fBaseHistograms->GetCard()->GetAlternativeDataType();
+    TString systemAndEnergy = Form("%s 5.02 TeV", fBaseHistograms->GetCard()->GetAlternativeDataType(fIncludeMCtype).Data());
+    if(!fAddEnergyToLegend) systemAndEnergy = fBaseHistograms->GetCard()->GetAlternativeDataType(fIncludeMCtype);
     legend->AddEntry((TObject*) 0,systemAndEnergy.Data(),"");
   }
   if(fBaseHistograms->GetSystem().Contains("PbPb")) legend->AddEntry((TObject*) 0,centralityString.Data(),"");
@@ -1399,8 +1400,9 @@ void EECComparingDrawer::SetLineWidth(const int lineWidth){
 }
 
 // Setter for adding collision system to the legend
-void EECComparingDrawer::SetAddSystemToLegend(const bool addSystem){
+void EECComparingDrawer::SetAddSystemToLegend(const bool addSystem, const bool includeMCtype){
   fAddSystemToLegend = addSystem;
+  fIncludeMCtype = includeMCtype;
 }
 
 // Setter for adding collision energy to the legend

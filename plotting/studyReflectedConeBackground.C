@@ -10,11 +10,11 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root
   
@@ -103,8 +103,8 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjetSimulation]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 0;
-  int lastStudiedTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstStudiedTrackPtBinEEC = 3;
+  int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -119,7 +119,7 @@ void studyReflectedConeBackground(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "";   // Comment given for this specific file
+  const char* saveComment = "genGenCheck";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant
@@ -205,7 +205,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[1] = false;
   
   // Index 2: Compare total background to signal+fake reflected cone
-  drawComparisonType[2] = false;
+  drawComparisonType[2] = true;
   ratioIndex[2] = std::make_pair(kBackgroundEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[2] = "All background pairs";
   legendTextReflectedCone[2] = "Jet+ref";
@@ -227,7 +227,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[3] = false;
   
   // Index 4: Compare signal to signal+fake reflected cone subtracted total distribution
-  drawComparisonType[4] = false;
+  drawComparisonType[4] = true;
   ratioIndex[4] = std::make_pair(kSignalEEC, kSubtractSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[4] = "Signal pairs";
   legendTextReflectedCone[4] = "Jet+ref";
@@ -345,7 +345,7 @@ void studyReflectedConeBackground(){
   double legendX1Triple[nTripleRatioTypes];
   
   // Index 0: Comparison of fake+fake, only reflected cone, and pure minimum bias
-  drawTripleComparisonType[0] = true;
+  drawTripleComparisonType[0] = false;
   tripleRatioIndex[0] = std::make_tuple(kFakeFakeEEC, kPairOnlyReflectedCone, kPureMinBias);
   tripleLegendTextEnergyEnergyCorrelator[0] = "Fake+fake pairs";
   tripleLegendTextReflectedCone[0] = "Reflected cone";
@@ -501,8 +501,9 @@ void studyReflectedConeBackground(){
               referenceIndexNormalization = kTotalEEC;
               if(iNormalization >= nBackgroundNormalizationBins) referenceIndexNormalization = iNormalization - nBackgroundNormalizationBins;
               for(int iReflectedConeType = kPairSignalReflectedCone; iReflectedConeType <= kCombineReflectedCone; iReflectedConeType++){
-                normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][referenceIndexNormalization]->Integral(lowIntegralBin, highIntegralBin, "width") / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Integral(lowIntegralBin, highIntegralBin, "width");
-                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Scale(normalizationFactor);
+                // normalizationFactor = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][referenceIndexNormalization]->Integral(lowIntegralBin, highIntegralBin, "width") / hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Integral(lowIntegralBin, highIntegralBin, "width");
+                // hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Scale(normalizationFactor);
+                hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iNormalization][iReflectedConeType][iReflectedConeFile]->Scale(1/normalizationFactor);
               }
               
               // The background subtracted histograms can be calculated from the normalized reflected cone histograms.
@@ -766,7 +767,8 @@ void studyReflectedConeBackground(){
                 currentNormalizationIndex = iNormalization;
                 if(optimalNormalization && (iNormalization == lastNormalizationIndex)) {
                   currentNormalizationIndex = nBackgroundNormalizationBins + ratioIndex[iRatio].first;
-                  if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
+                  //if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kSignalFakeEEC;
+                  if(ratioIndex[iRatio].second == kSubtractSignalReflectedCone) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
                   if(ratioIndex[iRatio].second == kSubtractCombined) currentNormalizationIndex = nBackgroundNormalizationBins + kBackgroundEEC;
                 }
                 

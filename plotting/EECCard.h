@@ -75,6 +75,7 @@ private:
   int fMonteCarloType;       // Type of Monte Carlo used for jet-track correlations
   TString fDataTypeString;   // Total number of eta gaps in the analysis
   TString fAlternativeDataTypeString; // Alternative data type string
+  TString fDataTypeStringWithoutMCType; // Data type string without the MC type appended to it
   
   void FindDataTypeString(); // Construct a data type string based on information on the card
   void ReadVectors();        // Read the vectors from the file
@@ -99,7 +100,7 @@ public:
   ~EECCard();             // Destructor
   
   TString GetDataType() const;            // Getter for data type string
-  TString GetAlternativeDataType() const; // Getter for alternative data type string
+  TString GetAlternativeDataType(const bool includeMCtype = true) const; // Getter for alternative data type string
   void Write(TDirectory *file);           // Write the contents of the card to a file
   void Print() const;                     // Print the contents of the card to the console
   

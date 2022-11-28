@@ -75,8 +75,12 @@ void EECCard::FindDataTypeString(){
   if(fDataType < 0 || fDataType > 4){
     fDataTypeString = "Unknown";
     fAlternativeDataTypeString = "Unknown";
+    fDataTypeStringWithoutMCType = "Unknown";
     return;
   }
+  
+  // Remember the data type without the MC type
+  fDataTypeStringWithoutMCType = alternativeDataTypes[fDataType];
   
   // Define Monte Carlo types and add them to MC productions, which are data types 2 and 3
   TString monteCarloString[4] = {" RecoReco"," RecoGen"," GenReco"," GenGen"};
@@ -106,8 +110,9 @@ TString EECCard::GetDataType() const{
 /*
  *  Getter for alternative data type string
  */
-TString EECCard::GetAlternativeDataType() const{
-  return fAlternativeDataTypeString;
+TString EECCard::GetAlternativeDataType(const bool includeMCtype) const{
+  if(includeMCtype) return fAlternativeDataTypeString;
+  return fDataTypeStringWithoutMCType;
 }
 
 

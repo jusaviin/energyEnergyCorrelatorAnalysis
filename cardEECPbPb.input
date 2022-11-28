@@ -22,7 +22,7 @@ FilledHistograms 63 # Bit 0 = Event information histograms                  (to 
 
 # Cuts for dijets
 JetType 3                  # 0 = Calo jets, 1 = PF CS jets, 2 = PF PU jets, 3 = PF flow CS jets
-JetAxis 0                  # 0 = Anti-kt axis, 1 = Leading Pf candidate axis, 2 = WTA
+JetAxis 2                  # 0 = Anti-kt axis, 1 = Leading Pf candidate axis, 2 = WTA
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
 MinJetPtCut 120            # Minimum pT of a jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a jet accepted in the analysis
