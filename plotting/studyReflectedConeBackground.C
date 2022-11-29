@@ -10,7 +10,7 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
@@ -228,7 +228,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[3] = false;
   
   // Index 4: Compare signal to signal+fake reflected cone subtracted total distribution
-  drawComparisonType[4] = true;
+  drawComparisonType[4] = false;
   ratioIndex[4] = std::make_pair(kSignalEEC, kSubtractSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[4] = "Signal pairs";
   legendTextReflectedCone[4] = "Jet+ref";

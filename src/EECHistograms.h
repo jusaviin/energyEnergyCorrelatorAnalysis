@@ -22,7 +22,7 @@ public:
   enum enumJetConeTypes{kSignalCone, kReflectedCone, knJetConeTypes};
   enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, knPairingTypes}; // Pair tracks from same jet or from reflected jet cone
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
-  enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetHydjet, knSubeventCombinations};
+  enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations};
   
   // Naming for the multiplicity histograms
   

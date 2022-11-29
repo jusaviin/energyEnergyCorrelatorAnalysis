@@ -1168,9 +1168,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   // Define a filler for THnSparse
   Double_t fillerEnergyEnergyCorrelator[6]; // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   
-  // Indices for different pairing types signal-signal, signal-fake and fake-fake
-  Int_t firstParticleType[EECHistograms::knPairingTypes] = {0,0,1};
-  Int_t secondParticleType[EECHistograms::knPairingTypes] = {0,1,1};
+  // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
+  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone};
+  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone};
   
   // Event information
   Double_t centrality = fTrackReader->GetCentrality();
@@ -1192,7 +1192,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Double_t correlatorWeightJetPt;       // Alternative weight given to the energy-energy correlator (pT1*pT2)/ jet pT^2
   Int_t subeventTrack1;    // Subevent index for the first track (0 = pythia, > 0 = hydjet)
   Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
-  Int_t subeventType;      // Subevent type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-hydjet)
+  Int_t subeventCombination;      // Subevent combination type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet)
   Int_t startIndex;        // First index when looping over the second tracks
   Int_t reflectedConeWeight1; // Weight given to the first particle if it is from the reflected cone
   Int_t reflectedConeWeight2; // Weight given to the second particle if it is from the reflected cone
@@ -1262,7 +1262,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         subeventTrack2 = selectedTrackSubevent[secondParticleType[iPairingType]].at(iSecondTrack);
         
         // Find the subevent type based on the subevents of the tracks (only relevant for simulation)
-        subeventType = GetSubeventType(subeventTrack1, subeventTrack2);
+        subeventCombination = GetSubeventCombination(subeventTrack1, subeventTrack2);
         
         // Find the deltaR between the tracks
         trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
@@ -1281,7 +1281,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 2: Lower of the two track pT:s
         fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 3: Event centrality
         fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
-        fillerEnergyEnergyCorrelator[5] = subeventType;              // Axis 5: Subevent type
+        fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
         if(fFillEnergyEnergyCorrelators){
           fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
           fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
@@ -1769,27 +1769,30 @@ Double_t EECAnalyzer::GetDeltaR(const Double_t eta1, const Double_t phi1, const 
 }
 
 /*
- * Get the subevent type from two track subevents
+ * Get the subevent combination type from two track subevents
  *
  *  Arguments:
  *   const Int_t subevent1 = Subevent index for the first track (0 = pythia, > 0 = hydjet)
  *   const Int_t subevent2 = Subevent index for the second track (0 = pythia, > 0 = hydjet)
  *
- * return: Subevent type: 0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-hydjet
+ * return: Subevent combination type: 0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet
  */
-Int_t EECAnalyzer::GetSubeventType(const Int_t subevent1, const Int_t subevent2) const{
+Int_t EECAnalyzer::GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const{
   
   // For data or reconstructed tracks, just return -1. It will go to the underflow bin of the histogram
   if(subevent1 < 0 || subevent2 < 0) return -1;
   
-  // If both tracks are from the pythia simulation, return 0
-  if(subevent1 == 0 && subevent2 == 0) return 0;
+  // If both tracks are from the pythia simulation, return flag the corresponding flag
+  if(subevent1 == 0 && subevent2 == 0) return EECHistograms::kPythiaPythia;
   
-  // If both tracks are from hydjet simulation, return 2
-  if(subevent1 > 0 && subevent2 > 0) return 2;
+  // If both tracks are from hydjet simulation, return the corresponding flag
+  if(subevent1 > 0 && subevent2 > 0) return EECHistograms::kHydjetHydjet;
   
-  // The only option left is that one of the tracks is from pythia, and the other from hydjet. Return 1
-  return 1;
+  // If the first track is from pythia and second from hydjet, return the corresponding flag
+  if(subevent1 == 0 && subevent2 > 0) return EECHistograms::kPythiaHydjet;
+  
+  // The only option left is that the first track is from hydjet, and the second from pythia. Return the corresponding flag
+  return EECHistograms::kHydjetPythia;
   
 }
 
