@@ -986,14 +986,14 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
  *
  *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorJetPt/energyEnergyCorrelatorUncorrected/energyEnergyCorrelatorJetPtUncorrected
  *
- *     Axis index       Content of axis               Note
- * -----------------------------------------------------------------
+ *     Axis index       Content of axis                Note
+ * ----------------------------------------------------------------------
  *       Axis 0              DeltaR
  *       Axis 1              Jet pT
  *       Axis 2           Track pT cut
  *       Axis 3            Centrality
- *       Axis 4           Pairing type       Same jet/reflected cone
- *       Axis 5             Subevent           Only relevant for MC
+ *       Axis 4           Pairing type         Same jet/reflected cone
+ *       Axis 5       Subevent combination      Only relevant for MC
  */
 void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   
@@ -1056,7 +1056,13 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
               
               // Add a restriction for the subevent axis (5 = subevent)
-              axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+              
+              // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
+              if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
+                axisIndices[3] = 5; lowLimits[3] = EECHistograms::kPythiaHydjet+1; highLimits[3] = EECHistograms::kHydjetPythia+1;
+              } else {
+                axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+              }
               
               // Read the energy-energy correlator histograms
               fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
@@ -1082,7 +1088,13 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
                 
                 // Add a restriction for the subevent axis (5 = subevent)
-                axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
+                
+                // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
+                if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
+                  axisIndices[4] = 5; lowLimits[4] = EECHistograms::kPythiaHydjet+1; highLimits[4] = EECHistograms::kHydjetPythia+1;
+                } else {
+                  axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
+                }
                 
                 // Read the energy-energy correlator histograms
                 fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 5, axisIndices, lowLimits, highLimits);
@@ -1836,6 +1848,9 @@ void EECHistogramManager::LoadProcessedHistograms(){
   
   // Helper variable for finding names of loaded histograms
   TString histogramNamer;
+  TH1D *testHistogram;
+  bool legacyEnergyEnergyCorrelatorMode = false; // Older files have different subevent combination indexing for energy-energy correlators. Take that into account here
+  int subeventIndex;
   
   // Always load the number of events histogram
   fhEvents = (TH1D*) fInputFile->Get("nEvents");                           // Number of events surviving different event cuts
@@ -2076,6 +2091,11 @@ void EECHistogramManager::LoadProcessedHistograms(){
     // Only load the selected types of histograms
     if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;
     
+    // Old file compatibility mode. There are less subevent combinations in old files. Take this into account when loading older files.
+    histogramNamer = Form("%s/%s%s_C0T0S3", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[0]);
+    testHistogram = (TH1D*) fInputFile->Get(histogramNamer.Data());
+    if(testHistogram == NULL) legacyEnergyEnergyCorrelatorMode = true;
+    
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
       for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
         for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -2088,8 +2108,12 @@ void EECHistogramManager::LoadProcessedHistograms(){
           if(fSystemAndEnergy.Contains("PbPb MC")){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
               
+              // Take into account that one subevent index is missing from the older files
+              subeventIndex = iSubevent;
+              if(legacyEnergyEnergyCorrelatorMode && iSubevent > EECHistograms::kPythiaHydjet) subeventIndex = iSubevent - 1;
+              
               // Load the energy-energy correlator histograms with subevent binning
-              histogramNamer = Form("%s/%s%s_C%dT%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
+              histogramNamer = Form("%s/%s%s_C%dT%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, subeventIndex);
               fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
               
             } // Subevent type loop
@@ -2109,8 +2133,12 @@ void EECHistogramManager::LoadProcessedHistograms(){
             if(fSystemAndEnergy.Contains("PbPb MC")){
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
                 
+                // Take into account that one subevent index is missing from the older files
+                subeventIndex = iSubevent;
+                if(legacyEnergyEnergyCorrelatorMode && iSubevent > EECHistograms::kPythiaHydjet) subeventIndex = iSubevent - 1;
+                
                 // Load the energy-energy correlator histograms with subevent binning
-                histogramNamer = Form("%s/%s%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
+                histogramNamer = Form("%s/%s%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, subeventIndex);
                 fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
                 
               } // Subevent type loop
