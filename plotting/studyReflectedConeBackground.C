@@ -17,6 +17,7 @@ void studyReflectedConeBackground(){
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root
   
   const int nAddReflectedConeFiles = 0;
   TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_newRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-17.root"};

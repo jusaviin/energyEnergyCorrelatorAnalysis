@@ -83,6 +83,8 @@ EECAnalyzer::EECAnalyzer() :
   fMinimumMaxTrackPtFraction(0),
   fMaximumMaxTrackPtFraction(0),
   fJetUncertaintyMode(0),
+  fCombinatorialJetCut(0),
+  fCombinatoriaJetMargin(0),
   fTrackEtaCut(0),
   fTrackMinPtCut(0),
   fMaxTrackPtRelativeError(0),
@@ -234,6 +236,8 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
   fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
   fJetUncertaintyMode(in.fJetUncertaintyMode),
+  fCombinatorialJetCut(in.fCombinatorialJetCut),
+  fCombinatoriaJetMargin(in.fCombinatoriaJetMargin),
   fTrackEtaCut(in.fTrackEtaCut),
   fTrackMinPtCut(in.fTrackMinPtCut),
   fMaxTrackPtRelativeError(in.fMaxTrackPtRelativeError),
@@ -299,6 +303,8 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
   fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
   fJetUncertaintyMode = in.fJetUncertaintyMode;
+  fCombinatorialJetCut = in.fCombinatorialJetCut;
+  fCombinatoriaJetMargin = in.fCombinatoriaJetMargin;
   fTrackEtaCut = in.fTrackEtaCut;
   fTrackMinPtCut = in.fTrackMinPtCut;
   fMaxTrackPtRelativeError = in.fMaxTrackPtRelativeError;
@@ -373,6 +379,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
+  fCombinatorialJetCut = fCard->Get("CombinatorialJetCut");      // Cut for combinatorial jets in MC
+  fCombinatoriaJetMargin = fCard->Get("CombinatorialJetMargin"); // Margin used in the combinatorial jet cut
   
   //****************************************
   //        Track selection cuts
@@ -835,42 +843,58 @@ void EECAnalyzer::RunAnalysis(){
           
         } // Circle jet if
           
-        // TODO TODO TODO: The following block should be removed after the test
+        //************************************************
+        //   Option to do combinatorial jet cut in MC
+        //************************************************
         
-        // Reset the max track pT values to 0
-        maxTrackPtInJetSignal = 0;
-        maxTrackPtInJetBackground = 0;
-        
-        // First determine the maximum track pT in from signal and background regions
-        nTracks = fTrackReader->GetNTracks();
-        for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+        if(fCombinatorialJetCut != 0){
           
-          // Check that all the track cuts are passed
-          if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+          // Reset the max track pT values to 0
+          maxTrackPtInJetSignal = 0;
+          maxTrackPtInJetBackground = 0;
           
-          // Find the track eta and phi
-          trackPt = fTrackReader->GetTrackPt(iTrack);
-          trackEta = fTrackReader->GetTrackEta(iTrack);
-          trackPhi = fTrackReader->GetTrackPhi(iTrack);
-          trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
-          trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
-          trackSubeventIndex = GetSubeventIndex(trackSubevent);
+          // First determine the maximum track pT in from signal and background regions
+          nTracks = fTrackReader->GetNTracks();
+          for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+            
+            // Check that all the track cuts are passed
+            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+            
+            // Find the track eta and phi
+            trackPt = fTrackReader->GetTrackPt(iTrack);
+            trackEta = fTrackReader->GetTrackEta(iTrack);
+            trackPhi = fTrackReader->GetTrackPhi(iTrack);
+            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+            trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
+            trackSubeventIndex = GetSubeventIndex(trackSubevent);
+            
+            // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+            deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+            if(deltaRTrackJet < fJetRadius){
+              // Find the maximum pT within the jet
+              if(trackSubeventIndex > 0){
+                if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
+              } else {
+                if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
+              }
+            } // Track close to jet
+          } // Track loop
           
-          // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
-          deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
-          if(deltaRTrackJet < fJetRadius){
-            // Find the maximum pT within the jet
-            if(trackSubeventIndex > 0){
-              if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
-            } else {
-              if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
-            }
-          } // Track close to jet
-        } // Track loop
+          // Do the combinatorial jet cut based on the cut parameters
+          if(fCombinatorialJetCut == -1){
+            // Reject jets where there is higher pT signal particle compared to background particles
+            if(maxTrackPtInJetBackground < (maxTrackPtInJetSignal + fCombinatoriaJetMargin)) continue;
+          } else {
+            // Reject jets where there is higher pT background particle compared to signal particles
+            if((maxTrackPtInJetBackground + fCombinatoriaJetMargin) > maxTrackPtInJetSignal) continue;
+          }
+          
+        } // If for combinatorial jet cut
         
-        // Test to rejects jets where there is higher pT background particle compared to signal particle
-        if(maxTrackPtInJetBackground > maxTrackPtInJetSignal) continue;
-        
+        //************************************************
+        //       End of combinatorial jet cut in MC
+        //************************************************
+          
         //************************************************
         //         Fill histograms for all jets
         //************************************************
@@ -1047,7 +1071,7 @@ void EECAnalyzer::RunAnalysis(){
                 fHistograms->fhParticleMultiplicityInJetUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);           // Fill the uncorrected multiplicity within the jet cone histogram
                 
                 fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][iSubevent]; // Axis 0: Multiplicity
-                fHistograms->fhParticleMultiplicityInReflectedConeUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);              // Fill the uncorrected multiplicity within the reflected cone histogram
+                fHistograms->fhParticleMultiplicityInReflectedConeUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);    // Fill the uncorrected multiplicity within the reflected cone histogram
               }
               
             } // Subevent loop

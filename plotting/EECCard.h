@@ -36,6 +36,8 @@ public:
     kMinMaxTrackPtFraction,     // Minimum fraction of jet pT taken by the highest pT track in jet
     kMaxMaxTrackPtFraction,     // Maximum fraction of jet pT taken by the highest pT track in jet
     kJetUncertaintyMode,        // 0 = Nominal jet pT, 1 = pT minus uncertainty, 2 = pT plus uncertainty
+    kCombinatorialJetCut,       // -1 = Only accept combinatorial jets, 0 = No cut, 1 = Cut combinatorial jets
+    kCombinatorialJetMargin,    // Margin (with respect to the highest pT track) used in the combinatorial jet cut
     kTrackEtaCut,               // Eta cut for tracks
     kMinTrackPtCut,             // Minimum accepted track pT
     kMaxTrackPtRelativeError,   // Maximum relative error allowed for track pT
@@ -65,7 +67,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","UseJetTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","CombinatorialJetCut","CombinatorialJetMargin","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   
