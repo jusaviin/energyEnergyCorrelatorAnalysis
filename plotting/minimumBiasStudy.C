@@ -10,7 +10,7 @@ void minimumBiasStudy(){
 
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  const int nRegularFiles = 2;
+  const int nRegularFiles = 1;
   TString inputFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_onlyFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-23.root
   // data/PbPbMC2018_GenGen_eecAnalysis_genJet_fakeFakeReflectedCone_noTrigger_preprocessed_2022-09-30.root
@@ -339,7 +339,7 @@ void minimumBiasStudy(){
               if(iFile == 0){
                 drawer->SetGridY(true);
                 hMinBiasToRegularRatio[iFile][iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
-                drawer->DrawHistogramToLowerPad(hMinBiasToRegularRatio[iFile][iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt], "#Deltar", "#frac{Color}{MinBias}", " ");
+                drawer->DrawHistogramToLowerPad(hMinBiasToRegularRatio[iFile][iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt], "#Deltar", "#frac{Pythia+Hydjet}{MinBias Hydjet}", " ");
                 drawer->SetGridY(false);
               } else {
                 hMinBiasToRegularRatio[iFile][iEnergyEnergyCorrelator][iCentrality][iJetPt][iJetPtMinBias][iTrackPt]->Draw("same");

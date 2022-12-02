@@ -273,7 +273,7 @@ void particleDensityComparer(){
           
           // Ratio between particle density in reflected cone and for the hydjet particles in the signal cone
           if(drawReflectedConeToHydjetRatio){
-            hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->Clone(Form("reflectedConeToHydjetRatio%d%d%d%d", iParticleDensity, iCentrality, iJetPt, iTrackPt));
+            hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->Clone(Form("reflectedConeToHydjetRatio%d%d%d%d", iParticleDensity, iCentrality, iJetPt, iTrackPt));
             hReflectedConeToHydjetRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->Divide(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]);
           }
           
@@ -389,12 +389,12 @@ void particleDensityComparer(){
             if(logY) drawer->SetLogY(true);
 
             // Set the x-axis ranges
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, maxX);
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             // Find good y-ranges for plotting
             histogramYrange = std::make_pair(10e10, 0);
-            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], histogramYrange);
+            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], histogramYrange);
             histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet], histogramYrange);
             
             // Add some empty space to the top and the bottom of the histogram
@@ -402,13 +402,13 @@ void particleDensityComparer(){
             histogramYrange.second = histogramYrange.second + histogramYrange.second*0.1;
             
             // Set the y-ranges for the histogram
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
             
             // Draw the histograms to the upper canvas
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->SetLineColor(color[0]);
-            drawer->DrawHistogramToUpperPad(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], "#Deltar", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisAxisName(iParticleDensity), " ");
-            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], "Reflected cone", "l");
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->SetLineColor(color[0]);
+            drawer->DrawHistogramToUpperPad(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], "#Deltar", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisAxisName(iParticleDensity), " ");
+            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], "Reflected cone", "l");
             
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->SetLineColor(color[1]);
             hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->Draw("same");

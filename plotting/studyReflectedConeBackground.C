@@ -10,11 +10,12 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_newSubeRefCone_wtaAxis_noTrigger_preprocessed_2022-11-29.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_newSubeRefCone_wtaAxis_noTrigger_preprocessed_2022-11-29.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root
@@ -104,7 +105,7 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjetSimulation]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 3;
+  int firstStudiedTrackPtBinEEC = 0;
   int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -119,12 +120,15 @@ void studyReflectedConeBackground(){
   const bool logEEC = true;
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
+  const bool saveFigures = true;  // Save figures
   const char* saveComment = "genGenCheck";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant
   bool optimalNormalization = true;
+  
+  // Option to remove Pythia particles from the reflected cone histograms
+  bool removePythiaFromReflectedCone = true;
   
   // For circle jets, there is no meaningful jet pT binning
   if(circleJetMB){
@@ -171,7 +175,7 @@ void studyReflectedConeBackground(){
   // =========================================================================================================================== //
   // Select which ratios should be made from the energy-energy correlators and reflected cone histograms and their configuration //
   // =========================================================================================================================== //
-  const int nRatioTypes = 6;
+  const int nRatioTypes = 7;
   std::pair<int,int> ratioIndex[nRatioTypes];
   bool drawComparisonType[nRatioTypes];
   const char* legendTextEnergyEnergyCorrelator[nRatioTypes];
@@ -189,7 +193,7 @@ void studyReflectedConeBackground(){
   legendTextEnergyEnergyCorrelator[0] = "Signal+fake pairs";
   legendTextReflectedCone[0] = "Jet+ref";
   ratioText[0] = "(Jet+ref) / BG";
-  yRange[0] = std::make_pair(0.0005, 2);
+  yRange[0] = std::make_pair(0.0005, 10);
   ratioZoom[0] = std::make_pair(0, 2);
   saveName[0] = "pythiaHydjetToSignalReflectedCone";
   addSignalToTotalRatio[0] = false;
@@ -206,7 +210,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[1] = false;
   
   // Index 2: Compare total background to signal+fake reflected cone
-  drawComparisonType[2] = true;
+  drawComparisonType[2] = false;
   ratioIndex[2] = std::make_pair(kBackgroundEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[2] = "All background pairs";
   legendTextReflectedCone[2] = "Jet+ref";
@@ -248,6 +252,17 @@ void studyReflectedConeBackground(){
   ratioZoom[5] = std::make_pair(0.5, 1.5);
   saveName[5] = "signalToReflectedConeSubtracted";
   addSignalToTotalRatio[5] = false;
+  
+  // Index 1: Compare fake+fake to signal+reflected cone distribution
+  drawComparisonType[6] = true;
+  ratioIndex[6] = std::make_pair(kFakeFakeEEC, kPairSignalReflectedCone);
+  legendTextEnergyEnergyCorrelator[6] = "Fake+fake pairs";
+  legendTextReflectedCone[6] = "Jet+ref";
+  ratioText[6] = "(Jet+ref) / BG";
+  yRange[6] = std::make_pair(0.0005, 2);
+  ratioZoom[6] = std::make_pair(0, 2.2);
+  saveName[6] = "hydjetHydjetToSignalReflectedCone";
+  addSignalToTotalRatio[6] = false;
   
   // ========================================================================================================================= //
   // Select which ratios should be made from the energy-energy correlators and minimum bias histograms and their configuration //
@@ -413,7 +428,7 @@ void studyReflectedConeBackground(){
   } // Energy-energy correlator loop
 
   // Helper variables
-  TH1D *helperHistogram, *helperHistogram2;
+  TH1D *helperHistogram, *helperHistogram2, *adderHistogram;
   double normalizationFactor;
   int lowIntegralBin, highIntegralBin;
   int studiedEnergyEnergyCorrelatorIndex = -1;
@@ -470,11 +485,23 @@ void studyReflectedConeBackground(){
               managerIndex = knDataTypes + iReflectedConeFile - 1;
             }
             
-            // The jet cone + reflected cone histogram.
-            helperHistogram = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
-            
-            // The only reflected cone histogram.
-            helperHistogram2 = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::knSubeventCombinations);
+            // Option to remove pythia particles from the reflected cone
+            if(removePythiaFromReflectedCone){
+              // The jet cone + reflected cone histogram.
+              helperHistogram = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::kHydjetHydjet);
+              //adderHistogram = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::kHydjetHydjet);
+              //helperHistogram->Add(adderHistogram);
+              
+              // The only reflected cone histogram.
+              helperHistogram2 = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::kHydjetHydjet);
+              
+            } else {
+              // The jet cone + reflected cone histogram.
+              helperHistogram = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
+              
+              // The only reflected cone histogram.
+              helperHistogram2 = histograms[managerIndex]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kReflectedConePair, EECHistograms::knSubeventCombinations);
+            }
             
             // Calculate the signal+fake to fake+fake ratio for the reflected cone histograms
             signalFaketoFakeFakeRatio[kNormalizeToReflectedCone] = helperHistogram->Integral("width") / helperHistogram2->Integral("width");
@@ -743,7 +770,7 @@ void studyReflectedConeBackground(){
                   if(nAddReflectedConeFiles > 0){
                     legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, %s", legendTextReflectedCone[iRatio], reflectedConeLegendComment[iReflectedConeFile].Data()), "l");
                   } else {
-                    legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, match yield", legendTextReflectedCone[iRatio]), "l");
+                    legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, Hydjet, data scale", legendTextReflectedCone[iRatio]), "l");
                   }
                 } else {
                   legend->AddEntry(hReflectedCone[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][currentNormalizationIndex][ratioIndex[iRatio].second][iReflectedConeFile], Form("%s, #Deltar > %.3f", legendTextReflectedCone[iRatio], deltaRBinBorders[nDeltaRBins-(nBackgroundNormalizationBins-iNormalization)]), "l");
