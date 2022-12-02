@@ -73,7 +73,7 @@ private:
   
   // Naming for subevent types
   const char* fSubeventTypeName[EECHistograms::knSubeventTypes] = {"Pythia", "Hydjet"};
-  const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Hydjet"};
+  const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Pythia", "Hydjet-Hydjet"};
   
   // Naming for pairing types
   const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"","SignalReflectedConePair","ReflectedConePair"};

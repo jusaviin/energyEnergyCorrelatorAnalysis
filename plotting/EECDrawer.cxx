@@ -753,6 +753,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   TString compactSubeventString;
   TString namerY;
   
+  int colorAdder = 1;
+  
   double normalizationFactor;
   int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
   
@@ -990,10 +992,15 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
               
               // Draw the different subevent contributions to the same canvas
+              colorAdder = 1;
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
+                if(iPairingType == EECHistograms::kSignalCone && iSubevent == EECHistograms::kHydjetPythia) {
+                  colorAdder = 0;
+                  continue;
+                }
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(normalizationFactor);
-                drawnHistogram->SetLineColor(color[iSubevent+1]);
+                drawnHistogram->SetLineColor(color[iSubevent+colorAdder]);
                 drawnHistogram->Draw("same");
                 
                 legend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "l");
