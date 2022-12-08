@@ -2745,6 +2745,12 @@ const char* EECHistogramManager::GetEnergyEnergyCorrelatorAxisName(int iEnergyEn
   return fEnergyEnergyCorrelatorAxisNames[iEnergyEnergyCorrelatorType];
 }
 
+// Getter for energy-energy correlator processing save name
+const char* EECHistogramManager::GetEnergyEnergyCorrelatorProcessSaveName(int iProcessingLevel) const{
+  iProcessingLevel = BinIndexCheck(knEnergyEnergyCorrelatorProcessingLevels, iProcessingLevel);
+  return fEnergyEnergyCorrelatorProcessedSaveString[iProcessingLevel];
+}
+
 // Getter for subevent type
 const char* EECHistogramManager::GetSubeventType(const int iSubeventType) const{
   if(iSubeventType < 0) return "";

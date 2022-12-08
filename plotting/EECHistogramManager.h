@@ -180,6 +180,7 @@ public:
   
   const char* GetEnergyEnergyCorrelatorHistogramName(int iEnergyEnergyCorrelatorType) const; // Getter for energy-energy correlator histogram name
   const char* GetEnergyEnergyCorrelatorAxisName(int iEnergyEnergyCorrelatorType) const;      // Getter for energy-energy correlator axis name
+  const char* GetEnergyEnergyCorrelatorProcessSaveName(int iProcessingLevel) const;          // Getter for energy-energy correlator processing save name
   
   const char* GetSubeventType(const int iSubeventType) const;            // Getter for subevent type
   const char* GetSubeventCombination(const int iSubeventType) const;     // Getter for subevent combination
