@@ -57,7 +57,8 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
     deltaRBinsEEC[iDeltaR] = (minDeltaREEC+binnerShift)*TMath::Exp(iDeltaR*deltaRlogBinWidth)-binnerShift;
   }
   
-  TH1D *hEnergyEnergyCorrelator = new TH1D("energyEnergyCorrelator", "energyEnergyCorrelator", nDeltaRBinsEEC, deltaRBinsEEC);
+  TH1D *hEnergyEnergyCorrelator = new TH1D("energyEnergyCorrelator", "energyEnergyCorrelator", nDeltaRBinsEEC, deltaRBinsEEC); hEnergyEnergyCorrelator->Sumw2();
+  TH1D *hThreePointEnergyCorrelator = new TH1D("threePointEnergyCorrelator", "threePointEnergyCorrelator", nDeltaRBinsEEC, deltaRBinsEEC); hThreePointEnergyCorrelator->Sumw2();
   TH1D *hMultiplicityOut = new TH1D("multiplicity", "multiplicity", 150, -0.5, 149.5);
   TH1D *hTrackPtOut = (TH1D*) hTrackPt->Clone("trackPt");
   TH2D *hEtaPhi = new TH2D("etaPhi", "etaPhi", 100, -0.5, 0.5, 100, -0.5, 0.5);
@@ -75,6 +76,7 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
   std::vector<double> particleEta;
   std::vector<double> particlePhi;
   double correlatorWeight, currentDeltaR;
+  double deltaR12, deltaR13, deltaR23;
   
   // Function for inducing a flow modulation for the particles
   TF1 *flowFunction = new TF1("flowFunction", "[1]*cos(2*x+[0])+1", -TMath::Pi(), TMath::Pi());
@@ -142,11 +144,11 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
       
       // Get eta and phi from uniform distribution. Require that they are within the jet cone of 0.4
       do {
-        currentEta = rng->Uniform(-jetR, jetR);
-        //currentPhi = rng->Uniform(-jetR, jetR);  // Uniform phi
+        currentEta = rng->Uniform(-jetR, jetR);  // Uniform eta
+        currentPhi = rng->Uniform(-jetR, jetR);  // Uniform phi
         
         // Phi with random flow modulation
-        currentPhi = flowFunction->GetRandom(-jetR,jetR,rng);
+        // currentPhi = flowFunction->GetRandom(-jetR,jetR,rng);
         
         currentDeltaR = TMath::Sqrt(currentEta*currentEta + currentPhi*currentPhi);
       } while ((currentDeltaR > jetR)/* || (rng->Rndm() < slopeFunction->Eval(currentDeltaR))*/);
@@ -166,6 +168,25 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
         correlatorWeight = particlePt.at(firstParticle)*particlePt.at(secondParticle);
         currentDeltaR = getDeltaR(particleEta.at(firstParticle), particlePhi.at(firstParticle), particleEta.at(secondParticle), particlePhi.at(secondParticle));
         hEnergyEnergyCorrelator->Fill(currentDeltaR, correlatorWeight);
+      }
+    }
+    
+    // Calculate also a three-point energy correlator
+    for(int firstParticle = 0; firstParticle < currentMultiplicity; firstParticle++){
+      for(int secondParticle = firstParticle+1; secondParticle < currentMultiplicity; secondParticle++){
+        deltaR12 = getDeltaR(particleEta.at(firstParticle), particlePhi.at(firstParticle), particleEta.at(secondParticle), particlePhi.at(secondParticle));
+        for(int thirdParticle = secondParticle+1; thirdParticle < currentMultiplicity; thirdParticle++){
+          deltaR13 = getDeltaR(particleEta.at(firstParticle), particlePhi.at(firstParticle), particleEta.at(thirdParticle), particlePhi.at(thirdParticle));
+          deltaR23 = getDeltaR(particleEta.at(secondParticle), particlePhi.at(secondParticle), particleEta.at(thirdParticle), particlePhi.at(thirdParticle));
+          
+          currentDeltaR = deltaR12;
+          if(deltaR13 > currentDeltaR) currentDeltaR = deltaR13;
+          if(deltaR23 > currentDeltaR) currentDeltaR = deltaR23;
+          
+          correlatorWeight = particlePt.at(firstParticle)*particlePt.at(secondParticle)*particlePt.at(thirdParticle);
+          
+          hThreePointEnergyCorrelator->Fill(currentDeltaR, correlatorWeight);
+        }
       }
     }
     
@@ -196,14 +217,16 @@ void generateToyEvents(int nEvent = 100000, double ptCut = 0.0, double slope = 0
     } // Bin loop for normalizing particle densities
   }
   
-  // Normalize the energy-energy correlator by the bin width
+  // Normalize the energy-energy correlators by the bin width
   hEnergyEnergyCorrelator->Scale(1.0,"width");
+  hThreePointEnergyCorrelator->Scale(1.0,"width");
   
   // After the histograms are normalized, we can save them to a file
-  TFile *outputFile = new TFile("toySimulation100kevents10pFlowMaxBiasSlope.root", "RECREATE");
+  TFile *outputFile = new TFile("toySimulation100keventsWith3Point.root", "RECREATE");
   hParticleDensity[0]->Write();
   hParticleDensity[1]->Write();
   hEnergyEnergyCorrelator->Write();
+  hThreePointEnergyCorrelator->Write();
   hMultiplicityOut->Write();
   hTrackPtOut->Write();
   hEtaPhi->Write();
