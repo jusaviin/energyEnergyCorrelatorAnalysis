@@ -82,9 +82,10 @@ private:
   void FindDataTypeString(); // Construct a data type string based on information on the card
   void ReadVectors();        // Read the vectors from the file
   
-  // String for git hash
+  // Strings for git hash
   TObjString *fGitHash;
   TObjString *fProjectionGitHash;
+  TObjString *fProcessGitHash;
   
   // Vectors for all the lines inside the card
   TVectorT<float> *fCardEntries[knEntries];   // Array of all the vectors in the card
@@ -103,8 +104,9 @@ public:
   
   TString GetDataType() const;            // Getter for data type string
   TString GetAlternativeDataType(const bool includeMCtype = true) const; // Getter for alternative data type string
-  void Write(TDirectory *file);           // Write the contents of the card to a file
-  void Print() const;                     // Print the contents of the card to the console
+  void Write(TDirectory *file);            // Write the contents of the card to a file
+  void WriteProcessHash(TDirectory *file); // Write the git hash used for processing histograms to the file
+  void Print() const;                      // Print the contents of the card to the console
   
   int GetNCentralityBins() const; // Get the number of centrality bins
   int GetNTrackPtBins() const;    // Get the number of track pT bins
@@ -131,6 +133,7 @@ public:
   void AddVector(int entryIndex, int dimension, double *contents); // Add a vector to the card
   void AddFileName(int entryIndex, TString fileName); // Add a file name to the card
   void AddProjectionGitHash(const char* gitHash); // Add a git hash used to project the histograms to the file
+  void AddProcessGitHash(const char* gitHash); // Add a git hash used to process the histograms in the file
   
 };
 

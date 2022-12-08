@@ -7,7 +7,7 @@
 void findBackgroundNormalizationScale(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_nSRC_cutBadPhiAndCombM5_wtaAxis_jetTrigger_preprocessed_2022-11-29.root";
+  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root";
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root

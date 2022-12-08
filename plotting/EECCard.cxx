@@ -17,7 +17,8 @@ EECCard::EECCard(TFile *inFile):
   fDataTypeString(""),
   fAlternativeDataTypeString(""),
   fGitHash(0),
-  fProjectionGitHash(0)
+  fProjectionGitHash(0),
+  fProcessGitHash(0)
 {
 
   // Read the vectors from the input file
@@ -51,6 +52,7 @@ void EECCard::ReadVectors(){
   // Read the git hash
   fGitHash = (TObjString*) gDirectory->Get("GitHash");
   fProjectionGitHash = (TObjString*) gDirectory->Get("ProjectionGitHash");
+  fProcessGitHash = (TObjString*) gDirectory->Get("ProcessGitHash");
 
   // Read the TVectorT<float>:s
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
@@ -338,8 +340,21 @@ void EECCard::AddFileName(int entryIndex, TString fileName){
  */
 void EECCard::AddProjectionGitHash(const char* gitHash){
   
-  // Make convert the string to TObjString and add it to the file name array
+  // Convert the const char* to TObjString and add it to the file name array
   fProjectionGitHash = new TObjString(gitHash);
+  
+}
+
+/*
+ * Add a git hash used to process the histograms in the file to the card
+ *
+ * Arguments:
+ *  const char* gitHash = Git hash to be added for processing
+ */
+void EECCard::AddProcessGitHash(const char* gitHash){
+  
+  // Convert the const char* to TObjString and add it to the file name array
+  fProcessGitHash = new TObjString(gitHash);
   
 }
 
@@ -373,10 +388,13 @@ void EECCard::Print() const{
       std::cout << "Used " << fFileNameType[iFileName] << " file: " << fFileNames[iFileName]->String().Data() << std::endl;
     }
   }
+  
+  if(fProcessGitHash != NULL) std::cout << "Git hash for histogram processing: " << fProcessGitHash->String().Data() << std::endl;
+  
 }
 
 /*
- * Reader for all the vectors from the input file
+ * Write the contents of the EECCard to a file
  */
 void EECCard::Write(TDirectory *file){
   
@@ -400,6 +418,26 @@ void EECCard::Write(TDirectory *file){
     if(fFileNames[iFileName]) fFileNames[iFileName]->Write(fFileNameSaveName[iFileName]);
   }
   
+  // Write the git hash used to precess the histograms
+  if(fProcessGitHash) fProcessGitHash->Write("ProcessGitHash");
+  
   // Return back to the main directory
   file->cd("../");
+}
+
+/*
+ * Write the git hash used for processing histograms to the file
+ */
+void EECCard::WriteProcessHash(TDirectory *file){
+  
+  // Go to a directory to store the card parameters
+  if(!file->GetDirectory("JCard")) file->mkdir("JCard");
+  file->cd("JCard");
+  
+  // Write the git hash used to precess the histograms
+  if(fProcessGitHash) fProcessGitHash->Write("ProcessGitHash");
+  
+  // Return back to the main directory
+  file->cd("../");
+  
 }

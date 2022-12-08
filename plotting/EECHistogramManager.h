@@ -13,6 +13,7 @@
 // Own includes
 #include "EECCard.h"
 #include "../src/EECHistograms.h"
+#include "EECBackgroundScale.h"
 
 /*
  * Class for drawing the histograms produced in the dijet analysis
@@ -35,6 +36,9 @@ public:
   
   // Indices for different energy-energy correlator categories
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
+  
+  // Indices for different energy-energy correlator processing levels
+  enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, knEnergyEnergyCorrelatorProcessingLevels};
   
   // Dimensions for histogram arrays
   static const int kMaxCentralityBins = 5;       // Maximum allowed number of centrality bins
@@ -67,6 +71,7 @@ private:
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
   const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC/jet pT", "Uncorrected EEC", "Uncorrected EEC/jet pT"};
+  const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal"};
   
   // Naming for closure particle
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
@@ -96,7 +101,8 @@ public:
   ~EECHistogramManager();                                   // Destructor
   
   void LoadHistograms();          // Load the histograms from the inputfile
-  void Write(const char* fileName, const char* fileOption);  // Write all the loaded histograms into a file
+  void Write(const char* fileName, const char* fileOption);          // Write all the loaded histograms into a file
+  void WriteProcessed(const char *fileName, const char* fileOption); // Write the processed histograms into a file
   void LoadProcessedHistograms(); // Load processed histograms from the inputfile
   
   // Setters for binning information
@@ -227,6 +233,7 @@ public:
   
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
   
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
@@ -252,6 +259,9 @@ public:
   
   // Getter for the card
   EECCard* GetCard() const;  // Getter for the JCard
+  
+  // Post-processing the energy-energy correlator histograms
+  void SubtractBackground();  // Subtract the background from the energy-energy correlator histograms
   
 private:
   
@@ -345,7 +355,8 @@ private:
   TH1D *fhMaxParticlePtInJetConePtBin[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins+1];
   
   // Histograms for energy-energy correlators
-  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];
+  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1]; // Raw correlators read from data file
+  TH1D *fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels]; // Postprocessed energy-energy correlators
   
   // Histograms for jet pT closure
   TH1D *fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1]; // Jet pT closure

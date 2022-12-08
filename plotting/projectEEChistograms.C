@@ -14,7 +14,7 @@
 void projectEEChistograms(TString inputFileName = "veryCoolData.root", const char* outputFileName = "veryCoolData_processed.root", int histogramSelection = 2047){
 
   // Print the file name to console
-  cout << "Projecting histograms histograms from " << inputFileName.Data() << endl;
+  cout << "Projecting histograms from " << inputFileName.Data() << endl;
   
   // ==================================================================
   // ========================= Configuration ==========================
