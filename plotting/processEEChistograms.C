@@ -9,14 +9,18 @@
  *
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
+ *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
  */
-void processEEChistograms(TString fileName = "veryCoolData_processed.root"){
+void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = ""){
 
   // Print the file name to console
   cout << "Processing histograms from " << fileName.Data() << endl;
   
   // We want to update more information to the file
   const char* fileWriteMode = "UPDATE";
+  
+  // If output file name is not given, just add the processed histograms to the input file
+  if(outputFileName == "") outputFileName = fileName;
   
   // Open the input file
   TFile *inputFile = TFile::Open(fileName);
@@ -54,7 +58,7 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root"){
   // Subtract the background from the energy-energy correlator histograms
   histograms->SubtractBackground();
   
-  // Add the processed histograms to the input file
-  histograms->WriteProcessed(fileName,fileWriteMode);
+  // Add the processed histograms to the file
+  histograms->WriteProcessed(outputFileName,fileWriteMode);
   
 }
