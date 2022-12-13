@@ -41,6 +41,37 @@ AlgorithmLibrary::~AlgorithmLibrary()
 }
 
 /*
+ * Find the minimum and maximum values from a histogram. They must be more extreme than the current values
+ *
+ *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
+ *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
+ *             std::pair<double,double> searchRange = Range from which the minimum and maximum values are searched
+ */
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
+  
+  // As initial guess, take the given minimum and maximum values
+  std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
+  
+  // Find the bin range from which the minimum and maximum values are searched
+  double epsilon = 0.00001;
+  int firstBin = histogram->GetXaxis()->FindBin(searchRange.first+epsilon);
+  int lastBin = histogram->GetXaxis()->FindBin(searchRange.second-epsilon);
+  
+  // Loop through all the bins in the histogram and update the minimum and maximum values
+  double currentValue, currentError;
+  for(int iBin = firstBin; iBin <= lastBin; iBin++){
+    currentValue = histogram->GetBinContent(iBin);
+    currentError = histogram->GetBinError(iBin);
+    if((currentValue-currentError) < newMinMax.first) newMinMax.first = currentValue-currentError;
+    if((currentValue+currentError) > newMinMax.second) newMinMax.second = currentValue+currentError;
+  }
+  
+  // Return the minimum and maximum values from the histogram
+  return newMinMax;
+  
+}
+
+/*
  * Rebin one dimensional histogram with asymmetric bin edges
  *
  * Arguments:

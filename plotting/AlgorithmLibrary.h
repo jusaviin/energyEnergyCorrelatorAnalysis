@@ -27,6 +27,7 @@ public:
   ~AlgorithmLibrary();  // Destructor
   AlgorithmLibrary& operator=(const AlgorithmLibrary& in); // Equal sign operator
   
+  std::pair<double,double> FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange); // Find the minimum and maximum values from a histogram. They must be more extreme than the current values, also given as input
   TH1D* RebinAsymmetric(TH1D *histogramInNeedOfRebinning, const int nBins, const double* binEdges); // Asymmetric rebinning for one-dimensional histograms
   TH2D* RebinHistogram(TH2D *histogramInNeedOfRebinning, const int nBinsX, const double* binBordersX, const int nBinsY, const double* binBordersY, const bool undoBinArea, const bool normalizeBinArea); // Rebin a two-dimensional histogram with given bin borders
   void NormalizeMatrix(TH2D *histogramInNeedOfNormalization, const double value = 1, const int direction = 1);  // Normalize rows or columns of a 2D histogram to a given value
