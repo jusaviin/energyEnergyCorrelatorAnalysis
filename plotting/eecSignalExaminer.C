@@ -1,6 +1,7 @@
 #include "EECHistogramManager.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "AlgorithmLibrary.h"
 
 /*
  * Macro studying the processed energy-energy correlator distributions
@@ -8,9 +9,10 @@
 void eecSignalExaminer(){
 
   // Open the input file
-  TString inputFileName = "testProTest.root";
-  // testHowThisWorks.root
-  // testIfThisAlsoWorks.root
+  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root";
+  // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -39,12 +41,12 @@ void eecSignalExaminer(){
   
   // Select which histograms are fitted
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 3;
+  int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -87,12 +89,17 @@ void eecSignalExaminer(){
   const bool logDeltaR = true;
   const bool logEEC = true;
   
+  // Drawing range for x-axis
+  std::pair<double,double> drawingRange = std::make_pair(0.001, 0.4); // Cut the histograms at 0.4, since background subtraction does not work beyond that
+  
   // Axis zooming
-  std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
+  std::pair<double,double> ratioZoomCentrality = std::make_pair(0.7, 1.3);
+  std::pair<double,double> ratioZoomTrackPt = std::make_pair(0.4, 1.6);
+  std::pair<double,double> ratioZoomJetPt = std::make_pair(0, 2);
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "";   // Comment given for this specific file
+  const char* saveComment = "PythiaHydjetCheck";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -113,7 +120,7 @@ void eecSignalExaminer(){
   // Load the histograms from the file
   histograms->LoadProcessedHistograms();
   
-  // Particle density histograms from the data
+  // Energy-energy correlator histograms
   TH1D* hEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels];
   TH1D* hEnergyEnergyCorrelatorCentralityRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels];
   TH1D* hEnergyEnergyCorrelatorTrackPtRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels];
@@ -135,6 +142,9 @@ void eecSignalExaminer(){
     } // Centrality loop
   } // Energy-energy correlator type loop
   
+  double epsilon = 0.0000001;
+  int lowSignalBin, highSignalBin;
+  
   // Get the histograms from the histogram manager and normalize the signal histograms to one
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
     
@@ -152,9 +162,11 @@ void eecSignalExaminer(){
             // Read the processed energy-energy correlator histograms
             hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel);
             
-            // Normalize the signal distributions to one
+            // Normalize the signal distributions to one over the drawn range
             if(iProcessLevel == EECHistogramManager::kEnergyEnergyCorrelatorSignal){
-              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Scale(1/hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Integral("width"));
+              lowSignalBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->FindBin(drawingRange.first+epsilon);
+              highSignalBin = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->FindBin(drawingRange.second-epsilon);
+              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Scale(1/hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Integral(lowSignalBin, highSignalBin, "width"));
             }
             
             // Calculate the ratio with respect to the first centrality bin
@@ -205,6 +217,11 @@ void eecSignalExaminer(){
   TString centralityString, trackPtString, jetPtString;
   TString compactCentralityString, compactTrackPtString, compactJetPtString;
   TString legendString;
+  
+  std::pair<double,double> histogramYrange;
+  
+  // Create an algorithm library object to help find y-axis scaling ranges for the histograms
+  AlgorithmLibrary *algorithms = new AlgorithmLibrary();
   
   // ============================================== //
   // Energy-energy correlator centrality comparison //
@@ -263,7 +280,7 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
               
               // Draw the histograms to the upper canvas
@@ -290,11 +307,11 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
               
               hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->SetLineColor(color[iCentrality-firstDrawnCentralityBin]);
-              hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+              hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoomCentrality.first, ratioZoomCentrality.second);
               if(iCentrality == firstDrawnCentralityBin+1){
                 drawer->SetGridY(true);
                 drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel], "#Deltar", centralityString.Data(), " ");
@@ -304,6 +321,12 @@ void eecSignalExaminer(){
               }
               
             } // Centrality loop
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%s%sCentralityComparison%s%s%s.%s", histograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), histograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel), saveComment, compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
+            
           } // Track pT loop
         } // Jet pT loop
       } // Energy-energy correlator processing level loop
@@ -368,7 +391,7 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
               
               // Draw the histograms to the upper canvas
@@ -395,11 +418,11 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
               
               hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->SetLineColor(color[iTrackPt-firstDrawnTrackPtBinEEC]);
-              hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+              hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoomTrackPt.first, ratioZoomTrackPt.second);
               if(iTrackPt == firstDrawnTrackPtBinEEC+1){
                 drawer->SetGridY(true);
                 drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel], "#Deltar", trackPtString.Data(), " ");
@@ -409,6 +432,12 @@ void eecSignalExaminer(){
               }
               
             } // Track pT loop
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%s%sTrackPtComparison%s%s%s.%s", histograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), histograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel), saveComment, compactCentralityString.Data(), compactJetPtString.Data(), figureFormat));
+            }
+            
           } // Jet pT loop
         } // Centrality loop
       } // Energy-energy correlator processing level loop
@@ -447,7 +476,7 @@ void eecSignalExaminer(){
             compactTrackPtString.ReplaceAll(".","v");
             
             // Create a legend for the figure
-            legend = new TLegend(0.44,0.08,0.69,0.44);
+            legend = new TLegend(0.41,0.04,0.66,0.56);
             legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
             legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",histograms->GetCard()->GetAlternativeDataType().Data()), "");
             legend->AddEntry((TObject*) 0, centralityString.Data(),"");
@@ -458,6 +487,16 @@ void eecSignalExaminer(){
             
             // Logarithmic EEC axis
             if(logEEC) drawer->SetLogY(true);
+            
+            // First, loop over jet pT bins and determine a good drawing range from that
+            histogramYrange = std::make_pair(1e10, -1e10);
+            for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+              histogramYrange = algorithms->FindHistogramMinMax(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel], histogramYrange, drawingRange);
+            }
+            
+            // Add some empty space to the top and the bottom of the histogram
+            histogramYrange.first = histogramYrange.first - histogramYrange.first*0.15;
+            histogramYrange.second = histogramYrange.second + histogramYrange.second*0.15;
             
             // Loop over jet pT bins
             for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
@@ -473,8 +512,11 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
+              
+              // Set a good y-axis drawing range for the histograms
+              hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
               
               // Draw the histograms to the upper canvas
               hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->SetLineColor(color[iJetPt-firstDrawnJetPtBinEEC]);
@@ -500,11 +542,11 @@ void eecSignalExaminer(){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
-                hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(0.001, 0.4);
+                hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               }
               
               hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->SetLineColor(color[iJetPt-firstDrawnJetPtBinEEC]);
-              hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+              hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoomJetPt.first, ratioZoomJetPt.second);
               if(iJetPt == firstDrawnJetPtBinEEC+1){
                 drawer->SetGridY(true);
                 drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorJetPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel], "#Deltar", jetPtString.Data(), " ");
@@ -514,6 +556,12 @@ void eecSignalExaminer(){
               }
               
             } // Jet pT loop
+            
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/%s%sJetPtComparison%s%s%s.%s", histograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), histograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel), saveComment, compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
+            
           } // Track pT loop
         } // Centrality loop
       } // Energy-energy correlator processing level loop
