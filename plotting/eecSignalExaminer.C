@@ -9,7 +9,7 @@
 void eecSignalExaminer(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root";
+  TString inputFileName = "data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root";
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
@@ -44,9 +44,9 @@ void eecSignalExaminer(){
   int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
+  int firstDrawnTrackPtBinEEC = 3;
   int lastDrawnTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -81,9 +81,9 @@ void eecSignalExaminer(){
   }
   
   // Types of comparisons drawn
-  const bool drawCentralityComparison = false; // Centrality comparison for constant jet and track pT selection
+  const bool drawCentralityComparison = true; // Centrality comparison for constant jet and track pT selection
   const bool drawTrackPtComparison = false;    // Track pT comparison for constant centrality and jet pT selection
-  const bool drawJetPtComparison = true;      // Jet pT comparison for constant centrality and track pT selection
+  const bool drawJetPtComparison = false;      // Jet pT comparison for constant centrality and track pT selection
   
   // Logarithmic axes
   const bool logDeltaR = true;
@@ -98,8 +98,8 @@ void eecSignalExaminer(){
   std::pair<double,double> ratioZoomJetPt = std::make_pair(0, 2);
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "PythiaHydjetCheck";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -151,7 +151,7 @@ void eecSignalExaminer(){
     // Only load the selected energy-energy correlator types
     if(!studyEnergyEnergyCorrelator[iEnergyEnergyCorrelator]) continue;
     
-    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+    for(int iCentrality = lastDrawnCentralityBin; iCentrality >= firstDrawnCentralityBin; iCentrality--){
       for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
         for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
           for(int iProcessLevel = 0; iProcessLevel < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels; iProcessLevel++){
@@ -172,7 +172,7 @@ void eecSignalExaminer(){
             // Calculate the ratio with respect to the first centrality bin
             hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel] = (TH1D*) hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Clone(Form("centralityRatio%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel));
             
-            hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][firstDrawnCentralityBin][iJetPt][iTrackPt][iProcessLevel]);
+            hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Divide(hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][lastDrawnCentralityBin][iJetPt][iTrackPt][iProcessLevel]);
             
             // Calculate the ratio with respect to the first track pT bin
             hEnergyEnergyCorrelatorTrackPtRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel] = (TH1D*) hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->Clone(Form("trackPtRatio%d%d%d%d%d", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel));
@@ -301,9 +301,9 @@ void eecSignalExaminer(){
             // Linear scale for the ratio
             drawer->SetLogY(false);
             
-            centralityString = Form("#frac{Centrality}{%.0f-%.0f%%}", histograms->GetCentralityBinBorder(firstDrawnCentralityBin), histograms->GetCentralityBinBorder(firstDrawnCentralityBin+1));
+            centralityString = Form("#frac{Centrality}{%.0f-%.0f%%}", histograms->GetCentralityBinBorder(lastDrawnCentralityBin), histograms->GetCentralityBinBorder(lastDrawnCentralityBin+1));
             
-            for(int iCentrality = firstDrawnCentralityBin+1; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+            for(int iCentrality = firstDrawnCentralityBin; iCentrality < lastDrawnCentralityBin; iCentrality++){
               
               // For logarithmic drawing, cannot go down to zero in x-axis
               if(logDeltaR){
@@ -312,7 +312,7 @@ void eecSignalExaminer(){
               
               hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->SetLineColor(color[iCentrality-firstDrawnCentralityBin]);
               hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel]->GetYaxis()->SetRangeUser(ratioZoomCentrality.first, ratioZoomCentrality.second);
-              if(iCentrality == firstDrawnCentralityBin+1){
+              if(iCentrality == firstDrawnCentralityBin){
                 drawer->SetGridY(true);
                 drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorCentralityRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iProcessLevel], "#Deltar", centralityString.Data(), " ");
                 drawer->SetGridY(false);
