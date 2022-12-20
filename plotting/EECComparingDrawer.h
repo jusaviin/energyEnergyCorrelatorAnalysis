@@ -80,6 +80,11 @@ public:
   void SetDrawReflectedConeOnlyEnergyEnergyCorrelators(const bool drawOrNot);    // Setter for drawing reflected cone-reflected cone energy-energy correlators
   void SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSameJet, const bool drawSignalReflectedCone, const bool drawReflectedConeOnly); // Setter for drawing all different energy-energy correlator pairing types
   
+  // Setters for drawing different processing levels
+  void SetDrawEnergyEnergyCorrelatorNormalized(const bool drawOrNot);  // Setter for drawing normalized energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorBackground(const bool drawOrNot);  // Setter for drawing the normalized background estimate for energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorSignal(const bool drawOrNor);      // Setter for drawing the background subtracted energy-energy correlators
+  
   // Setters for drawing different subevent types
   void SetDrawAllSubevents(const bool drawOrNot); // Setter for drawing histograms without subevent selection
   void SetDrawPythiaOnly(const bool drawOrNot);   // Setter for drawing only Pythia histograms
@@ -154,6 +159,7 @@ private:
   bool fDrawPairingType[EECHistograms::knPairingTypes];                   // Select which pairing types (signal+signal, signal+reflected cone, ref+ref) to draw
   bool fDrawSubeventType[EECHistograms::knSubeventTypes+1];               // Select which subevent types (Pythia, Hydjet, all) to draw
   bool fDrawSubeventCombination[EECHistograms::knSubeventCombinations+1]; // Select which subevent combinations to draw
+  bool fDrawProcessingLevel[EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels]; // Select which processing levels to draw
   
   // ==============================================
   // ============== Drawing settings ==============
@@ -215,6 +221,7 @@ private:
   void DrawMultiplicityInJetCone();             // Draw the multiplicities within the jet cone
   void DrawParticleDensityAroundJetAxis();      // Draw particle densities around the jet axis
   void DrawEnergyEnergyCorrelatorHistograms();  // Draw energy-energy correlator histograms
+  void DrawProcessedEnergyEnergyCorrelators();  // Draw the processed energy-energy correlator histograms
   void SetupLegend(TLegend *legend, TString centralityString = "", TString trackString = "", TString asymmetryString = "", TString extraString = "", TString additionalString = ""); // Common legend style setup for figures
   void SaveFigure(TString figureName, TString centralityString = "", TString trackPtString = "", TString correlationTypeString = "", TString deltaPhiString = ""); // Save the figure from current canvas to file
   void PrepareRatio(TString name, int rebin, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0, int bin6 = 0, double minRange = 1000, double maxRange = -1000); // Prepare the ratio histograms out of input histograms

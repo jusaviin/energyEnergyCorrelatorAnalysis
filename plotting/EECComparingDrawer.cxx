@@ -70,6 +70,9 @@ EECComparingDrawer::EECComparingDrawer(EECHistogramManager *fBaseHistograms) :
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     fDrawPairingType[iPairingType] = false;
   }
+  for(int iProcessLevel = 0; iProcessLevel < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels; iProcessLevel++){
+    fDrawProcessingLevel[iProcessLevel] = false;
+  }
   
   // By default, only draw the energy-energy correlators without subevent selection
   fDrawSubeventType[EECHistograms::knSubeventTypes] = true;
@@ -158,6 +161,9 @@ void EECComparingDrawer::DrawHistograms(){
   // Draw the energy-energy correlator histograms
   DrawEnergyEnergyCorrelatorHistograms();
 
+  // Draw the processed energy-energy correlator histograms
+  DrawProcessedEnergyEnergyCorrelators();
+  
 }
 
 /*
@@ -837,6 +843,110 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   } // Energy-energy correlator loop
 }
 
+// Draw energy-energy correlator histograms
+void EECComparingDrawer::DrawProcessedEnergyEnergyCorrelators(){
+  
+  if(!fEnergyEnergyCorrelatorHistogramDrawn) return;
+  
+  // Legend helper variable
+  TLegend *legend;
+  double legendX1 = 0.37; // Default x1 location for the legend
+  double legendY1 = 0.1;  // Default y1 location for the legend
+  double legendX2 = 0.57; // Default x2 location for the legend
+  double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
+  
+  // If we are not doing log-log drawing, move the legend to top right corner
+  if(!fLogDeltaR || !fLogEEC){
+    legendX1 = 0.52;
+    legendY1 = 0.58 - 0.06*fnAddedHistograms;
+    legendX2 = 0.72;
+    legendY2 = 0.82;
+  }
+  
+  // Helper variables for figures
+  TString centralityString;
+  TString compactCentralityString;
+  TString trackPtString;
+  TString compactTrackPtString;
+  TString jetPtString;
+  TString compactJetPtString;
+  TString namerY;
+  
+  // Change drawing ranges in case of logarithmic x-axis
+  double minRangeX = 0;
+  double maxRangeX = 0.8;
+  if(fLogDeltaR) minRangeX = 0.001;
+  
+  // Loop over energy-energy correlator types
+  for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
+    
+    // Only draw the selected histograms
+    if(!fDrawEnergyEnergyCorrelators[iEnergyEnergyCorrelator]) continue;
+    
+    // Loop over different processing levels (normalized, background, signal)
+    for(int iProcessLevel = 0; iProcessLevel < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels; iProcessLevel++){
+      
+      // Only draw selected processing levels
+      if(!fDrawProcessingLevel[iProcessLevel]) continue;
+      
+      // Loop over centrality
+      for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+        
+        centralityString = Form("Cent: %.0f-%.0f%%",fBaseHistograms->GetCentralityBinBorder(iCentrality),fBaseHistograms->GetCentralityBinBorder(iCentrality+1));
+        compactCentralityString = Form("_C=%.0f-%.0f",fBaseHistograms->GetCentralityBinBorder(iCentrality),fBaseHistograms->GetCentralityBinBorder(iCentrality+1));
+        
+        // Loop over track pT bins
+        for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+          
+          trackPtString = Form("%.1f < track p_{T}",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T>%.1f",fBaseHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString.ReplaceAll(".","v");
+          
+          // Loop over jet pT bins
+          for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
+            
+            // Set the jet pT information for legends and figure saving
+            if(iJetPt == fBaseHistograms->GetNJetPtBinsEEC()){
+              jetPtString = Form("Jet p_{T} > %.0f", fBaseHistograms->GetCard()->GetJetPtCut());
+              compactJetPtString = "";
+            } else {
+              jetPtString = Form("%.0f < jet p_{T} < %.0f", fBaseHistograms->GetJetPtBinBorderEEC(iJetPt), fBaseHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              compactJetPtString = Form("_J=%.0f-%.0f", fBaseHistograms->GetJetPtBinBorderEEC(iJetPt), fBaseHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            }
+            
+            // === Energy-energy correlator ===
+            
+            // Determine scaling factors
+            if(fApplyScaling) FindScalingFactors("energyEnergyCorrelatorProcessed", iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel);
+            
+            // Prepare the energy-energy correlator histograms to be drawn
+            PrepareRatio("energyEnergyCorrelatorProcessed", 1, iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel, 0, minRangeX, maxRangeX);
+            
+            // Draw the track phi distributions to the upper panel of a split canvas plot
+            namerY = Form("%s %s", fBaseHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fBaseHistograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel));
+            DrawToUpperPad("#Deltar", namerY.Data(), fLogDeltaR, fLogEEC);
+            
+            // Add a legend to the plot
+            legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
+            SetupLegend(legend,centralityString,trackPtString,jetPtString);
+            legend->Draw();
+            
+            // Draw the ratios to the lower portion of the split canvas
+            fDrawer->SetGridY(true);
+            DrawToLowerPad("#Deltar",fRatioLabel.Data(),fRatioZoomMin,fRatioZoomMax,fLogDeltaR);
+            fDrawer->SetGridY(false);
+            
+            // Save the figure to a file
+            namerY = Form("%s%sComparison", fBaseHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fBaseHistograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel));
+            SaveFigure(namerY, compactCentralityString, compactTrackPtString, compactJetPtString);
+            
+          } // Jet pT loop
+        } // Track pT loop
+      } // Centrality loop
+    } // Processing level loop (normalized, background, signal)
+  } // Energy-energy correlator loop
+}
+
 /*
  * Prepare histograms for ratio plots
  *
@@ -899,11 +1009,11 @@ void EECComparingDrawer::PrepareRatio(TString name, int rebin, int bin1, int bin
     namer = Form("%sRatio%d",fMainHistogram->GetName(),iAdditional);
     
 
-    fRatioHistogram[iAdditional] = (TH1D*)fMainHistogram->Clone(namer.Data());
+    fRatioHistogram[iAdditional] = (TH1D*)fComparisonHistogram[iAdditional]->Clone(namer.Data());
     if(fUseDifferenceInsteadOfRatio){
       fRatioHistogram[iAdditional]->Add(fComparisonHistogram[iAdditional],-1);
     } else {
-      fRatioHistogram[iAdditional]->Divide(fComparisonHistogram[iAdditional]);
+      fRatioHistogram[iAdditional]->Divide(fMainHistogram);
     }
     
   } // Loop over additional histograms
@@ -1348,6 +1458,21 @@ void EECComparingDrawer::SetDrawAllSubeventCombinations(const bool drawAll, cons
   SetDrawSignalOnly(drawSignal);
   SetDrawSignalFake(drawSignalFake);
   SetDrawFakeFake(drawFakeFake);
+}
+
+// Setter for drawing normalized energy-energy correlators
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorNormalized(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorNormalized] = drawOrNot;
+}
+
+// Setter for drawing the normalized background estimate for energy-energy correlators
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorBackground(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorBackground] = drawOrNot;
+}
+
+// Setter for drawing the background subtracted energy-energy correlators
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorSignal(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorSignal] = drawOrNot;
 }
 
 // Setter for saving the figures to a file

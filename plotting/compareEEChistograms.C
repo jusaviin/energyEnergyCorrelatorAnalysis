@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 3;
-  TString inputFileName[] = { "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_nSRC_cutBadPhiAndCombM2_wtaAxis_jetTrigger_preprocessed_2022-11-29.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_nSRC_cutBadPhiAndCombM5_wtaAxis_jetTrigger_preprocessed_2022-11-29.root"};
+  const int nDatasets = 4;
+  TString inputFileName[] = { "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"No high p_{T} Hydjet","2 GeV margin", "5 GeV margin"};
+  TString legendComment[] = {"Gen jets + Gen tracks","Gen jets + Reco tracks", "Reco jets + Gen tracks", "Reco jets + Reco tracks"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -68,6 +68,11 @@ void compareEEChistograms(){
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
+  // Select which processed energy-energy correlators to draw
+  const bool drawEnergyEnergyCorrelatorNormalized = false;    // Draw normalized energy-energy correlators
+  const bool drawEnergyEnergyCorrelatorBackground = false;   // Draw normalized energy-energy correlator background estimate
+  const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
+  
   // Select which subevents to draw
   bool drawAllSubevents = false;   // Draw histograms without subevent selection
   bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
@@ -81,7 +86,7 @@ void compareEEChistograms(){
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_fakeFakeStudy";
+  const char* figureComment = "_reconstructionEffectCheck";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -101,7 +106,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.1;
   double maxZoom = 1.9;
-  TString ratioLabel = "Color / Reco jets";
+  TString ratioLabel = "#frac{Color}{Gen+Gen}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -129,16 +134,16 @@ void compareEEChistograms(){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstDrawnTrackPtBinEEC = 3;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
   // ===================== Configuration ready ========================
@@ -212,6 +217,10 @@ void compareEEChistograms(){
   drawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
   drawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);
   drawer->SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnlyEnergyEnergyCorrelator);
+  
+  drawer->SetDrawEnergyEnergyCorrelatorNormalized(drawEnergyEnergyCorrelatorNormalized);
+  drawer->SetDrawEnergyEnergyCorrelatorBackground(drawEnergyEnergyCorrelatorBackground);
+  drawer->SetDrawEnergyEnergyCorrelatorSignal(drawEnergyEnergyCorrelatorSignal);
   
   drawer->SetDrawAllSubeventTypes(drawAllSubevents, drawPythiaOnly, drawHydjetOnly);
   drawer->SetDrawAllSubeventCombinations(drawAllSubeventPairs, drawSignalOnly, drawSignalFake, drawFakeFake);
