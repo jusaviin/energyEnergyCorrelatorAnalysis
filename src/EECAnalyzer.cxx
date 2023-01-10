@@ -1422,7 +1422,7 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
   if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
-  
+  return 1.0; // Test to remove weight
   return fPtWeightFunction->Eval(jetPt);
 }
 
