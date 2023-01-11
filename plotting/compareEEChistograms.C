@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 4;
-  TString inputFileName[] = { "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root"};
+  const int nDatasets = 3;
+  TString inputFileName[] = { "data/ppData_pfJets_wtaAxis_processed_2022-12-16.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_noJetPtWeight_wtaAxis_processed_2023-01-10.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_processed_2023-01-09.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Gen jets + Gen tracks","Gen jets + Reco tracks", "Reco jets + Gen tracks", "Reco jets + Reco tracks"};
+  TString legendComment[] = {"pp data","Raw Pythia8", "Weighted Pythia8", "Reco jets + Reco tracks"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -41,7 +41,7 @@ void compareEEChistograms(){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = false;
+  bool drawJets = true;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -58,7 +58,7 @@ void compareEEChistograms(){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -104,13 +104,13 @@ void compareEEChistograms(){
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
-  double minZoom = 0.1;
-  double maxZoom = 1.9;
-  TString ratioLabel = "#frac{Color}{Gen+Gen}";
+  double minZoom = 0.75;
+  double maxZoom = 1.25;
+  TString ratioLabel = "#frac{MC}{Data}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
-  bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
+  bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
-  bool addEnergyToLegend = true;  // Add the collision energy from the first file to legend. Useful if all files are from same system
+  bool addEnergyToLegend = false;  // Add the collision energy from the first file to legend. Useful if all files are from same system
   
   // Scaling for histograms
   int scaleHistograms = 1; // 0 = Do not scale histograms. 1 = Scale integral to one. 2 = Scale average to one
