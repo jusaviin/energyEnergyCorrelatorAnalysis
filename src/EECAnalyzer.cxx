@@ -1201,6 +1201,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Int_t nTracks1;
   Int_t nTracks2;
   
+  // For MC: weight according to jet pT
+  Double_t jetPtWeight = GetJetPtWeight(jetPt);
+  
   // Loop over the pairing types (same jet/reflected cone jet)
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     
@@ -1283,12 +1286,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
         fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
         if(fFillEnergyEnergyCorrelators){
-          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2);  // Fill the energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2*jetPtWeight);  // Fill the energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2*jetPtWeight);  // Fill the energy-energy correlator histogram
         }
         if(fFillEnergyEnergyCorrelatorsUncorrected) {
-          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2);  // Fill the uncorrected energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2);  // Fill the uncorrected energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeight*reflectedConeWeight1*reflectedConeWeight2*jetPtWeight);  // Fill the uncorrected energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt*reflectedConeWeight1*reflectedConeWeight2*jetPtWeight);  // Fill the uncorrected energy-energy correlator histogram
         }
         
       } // Inner track loop
@@ -1422,7 +1425,7 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
   if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
-  return 1.0; // Test to remove weight
+  
   return fPtWeightFunction->Eval(jetPt);
 }
 
