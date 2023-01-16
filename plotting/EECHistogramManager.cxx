@@ -1242,9 +1242,10 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
         higherCentralityBin = fCentralityBinIndices[iCentralityBin+1]+duplicateRemoverCentrality;
         
         // Setup the axes with restrictions
-        axisIndices[0] = 1; lowLimits[0] = iGenJetPt+1;    highLimits[0] = iGenJetPt+1;             // Gen jet pT
-        axisIndices[1] = 4; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin; // Centrality
-        axisIndices[2] = 5; lowLimits[2] = iClosureParticle+1; highLimits[2] = iClosureParticle+1;  // Quark/gluon
+        nRestrictionAxes = 3;
+        axisIndices[0] = 0; lowLimits[0] = iGenJetPt+1;    highLimits[0] = iGenJetPt+1;             // Gen jet pT
+        axisIndices[1] = 3; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin; // Centrality
+        axisIndices[2] = 4; lowLimits[2] = iClosureParticle+1; highLimits[2] = iClosureParticle+1;  // Quark/gluon
         
         // For the last closure particle bin no restrictions for quark/gluon jets
         if(iClosureParticle == EECHistograms::knClosureParticleTypes){
@@ -1257,39 +1258,39 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
         
         
         // Eta binning for the closure histogram
-        //            for(int iJetEta = 0; iJetEta < knJetEtaBins; iJetEta++){
-        //
-        //              // For the last closure particle bin no restrictions for quark/gluon jets
-        //              /*if(iClosureParticle == EECHistograms::knClosureParticleTypes){
-        //               nRestrictionAxes = 3;
-        //               axisIndices[2] = 2; lowLimits[2] = iJetEta+1; highLimits[2] = iJetEta+1; // Jet eta
-        //               } else {
-        //               nRestrictionAxes = 4;
-        //               axisIndices[3] = 2; lowLimits[3] = iJetEta+1; highLimits[3] = iJetEta+1; // Jet eta
-        //               }
-        //
-        //               fhJetPtClosure[iClosureType][iGenJetPt][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);*/
-        //
-        //              // Fill the pT integrated eta slices only once
-        //              if(iGenJetPt == 0){
-        //
-        //                // Setup the axes with restrictions
-        //                nRestrictionAxes = 3;
-        //                axisIndices[1] = 2; lowLimits[1] = iJetEta+1;    highLimits[1] = iJetEta+1;                 // Jet eta
-        //                axisIndices[2] = 3; lowLimits[2] = lowerCentralityBin; highLimits[2] = higherCentralityBin; // Centrality
-        //                axisIndices[3] = 4; lowLimits[3] = iClosureParticle+1; highLimits[3] = iClosureParticle+1;  // Quark/gluon
-        //
-        //                // For the last closure particle bin no restrictions for quark/gluon jets
-        //                if(iClosureParticle == EECHistograms::knClosureParticleTypes){
-        //
-        //                  // Remove the last set array bin
-        //                  nRestrictionAxes--;
-        //                }
-        //
-        //                fhJetPtClosure[knGenJetPtBins][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
-        //              }
-        //
-        //            } // Jet eta bin loop
+        for(int iJetEta = 0; iJetEta < knJetEtaBins; iJetEta++){
+          
+          // For the last closure particle bin no restrictions for quark/gluon jets
+          /*if(iClosureParticle == EECHistograms::knClosureParticleTypes){
+           nRestrictionAxes = 3;
+           axisIndices[2] = 2; lowLimits[2] = iJetEta+1; highLimits[2] = iJetEta+1; // Jet eta
+           } else {
+           nRestrictionAxes = 4;
+           axisIndices[3] = 2; lowLimits[3] = iJetEta+1; highLimits[3] = iJetEta+1; // Jet eta
+           }
+           
+           fhJetPtClosure[iClosureType][iGenJetPt][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);*/
+          
+          // Fill the pT integrated eta slices only once
+          if(iGenJetPt == 0){
+            
+            // Setup the axes with restrictions
+            nRestrictionAxes = 3;
+            axisIndices[0] = 2; lowLimits[0] = iJetEta+1;    highLimits[0] = iJetEta+1;                 // Jet eta
+            axisIndices[1] = 3; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin; // Centrality
+            axisIndices[2] = 4; lowLimits[2] = iClosureParticle+1; highLimits[2] = iClosureParticle+1;  // Quark/gluon
+            
+            // For the last closure particle bin no restrictions for quark/gluon jets
+            if(iClosureParticle == EECHistograms::knClosureParticleTypes){
+              
+              // Remove the last set array bin
+              nRestrictionAxes--;
+            }
+            
+            fhJetPtClosure[knGenJetPtBins][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+          }
+          
+        } // Jet eta bin loop
       } // Centrality loop
     } // Closure particle loop
   } // Gen jet pT loop
