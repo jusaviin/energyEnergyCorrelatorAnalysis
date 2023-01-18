@@ -97,7 +97,7 @@ void plotTrackClosure(JDrawer *drawer, TH1 *genHistogram, TH1 *recoHistogram, TH
   
   drawer->SetLogY(false);
   if(bigZoom){
-    recoRatio->GetYaxis()->SetRangeUser(0.9,1.1);
+    recoRatio->GetYaxis()->SetRangeUser(0.85,1.15);
   } else {
     recoRatio->GetYaxis()->SetRangeUser(0,2);
   }
@@ -134,7 +134,7 @@ void trackClosurePlotter(){
   int lastTrackPtBin = nTrackPtBins-1;
   
   // Zoom very close to one in closure plots
-  bool bigClosureZoom = false;
+  bool bigClosureZoom = true;
   
   // ============= //
   //  Config done  //
