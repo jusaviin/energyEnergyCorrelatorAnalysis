@@ -781,7 +781,7 @@ void EECAnalyzer::RunAnalysis(){
           // Here should implement an option if only quark and gluon tagged jets should be allowed in final results!
           if(fMatchJets){
             
-            if(fMatchJets) matchedCounter++; // For debugging purposes, count the number of matched jets
+            matchedCounter++; // For debugging purposes, count the number of matched jets
             jetFlavor = 0;    // Jet flavor. 0 = Quark jet.
             
             partonFlavor = fJetReader->GetPartonFlavor(jetIndex);
@@ -1149,6 +1149,14 @@ void EECAnalyzer::RunAnalysis(){
     // Close the input files after the event has been read
     inputFile->Close();
     if(useDifferentReaderForJetsAndTracks) copyInputFile->Close();
+    
+    // Write some debug messages if prompted
+    if(fDebugLevel > 1){
+      if(fMatchJets){
+        cout << "There were " << matchedCounter << " matched jets." << endl;
+        cout << "There were " << unmatchedCounter << " unmatched jets." << endl;
+      }
+    }
     
   } // File loop
   
