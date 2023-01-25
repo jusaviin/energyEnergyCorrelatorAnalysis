@@ -496,6 +496,7 @@ void EECAnalyzer::RunAnalysis(){
   Int_t matchedCounter = 0;         // Number of jets that are matched
   Int_t nonSensicalPartonIndex = 0; // Parton index is -999 even though jets are matched
   Int_t partonFlavor = -999;        // Code for parton flavor in Monte Carlo
+  Int_t matchRejectedDueToPtCounter = 0; // Counter for too large pT difference between matched jets
   
   // Variables for tracks
   Double_t fillerTrack[4];                // Track histogram filler
@@ -834,6 +835,16 @@ void EECAnalyzer::RunAnalysis(){
           if(jetPt < fJetMinimumPtCut) continue;
           if(jetPt > fJetMaximumPtCut) continue;
           
+          // If we are matching jets, require that the matched jet has at least half of the reconstructed pT
+          if(fMatchJets){
+            if(fMcCorrelationType == kRecoReco || fMcCorrelationType == kRecoGen){
+              if(jetPt > fJetReader->GetMatchedPt(jetIndex)*2.0) {
+                matchRejectedDueToPtCounter++;
+                continue;
+              }
+            }
+          }
+          
           //************************************************
           //       Fill histograms for jet pT closure
           //************************************************
@@ -1155,6 +1166,7 @@ void EECAnalyzer::RunAnalysis(){
       if(fMatchJets){
         cout << "There were " << matchedCounter << " matched jets." << endl;
         cout << "There were " << unmatchedCounter << " unmatched jets." << endl;
+        cout << "Too large pT gap between matched jets in " << matchRejectedDueToPtCounter << " pairs." << endl;
       }
     }
     
