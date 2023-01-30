@@ -57,7 +57,7 @@ private:
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
-  Bool_t PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
+  Bool_t PassTrackCuts(ForestReader *trackReader, const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
   Bool_t PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
   Double_t  GetTrackEfficiencyCorrection(const Float_t trackPt, const Float_t trackEta, const Int_t hiBin); // Get the track efficiency correction for given track and event information

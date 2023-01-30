@@ -782,12 +782,12 @@ void EECAnalyzer::RunAnalysis(){
               for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
                 
                 // Check that all the track cuts are passed
-                if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+                if(!PassTrackCuts(fJetReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
                 
                 // Find the track pT, eta and phi
-                trackPt = fTrackReader->GetTrackPt(iTrack);
-                trackEta = fTrackReader->GetTrackEta(iTrack);
-                trackPhi = fTrackReader->GetTrackPhi(iTrack);
+                trackPt = fJetReader->GetTrackPt(iTrack);
+                trackEta = fJetReader->GetTrackEta(iTrack);
+                trackPhi = fJetReader->GetTrackPhi(iTrack);
                 
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
@@ -916,7 +916,7 @@ void EECAnalyzer::RunAnalysis(){
           for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
             
             // Check that all the track cuts are passed
-            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+            if(!PassTrackCuts(fTrackReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
             
             // Find the track eta and phi
             trackPt = fTrackReader->GetTrackPt(iTrack);
@@ -1006,7 +1006,7 @@ void EECAnalyzer::RunAnalysis(){
           for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
             
             // Check that all the track cuts are passed
-            if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+            if(!PassTrackCuts(fTrackReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
             
             // Find the track eta and phi
             trackPt = fTrackReader->GetTrackPt(iTrack);
@@ -1166,7 +1166,7 @@ void EECAnalyzer::RunAnalysis(){
         for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
           
           // Check that all the track cuts are passed
-          if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts)) continue;
+          if(!PassTrackCuts(fTrackReader,iTrack,fHistograms->fhTrackCuts)) continue;
           
           // Get the efficiency correction
           trackPt = fTrackReader->GetTrackPt(iTrack);
@@ -1622,30 +1622,31 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHi
  * Check if a track passes all the track cuts
  *
  *  Arguments:
+ *   ForestReader *trackReader = ForestReader from which the tracks are read
  *   const Int_t iTrack = Index of the checked track in reader
  *   TH1F *trackCutHistogram = Histogram to which the track cut performance is filled
  *   const Bool_t bypassFill = Pass filling the track cut histograms
  *
  *   return: True if all track cuts are passed, false otherwise
  */
-Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill){
+Bool_t EECAnalyzer::PassTrackCuts(ForestReader *trackReader, const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill){
   
   // Only fill the track cut histograms for same event data
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kAllTracks);
   
   // Cuts specific to generator level MC tracks
-  if(fTrackReader->GetTrackCharge(iTrack) == 0) return false;  // Require that the track is charged
+  if(trackReader->GetTrackCharge(iTrack) == 0) return false;  // Require that the track is charged
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcCharge);
   
-  if(!PassSubeventCut(fTrackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
+  if(!PassSubeventCut(trackReader->GetTrackSubevent(iTrack))) return false;  // Require desired subevent
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcSube);
   
-  if(fTrackReader->GetTrackMCStatus(iTrack) != 1) return false;  // Require final state particles
+  if(trackReader->GetTrackMCStatus(iTrack) != 1) return false;  // Require final state particles
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kMcStatus);
   
-  Double_t trackPt = fTrackReader->GetTrackPt(iTrack);
-  Double_t trackEta = fTrackReader->GetTrackEta(iTrack);
-  Double_t trackEt = (fTrackReader->GetTrackEnergyEcal(iTrack)+fTrackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
+  Double_t trackPt = trackReader->GetTrackPt(iTrack);
+  Double_t trackEta = trackReader->GetTrackEta(iTrack);
+  Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
   
   //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
   
@@ -1659,20 +1660,20 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kEtaCut);
   
   // New cut for 2018 data based on track algorithm and MVA
-  if(fTrackReader->GetTrackAlgorithm(iTrack) == 6 && fTrackReader->GetTrackMVA(iTrack) < 0.98 && (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC)) return false; // Only apply this cut for PbPb
+  if(trackReader->GetTrackAlgorithm(iTrack) == 6 && trackReader->GetTrackMVA(iTrack) < 0.98 && (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC)) return false; // Only apply this cut for PbPb
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kTrackAlgorithm);
   
   // Cut for high purity
-  if(!fTrackReader->GetTrackHighPurity(iTrack)) return false;     // High purity cut
+  if(!trackReader->GetTrackHighPurity(iTrack)) return false;     // High purity cut
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kHighPurity);
   
   // Cut for relative error for track pT
-  if(fTrackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
+  if(trackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kPtError);
   
   // Cut for track distance from primary vertex
-  if(TMath::Abs(fTrackReader->GetTrackVertexDistanceZ(iTrack)/fTrackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
-  if(TMath::Abs(fTrackReader->GetTrackVertexDistanceXY(iTrack)/fTrackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
+  if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
+  if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kVertexDistance);
   
   // Cut for energy deposition in calorimeters for high pT tracks
@@ -1680,9 +1681,9 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
   
   // Cuts for track reconstruction quality
-  //if( fTrackReader->GetTrackChi2(iTrack) / (1.0*fTrackReader->GetNTrackDegreesOfFreedom(iTrack)) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
-  if(fTrackReader->GetTrackNormalizedChi2(iTrack) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
-  if(fTrackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
+  //if( trackReader->GetTrackChi2(iTrack) / (1.0*trackReader->GetNTrackDegreesOfFreedom(iTrack)) / (1.0*trackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  if(trackReader->GetTrackNormalizedChi2(iTrack) / (1.0*trackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  if(trackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
   
   // If passed all checks, return true
@@ -1774,7 +1775,7 @@ Double_t EECAnalyzer::GetMultiplicity(){
   for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
     
     // Check that all the track cuts are passed
-    if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+    if(!PassTrackCuts(fTrackReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
     
     // Get the efficiency correction
     trackEfficiencyCorrection = GetTrackEfficiencyCorrection(iTrack);
