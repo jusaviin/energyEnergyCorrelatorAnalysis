@@ -120,8 +120,8 @@ void studyReflectedConeBackground(){
   const bool logEEC = true;
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "genGenCheck";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "recoGenNormalization";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant

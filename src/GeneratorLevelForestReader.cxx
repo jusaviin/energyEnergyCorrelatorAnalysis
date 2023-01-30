@@ -231,8 +231,14 @@ void GeneratorLevelForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
     fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
     fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
-    fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-    fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+    
+    if(fIsMiniAOD){
+      fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
+    } else {
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+    }
+    
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
   } else if (fDataType == kPbPbMC){ // PbPb MC
@@ -241,13 +247,25 @@ void GeneratorLevelForestReader::Initialize(){
     fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
     fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
     
-    // Cut on noise on HCAL
-    fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-    fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    
-    // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-    fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
-    fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+    if(fIsMiniAOD){
+      
+      fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
+      
+      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+      fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
+      fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+    } else {
+      
+      // Cut on noise on HCAL
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      
+      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+      fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
+      fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+    }
 
     // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
     fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
@@ -283,6 +301,11 @@ void GeneratorLevelForestReader::Initialize(){
  * Connect a new tree to the reader
  */
 void GeneratorLevelForestReader::ReadForestFromFile(TFile *inputFile){
+  
+  // When reading a forest, we need to check if it is AOD or MiniAOD forest as there are some differences
+  // The HiForest tree is renamed to HiForestInfo in MiniAODs, so we can determine the forest type from this.
+  TTree* miniAODcheck = (TTree*)inputFile->Get("HiForestInfo/HiForest");
+  fIsMiniAOD = !(miniAODcheck == NULL);
   
   // Helper variable for finding the correct tree
   const char *treeName[4] = {"none","none","none","none"};
@@ -430,6 +453,11 @@ Float_t GeneratorLevelForestReader::GetTrackVertexDistanceXY(Int_t iTrack) const
 // Getter for error of track distance from primary vertex in xy-direction (not relevant for generator tracks)
 Float_t GeneratorLevelForestReader::GetTrackVertexDistanceXYError(Int_t iTrack) const{
   return 1; // The cut is on distance/error. Setting this to 1 and distance to 0 always passes the cut
+}
+
+// Getter for normalized track chi2 value from reconstruction fit (not relevant for generator tracks)
+Float_t GeneratorLevelForestReader::GetTrackNormalizedChi2(Int_t iTrack) const{
+  return 1; // Note: The chi2 quality cut is disabled for generator level tracks in the main analysis code
 }
 
 // Getter for track chi2 value from reconstruction fit (not relevant for generator tracks)

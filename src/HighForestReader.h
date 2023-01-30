@@ -52,6 +52,7 @@ public:
   Float_t GetTrackVertexDistanceZError(Int_t iTrack) const;  // Getter for error of track distance from primary vertex in z-direction
   Float_t GetTrackVertexDistanceXY(Int_t iTrack) const;      // Getter for track distance from primary vertex in xy-direction
   Float_t GetTrackVertexDistanceXYError(Int_t iTrack) const; // Getter for error of track distance from primary vertex in xy-direction
+  Float_t GetTrackNormalizedChi2(Int_t iTrack) const;        // Getter for normalized track chi2 value from reconstruction fit
   Float_t GetTrackChi2(Int_t iTrack) const;                  // Getter for track chi2 value from reconstruction fit
   Int_t GetNTrackDegreesOfFreedom(Int_t iTrack) const;       // Getter for number of degrees of freedom in reconstruction fit
   Int_t GetNHitsTrackerLayer(Int_t iTrack) const;            // Getter for number of hits in tracker layers
@@ -107,7 +108,7 @@ private:
   Float_t fMatchedJetPhiArray[fnMaxJet] = {0}; // phis of all the generator level jets in an event
   Float_t fMatchedJetEtaArray[fnMaxJet] = {0}; // etas of all the generator level jets in an event
   
-  // Leaves for the track tree
+  // Leaves for the track tree in AOD forests
   Float_t fTrackPtArray[fnMaxTrack] = {0};                    // Array for track pT:s
   Float_t fTrackPtErrorArray[fnMaxTrack] = {0};               // Array for track pT errors
   Float_t fTrackPhiArray[fnMaxTrack] = {0};                   // Array for track phis
@@ -128,6 +129,22 @@ private:
   UChar_t fTrackOriginalAlgorithmArray[fnMaxTrack] = {0};     // Array for track original algorithm
   Float_t fTrackMVAArray[fnMaxTrack] = {0};                   // Array for track MVA
   
+  // Leaves for the track tree in MiniAOD forests
+  vector<float> *fTrackPtVector;                    // Vector for track pT:s
+  vector<float> *fTrackPtErrorVector;               // Vector for track pT errors
+  vector<float> *fTrackPhiVector;                   // Vector for track phis
+  vector<float> *fTrackEtaVector;                   // Vector for track etas
+  vector<bool> *fHighPurityTrackVector;             // Vector for the high purity of tracks
+  vector<float> *fTrackVertexDistanceZVector;       // Vector for track distance from primary vertex in z-direction
+  vector<float> *fTrackVertexDistanceZErrorVector;  // Vector for error for track distance from primary vertex in z-direction
+  vector<float> *fTrackVertexDistanceXYVector;      // Vector for track distance from primary vertex in xy-direction
+  vector<float> *fTrackVertexDistanceXYErrorVector; // Vector for error for track distance from primary vertex in xy-direction
+  vector<float> *fTrackNormalizedChi2Vector;        // Vector for normalized track chi2 value from reconstruction fit
+  vector<char> *fnHitsTrackerLayerVector;           // Vector for number of hits in tracker layers
+  vector<char> *fnHitsTrackVector;                  // Vector for number of hits for the track
+  vector<float> *fTrackEnergyEcalVector;            // Vector for track energy in ECal
+  vector<float> *fTrackEnergyHcalVector;            // Vector for track energy in HCal
+
 };
 
 #endif

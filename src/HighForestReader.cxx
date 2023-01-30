@@ -22,7 +22,6 @@ HighForestReader::HighForestReader() :
   fJetPhiArray(),
   fJetEtaArray(),
   fJetRawPtArray(),
-  fJetMaxTrackPtArray(),
   fTrackPtArray(),
   fTrackPtErrorArray(),
   fTrackPhiArray(),
@@ -40,9 +39,28 @@ HighForestReader::HighForestReader() :
   fTrackEnergyHcalArray(),
   fTrackAlgorithmArray(),
   fTrackOriginalAlgorithmArray(),
-  fTrackMVAArray()
+  fTrackMVAArray(),
+  fTrackPtVector(0),
+  fTrackPtErrorVector(0),
+  fTrackPhiVector(0),
+  fTrackEtaVector(0),
+  fHighPurityTrackVector(0),
+  fTrackVertexDistanceZVector(0),
+  fTrackVertexDistanceZErrorVector(0),
+  fTrackVertexDistanceXYVector(0),
+  fTrackVertexDistanceXYErrorVector(0),
+  fTrackNormalizedChi2Vector(0),
+  fnHitsTrackerLayerVector(0),
+  fnHitsTrackVector(0),
+  fTrackEnergyEcalVector(0),
+  fTrackEnergyHcalVector(0)
 {
   // Default constructor
+  
+  // Initialize fJetMaxTrackPtArray to -1
+  for(int i = 0; i < fnMaxJet; i++){
+    fJetMaxTrackPtArray[i] = -1;
+  }
 }
 
 /*
@@ -88,9 +106,28 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fTrackEnergyHcalArray(),
   fTrackAlgorithmArray(),
   fTrackOriginalAlgorithmArray(),
-  fTrackMVAArray()
+  fTrackMVAArray(),
+  fTrackPtVector(0),
+  fTrackPtErrorVector(0),
+  fTrackPhiVector(0),
+  fTrackEtaVector(0),
+  fHighPurityTrackVector(0),
+  fTrackVertexDistanceZVector(0),
+  fTrackVertexDistanceZErrorVector(0),
+  fTrackVertexDistanceXYVector(0),
+  fTrackVertexDistanceXYErrorVector(0),
+  fTrackNormalizedChi2Vector(0),
+  fnHitsTrackerLayerVector(0),
+  fnHitsTrackVector(0),
+  fTrackEnergyEcalVector(0),
+  fTrackEnergyHcalVector(0)
 {
   // Custom constructor
+  
+  // Initialize fJetMaxTrackPtArray to -1
+  for(int i = 0; i < fnMaxJet; i++){
+    fJetMaxTrackPtArray[i] = -1;
+  }
   
 }
 
@@ -108,7 +145,20 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fnTracksBranch(in.fnTracksBranch),
   fTrackAlgorithmBranch(in.fTrackAlgorithmBranch),
   fTrackOriginalAlgorithmBranch(in.fTrackOriginalAlgorithmBranch),
-  fTrackMVABranch(in.fTrackMVABranch)
+  fTrackMVABranch(in.fTrackMVABranch),
+  fTrackPtVector(in.fTrackPtVector),
+  fTrackPhiVector(in.fTrackPhiVector),
+  fTrackEtaVector(in.fTrackEtaVector),
+  fHighPurityTrackVector(in.fHighPurityTrackVector),
+  fTrackVertexDistanceZVector(in.fTrackVertexDistanceZVector),
+  fTrackVertexDistanceZErrorVector(in.fTrackVertexDistanceZErrorVector),
+  fTrackVertexDistanceXYVector(in.fTrackVertexDistanceXYVector),
+  fTrackVertexDistanceXYErrorVector(in.fTrackVertexDistanceXYErrorVector),
+  fTrackNormalizedChi2Vector(in.fTrackNormalizedChi2Vector),
+  fnHitsTrackerLayerVector(in.fnHitsTrackerLayerVector),
+  fnHitsTrackVector(in.fnHitsTrackVector),
+  fTrackEnergyEcalVector(in.fTrackEnergyEcalVector),
+  fTrackEnergyHcalVector(in.fTrackEnergyHcalVector)
 {
   // Copy constructor
   for(Int_t i = 0; i < fnMaxJet; i++){
@@ -190,6 +240,21 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
     fTrackOriginalAlgorithmArray[i] = in.fTrackOriginalAlgorithmArray[i];
     fTrackMVAArray[i] = in.fTrackMVAArray[i];
   }
+  
+  fTrackPtVector = in.fTrackPtVector;
+  fTrackPtVector = in.fTrackPtVector;
+  fTrackPhiVector = in.fTrackPhiVector;
+  fTrackEtaVector = in.fTrackEtaVector;
+  fHighPurityTrackVector = in.fHighPurityTrackVector;
+  fTrackVertexDistanceZVector = in.fTrackVertexDistanceZVector;
+  fTrackVertexDistanceZErrorVector = in.fTrackVertexDistanceZErrorVector;
+  fTrackVertexDistanceXYVector = in.fTrackVertexDistanceXYVector;
+  fTrackVertexDistanceXYErrorVector = in.fTrackVertexDistanceXYErrorVector;
+  fTrackNormalizedChi2Vector = in.fTrackNormalizedChi2Vector;
+  fnHitsTrackerLayerVector = in.fnHitsTrackerLayerVector;
+  fnHitsTrackVector = in.fnHitsTrackVector;
+  fTrackEnergyEcalVector = in.fTrackEnergyEcalVector;
+  fTrackEnergyHcalVector = in.fTrackEnergyHcalVector;
   
   return *this;
 }
@@ -323,8 +388,12 @@ void HighForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
     fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
     fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
-    fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-    fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+    if(fIsMiniAOD){
+      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the MiniAOD forests.
+    } else {
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+    }
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
   } else if (fDataType == kPbPb || fDataType == kPbPbMC){ // PbPb data or MC
@@ -334,12 +403,21 @@ void HighForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
     
     // Cut on noise on HCAL
-    fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-    fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    
-    // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-    fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
-    fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+    if(fIsMiniAOD){
+      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the MiniAOD forests.
+      
+      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+      fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
+      fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+    } else {
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      
+      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+      fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
+      fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+    }
     
     // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
     fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
@@ -356,50 +434,89 @@ void HighForestReader::Initialize(){
   
   // Connect the branches to the track tree
   if(fReadTrackTree){
+    
     fTrackTree->SetBranchStatus("*",0);
-    fTrackTree->SetBranchStatus("trkPt",1);
-    fTrackTree->SetBranchAddress("trkPt",&fTrackPtArray,&fTrackPtBranch);
-    fTrackTree->SetBranchStatus("trkPtError",1);
-    fTrackTree->SetBranchAddress("trkPtError",&fTrackPtErrorArray,&fTrackPtErrorBranch);
-    fTrackTree->SetBranchStatus("trkPhi",1);
-    fTrackTree->SetBranchAddress("trkPhi",&fTrackPhiArray,&fTrackPhiBranch);
-    fTrackTree->SetBranchStatus("trkEta",1);
-    fTrackTree->SetBranchAddress("trkEta",&fTrackEtaArray,&fTrackEtaBranch);
-    fTrackTree->SetBranchStatus("nTrk",1);
-    fTrackTree->SetBranchAddress("nTrk",&fnTracks,&fnTracksBranch);
-    fTrackTree->SetBranchStatus("highPurity",1);
-    fTrackTree->SetBranchAddress("highPurity",&fHighPurityTrackArray,&fHighPurityTrackBranch);
-    fTrackTree->SetBranchStatus("trkDz1",1);
-    fTrackTree->SetBranchAddress("trkDz1",&fTrackVertexDistanceZArray,&fTrackVertexDistanceZBranch);
-    fTrackTree->SetBranchStatus("trkDzError1",1);
-    fTrackTree->SetBranchAddress("trkDzError1",&fTrackVertexDistanceZErrorArray,&fTrackVertexDistanceZErrorBranch);
-    fTrackTree->SetBranchStatus("trkDxy1",1);
-    fTrackTree->SetBranchAddress("trkDxy1",&fTrackVertexDistanceXYArray,&fTrackVertexDistanceXYBranch);
-    fTrackTree->SetBranchStatus("trkDxyError1",1);
-    fTrackTree->SetBranchAddress("trkDxyError1",&fTrackVertexDistanceXYErrorArray,&fTrackVertexDistanceXYErrorBranch);
-    fTrackTree->SetBranchStatus("trkChi2",1);
-    fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
-    fTrackTree->SetBranchStatus("trkNdof",1);
-    fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
-    fTrackTree->SetBranchStatus("trkNlayer",1);
-    fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
-    fTrackTree->SetBranchStatus("trkNHit",1);
-    fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
-    fTrackTree->SetBranchStatus("pfEcal",1);
-    fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
-    fTrackTree->SetBranchStatus("pfHcal",1);
-    fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
     
-    // Additional information for track cuts
-    fTrackTree->SetBranchStatus("trkAlgo",1);
-    fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
-    fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
-    fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
-    
-    // Track MVA only in PbPb trees
-    if(fDataType == kPbPb || fDataType == kPbPbMC){
-      fTrackTree->SetBranchStatus("trkMVA",1);
-      fTrackTree->SetBranchAddress("trkMVA",&fTrackMVAArray,&fTrackMVABranch);
+    // We need to read the forest to vectors for MiniAODs and to arrays for AODs
+    if(fIsMiniAOD){
+      
+      fTrackTree->SetBranchStatus("trkPt",1);
+      fTrackTree->SetBranchAddress("trkPt",&fTrackPtVector,&fTrackPtBranch);
+      fTrackTree->SetBranchStatus("trkPtError",1);
+      fTrackTree->SetBranchAddress("trkPtError",&fTrackPtErrorVector,&fTrackPtErrorBranch);
+      fTrackTree->SetBranchStatus("trkPhi",1);
+      fTrackTree->SetBranchAddress("trkPhi",&fTrackPhiVector,&fTrackPhiBranch);
+      fTrackTree->SetBranchStatus("trkEta",1);
+      fTrackTree->SetBranchAddress("trkEta",&fTrackEtaVector,&fTrackEtaBranch);
+      fTrackTree->SetBranchStatus("nTrk",1);
+      fTrackTree->SetBranchAddress("nTrk",&fnTracks,&fnTracksBranch);
+      fTrackTree->SetBranchStatus("highPurity",1);
+      fTrackTree->SetBranchAddress("highPurity",&fHighPurityTrackVector,&fHighPurityTrackBranch);
+      fTrackTree->SetBranchStatus("trkDzFirstVtx",1);
+      fTrackTree->SetBranchAddress("trkDzFirstVtx",&fTrackVertexDistanceZVector,&fTrackVertexDistanceZBranch);
+      fTrackTree->SetBranchStatus("trkDzErrFirstVtx",1);
+      fTrackTree->SetBranchAddress("trkDzErrFirstVtx",&fTrackVertexDistanceZErrorVector,&fTrackVertexDistanceZErrorBranch);
+      fTrackTree->SetBranchStatus("trkDxyFirstVtx",1);
+      fTrackTree->SetBranchAddress("trkDxyFirstVtx",&fTrackVertexDistanceXYVector,&fTrackVertexDistanceXYBranch);
+      fTrackTree->SetBranchStatus("trkDxyErrFirstVtx",1);
+      fTrackTree->SetBranchAddress("trkDxyErrFirstVtx",&fTrackVertexDistanceXYErrorVector,&fTrackVertexDistanceXYErrorBranch);
+      fTrackTree->SetBranchStatus("trkNormChi2",1);
+      fTrackTree->SetBranchAddress("trkNormChi2",&fTrackNormalizedChi2Vector,&fTrackChi2Branch);
+      fTrackTree->SetBranchStatus("trkNLayers",1);
+      fTrackTree->SetBranchAddress("trkNLayers",&fnHitsTrackerLayerVector,&fnHitsTrackerLayerBranch);
+      fTrackTree->SetBranchStatus("trkNHits",1);
+      fTrackTree->SetBranchAddress("trkNHits",&fnHitsTrackVector,&fnHitsTrackBranch);
+      fTrackTree->SetBranchStatus("pfEcal",1);
+      fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalVector,&fTrackEnergyEcalBranch);
+      fTrackTree->SetBranchStatus("pfHcal",1);
+      fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalVector,&fTrackEnergyHcalBranch);
+      
+    } else { // Read the tree from AOD files
+      
+      fTrackTree->SetBranchStatus("trkPt",1);
+      fTrackTree->SetBranchAddress("trkPt",&fTrackPtArray,&fTrackPtBranch);
+      fTrackTree->SetBranchStatus("trkPtError",1);
+      fTrackTree->SetBranchAddress("trkPtError",&fTrackPtErrorArray,&fTrackPtErrorBranch);
+      fTrackTree->SetBranchStatus("trkPhi",1);
+      fTrackTree->SetBranchAddress("trkPhi",&fTrackPhiArray,&fTrackPhiBranch);
+      fTrackTree->SetBranchStatus("trkEta",1);
+      fTrackTree->SetBranchAddress("trkEta",&fTrackEtaArray,&fTrackEtaBranch);
+      fTrackTree->SetBranchStatus("nTrk",1);
+      fTrackTree->SetBranchAddress("nTrk",&fnTracks,&fnTracksBranch);
+      fTrackTree->SetBranchStatus("highPurity",1);
+      fTrackTree->SetBranchAddress("highPurity",&fHighPurityTrackArray,&fHighPurityTrackBranch);
+      fTrackTree->SetBranchStatus("trkDz1",1);
+      fTrackTree->SetBranchAddress("trkDz1",&fTrackVertexDistanceZArray,&fTrackVertexDistanceZBranch);
+      fTrackTree->SetBranchStatus("trkDzError1",1);
+      fTrackTree->SetBranchAddress("trkDzError1",&fTrackVertexDistanceZErrorArray,&fTrackVertexDistanceZErrorBranch);
+      fTrackTree->SetBranchStatus("trkDxy1",1);
+      fTrackTree->SetBranchAddress("trkDxy1",&fTrackVertexDistanceXYArray,&fTrackVertexDistanceXYBranch);
+      fTrackTree->SetBranchStatus("trkDxyError1",1);
+      fTrackTree->SetBranchAddress("trkDxyError1",&fTrackVertexDistanceXYErrorArray,&fTrackVertexDistanceXYErrorBranch);
+      fTrackTree->SetBranchStatus("trkChi2",1);
+      fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
+      fTrackTree->SetBranchStatus("trkNdof",1);
+      fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
+      fTrackTree->SetBranchStatus("trkNlayer",1);
+      fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
+      fTrackTree->SetBranchStatus("trkNHit",1);
+      fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
+      fTrackTree->SetBranchStatus("pfEcal",1);
+      fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
+      fTrackTree->SetBranchStatus("pfHcal",1);
+      fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
+      
+      // Additional information for track cuts
+      fTrackTree->SetBranchStatus("trkAlgo",1);
+      fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
+      fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
+      fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
+      
+      // Track MVA only in PbPb trees
+      if(fDataType == kPbPb || fDataType == kPbPbMC){
+        fTrackTree->SetBranchStatus("trkMVA",1);
+        fTrackTree->SetBranchAddress("trkMVA",&fTrackMVAArray,&fTrackMVABranch);
+      }
     }
   } // Reading track trees
   
@@ -409,6 +526,11 @@ void HighForestReader::Initialize(){
  * Connect a new tree to the reader
  */
 void HighForestReader::ReadForestFromFile(TFile *inputFile){
+  
+  // When reading a forest, we need to check if it is AOD or MiniAOD forest as there are some differences
+  // The HiForest tree is renamed to HiForestInfo in MiniAODs, so we can determine the forest type from this.
+  TTree* miniAODcheck = (TTree*)inputFile->Get("HiForestInfo/HiForest");
+  fIsMiniAOD = !(miniAODcheck == NULL);
   
   // Helper variable for finding the correct tree
   const char *treeName[4] = {"none","none","none","none"};
@@ -432,7 +554,13 @@ void HighForestReader::ReadForestFromFile(TFile *inputFile){
     treeName[1] = "ak4PFJetAnalyzer/t";  // Only PF jets in local test file
   }
   fJetTree = (TTree*)inputFile->Get(treeName[fJetType]);
-  if(fReadTrackTree) fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree");
+  if(fReadTrackTree){
+    if(fIsMiniAOD && (fDataType == kPbPb || fDataType == kPbPbMC)){
+      fTrackTree = (TTree*)inputFile->Get("PbPbTracks/trackTree");
+    } else {
+      fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree");
+    }
+  }
   
   Initialize();
 }
@@ -494,76 +622,97 @@ Float_t HighForestReader::GetJetMaxTrackPt(Int_t iJet) const{
 
 // Getter for track pT
 Float_t HighForestReader::GetTrackPt(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackPtVector->at(iTrack);
   return fTrackPtArray[iTrack];
 }
 
 // Getter for track pT error
 Float_t HighForestReader::GetTrackPtError(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackPtErrorVector->at(iTrack);
   return fTrackPtErrorArray[iTrack];
 }
 
 // Getter for track phi
 Float_t HighForestReader::GetTrackPhi(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackPhiVector->at(iTrack);
   return fTrackPhiArray[iTrack];
 }
 
 // Getter for track eta
 Float_t HighForestReader::GetTrackEta(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackEtaVector->at(iTrack);
   return fTrackEtaArray[iTrack];
 }
 
 // Getter for high purity of the track
 Bool_t HighForestReader::GetTrackHighPurity(Int_t iTrack) const{
+  if(fIsMiniAOD) return fHighPurityTrackVector->at(iTrack);
   return fHighPurityTrackArray[iTrack];
 }
 
 // Getter for track distance from primary vertex in z-direction
 Float_t HighForestReader::GetTrackVertexDistanceZ(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackVertexDistanceZVector->at(iTrack);
   return fTrackVertexDistanceZArray[iTrack];
 }
 
 // Getter for error of track distance from primary vertex in z-direction
 Float_t HighForestReader::GetTrackVertexDistanceZError(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackVertexDistanceZErrorVector->at(iTrack);
   return fTrackVertexDistanceZErrorArray[iTrack];
 }
 
 // Getter for track distance from primary vertex in xy-direction
 Float_t HighForestReader::GetTrackVertexDistanceXY(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackVertexDistanceXYVector->at(iTrack);
   return fTrackVertexDistanceXYArray[iTrack];
 }
 
 // Getter for error of track distance from primary vertex in xy-direction
 Float_t HighForestReader::GetTrackVertexDistanceXYError(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackVertexDistanceXYErrorVector->at(iTrack);
   return fTrackVertexDistanceXYErrorArray[iTrack];
+}
+
+// Getter for normalized track chi2 value from reconstruction fit
+Float_t HighForestReader::GetTrackNormalizedChi2(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackNormalizedChi2Vector->at(iTrack);
+  return GetTrackChi2(iTrack) / (1.0*GetNTrackDegreesOfFreedom(iTrack));
 }
 
 // Getter for track chi2 value from reconstruction fit
 Float_t HighForestReader::GetTrackChi2(Int_t iTrack) const{
+  if(fIsMiniAOD) return -1; // Does not exist in MiniAOD forest
   return fTrackChi2Array[iTrack];
 }
 
 // Getter for number of degrees of freedom in reconstruction fit
 Int_t HighForestReader::GetNTrackDegreesOfFreedom(Int_t iTrack) const{
+  if(fIsMiniAOD) return -1; // Does not exist in MiniAOD forest
   return fnTrackDegreesOfFreedomArray[iTrack];
 }
 
 // Getter for number of hits in tracker layers
 Int_t HighForestReader::GetNHitsTrackerLayer(Int_t iTrack) const{
+  if(fIsMiniAOD) return fnHitsTrackerLayerVector->at(iTrack);
   return fnHitsTrackerLayerArray[iTrack];
 }
 
 // Getter for number of hits for the track
 Int_t HighForestReader::GetNHitsTrack(Int_t iTrack) const{
+  if(fIsMiniAOD) return fnHitsTrackVector->at(iTrack);
   return fnHitsTrackArray[iTrack];
 }
 
 // Getter for track energy in ECal
 Float_t HighForestReader::GetTrackEnergyEcal(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackEnergyEcalVector->at(iTrack);
   return fTrackEnergyEcalArray[iTrack];
 }
 
 // Getter for track energy in HCal
 Float_t HighForestReader::GetTrackEnergyHcal(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackEnergyHcalVector->at(iTrack);
   return fTrackEnergyHcalArray[iTrack];
 }
 
@@ -584,16 +733,19 @@ Int_t HighForestReader::GetTrackMCStatus(Int_t iTrack) const{
 
 // Getter for track algorithm
 Int_t HighForestReader::GetTrackAlgorithm(Int_t iTrack) const{
+  if(fIsMiniAOD) return 0; // Does not exist in MiniAOD forest
   return fTrackAlgorithmArray[iTrack];
 }
 
 // Getter for track original algorithm
 Int_t HighForestReader::GetTrackOriginalAlgorithm(Int_t iTrack) const{
+  if(fIsMiniAOD) return 0; // Does not exist in MiniAOD forest
   return fTrackOriginalAlgorithmArray[iTrack];
 }
 
 // Getter for track MVA
 Float_t HighForestReader::GetTrackMVA(Int_t iTrack) const{
+  if(fIsMiniAOD) return 1; // Does not exist in MiniAOD forest
   return fTrackMVAArray[iTrack];
 }
 

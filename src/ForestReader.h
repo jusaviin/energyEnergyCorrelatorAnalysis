@@ -87,6 +87,7 @@ public:
   virtual Float_t GetTrackVertexDistanceZError(Int_t iTrack) const = 0;  // Getter for error of track distance from primary vertex in z-direction
   virtual Float_t GetTrackVertexDistanceXY(Int_t iTrack) const = 0;      // Getter for track distance from primary vertex in xy-direction
   virtual Float_t GetTrackVertexDistanceXYError(Int_t iTrack) const = 0; // Getter for error of track distance from primary vertex in xy-direction
+  virtual Float_t GetTrackNormalizedChi2(Int_t iTrack) const = 0;        // Getter for normalized track chi2 value from reconstruction fit
   virtual Float_t GetTrackChi2(Int_t iTrack) const = 0;                  // Getter for track chi2 value from reconstruction fit
   virtual Int_t GetNTrackDegreesOfFreedom(Int_t iTrack) const = 0;       // Getter for number of degrees of freedom in reconstruction fit
   virtual Int_t GetNHitsTrackerLayer(Int_t iTrack) const = 0;            // Getter for number of hits in tracker layers
@@ -115,6 +116,7 @@ protected:
   Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = Leading particle flow candidate, 2 = WTA
   Bool_t fMatchJets;      // Match generator and reconstructed level jets
   Bool_t fReadTrackTree;  // Read the track trees from the forest
+  Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
   
   // Branches for heavy ion tree
   TBranch *fHiVzBranch;                   // Branch for vertex z-position

@@ -766,8 +766,55 @@ void EECAnalyzer::RunAnalysis(){
           
           // No jet quality cuts for generator level jets
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
-            if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets with only very low pT particles
-            if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) continue; // Cut for jets where all the pT is taken by one track
+            
+            // I forgot to include the trackMax branch in the "NewRelease" MC production
+            // This branch in correctly included in default MC and in the data production
+            // But in case we want to use the NEwRelease-files, we need to calculate trackMax manually
+            // The trackMax array is initialized to -1, so if trackMax is exactly -1, we know this branch is not included in the forest.
+            // This piece of code can be removed if NewRelease part of the MC is reforested or is not used anymore.
+            bool isNewReleaseMC = (fJetReader->GetJetMaxTrackPt(jetIndex) == -1);
+                        
+            if(isNewReleaseMC){
+              
+              double manualMaxTrackPt = 0;
+              
+              nTracks = fJetReader->GetNTracks();
+              for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+                
+                // Check that all the track cuts are passed
+                if(!PassTrackCuts(iTrack,fHistograms->fhTrackCuts,true)) continue;
+                
+                // Find the track pT, eta and phi
+                trackPt = fTrackReader->GetTrackPt(iTrack);
+                trackEta = fTrackReader->GetTrackEta(iTrack);
+                trackPhi = fTrackReader->GetTrackPhi(iTrack);
+                
+                // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+                deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+                
+                if(deltaRTrackJet < 0.4){
+                  if(trackPt > manualMaxTrackPt) manualMaxTrackPt = trackPt;
+                }
+                
+              } // Track pT loop for manual calculation
+              
+              if(fMinimumMaxTrackPtFraction >= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)) {
+                continue; // Cut for jets with only very low pT particles
+              }
+              if(fMaximumMaxTrackPtFraction <= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)) {
+                continue; // Cut for jets where all the pT is taken by one track
+              }
+              
+            } else {
+              // Default jet quality cut, used in all other cases expect for NewRelease MC test
+              
+              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) {
+                continue; // Cut for jets with only very low pT particles
+              }
+              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) {
+                continue; // Cut for jets where all the pT is taken by one track
+              }
+            }
           }
           
           // Jet matching between reconstructed and generator level jets
@@ -1633,7 +1680,8 @@ Bool_t EECAnalyzer::PassTrackCuts(const Int_t iTrack, TH1F *trackCutHistogram, c
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
   
   // Cuts for track reconstruction quality
-  if( fTrackReader->GetTrackChi2(iTrack) / (1.0*fTrackReader->GetNTrackDegreesOfFreedom(iTrack)) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  //if( fTrackReader->GetTrackChi2(iTrack) / (1.0*fTrackReader->GetNTrackDegreesOfFreedom(iTrack)) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  if(fTrackReader->GetTrackNormalizedChi2(iTrack) / (1.0*fTrackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
   if(fTrackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
   

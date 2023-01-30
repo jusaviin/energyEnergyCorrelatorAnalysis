@@ -13,6 +13,7 @@ ForestReader::ForestReader() :
   fJetAxis(0),
   fMatchJets(false),
   fReadTrackTree(true),
+  fIsMiniAOD(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -84,6 +85,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fJetAxis(jetAxis),
   fMatchJets(matchJets),
   fReadTrackTree(readTrackTree),
+  fIsMiniAOD(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -149,6 +151,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fJetAxis(in.fJetAxis),
   fMatchJets(in.fMatchJets),
   fReadTrackTree(in.fReadTrackTree),
+  fIsMiniAOD(in.fIsMiniAOD),
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
   fPtHatBranch(in.fPtHatBranch),
@@ -215,6 +218,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fJetAxis = in.fJetAxis;
   fMatchJets = in.fMatchJets;
   fReadTrackTree = in.fReadTrackTree;
+  fIsMiniAOD = in.fIsMiniAOD;
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
   fPtHatBranch = in.fPtHatBranch;
