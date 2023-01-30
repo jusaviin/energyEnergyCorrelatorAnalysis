@@ -592,7 +592,14 @@ void HighForestReader::GetEvent(Int_t nEvent){
   fJetTree->GetEntry(nEvent);
   fHltTree->GetEntry(nEvent);
   fSkimTree->GetEntry(nEvent);
-  if(fReadTrackTree) fTrackTree->GetEntry(nEvent);
+  if(fReadTrackTree) {
+    fTrackTree->GetEntry(nEvent);
+    
+    // For miniAOD, the number of tracks can be deduced from the vectors
+    if(fIsMiniAOD){
+      fnTracks = fTrackPtVector->size();
+    }
+  }
 }
 
 // Getter for jet pT
