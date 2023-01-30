@@ -32,14 +32,14 @@ using namespace std;
  *    std::vector<TString> &fileNameVector = Vector filled with filenames found in the file
  *    TString fileNameFile = Text file containing one analysis file name in each line
  *    int debug = Level of debug messages shown
- *    int locationIndex = Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Use xrootd to find the data
+ *    int locationIndex = Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2,  3 = Use xrootd to find the data
  *    bool runLocal = True: Local run mode. False: Crab run mode
  */
 void ReadFileList(std::vector<TString> &fileNameVector, TString fileNameFile, int debug, int locationIndex, bool runLocal)
 {
   
   // Possible location for the input files
-  const char *fileLocation[] = {"root://xrootd.rcac.purdue.edu/","root://eoscms.cern.ch/","root://cmsxrootd.fnal.gov/"};
+  const char *fileLocation[] = {"root://xrootd.rcac.purdue.edu/", "root://eoscms.cern.ch/", "root://xrootd-vanderbilt.sites.opensciencegrid.org", "root://cmsxrootd.fnal.gov/"};
   
   // Set up the file names file for reading
   ifstream file_stream(fileNameFile);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     cout<<"+  fileNameFile: Text file containing the list of files used in the analysis. For crab analysis a job id should be given here." <<endl;
     cout<<"+  configurationCard: Card file with binning and cut information for the analysis." <<endl;
     cout<<"+  outputFileName: .root file to which the histograms are written." <<endl;
-    cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Use xrootd to find the data." << endl;
+    cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data." << endl;
     cout<<"+  runLocal: True: Search input files from local machine. False (default): Search input files from grid with xrootd." << endl;
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
     cout << endl << endl;
