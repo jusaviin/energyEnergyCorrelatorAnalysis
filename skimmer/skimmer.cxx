@@ -349,11 +349,11 @@ int main(int argc,char *argv[]){
   // Connect the branches of the HiForestInfo tree
   hiForestInfoTree->SetBranchStatus("*",0);
   hiForestInfoTree->SetBranchStatus("info_0",1);
-  hiForestInfoTree->SetBranchAddress("info_0",&infoString,&infoBranch);
+  hiForestInfoTree->SetBranchAddress("info_0",infoString.data(),&infoBranch);
   hiForestInfoTree->SetBranchStatus("HiForestVersion",1);
-  hiForestInfoTree->SetBranchAddress("HiForestVersion",&versionString,&versionBranch);
+  hiForestInfoTree->SetBranchAddress("HiForestVersion",versionString.data(),&versionBranch);
   hiForestInfoTree->SetBranchStatus("GlobalTag",1);
-  hiForestInfoTree->SetBranchAddress("GlobalTag",&globalTagString,&globalTagBranch);
+  hiForestInfoTree->SetBranchAddress("GlobalTag",globalTagString.data(),&globalTagBranch);
   
   // Connect the branches of the heavy ion tree
   heavyIonTree->SetBranchStatus("*",0);
@@ -736,6 +736,10 @@ int main(int argc,char *argv[]){
   bool passTrackCuts;
   bool passJetCuts;
   int iJetOutput;
+  
+  // There is only one HiForestInfo for the whole forest, so read that before event loop
+  hiForestInfoTree->GetEntry(0);
+  hiForestInfoTreeOutput->Fill();
   
   for(int iEvent = 0; iEvent < nEvents; iEvent++) {
     
