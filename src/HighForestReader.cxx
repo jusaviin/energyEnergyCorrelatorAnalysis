@@ -352,8 +352,10 @@ void HighForestReader::Initialize(){
   // skimanalysis/HltTree           pBeamScrapingFilter           Event selection for pp
   
   // Connect the branches to the HLT tree
-  fHltTree->SetBranchStatus("*",0);
   if(fUseJetTrigger){
+    
+    fHltTree->SetBranchStatus("*",0);
+    
     if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
       
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1",1); // 2017 syntax
@@ -590,7 +592,7 @@ void HighForestReader::BurnForest(){
 void HighForestReader::GetEvent(Int_t nEvent){
   fHeavyIonTree->GetEntry(nEvent);
   fJetTree->GetEntry(nEvent);
-  fHltTree->GetEntry(nEvent);
+  if(fUseJetTrigger) fHltTree->GetEntry(nEvent);
   fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) {
     fTrackTree->GetEntry(nEvent);
