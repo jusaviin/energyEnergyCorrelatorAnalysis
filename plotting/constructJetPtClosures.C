@@ -11,7 +11,7 @@
  *
  *  return: Gauss mean, Gauss sigma, Error for Gauss mean, Error for Gauss sigma
  */
-std::tuple<double,double,double,double> fitGauss(TH1* histogram, TString title = "", TString bin = "", TString saveName = ""){
+std::tuple<double,double,double,double> fitGauss(TH1* histogram, TString title = "", TString jetTypeString = "", TString centralityBin = "", TString ptBin = "",  TString saveName = ""){
   histogram->Fit("gaus","","",0.5,1.5);
   TF1 * gaussFit = histogram->GetFunction("gaus");
   
@@ -31,10 +31,12 @@ std::tuple<double,double,double,double> fitGauss(TH1* histogram, TString title =
   if(!title.EqualTo("")){
     JDrawer *temporaryDrawer = new JDrawer();
     temporaryDrawer->DrawHistogram(histogram,"Reco p_{T} / Gen p_{T}","Counts", " ");
-    TLegend *legend = new TLegend(0.62,0.7,0.85,0.85);
+    TLegend *legend = new TLegend(0.57,0.68,0.8,0.93);
     legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
     legend->SetHeader(title);
-    legend->AddEntry(histogram,bin,"l");
+    legend->AddEntry((TObject*)0, jetTypeString, "");
+    legend->AddEntry((TObject*)0, centralityBin, "");
+    legend->AddEntry((TObject*)0, ptBin, "");
     legend->Draw();
     
     if(!saveName.EqualTo("")){
@@ -55,10 +57,11 @@ std::tuple<double,double,double,double> fitGauss(TH1* histogram, TString title =
  *  bool ppData = Are we using pp od PbPb data in closure plotting
  *  int iCentrality = Index of the centrality bin
  *  int legendNzoom = Define the y-axis zoom and the legend position in the plot
+ *  bool includeQuarkGluon = Flag for including quark and gluon jet only closures
  *  const char* saveComment = Comment given to the save name file
  *  bool saveFigures = Choose whether to save the figures or not
  */
-void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+1], const char* xTitle, const char* yTitle, bool ppData, int iCentrality, int legendNzoom, const char* saveComment, bool saveFigures){
+void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+1], const char* xTitle, const char* yTitle, bool ppData, int iCentrality, int legendNzoom, bool includeQuarkGluon, const char* saveComment, bool saveFigures){
   
   // Create a new drawer and define bin borders and drawing style
   JDrawer *drawer = new JDrawer();
@@ -68,7 +71,7 @@ void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+
   const char* centralitySaveName;
   const char* namer;
   int lineColors[2] = {kBlue,kRed};
-  const char* particleNames[2] = {"Quark","Gluon"};
+  const char* particleNames[2] = {"Quark jets","Gluon jets"};
   
   // Zooming and legend position options
   double yZoomLow = 0.9;
@@ -107,7 +110,7 @@ void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+
   
   if(ppData){
     centralityString = ", pp";
-    centralitySaveName = "";
+    centralitySaveName = "_pp";
   } else {
     centralityString = Form(", Cent:%.0f-%.0f", centralityBinBorders[iCentrality], centralityBinBorders[iCentrality+1]);
     centralitySaveName = Form("_C=%.0f-%.0f", centralityBinBorders[iCentrality], centralityBinBorders[iCentrality+1]);
@@ -115,13 +118,15 @@ void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+
   
   namer = Form("Inclusive jet%s", centralityString);
   legend->SetHeader(namer);
-  legend->AddEntry(histogram[EECHistograms::knClosureParticleTypes],"All particles","l");
+  legend->AddEntry(histogram[EECHistograms::knClosureParticleTypes],"All jets","l");
   
-  for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes; iClosureParticle++){
-    histogram[iClosureParticle]->SetLineColor(lineColors[iClosureParticle]);
-    histogram[iClosureParticle]->Draw("same");
-    legend->AddEntry(histogram[iClosureParticle],particleNames[iClosureParticle],"l");
-  } // Closure particle loop (quark/gluon)
+  if(includeQuarkGluon){
+    for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes; iClosureParticle++){
+      histogram[iClosureParticle]->SetLineColor(lineColors[iClosureParticle]);
+      histogram[iClosureParticle]->Draw("same");
+      legend->AddEntry(histogram[iClosureParticle],particleNames[iClosureParticle],"l");
+    } // Closure particle loop (quark/gluon)
+  }
   
   legend->Draw();
   
@@ -142,14 +147,21 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root";
+  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root";
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAODnewR_4pC_wtaAxis_noTrigger_jetPtClosure_processed_2023-01-30.root
+  // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noCorrelations_jetPtClosures_processed_2022-01-13.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akCsPfJets_4pC_wtaAxis_noCorr_jetPtClosure_processed_2022-01-16.root
   
   bool drawPtClosure = true;
-  bool drawEtaClosure = true;
+  bool drawEtaClosure = false;
+  
+  bool includeQuarkGluon = false; // Include only quark and only gluon jet curves
+  bool drawGaussFitsPt = false;
     
   bool fitResolution = false;  // Fit the jet pT resolution histograms
   
-  bool saveFigures = false;  // Save the figures to file
+  bool saveFigures = true;  // Save the figures to file
   
   // ==================================================================
   // =================== Configuration ready ==========================
@@ -208,10 +220,16 @@ void constructJetPtClosures(){
   double gaussMeanError = 0;
   double gaussSigmaError = 0;
   int minGenPt = 7;  // Set this to 7 to skip bins below 120 GeV
+  TString genPtString;
+  TString centralityString;
+  TString jetTypeName[EECHistograms::knClosureParticleTypes+1] = {"Quark", "Gluon", "All"};
+  TString jetTypeString;
+  TString gaussFitSaveString;
   
   // Read the reco/gen histograms from the file and fit them to construct the closure plots
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
     for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
+      if(iClosureParticle < EECHistograms::knClosureParticleTypes && !includeQuarkGluon) continue; // Only create the quark and gluon curves if selected
       if(drawPtClosure){
         for(int iGenJetPt = minGenPt; iGenJetPt < EECHistogramManager::knGenJetPtBins; iGenJetPt++){
 
@@ -219,7 +237,15 @@ void constructJetPtClosures(){
           hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(iGenJetPt, EECHistogramManager::knJetEtaBins, iCentrality, iClosureParticle);
           
           // Fit a gauss to the histogram
-          std::tie(gaussMean,gaussSigma,gaussMeanError,gaussSigmaError) = fitGauss(hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle]);
+          if(drawGaussFitsPt){
+            genPtString = Form("%d < Gen p_{T} < %d", 50+10*iGenJetPt, 60+10*iGenJetPt);
+            centralityString = Form("Cent: %.0f-%.0f", centralityBinBorders[iCentrality], centralityBinBorders[iCentrality+1]);
+            jetTypeString = Form("%s jets", jetTypeName[iClosureParticle].Data());
+            gaussFitSaveString = Form("figures/jetPtClosureGaussFit%sJets_T%dC%d.pdf", jetTypeName[iClosureParticle].Data(), iGenJetPt, iCentrality);
+            std::tie(gaussMean,gaussSigma,gaussMeanError,gaussSigmaError) = fitGauss(hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle], " ", jetTypeString, centralityString, genPtString, gaussFitSaveString);
+          } else {
+            std::tie(gaussMean,gaussSigma,gaussMeanError,gaussSigmaError) = fitGauss(hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle]);
+          }
           
           // Fill the histogram with the fit parameters
           hJetPtClosure[iCentrality][iClosureParticle]->SetBinContent(iGenJetPt+1,gaussMean);
@@ -273,17 +299,17 @@ void constructJetPtClosures(){
   
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
     if(drawPtClosure){
-      drawClosureHistogram(hJetPtClosure[iCentrality], "Gen p_{T} (GeV)", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, "PtClosure", saveFigures);
+      drawClosureHistogram(hJetPtClosure[iCentrality], "Gen p_{T} (GeV)", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, includeQuarkGluon, "PtClosureMiniAOD", saveFigures);
       
-      drawClosureHistogram(hJetPtClosureSigma[iCentrality], "Gen p_{T} (GeV)", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, "PtResolution", saveFigures);
+      drawClosureHistogram(hJetPtClosureSigma[iCentrality], "Gen p_{T} (GeV)", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "PtResolutionMiniAOD", saveFigures);
       
       hJetPtClosureSigma[iCentrality][2]->Write();
     }
     
     if(drawEtaClosure){
-      drawClosureHistogram(hJetPtClosureEta[iCentrality], "#eta", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, "EtaClosureGenDijet", saveFigures);
+      drawClosureHistogram(hJetPtClosureEta[iCentrality], "#eta", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, includeQuarkGluon, "EtaClosure", saveFigures);
       
-      drawClosureHistogram(hJetPtClosureSigmaEta[iCentrality], "#eta", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, "EtaResolutionGenDijet", saveFigures);
+      drawClosureHistogram(hJetPtClosureSigmaEta[iCentrality], "#eta", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "EtaResolution", saveFigures);
       
     }
     
