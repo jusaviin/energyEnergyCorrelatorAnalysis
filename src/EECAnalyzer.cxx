@@ -54,7 +54,8 @@ EECAnalyzer::EECAnalyzer() :
   fCard(0),
   fHistograms(0),
   fVzWeightFunction(0),
-  fCentralityWeightFunction(0),
+  fCentralityWeightFunctionCentral(0),
+  fCentralityWeightFunctionPeripheral(0),
   fMultiplicityWeightFunction(0),
   fPtWeightFunction(0),
   fSmearingFunction(0),
@@ -168,7 +169,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     // Weight function for 2017 MC
     fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
     fVzWeightFunction->SetParameters(0.973805, 0.00339418, 0.000757544, -1.37331e-06, -2.82953e-07, -3.06778e-10, 3.48615e-09);
-    fCentralityWeightFunction = NULL;
+    fCentralityWeightFunctionCentral = NULL;
+    fCentralityWeightFunctionPeripheral = NULL;
     fMultiplicityWeightFunction = NULL;
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
@@ -176,13 +178,21 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     // Track correction for 2018 PbPb data
     fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", false, "trackCorrectionTables/PbPb2018/");
     
-    // Common vz weight function used by UIC group for PbPb MC
+    // The vz weight function is rederived from the miniAOD dataset.
+    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: f95771aa3242a7a9ed385c1ff364500481088eec
+    // Input files: eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root
+    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root
     fVzWeightFunction = new TF1("fvz","pol6",-15,15);
-    fVzWeightFunction->SetParameters(1.00656, -0.0193651, 0.000976851, -1.043e-05, -9.79808e-06, 9.07733e-08, 1.79165e-08); // Parameters for 2018 MC
+    fVzWeightFunction->SetParameters(1.0082, -0.0190011, 0.000779051, -2.15118e-05, -6.70894e-06, 1.47181e-07, 6.65274e-09);
     
-    // Common centrality weight function used by UIC group for 2018 PbPb MC
-    fCentralityWeightFunction = new TF1("fcent","pol6",0,90);
-    fCentralityWeightFunction->SetParameters(4.64945,-0.201337, 0.00435794,-7.00799e-05,8.18299e-07,-5.52604e-09,1.54472e-11);
+    // The centrality weight function is rederived for the miniAOD dataset.
+    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: f95771aa3242a7a9ed385c1ff364500481088eec
+    // Input files: eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root
+    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root
+    fCentralityWeightFunctionCentral = new TF1("fCentralWeight","pol6",0,30);
+    fCentralityWeightFunctionCentral->SetParameters(4.44918,-0.0544424, -0.0248668,0.00254486,-0.000117819,2.65985e-06,-2.35606e-08);
+    fCentralityWeightFunctionPeripheral = new TF1("fPeripheralWeight","pol6",30,90);
+    fCentralityWeightFunctionPeripheral->SetParameters(3.41938,-0.0643178, -0.00186948,7.67356e-05,-1.06981e-06,7.04102e-09,-1.84554e-11);
     
     // Multiplicity based weight function
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
@@ -190,7 +200,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     
   } else {
     fVzWeightFunction = NULL;
-    fCentralityWeightFunction = NULL;
+    fCentralityWeightFunctionCentral = NULL;
+    fCentralityWeightFunctionPeripheral = NULL;
     fMultiplicityWeightFunction = NULL;
   }
   
@@ -210,7 +221,8 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fCard(in.fCard),
   fHistograms(in.fHistograms),
   fVzWeightFunction(in.fVzWeightFunction),
-  fCentralityWeightFunction(in.fCentralityWeightFunction),
+  fCentralityWeightFunctionCentral(in.fCentralityWeightFunctionCentral),
+  fCentralityWeightFunctionPeripheral(in.fCentralityWeightFunctionPeripheral),
   fMultiplicityWeightFunction(in.fMultiplicityWeightFunction),
   fPtWeightFunction(in.fPtWeightFunction),
   fSmearingFunction(in.fSmearingFunction),
@@ -277,7 +289,8 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fCard = in.fCard;
   fHistograms = in.fHistograms;
   fVzWeightFunction = in.fVzWeightFunction;
-  fCentralityWeightFunction = in.fCentralityWeightFunction;
+  fCentralityWeightFunctionCentral = in.fCentralityWeightFunctionCentral;
+  fCentralityWeightFunctionPeripheral = in.fCentralityWeightFunctionPeripheral;
   fMultiplicityWeightFunction = in.fMultiplicityWeightFunction;
   fPtWeightFunction = in.fPtWeightFunction;
   fSmearingFunction = in.fSmearingFunction;
@@ -340,7 +353,8 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetCorrector2018) delete fJetCorrector2018;
   if(fJetUncertainty2018) delete fJetUncertainty2018;
   if(fReflectedConeWeighter) delete fReflectedConeWeighter;
-  if(fCentralityWeightFunction) delete fCentralityWeightFunction;
+  if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
+  if(fCentralityWeightFunctionPeripheral) delete fCentralityWeightFunctionPeripheral;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
   if(fPtWeightFunction) delete fPtWeightFunction;
   if(fSmearingFunction) delete fSmearingFunction;
@@ -1464,8 +1478,9 @@ Double_t EECAnalyzer::GetVzWeight(const Double_t vz) const{
 Double_t EECAnalyzer::GetCentralityWeight(const Int_t hiBin) const{
   if(fDataType != ForestReader::kPbPbMC) return 1;
   
-  // No weighting for the most peripheral centrality bins
-  return (hiBin < 194) ? fCentralityWeightFunction->Eval(hiBin/2.0) : 1;
+  // No weighting for the most peripheral centrality bins. Different weight function for central and peripheral.
+  if(hiBin < 60) return fCentralityWeightFunctionCentral->Eval(hiBin/2.0);
+  return (hiBin < 194) ? fCentralityWeightFunctionPeripheral->Eval(hiBin/2.0) : 1;
 }
 
 /*

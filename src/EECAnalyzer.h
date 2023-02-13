@@ -75,21 +75,22 @@ private:
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
   
   // Private data members
-  ForestReader *fJetReader;            // Reader for jets in the event
-  ForestReader *fTrackReader;          // Readers for tracks in the event
-  std::vector<TString> fFileNames;     // Vector for all the files to loop over
-  ConfigurationCard *fCard;            // Configuration card for the analysis
-  EECHistograms *fHistograms;        // Filled histograms
-  TF1 *fVzWeightFunction;              // Weighting function for vz. Needed for MC.
-  TF1 *fCentralityWeightFunction;      // Weighting function for centrality. Needed for MC.
-  TF1 *fMultiplicityWeightFunction;    // Track multiplicity based weighting function. Can be done instead of centrality weight.
-  TF1 *fPtWeightFunction;              // Weighting function for jet pT. Needed for MC.
-  TF1 *fSmearingFunction;              // Additional smearing for jets. Needed in systematic uncertainty study.
+  ForestReader *fJetReader;                 // Reader for jets in the event
+  ForestReader *fTrackReader;               // Readers for tracks in the event
+  std::vector<TString> fFileNames;          // Vector for all the files to loop over
+  ConfigurationCard *fCard;                 // Configuration card for the analysis
+  EECHistograms *fHistograms;               // Filled histograms
+  TF1 *fVzWeightFunction;                   // Weighting function for vz. Needed for MC.
+  TF1 *fCentralityWeightFunctionCentral;    // Weighting function for central centrality classes. Needed for MC.
+  TF1 *fCentralityWeightFunctionPeripheral; // Weighting function for peripheral centrality classes. Needed for MC.
+  TF1 *fMultiplicityWeightFunction;         // Track multiplicity based weighting function. Can be done instead of centrality weight.
+  TF1 *fPtWeightFunction;                   // Weighting function for jet pT. Needed for MC.
+  TF1 *fSmearingFunction;                   // Additional smearing for jets. Needed in systematic uncertainty study.
   TrackingEfficiencyInterface *fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
-  JetCorrector *fJetCorrector2018;     // Class for making jet energy correction for 2018 data
-  JetUncertainty *fJetUncertainty2018; // Class for finding uncertainty for jet pT for 2018 data
+  JetCorrector *fJetCorrector2018;          // Class for making jet energy correction for 2018 data
+  JetUncertainty *fJetUncertainty2018;      // Class for finding uncertainty for jet pT for 2018 data
   ReflectedConeWeight *fReflectedConeWeighter;  // Class for weighting the tracks in the reflected cone
-  TRandom3 *fRng;                      // Random number generator
+  TRandom3 *fRng;                           // Random number generator
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
