@@ -322,8 +322,8 @@ void HighForestReader::Initialize(){
   if(fDataType > kPbPb){
     fJetTree->SetBranchStatus("refpt",1);
     fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
-    fJetTree->SetBranchStatus("refparton_flavor",1);
-    fJetTree->SetBranchAddress("refparton_flavor",&fJetRefFlavorArray,&fJetRefFlavorBranch);
+    fJetTree->SetBranchStatus("refparton_flavorForB",1);
+    fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
     fJetTree->SetBranchStatus("genpt",1);
     fJetTree->SetBranchAddress("genpt",&fMatchedJetPtArray,&fJetMatchedPtBranch);
     
@@ -413,8 +413,9 @@ void HighForestReader::Initialize(){
       fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
       
     } else {
-      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      //fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      //fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      fHBHENoiseFilterBit = 1; // For testing purpose, set this to 1
       
       // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
       fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);

@@ -180,8 +180,8 @@ void GeneratorLevelForestReader::Initialize(){
   if(fMatchJets){
     fJetTree->SetBranchStatus("refpt",1);
     fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
-    fJetTree->SetBranchStatus("refparton_flavor",1);
-    fJetTree->SetBranchAddress("refparton_flavor",&fJetRefFlavorArray,&fJetRefFlavorBranch);
+    fJetTree->SetBranchStatus("refparton_flavorForB",1);
+    fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
     fJetTree->SetBranchStatus("jtpt",1);
     fJetTree->SetBranchAddress("jtpt",&fRecoJetPtArray,&fJetMatchedPtBranch);
     fJetTree->SetBranchStatus("rawpt",1);
