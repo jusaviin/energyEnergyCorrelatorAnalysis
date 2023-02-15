@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = { "data/eecAnalysis_akFlowJets_wtaAxis_onlyJets_noHBHEtest_2023-02-13.root", "data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root"};
+  TString inputFileName[] = {"veryCoolDataNormal.root", "veryCoolData.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"AOD, 1033p1x01", "MiniAOD, 1031x02", "R and pT match", "No high pT hydjet"};
+  TString legendComment[] = {"MiniAOD, 1031x02", "MiniAOD, manual", "No high pT hydjet"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
