@@ -70,17 +70,17 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // track pT in energy-energy correlators = {0.7,1,2,3,4,6,300}
   
   // Bin range to be drawn
-  int firstDrawnCentralityBin = 3;
-  int lastDrawnCentralityBin = 3;
+  int firstDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = 0;
   
   int firstDrawnTrackPtBin = 0;
-  int lastDrawnTrackPtBin = nTrackPtBins-1;
+  int lastDrawnTrackPtBin = 0;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 3;
-  int lastDrawnTrackPtBinEEC = 3;
+  int firstDrawnTrackPtBinEEC = 1;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -94,19 +94,19 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which processed energy-energy correlators to draw
   const bool drawEnergyEnergyCorrelatorNormalized = false;    // Draw normalized energy-energy correlators
   const bool drawEnergyEnergyCorrelatorBackground = false;   // Draw normalized energy-energy correlator background estimate
-  const bool drawEnergyEnergyCorrelatorSignal = true;       // Draw background subtracted energy-energy correlators
+  const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
   
   // Figure saving
   const bool saveFigures = false;
   const char* figureFormat = "png";
-  TString figureNameSuffix = "_test";
+  TString figureNameSuffix = "_badRegion";
   
   // Logarithmic scales for figures
   const bool logPt = true;          // pT distributions
@@ -123,10 +123,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = false;
+  bool drawEnergyEnergyCorrelatorsSubevent = true;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection

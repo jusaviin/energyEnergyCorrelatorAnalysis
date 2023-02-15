@@ -193,12 +193,14 @@ void EECComparingDrawer::DrawEventInformation(){
   DrawToUpperPad("Centrality percentile", "Counts");
   
   // Add a legend to the plot
-  legend = new TLegend(0.6,0.5,0.9,0.85);
-  SetupLegend(legend, "All events");
+  legend = new TLegend(0.48,0.48,0.78,0.83);
+  SetupLegend(legend, "Events passing cuts");
   legend->Draw();
   
   // Draw the ratios to the lower portion of the split canvas
+  fDrawer->SetGridY(true);
   DrawToLowerPad("Centrality percentile","Ratio",fRatioZoomMin,fRatioZoomMax);
+  fDrawer->SetGridY(false);
   
   // Save the figure to a file
   SaveFigure("centralityInAllEvents");
@@ -215,12 +217,14 @@ void EECComparingDrawer::DrawEventInformation(){
   DrawToUpperPad("Centrality percentile", "Counts");
   
   // Add a legend to the plot
-  legend = new TLegend(0.6,0.5,0.9,0.85);
+  legend = new TLegend(0.48,0.48,0.78,0.83);
   SetupLegend(legend, "All events weighted");
   legend->Draw();
   
   // Draw the ratios to the lower portion of the split canvas
+  fDrawer->SetGridY(true);
   DrawToLowerPad("Centrality percentile","Ratio",fRatioZoomMin,fRatioZoomMax);
+  fDrawer->SetGridY(false);
   
   // Save the figure to a file
   SaveFigure("centralityInAllEventsWeighted");

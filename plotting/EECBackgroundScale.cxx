@@ -45,9 +45,9 @@ void EECBackgroundScale::InitializeArrays(){
   // We know that in this case fake+fake contribution is not properly modeled, but this contribution is negligible in the region
   // Track pT > 2 GeV and DeltaR < 0.4. We also know that there is a bias in reconstruction jets on upwards fluctuations of background.
   // To take the fluctuations into account and to mitigate the mismodeling of the fake+fake part, we look at the integrals of
-  // true background and the reflected cone background estimate in the region DeltaR < 0.4 and calculate theur ration.
+  // true background and the reflected cone background estimate in the region DeltaR < 0.4 and calculate their ratio.
   // This ratio now reflects excess fluctuations below the jet peak in Monte Carlo. Assuming the ratio is similar in data,
-  // the reflected cone estimate from data can be scaled with this number to get a good estimate of the absolute background level,
+  // the reflected cone estimate from data can be scaled with this number to get a good estimate of the absolute background level.
   //
   // The file that was used for the study is data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root
   // The macro for the study is findBackgroundNormalizationScale.C

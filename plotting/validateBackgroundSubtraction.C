@@ -10,6 +10,9 @@ void validateBackgroundSubtraction(){
 
   // Open the input file
   TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root";
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -44,7 +47,7 @@ void validateBackgroundSubtraction(){
   int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -71,7 +74,7 @@ void validateBackgroundSubtraction(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "";   // Comment given for this specific file
+  const char* saveComment = "_genLevelCheck";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms

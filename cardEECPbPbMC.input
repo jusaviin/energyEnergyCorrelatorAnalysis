@@ -4,14 +4,14 @@
 DataType 3  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 
 # Select correlation type for Monte Carlo runs (Jet-Track)
-McCorrelationType 1 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
-MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Match dijets. 3 = Match leading jets. 4 = Anti-match dijets. 5 = Anti-match leading jets. 6 = Find the matching dijet, but do not require analysis cuts from it
+McCorrelationType 3 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
+MatchJets 1 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Match dijets. 3 = Match leading jets. 4 = Anti-match dijets. 5 = Anti-match leading jets. 6 = Find the matching dijet, but do not require analysis cuts from it
 
 # Select if you want to use the jet trigger
 UseJetTrigger 0   # 0 = No trigger, 1 = Use jet trigger
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 127 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -62,7 +62,7 @@ PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
 DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone
-ApplyReflectedConeWeight 1 # 0 = Do not weight reflected cone particles, 1 = Weight reflected cone particles
+ApplyReflectedConeWeight 0 # 0 = Do not weight reflected cone particles, 1 = Weight reflected cone particles
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

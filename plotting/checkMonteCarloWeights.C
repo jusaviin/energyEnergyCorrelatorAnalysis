@@ -12,11 +12,13 @@ void checkMonteCarloWeights(){
   
   // Data and MC files for the comparison
   TString fileName[knDataTypes];
-  fileName[kData] = "data/ppData_pfJets_wtaAxis_processed_2022-12-16.root";
-  fileName[kMC] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_processed_2023-01-09.root";
+  fileName[kData] = "data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root";
+  fileName[kMC] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root";
   
   // Some PbPb files
+  // data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   
   // Some pp files
