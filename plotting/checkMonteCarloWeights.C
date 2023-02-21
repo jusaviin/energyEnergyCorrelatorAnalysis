@@ -59,14 +59,14 @@ void checkMonteCarloWeights(){
   for(int iFile = 0; iFile < knDataTypes; iFile++){
     histograms[iFile] = new EECHistogramManager(inputFile[iFile]);
     
-    // Choose the enent information histograms to load
+    // Choose the event information histograms to load
     histograms[iFile]->SetLoadEventInformation(true);
     
     // Load the histograms from the file
     histograms[iFile]->LoadProcessedHistograms();
   }
   
-  // Loaded event information histograms used to check the MC weightd
+  // Loaded event information histograms used to check the MC weighted
   TH1D* hVz[knDataTypes+1]; // Vz distribution
   TH1D* hVzRatio[2];        // Ratios of data to MC vz distributions
   TH1D* hCentrality[knDataTypes+1]; // Ratio between true and extracted signal
