@@ -199,6 +199,7 @@ public:
   TH1D* GetHistogramVertexZ() const;            // Getter for z-vertex histogram
   TH1D* GetHistogramVertexZWeighted() const;    // Getter for weighted z-vertex histogram
   TH1D* GetHistogramEvents() const;             // Getter for histogram for number of events surviving different event cuts
+  TH1D* GetHistogramTriggers() const;           // Getter for histogram for trigger selection
   TH1D* GetHistogramTrackCuts() const;          // Getter for histogram for number of tracks surviving different track cuts
   TH1D* GetHistogramCentrality() const;         // Getter for centrality histogram in all events
   TH1D* GetHistogramCentralityWeighted() const; // Getter for weighted centrality histogram in all events
@@ -324,6 +325,7 @@ private:
   TH1D *fhVertexZ;            // Vertex z position
   TH1D *fhVertexZWeighted;    // Weighted vertex z-position (only meaningfull for MC)
   TH1D *fhEvents;             // Number of events surviving different event cuts
+  TH1D *fhTriggers;           // Trigger selection for the events
   TH1D *fhTrackCuts;          // Number of tracks surviving different track cuts
   TH1D *fhCentrality;         // Centrality of all events
   TH1D *fhCentralityWeighted; // Weighted centrality distribution in all events (only meaningful for MC)

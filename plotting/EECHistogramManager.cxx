@@ -81,6 +81,7 @@ EECHistogramManager::EECHistogramManager() :
   fhVertexZ = NULL;            // Vertex z position
   fhVertexZWeighted = NULL;    // Weighted vertex z-position (only meaningfull for MC)
   fhEvents = NULL;             // Number of events surviving different event cuts
+  fhTriggers = NULL;           // Trigger selection information
   fhTrackCuts = NULL;          // Number of tracks surviving different track cuts
   fhCentrality = NULL;         // Centrality of all events
   fhCentralityWeighted = NULL; // Weighted centrality distribution in all events (only meaningful for MC)
@@ -287,6 +288,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fhVertexZ(in.fhVertexZ),
   fhVertexZWeighted(in.fhVertexZWeighted),
   fhEvents(in.fhEvents),
+  fhTriggers(in.fhTriggers),
   fhTrackCuts(in.fhTrackCuts),
   fhCentrality(in.fhCentrality),
   fhCentralityWeighted(in.fhCentralityWeighted)
@@ -546,6 +548,7 @@ void EECHistogramManager::LoadHistograms(){
   
   // Load the event information histograms
   if(fLoadEventInformation){
+    fhTriggers = (TH1D*) fInputFile->Get("triggers");                      // Trigger selection information
     fhVertexZ = (TH1D*) fInputFile->Get("vertexZ");                        // Vertex z position
     fhVertexZWeighted = (TH1D*) fInputFile->Get("vertexZweighted");        // MC weighted vertex z position
     fhTrackCuts = (TH1D*) fInputFile->Get("trackCuts");                    // Number of tracks surviving different track cuts
@@ -1456,6 +1459,7 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   // Write the event information histograms to the output file
   if(fLoadEventInformation){
     fhEvents->Write("",TObject::kOverwrite);             // Number of events surviving different event cuts
+    fhTriggers->Write("",TObject::kOverwrite);           // Trigger selection information
     fhVertexZ->Write("",TObject::kOverwrite);            // Vertex z position
     fhVertexZWeighted->Write("",TObject::kOverwrite);    // MC weighted vertex z position
     fhTrackCuts->Write("",TObject::kOverwrite);          // Number of tracks surviving different track cuts
@@ -2031,6 +2035,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
   
   // Load the event information histograms
   if(fLoadEventInformation){
+    fhTriggers = (TH1D*) fInputFile->Get("triggers");                      // Trigger selection information
     fhVertexZ = (TH1D*) fInputFile->Get("vertexZ");                        // Vertex z position
     fhVertexZWeighted = (TH1D*) fInputFile->Get("vertexZweighted");        // MC weighted vertex z position
     fhTrackCuts = (TH1D*) fInputFile->Get("trackCuts");                    // Number of tracks surviving different track cuts
@@ -2844,6 +2849,11 @@ TH1D* EECHistogramManager::GetHistogramEvents() const{
   return fhEvents;
 }
 
+// Getter for histogram for trigger selection
+TH1D* EECHistogramManager::GetHistogramTriggers() const{
+  return fhTriggers;
+}
+
 // Getter for histogram for number of tracks surviving different track cuts
 TH1D* EECHistogramManager::GetHistogramTrackCuts() const{
   return fhTrackCuts;
@@ -3001,6 +3011,7 @@ TH1D* EECHistogramManager::GetHistogramJetPtClosure(const int iGenPtBin, const i
 TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, int bin2, int bin3, int bin4, int bin5, int bin6) const{
   if(name.EqualTo("vertexz",TString::kIgnoreCase) || name.EqualTo("fhvertexz",TString::kIgnoreCase)) return GetHistogramVertexZ();
   if(name.EqualTo("events",TString::kIgnoreCase) || name.EqualTo("fhevents",TString::kIgnoreCase)) return GetHistogramEvents();
+  if(name.EqualTo("triggers",TString::kIgnoreCase) || name.EqualTo("fhtriggers",TString::kIgnoreCase)) return GetHistogramTriggers();
   if(name.EqualTo("trackcuts",TString::kIgnoreCase) || name.EqualTo("fhtrackcuts",TString::kIgnoreCase)) return GetHistogramTrackCuts();
   if(name.EqualTo("centrality",TString::kIgnoreCase) || name.EqualTo("fhcentrality",TString::kIgnoreCase)) return GetHistogramCentrality();
   if(name.EqualTo("centralityweighted",TString::kIgnoreCase) || name.EqualTo("fhcentralityweighted",TString::kIgnoreCase)) return GetHistogramCentralityWeighted();
