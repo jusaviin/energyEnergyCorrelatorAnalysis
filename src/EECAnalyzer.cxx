@@ -731,7 +731,15 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 2 && !caloJet100Trigger) continue;
       if(fTriggerSelection == 3 && (!caloJet80Trigger && !caloJet100Trigger)) continue;
       
-      // TODO: Add event weight, if the triggers are combined
+      // If combining triggers, need to include event weight for events that only fire the lower trigger
+      // The weight used here is the inverse of the average effective prescale in the whole sample
+      // The effective prescale number is determined using the macro findEffectivePrescale
+      // Git hash for the version used to get the number below is 2db6ffe6f5433b6b9f56a30fa2cd16b21d76561d
+      // The input file used is eecAnalysis_akFlowJet_findEffectivePrescale_processed_2023-02-28.root
+      if(fTriggerSelection == 3 && caloJet80Trigger && !caloJet100Trigger){
+        fTotalEventWeight = fTotalEventWeight / 2.56248;
+      }
+      
       
       // Fill the event information histograms for the events that pass the event cuts
       if(fFillEventInformation){
