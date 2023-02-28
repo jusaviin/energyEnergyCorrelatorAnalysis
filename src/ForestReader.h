@@ -28,7 +28,7 @@ class ForestReader{
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kLocalTest, knDataTypes};
+  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, knDataTypes};
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
@@ -60,7 +60,8 @@ public:
   virtual Float_t GetJetMaxTrackPt(Int_t iJet) const = 0; // Getter for maximum track pT inside a jet
   
   // Getters for leaves in HLT tree
-  Int_t GetCaloJetFilterBit() const;           // Getter for calorimeter jet filter bit
+  Int_t GetCaloJet80FilterBit() const;           // Getter for calorimeter jet 80 filter bit
+  Int_t GetCaloJet100FilterBit() const;          // Getter for calorimeter jet 100 filter bit
   
   // Getters for leaves in skim tree
   Int_t GetPrimaryVertexFilterBit() const;           // Getter for primary vertex filter bit
@@ -110,7 +111,7 @@ protected:
   // Methods
   virtual void Initialize() = 0;  // Connect the branches to the tree
   
-  Int_t fDataType;        // Type of data read with the tree. 0 = pp, 1 = PbPb, 2 = ppMC, 3 = PbPbMC, 4 = LocalTest
+  Int_t fDataType;        // Type of data read with the tree. 0 = pp, 1 = PbPb, 2 = ppMC, 3 = PbPbMC
   Int_t fUseJetTrigger;   // 0 = Do not use any triggers, 1 = Require jet trigger
   Int_t fJetType;         // Choose the type of jets usedfor analysis. 0 = Calo jets, 1 = PF jets
   Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = Leading particle flow candidate, 2 = WTA
@@ -137,7 +138,8 @@ protected:
   TBranch *fEventWeightBranch;     // Branch for jet weight in MC
   
   // Branches for HLT tree
-  TBranch *fCaloJetFilterBranch;         // Branch for calo jet filter bit
+  TBranch *fCaloJet80FilterBranch;         // Branch for calo jet 80 filter bit
+  TBranch *fCaloJet100FilterBranch;        // Branch for calo jet 100 filter bit
   
   // Branches for skim tree
   TBranch *fPrimaryVertexBranch;           // Branch for primary vertex filter bit
@@ -171,10 +173,11 @@ protected:
   // Leaves for jet tree
   Int_t fnJets;          // number of jets in an event
   Int_t fnMatchedJets;   // number of matched jets in an event
-  Float_t fEventWeight;    // jet weight in the MC tree
+  Float_t fEventWeight;  // jet weight in the MC tree
   
   // Leaves for the HLT tree
-  Int_t fCaloJetFilterBit;         // Filter bit for calorimeter jets
+  Int_t fCaloJet80FilterBit;         // Filter bit for calorimeter jets with 80 GeV threshold
+  Int_t fCaloJet100FilterBit;        // Filter bit for calorimeter jets with 100 GeV threshold
   
   // Leaves for the skim tree
   Int_t fPrimaryVertexFilterBit;           // Filter bit for primary vertex

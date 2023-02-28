@@ -40,7 +40,7 @@ public:
   
   // Constructors and destructor
   EECAnalyzer(); // Default constructor
-  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, bool runLocal); // Custom constructor
+  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard); // Custom constructor
   EECAnalyzer(const EECAnalyzer& in); // Copy constructor
   virtual ~EECAnalyzer(); // Destructor
   EECAnalyzer& operator=(const EECAnalyzer& obj); // Equal sign operator
@@ -94,11 +94,10 @@ private:
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
-  Int_t fUseJetTrigger;              // 0 = Do not use any triggers, 1 = Require jet trigger
+  Int_t fTriggerSelection;           // 0 = Do not use any triggers, 1 = Require CaloJet80, 2 = Require CaloJet100, 3 = Require CaloJet80 or CaloJet100
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
   Bool_t fMatchJets;                 // Match generator and reconstruction level jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
-  Int_t fLocalRun;                   // Flag for running locally or on crab
   
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC

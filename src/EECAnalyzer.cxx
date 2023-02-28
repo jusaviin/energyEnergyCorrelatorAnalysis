@@ -64,11 +64,10 @@ EECAnalyzer::EECAnalyzer() :
   fJetUncertainty2018(),
   fRng(0),
   fDataType(-1),
-  fUseJetTrigger(0),
+  fTriggerSelection(0),
   fJetType(0),
   fMatchJets(false),
   fDebugLevel(0),
-  fLocalRun(0),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -123,7 +122,7 @@ EECAnalyzer::EECAnalyzer() :
 /*
  * Custom constructor
  */
-EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, bool runLocal) :
+EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard) :
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
@@ -148,9 +147,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   // Configurure the analyzer from input card
   ReadConfigurationFromCard();
   
-  // Flog for local running or CRAB running
-  fLocalRun = runLocal ? 1 : 0;
-  
   // pT weight function for Pythia to match 2017 MC and data pT spectra. Derived from all jets above 120 GeV
   fPtWeightFunction = new TF1("fPtWeightFunction","pol3",0,500);
   //fPtWeightFunction->SetParameters(0.699073,0.00287672,-6.35568e-06,5.02292e-09);
@@ -161,7 +157,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fSmearingFunction = new TF1("fSmearingFunction","pol4",0,500);
   
   // Find the correct folder for track correction tables based on data type
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC || fDataType == ForestReader::kLocalTest){
+  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
     
     // Track correction for 2017 pp data
     fTrackEfficiencyCorrector2018 = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
@@ -228,11 +224,10 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSmearingFunction(in.fSmearingFunction),
   fRng(in.fRng),
   fDataType(in.fDataType),
-  fUseJetTrigger(in.fUseJetTrigger),
+  fTriggerSelection(in.fTriggerSelection),
   fJetType(in.fJetType),
   fMatchJets(in.fMatchJets),
   fDebugLevel(in.fDebugLevel),
-  fLocalRun(in.fLocalRun),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -296,11 +291,10 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSmearingFunction = in.fSmearingFunction;
   fRng = in.fRng;
   fDataType = in.fDataType;
-  fUseJetTrigger = in.fUseJetTrigger;
+  fTriggerSelection = in.fTriggerSelection;
   fJetType = in.fJetType;
   fMatchJets = in.fMatchJets;
   fDebugLevel = in.fDebugLevel;
-  fLocalRun = in.fLocalRun;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -372,7 +366,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //     Analyzed data type and trigger
   //****************************************
   fDataType = fCard->Get("DataType");
-  fUseJetTrigger = fCard->Get("UseJetTrigger");
+  fTriggerSelection = fCard->Get("TriggerSelection");
   
   //****************************************
   //         Event selection cuts
@@ -487,6 +481,10 @@ void EECAnalyzer::RunAnalysis(){
   // Combining bools to make the code more readable
   Bool_t useDifferentReaderForJetsAndTracks = (fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenReco); // Use different forest reader for jets and tracks
   
+  // Variables for trigger flags
+  Bool_t caloJet80Trigger;
+  Bool_t caloJet100Trigger;
+  
   // Variables for jets
   Double_t jetPt = 0;               // pT of the i:th jet in the event
   Double_t jetPtCorrected = 0;      // Jet pT corrected with the JFF correction
@@ -598,16 +596,16 @@ void EECAnalyzer::RunAnalysis(){
   //************************************************
   
   if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
-      fJetReader = new GeneratorLevelForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets,readTrackTree);
+      fJetReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   } else {
-      fJetReader = new HighForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets,readTrackTree);
+      fJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   }
   
   // Select the reader for tracks based on forest and MC correlation type
   if(fMcCorrelationType == kRecoGen){
-    fTrackReader = new GeneratorLevelForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets);
+    fTrackReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets);
   } else if (fMcCorrelationType == kGenReco){
-    fTrackReader = new HighForestReader(fDataType,fUseJetTrigger,fJetType,fJetAxis,fMatchJets);
+    fTrackReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets);
   } else {
     fTrackReader = fJetReader;
   }
@@ -716,6 +714,24 @@ void EECAnalyzer::RunAnalysis(){
       //  ============================================
       
       if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
+      
+      // Jet trigger combinations
+      caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
+      caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
+      
+      if(fFillEventInformation){
+        if(!caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kNoTrigger);
+        if(caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet80);
+        if(!caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet100);
+        if(caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet80And100);
+      }
+      
+      // Make jet trigger selection
+      if(fTriggerSelection == 1 && !caloJet80Trigger) continue;
+      if(fTriggerSelection == 2 && !caloJet100Trigger) continue;
+      if(fTriggerSelection == 3 && (!caloJet80Trigger && !caloJet100Trigger)) continue;
+      
+      // TODO: Add event weight, if the triggers are combined
       
       // Fill the event information histograms for the events that pass the event cuts
       if(fFillEventInformation){
@@ -1620,10 +1636,6 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHi
   // Cut for beam scraping. Only applied for pp data.
   if(eventReader->GetBeamScrapingFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kBeamScraping);
-  
-  // Jet trigger requirement.
-  if(eventReader->GetCaloJetFilterBit() == 0) return false;
-  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kCaloJet);
   
   // Cut for vertex z-position
   if(TMath::Abs(eventReader->GetVz()) > fVzCut) return false;

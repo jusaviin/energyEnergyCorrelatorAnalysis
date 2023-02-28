@@ -28,7 +28,8 @@ ForestReader::ForestReader() :
   fJetMatchedEtaBranch(0),
   fJetMatchedPhiBranch(0),
   fEventWeightBranch(0),
-  fCaloJetFilterBranch(0),
+  fCaloJet80FilterBranch(0),
+  fCaloJet100FilterBranch(0),
   fPrimaryVertexBranch(0),
   fBeamScrapingBranch(0),
   fHBHENoiseBranch(0),
@@ -55,7 +56,8 @@ ForestReader::ForestReader() :
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
-  fCaloJetFilterBit(0),
+  fCaloJet80FilterBit(0),
+  fCaloJet100FilterBit(0),
   fPrimaryVertexFilterBit(0),
   fBeamScrapingFilterBit(0),
   fHBHENoiseFilterBit(0),
@@ -71,10 +73,10 @@ ForestReader::ForestReader() :
  * Custom constructor
  *
  *  Arguments:
- *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = Local Test
- *   Int_t useJetTrigger: 0 = Do not use any triggers, 1 = Require jet trigger
+ *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC
+ *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
- *   Int_t jetAxis: 0 = Anti-kT axis, 1 = Leading particle flow candidate axis, 2 = WTA axis
+ *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
  *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
  *   Bool_t readTrackTree: Read the track tree from the forest. Optimizes speed if tracks are not needed
  */
@@ -100,7 +102,8 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fJetMatchedEtaBranch(0),
   fJetMatchedPhiBranch(0),
   fEventWeightBranch(0),
-  fCaloJetFilterBranch(0),
+  fCaloJet80FilterBranch(0),
+  fCaloJet100FilterBranch(0),
   fPrimaryVertexBranch(0),
   fBeamScrapingBranch(0),
   fHBHENoiseBranch(0),
@@ -127,7 +130,8 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
-  fCaloJetFilterBit(0),
+  fCaloJet80FilterBit(0),
+  fCaloJet100FilterBit(0),
   fPrimaryVertexFilterBit(0),
   fBeamScrapingFilterBit(0),
   fHBHENoiseFilterBit(0),
@@ -166,7 +170,8 @@ ForestReader::ForestReader(const ForestReader& in) :
   fJetMatchedEtaBranch(in.fJetMatchedEtaBranch),
   fJetMatchedPhiBranch(in.fJetMatchedPhiBranch),
   fEventWeightBranch(in.fEventWeightBranch),
-  fCaloJetFilterBranch(in.fCaloJetFilterBranch),
+  fCaloJet80FilterBranch(in.fCaloJet80FilterBranch),
+  fCaloJet100FilterBranch(in.fCaloJet100FilterBranch),
   fPrimaryVertexBranch(in.fPrimaryVertexBranch),
   fBeamScrapingBranch(in.fBeamScrapingBranch),
   fHBHENoiseBranch(in.fHBHENoiseBranch),
@@ -193,7 +198,8 @@ ForestReader::ForestReader(const ForestReader& in) :
   fnJets(in.fnJets),
   fnMatchedJets(in.fnMatchedJets),
   fEventWeight(in.fEventWeight),
-  fCaloJetFilterBit(in.fCaloJetFilterBit),
+  fCaloJet80FilterBit(in.fCaloJet80FilterBit),
+  fCaloJet100FilterBit(in.fCaloJet100FilterBit),
   fPrimaryVertexFilterBit(in.fPrimaryVertexFilterBit),
   fBeamScrapingFilterBit(in.fBeamScrapingFilterBit),
   fHBHENoiseFilterBit(in.fHBHENoiseFilterBit),
@@ -233,7 +239,8 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fJetMatchedEtaBranch = in.fJetMatchedEtaBranch;
   fJetMatchedPhiBranch = in.fJetMatchedPhiBranch;
   fEventWeightBranch = in.fEventWeightBranch;
-  fCaloJetFilterBranch = in.fCaloJetFilterBranch;
+  fCaloJet80FilterBranch = in.fCaloJet80FilterBranch;
+  fCaloJet100FilterBranch = in.fCaloJet100FilterBranch;
   fPrimaryVertexBranch = in.fPrimaryVertexBranch;
   fBeamScrapingBranch = in.fBeamScrapingBranch;
   fHBHENoiseBranch = in.fHBHENoiseBranch;
@@ -260,7 +267,8 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fnJets = in.fnJets;
   fnMatchedJets = in.fnMatchedJets;
   fEventWeight = in.fEventWeight;
-  fCaloJetFilterBit = in.fCaloJetFilterBit;
+  fCaloJet80FilterBit = in.fCaloJet80FilterBit;
+  fCaloJet100FilterBit = in.fCaloJet100FilterBit;
   fPrimaryVertexFilterBit = in.fPrimaryVertexFilterBit;
   fBeamScrapingFilterBit = in.fBeamScrapingFilterBit;
   fHBHENoiseFilterBit = in.fHBHENoiseFilterBit;
@@ -332,9 +340,14 @@ Float_t ForestReader::GetEventWeight() const{
   return fEventWeight;
 }
 
-// Getter for calorimeter jet filter bit. Always 1 for MC (set in the initializer).
-Int_t ForestReader::GetCaloJetFilterBit() const{
-  return fCaloJetFilterBit;
+// Getter for calorimeter jet filter bit with threshold 80 GeV. Always 1 for MC (set in the initializer).
+Int_t ForestReader::GetCaloJet80FilterBit() const{
+  return fCaloJet80FilterBit;
+}
+
+// Getter for calorimeter jet filter bit with threshold 100 GeV. Always 1 for MC (set in the initializer).
+Int_t ForestReader::GetCaloJet100FilterBit() const{
+  return fCaloJet100FilterBit;
 }
 
 // Getter for primary vertex filter bit. Always 1 for MC (set in the initializer).

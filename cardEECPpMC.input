@@ -8,7 +8,7 @@ McCorrelationType 3 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 1 = Match generator level jets with reconstructed jets, 0 = Do not do that
 
 # Select if you want to use the jet trigger
-UseJetTrigger 0   # 0 = No trigger, 1 = Use jet trigger
+TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
@@ -22,7 +22,7 @@ FilledHistograms 63 # Bit 0 = Event information histograms                  (to 
 
 # Cuts for dijets
 JetType 1                  # 0 = Calo jets, 1 = PF jets
-JetAxis 0                  # 0 = Escheme axis, 1 = Leading PF candidate axis, 2 = WTA
+JetAxis 0                  # 0 = Escheme axis, 1 = WTA axis
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
 MinJetPtCut 120            # Minimum pT of a leading jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis

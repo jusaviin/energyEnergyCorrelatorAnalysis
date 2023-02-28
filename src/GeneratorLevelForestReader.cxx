@@ -30,10 +30,10 @@ GeneratorLevelForestReader::GeneratorLevelForestReader() :
  * Custom constructor
  *
  *  Arguments:
- *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = Local Test
- *   Int_t useJetTrigger: 0 = Do not use any triggers, 1 = Require jet trigger
+ *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC
+ *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
- *   Int_t jetAxis: 0 = Anti-kT axis, 1 = Leading particle flow candidate axis, 2 = WTA axis
+ *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
  *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  */
@@ -155,8 +155,8 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
   
   // Connect the branches to the jet tree
-  const char *jetAxis[3] = {"jt","jt","WTA"};
-  const char *genJetAxis[3] = {"","","WTA"};
+  const char *jetAxis[2] = {"jt","WTA"};
+  const char *genJetAxis[2] = {"","WTA"};
   char branchName[30];
   
   fJetTree->SetBranchStatus("*",0);
@@ -201,27 +201,33 @@ void GeneratorLevelForestReader::Initialize(){
     fJetTree->SetBranchAddress("nref",&fnMatchedJets,&fnTrackDegreesOfFreedomBranch); // Reuse a branch from ForestReader that is not otherwise needed here
   }
   
-  // Helper variable for choosing correct branches in HLT tree
-  const char *branchNameHlt[2] = {"none","none"};
-  
   // Connect the branches to the HLT tree
-  fHltTree->SetBranchStatus("*",0);
   if(fUseJetTrigger){
-    if(fDataType == kPp){ // pp data
-      branchNameHlt[0] = "HLT_AK4CaloJet80_Eta5p1_v1";
-      branchNameHlt[1] = "HLT_AK4PFJet80_Eta5p1_v1";
-      fHltTree->SetBranchStatus(branchNameHlt[fJetType],1);
-      fHltTree->SetBranchAddress(branchNameHlt[fJetType],&fCaloJetFilterBit,&fCaloJetFilterBranch);
-    } else if (fDataType == kPpMC){
-      fCaloJetFilterBit = 1; // No filtering for Monte Carlo TODO: Check if this exists in new pp MC!
-    } else if (fDataType == kPbPb || fDataType == kPbPbMC){ // PbPb or PbPb MC
+    
+    fHltTree->SetBranchStatus("*",0);
+    
+    if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
+      
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet80_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      
+    } else { // PbPb data or MC
+      
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      
+      // Calo jet 100 trigger
       fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJetFilterBit,&fCaloJetFilterBranch);
-    } else {
-      fCaloJetFilterBit = 1;  // No filter for local test of MC if not specifically required
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
+      
     }
   } else {
-    fCaloJetFilterBit = 1;  // No jet trigger required
+    fCaloJet80FilterBit = 1;
+    fCaloJet100FilterBit = 1;
   }
   
   // Connect the branches to the skim tree (different for pp and PbPb Monte Carlo)
@@ -241,7 +247,7 @@ void GeneratorLevelForestReader::Initialize(){
     
     fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
     fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
-  } else if (fDataType == kPbPbMC){ // PbPb MC
+  } else { // PbPb MC
     
     // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
     fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
@@ -272,12 +278,6 @@ void GeneratorLevelForestReader::Initialize(){
     fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
     
     fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
-  } else { // Local test
-    fPrimaryVertexFilterBit = 1;
-    fBeamScrapingFilterBit = 1;
-    fHBHENoiseFilterBit = 1;
-    fHfCoincidenceFilterBit = 1;
-    fClusterCompatibilityFilterBit = 1;
   }
   
   // Connect the branches to the track tree
@@ -319,14 +319,11 @@ void GeneratorLevelForestReader::ReadForestFromFile(TFile *inputFile){
   if(fDataType == kPp || fDataType == kPpMC){
     treeName[0] = "ak4CaloJetAnalyzer/t"; // Tree for calo jets
     treeName[1] = "ak4PFJetAnalyzer/t";   // Tree for PF jets
-  } else if (fDataType == kPbPb || fDataType == kPbPbMC){
+  } else { // PbPb data or MC
     treeName[0] = "akPu4CaloJetAnalyzer/t";     // Tree for calo jets
     treeName[1] = "akCs4PFJetAnalyzer/t";       // Tree for PF jets
     treeName[2] = "akPu4PFJetAnalyzer/t";       // Tree for PF jets
     treeName[3] = "akFlowPuCs4PFJetAnalyzer/t"; // Tree for flow subtracted csPF jets
-  } else if (fDataType == kLocalTest){
-    treeName[0] = "ak4PFJetAnalyzer/t";  // Only PF jets in local test file
-    treeName[1] = "ak4PFJetAnalyzer/t";  // Only PF jets in local test file
   }
   fJetTree = (TTree*)inputFile->Get(treeName[fJetType]);
   
