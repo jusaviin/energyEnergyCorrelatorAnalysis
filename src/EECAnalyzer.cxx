@@ -737,7 +737,7 @@ void EECAnalyzer::RunAnalysis(){
       // Git hash for the version used to get the number below is 2db6ffe6f5433b6b9f56a30fa2cd16b21d76561d
       // The input file used is eecAnalysis_akFlowJet_findEffectivePrescale_processed_2023-02-28.root
       if(fTriggerSelection == 3 && caloJet80Trigger && !caloJet100Trigger){
-        fTotalEventWeight = fTotalEventWeight / 2.56248;
+        fTotalEventWeight = fTotalEventWeight * 2.56248;
       }
       
       
