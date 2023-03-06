@@ -743,9 +743,9 @@ void EECAnalyzer::RunAnalysis(){
       
       // Fill the event information histograms for the events that pass the event cuts
       if(fFillEventInformation){
-        fHistograms->fhVertexZ->Fill(vz);                                      // z vertex distribution from all events
+        fHistograms->fhVertexZ->Fill(vz,fPtHatWeight);                         // z vertex distribution from all events
         fHistograms->fhVertexZWeighted->Fill(vz,fTotalEventWeight);            // z-vertex distribution weighted with the weight function
-        fHistograms->fhCentrality->Fill(centrality);                           // Centrality filled from all events
+        fHistograms->fhCentrality->Fill(centrality, fPtHatWeight);             // Centrality filled from all events
         fHistograms->fhCentralityWeighted->Fill(centrality,fTotalEventWeight); // Centrality weighted with the centrality weighting function
         fHistograms->fhPtHat->Fill(ptHat);                                     // pT hat histogram
         fHistograms->fhPtHatWeighted->Fill(ptHat,fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
