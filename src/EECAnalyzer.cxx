@@ -175,20 +175,20 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", false, "trackCorrectionTables/PbPb2018/");
     
     // The vz weight function is rederived from the miniAOD dataset.
-    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: 50a3685052af8ab66180040fb0eba895f750e6d6
+    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: d4eab1cd188da72f5a81b8902cb6cc55ea1baf23
     // Input files: eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root
-    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_noTrigger_cutBadPhi_matchJets_newMCWeight_processed_2023-03-02.root
+    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_onlyJets_noTrigger_ptHatWeight_processed_2023-03-06.root
     fVzWeightFunction = new TF1("fvz","pol6",-15,15);
-    fVzWeightFunction->SetParameters(1.00576, -0.0192953, 0.000973003, -2.57075e-05, -8.30049e-06, 1.71946e-07, 1.08886e-08);
+    fVzWeightFunction->SetParameters(1.00591, -0.0193751, 0.000961142, -2.44303e-05, -8.24443e-06, 1.66679e-07, 1.11028e-08);
     
     // The centrality weight function is rederived for the miniAOD dataset.
-    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: 50a3685052af8ab66180040fb0eba895f750e6d6
+    // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: d4eab1cd188da72f5a81b8902cb6cc55ea1baf23
     // Input files: eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root
-    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_noTrigger_cutBadPhi_matchJets_newMCWeight_processed_2023-03-02.root
+    //              PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_onlyJets_noTrigger_ptHatWeight_processed_2023-03-06.root
     fCentralityWeightFunctionCentral = new TF1("fCentralWeight","pol6",0,30);
-    fCentralityWeightFunctionCentral->SetParameters(4.80897,-0.0936162, -0.0236316,0.00260691,-0.000126214,2.97456e-06,-2.74839e-08);
+    fCentralityWeightFunctionCentral->SetParameters(4.73421, -0.0477343, -0.0332804, 0.00355699, -0.00017427, 4.18398e-06, -3.94746e-08);
     fCentralityWeightFunctionPeripheral = new TF1("fPeripheralWeight","pol6",30,90);
-    fCentralityWeightFunctionPeripheral->SetParameters(3.52531,-0.0773019, -0.00150513,7.44973e-05,-1.11578e-06,7.77744e-09,-2.14457e-11);
+    fCentralityWeightFunctionPeripheral->SetParameters(3.38091, -0.0609601, -0.00228529, 9.43076e-05, -1.39593e-06, 9.85435e-09, -2.77153e-11);
     
     // Multiplicity based weight function
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
