@@ -8,19 +8,19 @@ void deriveMonteCarloWeights(){
   enum enumDataType {kData, kMC, knDataTypes};
   
   // Open files for MC and data
-  TFile *dataFile = TFile::Open("data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root");
+  TFile *dataFile = TFile::Open("data/eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root");
   //TFile *dataFile = TFile::Open("data/ppData2017_highForest_pfJets_onlyJets_L2rel_wtaAxis_processed_2019-08-05.root"); // Note: old file from previous analysis
-  TFile *mcFile = TFile::Open("data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root");
+  TFile *mcFile = TFile::Open("data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_noTrigger_cutBadPhi_matchJets_newMCWeight_processed_2023-03-02.root");
   //TFile *mcFile = TFile::Open("data/dijet_ppMC_GenGen_Pythia8_pfJets_wtaAxis_onlyJets_processed_2019-08-06.root"); // Note: old file from previous analysis
 
   // Read the histograms for vz and centrality
   TH1D *hVz[knDataTypes];  // 0 = Data, 1 = MC
   TH1D *hCentrality[knDataTypes]; // 0 = Data, 1 = MC
 
-  hVz[kData] = (TH1D*) dataFile->Get("vertexZ");            // vz histogram for data
-  hCentrality[kData] = (TH1D*) dataFile->Get("centrality"); // centrality histogram for data
-  hVz[kMC] = (TH1D*) mcFile->Get("vertexZ");                // vz histogram for MC
-  hCentrality[kMC] = (TH1D*) mcFile->Get("centrality");     // centrality histogram for MC
+  hVz[kData] = (TH1D*) dataFile->Get("vertexZweighted");            // vz histogram for data (include event weight when combining triggers)
+  hCentrality[kData] = (TH1D*) dataFile->Get("centralityWeighted"); // centrality histogram for data (include event weight when combining triggers)
+  hVz[kMC] = (TH1D*) mcFile->Get("vertexZ");                        // vz histogram for MC
+  hCentrality[kMC] = (TH1D*) mcFile->Get("centrality");             // centrality histogram for MC
   
   // Normalize all histograms to one
   for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
