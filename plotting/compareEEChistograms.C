@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 2;
-  TString inputFileName[] = {"data/eecAnalysis_akFlowJetAODs_wtaAxis_onlyJets_noEventFilters_processed_2023-02-15.root", "data/eecAnalysis_akFlowJetMiniAODs_wtaAxis_onlyJets_noEventFilters_processed_2023-02-15.root"};
+  const int nDatasets = 3;
+  TString inputFileName[] = {"data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root", "data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root", "data/eecAnalysis_akFlowJet_cutBadAcc_combinedTriggers_processed_2023-02-28.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"AOD, no filters", "MiniAOD, no filters"};
+  TString legendComment[] = {"Old results", "Jet UE subtraction fix", "Jet fix + trigger combination"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -40,7 +40,7 @@ void compareEEChistograms(){
   EECCard *card = new EECCard(inputFile[0]);
   
   // Choose which figure sets to draw
-  bool drawEventInformation = true;
+  bool drawEventInformation = false;
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
@@ -58,7 +58,7 @@ void compareEEChistograms(){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -84,9 +84,9 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = false;
+  bool saveFigures = true;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_newProductionCheck";
+  const char* figureComment = "_triggerEfficiencyCheck";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -106,7 +106,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.7;
   double maxZoom = 1.3;
-  TString ratioLabel = "#frac{New}{Old}";
+  TString ratioLabel = "#frac{Fixed}{Old}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -140,9 +140,9 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 3;
+  int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
