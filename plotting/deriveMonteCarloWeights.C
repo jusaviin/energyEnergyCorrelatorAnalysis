@@ -10,7 +10,7 @@ void deriveMonteCarloWeights(){
   // Open files for MC and data
   TFile *dataFile = TFile::Open("data/eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root");
   //TFile *dataFile = TFile::Open("data/ppData2017_highForest_pfJets_onlyJets_L2rel_wtaAxis_processed_2019-08-05.root"); // Note: old file from previous analysis
-  TFile *mcFile = TFile::Open("data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_noTrigger_cutBadPhi_matchJets_newMCWeight_processed_2023-03-02.root");
+  TFile *mcFile = TFile::Open("data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_onlyJets_noTrigger_ptHatWeight_processed_2023-03-06.root");
   //TFile *mcFile = TFile::Open("data/dijet_ppMC_GenGen_Pythia8_pfJets_wtaAxis_onlyJets_processed_2019-08-06.root"); // Note: old file from previous analysis
 
   // Read the histograms for vz and centrality
