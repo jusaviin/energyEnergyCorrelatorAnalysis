@@ -12,8 +12,8 @@ void checkMonteCarloWeights(){
   
   // Data and MC files for the comparison
   TString fileName[knDataTypes];
-  fileName[kData] = "data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root";
-  fileName[kMC] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_jetTrig_cutBadPhi_processed_2023-02-10.root";
+  fileName[kData] = "data/eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root";
+  fileName[kMC] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_onlyJets_noTrigger_finalMcWeight_processed_2023-03-06.root";
   
   // Some PbPb files
   // data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root
@@ -83,11 +83,11 @@ void checkMonteCarloWeights(){
   }
   
   // Read the histograms from the file
-  hVz[0] = histograms[0]->GetHistogramVertexZ();         // Vertex-z distribution from data
+  hVz[0] = histograms[0]->GetHistogramVertexZWeighted(); // Vertex-z distribution from data (weighing for trigger combination)
   hVz[1] = histograms[1]->GetHistogramVertexZ();         // Vertex-z distribution from MC
   hVz[2] = histograms[1]->GetHistogramVertexZWeighted(); // Weighted vertex-z distribution from MC
   
-  hCentrality[0] = histograms[0]->GetHistogramCentrality();         // Centrality distribution from data
+  hCentrality[0] = histograms[0]->GetHistogramCentralityWeighted(); // Centrality distribution from data (weighing for trigger combination)
   hCentrality[1] = histograms[1]->GetHistogramCentrality();         // Centrality distribution from MC
   hCentrality[2] = histograms[1]->GetHistogramCentralityWeighted(); // Weighted centrality distribution from MC
 
