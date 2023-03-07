@@ -130,6 +130,14 @@ void drawClosureHistogram(TH1D *histogram[EECHistograms::knClosureParticleTypes+
   
   legend->Draw();
   
+  // Draw a dashed line at one
+  double startPoint = histogram[EECHistograms::knClosureParticleTypes]->GetXaxis()->GetBinLowEdge(1);
+  double endPoint = histogram[EECHistograms::knClosureParticleTypes]->GetXaxis()->GetBinUpEdge(histogram[EECHistograms::knClosureParticleTypes]->GetNbinsX());
+  TLine *oneLine = new TLine(startPoint, 1, endPoint, 1);
+  oneLine->SetLineStyle(2);
+  oneLine->SetLineColor(kBlack);
+  oneLine->Draw("same");
+  
   // Save the figures if selected to do so
   if(saveFigures){
     namer = Form("figures/jet%sInclusiveJet%s.pdf",saveComment,centralitySaveName);
