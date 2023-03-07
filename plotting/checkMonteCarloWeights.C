@@ -50,7 +50,7 @@ void checkMonteCarloWeights(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "ForPp";   // Comment given for this specific file
+  const char* saveComment = "";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms

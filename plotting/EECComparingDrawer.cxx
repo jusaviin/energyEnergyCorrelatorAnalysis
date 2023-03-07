@@ -347,7 +347,7 @@ void EECComparingDrawer::DrawJetHistograms(){
     DrawToUpperPad(namerX.Data(), namerY.Data());
     
     // Add a legend to the plot
-    legend = new TLegend(0.62,0.65,0.82,0.9);
+    legend = new TLegend(0.62,0.55,0.82,0.8);
     SetupLegend(legend,centralityString);
     legend->Draw();
     
