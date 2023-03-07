@@ -147,14 +147,14 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root";
+  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root";
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAODnewR_4pC_wtaAxis_noTrigger_jetPtClosure_processed_2023-01-30.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noCorrelations_jetPtClosures_processed_2022-01-13.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akCsPfJets_4pC_wtaAxis_noCorr_jetPtClosure_processed_2022-01-16.root
   
   bool drawPtClosure = true;
-  bool drawEtaClosure = false;
+  bool drawEtaClosure = true;
   
   bool includeQuarkGluon = false; // Include only quark and only gluon jet curves
   bool drawGaussFitsPt = false;
@@ -299,9 +299,9 @@ void constructJetPtClosures(){
   
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
     if(drawPtClosure){
-      drawClosureHistogram(hJetPtClosure[iCentrality], "Gen p_{T} (GeV)", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, includeQuarkGluon, "PtClosureMiniAOD", saveFigures);
+      drawClosureHistogram(hJetPtClosure[iCentrality], "Gen p_{T} (GeV)", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, includeQuarkGluon, "PtClosure", saveFigures);
       
-      drawClosureHistogram(hJetPtClosureSigma[iCentrality], "Gen p_{T} (GeV)", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "PtResolutionMiniAOD", saveFigures);
+      drawClosureHistogram(hJetPtClosureSigma[iCentrality], "Gen p_{T} (GeV)", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "PtResolution", saveFigures);
       
       hJetPtClosureSigma[iCentrality][2]->Write();
     }
