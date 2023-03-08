@@ -10,15 +10,11 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root"};
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-08.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_newSubeRefCone_wtaAxis_noTrigger_preprocessed_2022-11-29.root
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_circleJetTest_noTrigger_preprocessed_2022-11-17.root
-  // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_removeFakeJets_wtaAxis_noTrigger_preprocessed_2022-11-22.root
   
   const int nAddReflectedConeFiles = 0;
   TString reflectedConeFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_refConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-01.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_newRefConeWeight_wtaAxis_noTrigger_preprocessed_2022-11-17.root"};
@@ -105,7 +101,7 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjetSimulation]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 1;
   int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -120,15 +116,15 @@ void studyReflectedConeBackground(){
   const bool logEEC = true;
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_reflectedConeStudy";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_recoGenNormalization";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Instead of normalizing to the tail of the distribution, best match the background in the region where it is the most dominant
   bool optimalNormalization = true;
   
   // Option to remove Pythia particles from the reflected cone histograms
-  bool removePythiaFromReflectedCone = true;
+  bool removePythiaFromReflectedCone = false;
   
   // For circle jets, there is no meaningful jet pT binning
   if(circleJetMB){
@@ -188,7 +184,7 @@ void studyReflectedConeBackground(){
   
   
   // Index 0: Compare signal+fake to corresponding reflected cone distribution
-  drawComparisonType[0] = true;
+  drawComparisonType[0] = false;
   ratioIndex[0] = std::make_pair(kSignalFakeEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[0] = "Signal+fake pairs";
   legendTextReflectedCone[0] = "Jet (Pythia) + ref (Hydjet)";
@@ -210,7 +206,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[1] = false;
   
   // Index 2: Compare total background to signal+fake reflected cone
-  drawComparisonType[2] = false;
+  drawComparisonType[2] = true;
   ratioIndex[2] = std::make_pair(kBackgroundEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[2] = "Background within jet cone";
   legendTextReflectedCone[2] = "Reflected cone";
