@@ -13,15 +13,15 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_processed_2023-03-06.root"};
+  TString inputFileName[] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"PbPb data", "Pythia+Hydjet"};
+  TString legendComment[] = {"Signal gen jets", "Matched reco jets"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -41,7 +41,7 @@ void compareEEChistograms(){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = true;
+  bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -52,7 +52,7 @@ void compareEEChistograms(){
   bool drawMultiplicityInReflectedConeUncorrected = false;
   
   // Particle density around jets
-  bool drawParticleDensityAroundJets = false;
+  bool drawParticleDensityAroundJets = true;
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
@@ -74,9 +74,9 @@ void compareEEChistograms(){
   const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
   
   // Select which subevents to draw
-  bool drawAllSubevents = true;   // Draw histograms without subevent selection
+  bool drawAllSubevents = false;   // Draw histograms without subevent selection
   bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
-  bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
+  bool drawHydjetOnly = true;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
   
   bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
   bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
@@ -84,7 +84,7 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = true;
+  bool saveFigures = false;
   const char* figureFormat = "pdf";
   const char* figureComment = "";
   
@@ -106,7 +106,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.5;
   double maxZoom = 1.5;
-  TString ratioLabel = "#frac{MC}{Data}";
+  TString ratioLabel = "#frac{Reco}{Gen}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -134,16 +134,16 @@ void compareEEChistograms(){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = nCentralityBins-1;
+  int lastDrawnCentralityBin = 0;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 3;
+  int lastDrawnTrackPtBinEEC = 3;
   
   // ==================================================================
   // ===================== Configuration ready ========================
