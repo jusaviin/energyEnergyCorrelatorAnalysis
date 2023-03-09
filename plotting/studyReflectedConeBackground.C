@@ -10,7 +10,7 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
@@ -101,7 +101,7 @@ void studyReflectedConeBackground(){
   int firstStudiedJetPtBinEEC[knDataTypes] = {0,nJetPtBinsEEC[kMinBiasHydjetSimulation]};
   int lastStudiedJetPtBinEEC[knDataTypes] = {0, nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstStudiedTrackPtBinEEC = 1;
+  int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -116,7 +116,7 @@ void studyReflectedConeBackground(){
   const bool logEEC = true;
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_recoGenNormalization";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
@@ -124,7 +124,7 @@ void studyReflectedConeBackground(){
   bool optimalNormalization = true;
   
   // Option to remove Pythia particles from the reflected cone histograms
-  bool removePythiaFromReflectedCone = false;
+  bool removePythiaFromReflectedCone = true;
   
   // For circle jets, there is no meaningful jet pT binning
   if(circleJetMB){
@@ -206,7 +206,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[1] = false;
   
   // Index 2: Compare total background to signal+fake reflected cone
-  drawComparisonType[2] = true;
+  drawComparisonType[2] = false;
   ratioIndex[2] = std::make_pair(kBackgroundEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[2] = "Background within jet cone";
   legendTextReflectedCone[2] = "Reflected cone";
@@ -250,7 +250,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[5] = false;
   
   // Index 6: Compare fake+fake to signal+reflected cone distribution
-  drawComparisonType[6] = false;
+  drawComparisonType[6] = true;
   ratioIndex[6] = std::make_pair(kFakeFakeEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[6] = "Fake+fake pairs";
   legendTextReflectedCone[6] = "Jet+ref, only hydjet";

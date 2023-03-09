@@ -9,7 +9,7 @@
 void eecSignalExaminer(){
 
   // Open the PbPb input file
-  TString inputFileName = "data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root";
+  TString inputFileName = "data/eecAnalysis_akFlowJet_cutBadAcc_combinedTriggers_processed_2023-02-28.root";
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pC_newSRC_cutBadPhiAndComb_wtaAxis_jetTrigger_preprocessed_2022-11-29.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root
@@ -97,9 +97,9 @@ void eecSignalExaminer(){
   }
   
   // Types of comparisons drawn
-  const bool drawCentralityComparison = false; // Centrality comparison for constant jet and track pT selection
+  const bool drawCentralityComparison = true; // Centrality comparison for constant jet and track pT selection
   const bool drawTrackPtComparison = false;    // Track pT comparison for constant centrality and jet pT selection
-  const bool drawJetPtComparison = true;      // Jet pT comparison for constant centrality and track pT selection
+  const bool drawJetPtComparison = false;      // Jet pT comparison for constant centrality and track pT selection
   
   // Logarithmic axes
   const bool logDeltaR = true;

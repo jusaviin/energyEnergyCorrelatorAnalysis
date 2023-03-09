@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root"};
+  TString inputFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_finalMcWeight_processed_2023-03-09.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Signal gen jets", "Matched reco jets"};
+  TString legendComment[] = {"RecoGen", "RecoReco"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -74,9 +74,9 @@ void compareEEChistograms(){
   const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
   
   // Select which subevents to draw
-  bool drawAllSubevents = false;   // Draw histograms without subevent selection
+  bool drawAllSubevents = true;   // Draw histograms without subevent selection
   bool drawPythiaOnly = false;    // Draw only Pythia histograms in Pythia+Hydjet simulation
-  bool drawHydjetOnly = true;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
+  bool drawHydjetOnly = false;    // Draw only Hydjet histograms in Pythia+Hydjet simulation
   
   bool drawAllSubeventPairs = true;  // Draw energy-energy correlators without subevent selection
   bool drawSignalOnly = false;        // Draw Pythia+Pythia correlations from MC
@@ -86,7 +86,7 @@ void compareEEChistograms(){
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "";
+  const char* figureComment = "_resultChange";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -140,10 +140,10 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 3;
-  int lastDrawnTrackPtBinEEC = 3;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================
   // ===================== Configuration ready ========================

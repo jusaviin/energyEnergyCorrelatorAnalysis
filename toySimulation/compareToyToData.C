@@ -6,10 +6,10 @@
 void compareToyToData(){
   
   // Open the data and toy files
-  TFile *dataFile = TFile::Open("../data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pC_wtaAxis_noTrigger_recoEffectCheck_processed_2022-12-19.root");
+  TFile *dataFile = TFile::Open("../data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root");
   // ../data/eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_newSubeRefCone_wtaAxis_noTrigger_preprocessed_2022-11-29.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   
   const int nToyFiles = 1;
   TString toyFileNames[] = {"toySimulation100kevents.root","toySimulation100kevents10pFlow.root"};
