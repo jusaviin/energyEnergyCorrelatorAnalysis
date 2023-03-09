@@ -356,7 +356,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderTrack[nAxesTrack];
   Double_t highBinBorderTrack[nAxesTrack];
   
-  const Int_t nAxesTrackDensity = 6;
+  const Int_t nAxesTrackDensity = 7;
   Int_t nBinsTrackDensity[nAxesTrackDensity];
   Double_t lowBinBorderTrackDensity[nAxesTrackDensity];
   Double_t highBinBorderTrackDensity[nAxesTrackDensity];
@@ -596,6 +596,11 @@ void EECHistograms::CreateHistograms(){
   lowBinBorderTrackDensity[5] = minSubeventType;  // low bin border for subevent combinations
   highBinBorderTrackDensity[5] = maxSubeventType; // high bin border for subevent combinations
   
+  // Axis 6 of the track density histogram: deltaR in narrow bins
+  nBinsTrackDensity[6] = nDeltaRBinsEEC;        // nBins for deltaR between the track and the jet axis in the energy-energy correlator binning
+  lowBinBorderTrackDensity[6] = minDeltaREEC;   // low bin border for deltaR in the energy-energy correlator binning
+  highBinBorderTrackDensity[6] = maxDeltaREEC;  // high bin border for deltaR in the energy-energy correlator binning
+  
   // Create the histograms for track density and pT weighted track density using the above binning information
   fhParticleDensityAroundJet = new THnSparseF("particleDensity", "particleDensity", nAxesTrackDensity, nBinsTrackDensity ,lowBinBorderTrackDensity, highBinBorderTrackDensity); fhParticleDensityAroundJet->Sumw2();
   fhParticlePtDensityAroundJet = new THnSparseF("particlePtDensity", "particlePtDensity", nAxesTrackDensity, nBinsTrackDensity, lowBinBorderTrackDensity, highBinBorderTrackDensity); fhParticlePtDensityAroundJet->Sumw2();
@@ -609,6 +614,9 @@ void EECHistograms::CreateHistograms(){
   
   fhParticleDensityAroundJet->SetBinEdges(3,wideCentralityBins);        // Centrality bins
   fhParticlePtDensityAroundJet->SetBinEdges(3,wideCentralityBins);      // Centrality bins
+  
+  fhParticleDensityAroundJet->SetBinEdges(6,deltaRBinsEEC);             // DeltaR bins in the energy-energy correlator binning
+  fhParticlePtDensityAroundJet->SetBinEdges(6,deltaRBinsEEC);           // DeltaR bins in the energy-energy correlator binning
   
   // ======== THnSparses for energy-energy correlators ========
   

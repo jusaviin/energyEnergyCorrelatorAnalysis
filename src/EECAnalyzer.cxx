@@ -557,7 +557,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
   const Int_t nFillMultiplicity = 3; // 3 is nominal
   const Int_t nFillMultiplicityInJetCone = 5;
-  const Int_t nFillParticleDensityInJetCone = 6;
+  const Int_t nFillParticleDensityInJetCone = 7;
   const Int_t nFillMaxParticlePtInJetCone = 4;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
@@ -1097,6 +1097,7 @@ void EECAnalyzer::RunAnalysis(){
                 fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
                 fillerParticleDensityInJetCone[4] = 0;                  // Axis 4: 0 is the index for signal cone
                 fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
+                fillerParticleDensityInJetCone[6] = deltaRTrackJet;     // Axis 6: DeltaR between the track and the jet (energy-energy correlator binning)
                 fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                 fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
               }
@@ -1137,6 +1138,7 @@ void EECAnalyzer::RunAnalysis(){
                   fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
                   fillerParticleDensityInJetCone[4] = 1;                  // Axis 4: 1 is the index for reflected cone
                   fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
+                  fillerParticleDensityInJetCone[6] = deltaRTrackJet;     // Axis 6: DeltaR between the track and the jet (energy-energy correlator binning)
                   fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * reflectedConeWeight);
                   fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt * reflectedConeWeight);
                 }
