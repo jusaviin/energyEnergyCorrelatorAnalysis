@@ -180,7 +180,7 @@ void particleDensityComparer(){
   TH1D* hSubeventWithinSignalConeRatio[EECHistogramManager::knParticleDensityAroundJetAxisTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjet]+1][nTrackPtBinsEEC][EECHistograms::knSubeventTypes];
   TH1D* hMinBiasToRegularRatio[EECHistogramManager::knParticleDensityAroundJetAxisTypes][nCentralityBins][nJetPtBinsEEC[kPythiaHydjet]+1][nJetPtBinsEEC[kMinBiasHydjet]+1][nTrackPtBinsEEC][EECHistograms::knSubeventTypes+1];
   
-  // Initialize the energy-energy correlator histogram array to NULL
+  // Initialize the particle density histogram arrays to NULL
   for(int iParticleDensity = 0; iParticleDensity < EECHistogramManager::knParticleDensityAroundJetAxisTypes; iParticleDensity++){
     for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){

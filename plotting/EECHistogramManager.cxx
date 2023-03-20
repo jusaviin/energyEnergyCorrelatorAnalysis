@@ -2107,41 +2107,41 @@ void EECHistogramManager::LoadProcessedHistograms(){
   // Load the track histograms from the input file
   for(int iTrackType = 0; iTrackType < knTrackCategories; iTrackType++){
     if(!fLoadTracks[iTrackType]) continue;  // Only load the selected track types
+    
+    for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
       
-      for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
+      // Track pT
+      histogramNamer = Form("%s/%sPt_C%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin);
+      fhTrackPt[iTrackType][iCentralityBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+      
+      // pT integrated track phi
+      histogramNamer = Form("%s/%sPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
+      fhTrackPhi[iTrackType][iCentralityBin][fnTrackPtBins] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+      
+      // pT integrated track eta
+      histogramNamer = Form("%s/%sEta_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
+      fhTrackEta[iTrackType][iCentralityBin][fnTrackPtBins] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+      
+      // pT integrated track eta-phi
+      histogramNamer = Form("%s/%sEtaPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
+      if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][fnTrackPtBins] = (TH2D*) fInputFile->Get(histogramNamer.Data());
+      
+      for(int iTrackPtBin = fFirstLoadedTrackPtBin; iTrackPtBin <= fLastLoadedTrackPtBin; iTrackPtBin++){
         
-        // Track pT
-        histogramNamer = Form("%s/%sPt_C%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin);
-        fhTrackPt[iTrackType][iCentralityBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+        // Track phi in track pT bins
+        histogramNamer = Form("%s/%sPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
+        fhTrackPhi[iTrackType][iCentralityBin][iTrackPtBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
         
-        // pT integrated track phi
-        histogramNamer = Form("%s/%sPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
-        fhTrackPhi[iTrackType][iCentralityBin][fnTrackPtBins] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+        // Track eta in track pT bins
+        histogramNamer = Form("%s/%sEta_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
+        fhTrackEta[iTrackType][iCentralityBin][iTrackPtBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
         
-        // pT integrated track eta
-        histogramNamer = Form("%s/%sEta_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
-        fhTrackEta[iTrackType][iCentralityBin][fnTrackPtBins] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+        // Track eta-phi in track pT bins
+        histogramNamer = Form("%s/%sEtaPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
+        if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][iTrackPtBin] = (TH2D*) fInputFile->Get(histogramNamer.Data());
         
-        // pT integrated track eta-phi
-        histogramNamer = Form("%s/%sEtaPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,fnTrackPtBins);
-        if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][fnTrackPtBins] = (TH2D*) fInputFile->Get(histogramNamer.Data());
-        
-        for(int iTrackPtBin = fFirstLoadedTrackPtBin; iTrackPtBin <= fLastLoadedTrackPtBin; iTrackPtBin++){
-          
-          // Track phi in track pT bins
-          histogramNamer = Form("%s/%sPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
-          fhTrackPhi[iTrackType][iCentralityBin][iTrackPtBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
-          
-          // Track eta in track pT bins
-          histogramNamer = Form("%s/%sEta_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
-          fhTrackEta[iTrackType][iCentralityBin][iTrackPtBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
-          
-          // Track eta-phi in track pT bins
-          histogramNamer = Form("%s/%sEtaPhi_C%dT%d",fTrackHistogramNames[iTrackType],fTrackHistogramNames[iTrackType],iCentralityBin,iTrackPtBin);
-          if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][iTrackPtBin] = (TH2D*) fInputFile->Get(histogramNamer.Data());
-          
-        } // Track pT loop
-      } // Centrality loop
+      } // Track pT loop
+    } // Centrality loop
   } // Track category loop
   
   // Load the multiplicity histograms within the jet cone

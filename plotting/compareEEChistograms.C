@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_finalMcWeight_processed_2023-03-09.root"};
+  TString inputFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_ESchemeAxis_noTrigger_cutBadPhi_matchJets_moreDensityBins_processed_2023-03-10.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_ESchemeAxis_noTrigger_cutBadPhi_matchJets_moreDensityBins_processed_2023-03-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -52,13 +52,13 @@ void compareEEChistograms(){
   bool drawMultiplicityInReflectedConeUncorrected = false;
   
   // Particle density around jets
-  bool drawParticleDensityAroundJets = true;
+  bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
   bool drawParticleDensityAroundJetsPtBinned = false;
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -140,7 +140,7 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;

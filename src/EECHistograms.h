@@ -54,8 +54,8 @@ public:
   TH1F *fhPtHatWeighted;           // Weighted pT hat distribution
   THnSparseF *fhMultiplicity;      // Track multiplicity from all events [multiplicity][centrality]
   THnSparseF *fhInclusiveJet;      // Inclusive jet information. Axes: [jet pT][jet phi][jet eta][cent]
-  THnSparseF *fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent][same/mixed]
-  THnSparseF *fhTrackUncorrected;  // Track histogram for uncorrected tracks. Axes: [uc pT][uc phi][uc eta][cent][same/mixed]
+  THnSparseF *fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent]
+  THnSparseF *fhTrackUncorrected;  // Track histogram for uncorrected tracks. Axes: [uc pT][uc phi][uc eta][cent]
   THnSparseF *fhParticleDensityAroundJet;   // Particle density around the studied jets
   THnSparseF *fhParticlePtDensityAroundJet; // pT weighted particle density around the studied jets
   THnSparseF *fhParticleMultiplicityInJet;                      // Multiplicity of particles within the studied jet cones

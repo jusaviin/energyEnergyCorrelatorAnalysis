@@ -27,6 +27,7 @@
 #include "trackingEfficiency2017pp.h"
 #include "TrackingEfficiencyInterface.h"
 #include "ReflectedConeWeight.h"
+#include "TrackPairEfficiencyCorrector.h"
 
 class EECAnalyzer{
   
@@ -90,6 +91,7 @@ private:
   JetCorrector *fJetCorrector2018;          // Class for making jet energy correction for 2018 data
   JetUncertainty *fJetUncertainty2018;      // Class for finding uncertainty for jet pT for 2018 data
   ReflectedConeWeight *fReflectedConeWeighter;  // Class for weighting the tracks in the reflected cone
+  TrackPairEfficiencyCorrector *fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   TRandom3 *fRng;                           // Random number generator
   
   // Analyzed data and forest types
