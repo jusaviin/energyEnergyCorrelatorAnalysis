@@ -172,7 +172,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     
     // TODO: Update the file for pp track pair efficiency corrector
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableWithCard_PbPb2018.root");
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableMoreHighPt_pp2017.root");
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -1577,24 +1577,20 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centralit
   // Set the parameters to the smearing function. pp and PbPb have different smearing function parameters
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
     // Settings for pp
-    fSmearingFunction->SetParameters(0.174881, -0.00091979, 3.50064e-06, -6.52541e-09, 4.64199e-12);
+    // Determined using the macro constructJetPtClosures.C
+    // Input file: ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
+    fSmearingFunction->SetParameters(0.165659, -0.000775499, 2.70493e-06, -4.69846e-09, 3.15964e-12);
     
   } else {
     
-//    // Parameters for the smearing function for flow jets
-//    Double_t resolutionFit[4][5] = {
-//      {0.451855, -0.00331992, 1.25897e-05, -2.26434e-08, 1.55081e-11},
-//      {0.366326, -0.00266997, 1.04733e-05, -1.95302e-08, 1.38409e-11},
-//      {0.268453, -0.00184878, 7.45201e-06, -1.43486e-08, 1.04726e-11},
-//      {0.202255, -0.00114677, 4.2566e-06, -7.69286e-09, 5.32617e-12}
-//    };
-    
-    // Parameters for the smearing function for calo jets
+    // Parameters for the smearing function
+    // Determined using the macro constructJetPtClosures.C
+    // Input file: PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
     Double_t resolutionFit[4][5] = {
-      {0.268878, -0.00142952, 4.91294e-06, -8.43379e-09, 5.64202e-12},
-      {0.251296, -0.00130685, 4.51052e-06, -7.78237e-09, 5.21521e-12},
-      {0.246154, -0.00137711, 5.21775e-06, -9.76697e-09, 6.98133e-12},
-      {0.215341, -0.000966671, 3.06525e-06, -4.92523e-09, 3.08673e-12}
+      {0.424589, -0.00260826, 8.06713e-06, -1.17528e-08, 6.49404e-12},
+      {0.415669, -0.00300066, 1.18443e-05, -2.30594e-08, 1.74213e-11},
+      {0.358008, -0.00270528, 1.10689e-05, -2.15565e-08, 1.59491e-11},
+      {0.237325, -0.00138461, 4.77259e-06, -7.80495e-09, 4.79538e-12}
     };
     
     for(int iParameter = 0; iParameter < 5; iParameter++){
