@@ -111,6 +111,8 @@ int TrackPairEfficiencyCorrector::FindTrackPtBin(const double trackPt) const{
  */
 double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt) const{
   
+  if(fDisableCorrection) return 1;
+
   // Determine the correct bin from the centrality and track pT values
   int iCentrality = FindCentralityBin(centrality);
   int iTriggerPt = FindTrackPtBin(triggerPt);

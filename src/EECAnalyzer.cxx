@@ -83,8 +83,6 @@ EECAnalyzer::EECAnalyzer() :
   fMinimumMaxTrackPtFraction(0),
   fMaximumMaxTrackPtFraction(0),
   fJetUncertaintyMode(0),
-  fCombinatorialJetCut(0),
-  fCombinatoriaJetMargin(0),
   fTrackEtaCut(0),
   fTrackMinPtCut(0),
   fMaxTrackPtRelativeError(0),
@@ -213,8 +211,14 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fRng = new TRandom3();
   fRng->SetSeed(0);
   
-  // Disable the track pair efficiency correction for generator level particles
-  fTrackPairEfficiencyCorrector->SetDisableCorrection(((fMcCorrelationType == kGenGen) || (fMcCorrelationType == kRecoGen)));
+  //**********************************************************
+  //    Disable/enable the track pair efficiency correction
+  //**********************************************************
+
+  bool disableTrackPairEfficiencyCorrection = (fCard->Get("DisableTrackPairEfficiencyCorrection") == 1);
+  if((fMcCorrelationType == kGenGen) || (fMcCorrelationType == kRecoGen)) disableTrackPairEfficiencyCorrection = true; // Disable the track pair efficiency correction for generator level particles
+  fTrackPairEfficiencyCorrector->SetDisableCorrection(disableTrackPairEfficiencyCorrection);
+
 }
 
 /*
@@ -253,8 +257,6 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
   fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
   fJetUncertaintyMode(in.fJetUncertaintyMode),
-  fCombinatorialJetCut(in.fCombinatorialJetCut),
-  fCombinatoriaJetMargin(in.fCombinatoriaJetMargin),
   fTrackEtaCut(in.fTrackEtaCut),
   fTrackMinPtCut(in.fTrackMinPtCut),
   fMaxTrackPtRelativeError(in.fMaxTrackPtRelativeError),
@@ -320,8 +322,6 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
   fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
   fJetUncertaintyMode = in.fJetUncertaintyMode;
-  fCombinatorialJetCut = in.fCombinatorialJetCut;
-  fCombinatoriaJetMargin = in.fCombinatoriaJetMargin;
   fTrackEtaCut = in.fTrackEtaCut;
   fTrackMinPtCut = in.fTrackMinPtCut;
   fMaxTrackPtRelativeError = in.fMaxTrackPtRelativeError;
@@ -398,8 +398,6 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
-  fCombinatorialJetCut = fCard->Get("CombinatorialJetCut");      // Cut for combinatorial jets in MC
-  fCombinatoriaJetMargin = fCard->Get("CombinatorialJetMargin"); // Margin used in the combinatorial jet cut
   
   //****************************************
   //        Track selection cuts
@@ -415,7 +413,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fMinimumTrackHits = fCard->Get("MinimumTrackHits"); // Quality cut for track hits
   
   fSubeventCut = fCard->Get("SubeventCut");     // Required subevent type
-  
+
   //****************************************
   //    Correlation type for Monte Carlo
   //****************************************
@@ -568,7 +566,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
   const Int_t nFillMultiplicity = 3; // 3 is nominal
   const Int_t nFillMultiplicityInJetCone = 5;
-  const Int_t nFillParticleDensityInJetCone = 7;
+  const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
@@ -594,7 +592,7 @@ void EECAnalyzer::RunAnalysis(){
     uncertaintyFile[fDataType].replace(pfIndex, 2, "Calo");
     
   }
-    
+  
   vector<string> correctionFiles;
   correctionFiles.push_back(correctionFileRelative[fDataType]);
   if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp)  correctionFiles.push_back(correctionFileResidual[fDataType]);
@@ -822,7 +820,7 @@ void EECAnalyzer::RunAnalysis(){
             // The trackMax array is initialized to -1, so if trackMax is exactly -1, we know this branch is not included in the forest.
             // This piece of code can be removed if NewRelease part of the MC is reforested or is not used anymore.
             bool isNewReleaseMC = (fJetReader->GetJetMaxTrackPt(jetIndex) == -1);
-                        
+            
             if(isNewReleaseMC){
               
               double manualMaxTrackPt = 0;
@@ -949,59 +947,7 @@ void EECAnalyzer::RunAnalysis(){
           if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
           
         } // Circle jet if
-          
-        //************************************************
-        //   Option to do combinatorial jet cut in MC
-        //************************************************
         
-        if(fCombinatorialJetCut != 0){
-          
-          // Reset the max track pT values to 0
-          maxTrackPtInJetSignal = 0;
-          maxTrackPtInJetBackground = 0;
-          
-          // First determine the maximum track pT in from signal and background regions
-          nTracks = fTrackReader->GetNTracks();
-          for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
-            
-            // Check that all the track cuts are passed
-            if(!PassTrackCuts(fTrackReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
-            
-            // Find the track eta and phi
-            trackPt = fTrackReader->GetTrackPt(iTrack);
-            trackEta = fTrackReader->GetTrackEta(iTrack);
-            trackPhi = fTrackReader->GetTrackPhi(iTrack);
-            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
-            trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
-            trackSubeventIndex = GetSubeventIndex(trackSubevent);
-            
-            // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
-            deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
-            if(deltaRTrackJet < fJetRadius){
-              // Find the maximum pT within the jet
-              if(trackSubeventIndex > 0){
-                if(trackPt > maxTrackPtInJetBackground) maxTrackPtInJetBackground = trackPt;
-              } else {
-                if(trackPt > maxTrackPtInJetSignal) maxTrackPtInJetSignal = trackPt;
-              }
-            } // Track close to jet
-          } // Track loop
-          
-          // Do the combinatorial jet cut based on the cut parameters
-          if(fCombinatorialJetCut == -1){
-            // Reject jets where there is higher pT signal particle compared to background particles
-            if(maxTrackPtInJetBackground < (maxTrackPtInJetSignal + fCombinatoriaJetMargin)) continue;
-          } else {
-            // Reject jets where there is higher pT background particle compared to signal particles
-            if((maxTrackPtInJetBackground + fCombinatoriaJetMargin) > maxTrackPtInJetSignal) continue;
-          }
-          
-        } // If for combinatorial jet cut
-        
-        //************************************************
-        //       End of combinatorial jet cut in MC
-        //************************************************
-          
         //************************************************
         //         Fill histograms for all jets
         //************************************************
@@ -1108,7 +1054,6 @@ void EECAnalyzer::RunAnalysis(){
                 fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
                 fillerParticleDensityInJetCone[4] = 0;                  // Axis 4: 0 is the index for signal cone
                 fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
-                fillerParticleDensityInJetCone[6] = deltaRTrackJet;     // Axis 6: DeltaR between the track and the jet (energy-energy correlator binning)
                 fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection);
                 fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt);
               }
@@ -1149,7 +1094,6 @@ void EECAnalyzer::RunAnalysis(){
                   fillerParticleDensityInJetCone[3] = centrality;         // Axis 3: centrality
                   fillerParticleDensityInJetCone[4] = 1;                  // Axis 4: 1 is the index for reflected cone
                   fillerParticleDensityInJetCone[5] = trackSubeventIndex; // Axis 5: Subevent index for the track
-                  fillerParticleDensityInJetCone[6] = deltaRTrackJet;     // Axis 6: DeltaR between the track and the jet (energy-energy correlator binning)
                   fHistograms->fhParticleDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * reflectedConeWeight);
                   fHistograms->fhParticlePtDensityAroundJet->Fill(fillerParticleDensityInJetCone, fTotalEventWeight * trackEfficiencyCorrection * trackPt * reflectedConeWeight);
                 }
@@ -1343,7 +1287,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       
       // Get the efficiency correction for the first track
       trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(trackPt1, trackEta1, hiBin);
-            
+      
       // Get the reflected cone weight for the first track
       if(firstParticleType[iPairingType] == EECHistograms::kReflectedCone){
         reflectedConeWeight1 = fReflectedConeWeighter->GetReflectedConeWeight((fDataType == ForestReader::kPbPb), TMath::Sqrt(trackEta1*trackEta1 + trackPhi1*trackPhi1), centrality, jetPt, trackPt1);
@@ -1428,7 +1372,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
  *  const Int_t jetIndex = Index of a jet for which the closure is filled
  */
 void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
-
+  
   // Define a filler for the closure histogram
   const Int_t nAxesClosure = 6;
   Double_t fillerClosure[nAxesClosure];
@@ -1637,7 +1581,7 @@ Bool_t EECAnalyzer::PassSubeventCut(const Int_t subeventIndex) const{
  *   return = True if all event cuts are passed, false otherwise
  */
 Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms){
-
+  
   // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction. Only applied for data.
   if(eventReader->GetPrimaryVertexFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kPrimaryVertex);
@@ -1810,7 +1754,7 @@ Int_t EECAnalyzer::GetCentralityBin(const Double_t centrality) const{
  * Get the track multiplicity in the current event
  */
 Double_t EECAnalyzer::GetMultiplicity(){
-
+  
   // Loop over all track in the event
   Int_t nTracks = fTrackReader->GetNTracks();
   Double_t trackMultiplicity = 0;
@@ -1834,7 +1778,7 @@ Double_t EECAnalyzer::GetMultiplicity(){
   } // Track loop
   
   fSubeventCut = originalCut;
-
+  
   return trackMultiplicity;
   
 }
@@ -1875,7 +1819,7 @@ Double_t EECAnalyzer::GetCentralityFromMultiplicity(const Double_t multiplicity)
  *  return: DeltaR between the two objects
  */
 Double_t EECAnalyzer::GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const{
-
+  
   Double_t deltaEta = eta1 - eta2;
   Double_t deltaPhi = phi1 - phi2;
   
@@ -1946,7 +1890,7 @@ Int_t EECAnalyzer::GetSubeventIndex(const Int_t subevent) const{
  * return: Eta of a reflected jet axis
  */
 Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
-
+  
   // If the jet eta is far enough from zero that the cones do not overlap, do a direct reflection
   if(TMath::Abs(eta) > fJetRadius) return -eta;
   

@@ -27,7 +27,6 @@ public:
   
   // Indices for different multiplicity within the jet cone histogram categories
   enum enumMultiplicityInJetCone{kMultiplicityInJetCone, kMultiplicityInReflectedCone, kMultiplicityInJetConeUncorrected, kMultiplicityInReflectedConeUncorrected, knMultiplicityInJetConeTypes};
-  enum enumDeltaRBinning{kConstantDeltaR, kLogarithmicDeltaR, knDeltaRBinningTypes};
   
   // Indices for different particle density types measured around the jet axis
   enum enumParticleDensityAroundJets{kParticleDensityAroundJetAxis, kParticlePtDensityAroundJetAxis, kParticleDensityAroundJetAxisPtBinned, kParticlePtDensityAroundJetAxisPtBinned, knParticleDensityAroundJetAxisTypes};
@@ -68,7 +67,6 @@ private:
   const char* fParticleDensityAroundJetsHistogramNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity", "particleDensity", "particlePtDensity"};
   const char* fParticleDensityAroundJetsSaveNames[knParticleDensityAroundJetAxisTypes] = {"particleDensity", "particlePtDensity", "particleDensityPtBinned", "particlePtDensityPtBinned"};
   const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})", "#rho(N_{ch})", "#rho(p_{T}^{ch})"};
-  const char* fDeltaRBinningTypeSaveName[knDeltaRBinningTypes] = {"", "_logDeltaRBins"};
   
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
@@ -225,7 +223,7 @@ public:
   
   // Getters for multiplicity and particle density histograms within the jet cones
   TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes) const; // Multiplicity within the jet cone
-  TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes, const int iDeltaRBinning = kConstantDeltaR) const; // Particle density around the jet axis
+  TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet axis
   
   // Getters for the maximum particle pT histograms within the jet cone
   TH1D* GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum particle pT in jet cone
@@ -353,7 +351,7 @@ private:
   
   // Histograms for multiplicity and particle density within the jet cones
   TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
-  TH1D *fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1][knDeltaRBinningTypes];
+  TH1D *fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
   
   // Histograms for maximum particle pT within the jet cone
   TH1D *fhMaxParticlePtInJetConePtCut[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins];

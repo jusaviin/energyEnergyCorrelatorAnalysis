@@ -36,8 +36,6 @@ public:
     kMinMaxTrackPtFraction,     // Minimum fraction of jet pT taken by the highest pT track in jet
     kMaxMaxTrackPtFraction,     // Maximum fraction of jet pT taken by the highest pT track in jet
     kJetUncertaintyMode,        // 0 = Nominal jet pT, 1 = pT minus uncertainty, 2 = pT plus uncertainty
-    kCombinatorialJetCut,       // -1 = Only accept combinatorial jets, 0 = No cut, 1 = Cut combinatorial jets
-    kCombinatorialJetMargin,    // Margin (with respect to the highest pT track) used in the combinatorial jet cut
     kTrackEtaCut,               // Eta cut for tracks
     kMinTrackPtCut,             // Minimum accepted track pT
     kMaxTrackPtRelativeError,   // Maximum relative error allowed for track pT
@@ -47,6 +45,7 @@ public:
     kChi2QualityCut,            // Maximum accepted chi2 for reconstructed tracks
     kMinimumTrackHits,          // Minimum number of hits in tracking for a track
     kSubeventCut,               // 0 = Subevent 0 (Pythia), 1 = Subevent > 0 (Hydjet), 2 = No subevent selection
+    kDisableTrackPairEfficiencyCorrection, // 0 = Keep track pair efficiency correction enabled. 1 = Disable track pair efficiency correction
     kZVertexCut,                // Maximum accepted vz in the event
     kLowPtHatCut,               // Minimum accepted pT hat
     kHighPtHatCut,              // Maximum accepted pT hat
@@ -67,7 +66,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","CombinatorialJetCut","CombinatorialJetMargin","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   
