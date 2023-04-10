@@ -212,7 +212,7 @@ void EECHistograms::CreateHistograms(){
   
   //Track pT
   const Double_t minPtTrack = 0;   // Minimum track pT for track histograms
-  const Double_t maxPtTrack = 20;  // Maximum track pT for track histograms (Hallie's analysis = 20)
+  const Double_t maxPtTrack = 50;  // Maximum track pT for track histograms (Hallie's analysis = 20)
   const Int_t nPtBinsTrack = 500;  // Number of track pT bins for track histograms (Hallie's analysis = 500)
   
   // Track pT for maximum particle pT inside a jet
@@ -325,7 +325,7 @@ void EECHistograms::CreateHistograms(){
   const Double_t maxDeltaRTrackDensity = 0.8;
   
   // Logarithmic deltaR binning for energy-energy correlator histograms
-  const Int_t nDeltaRBinsEEC = 60;
+  const Int_t nDeltaRBinsEEC = 40;
   const Double_t minDeltaREEC = 0;
   const Double_t maxDeltaREEC = 0.8;
   const Double_t binnerShift = 0.01;
