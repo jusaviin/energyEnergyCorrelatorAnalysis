@@ -22,7 +22,7 @@ public:
   static const int kMaxTrackPtBins = 12;        // Maximum allowed number of track pT bins
   
   TrackPairEfficiencyCorrector();                   // Contructor
-  TrackPairEfficiencyCorrector(TString inputFileName);   // Custom constructor
+  TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection);   // Custom constructor
   ~TrackPairEfficiencyCorrector() = default;        // Destructor
   
   double GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt) const;
@@ -34,10 +34,10 @@ public:
 private:
   
   // Card with binning information
-  TrackPairEfficiencyCard *fCard;
+  TrackPairEfficiencyCard* fCard;
   
   // File from which the histograms are read
-  TFile *fInputFile;
+  TFile* fInputFile;
   
   // Binning information read to be read from the input file
   double fCentralityBinBorders[kMaxCentralityBins+1] = {0};
@@ -45,11 +45,12 @@ private:
   int fnCentralityBins;
   int fnTrackPtBins;
   
-  // Flag for disabling the correction
-  bool fDisableCorrection;
+  // Flags for selecting correct corrections
+  bool fDisableCorrection;      // Disable the correction and just return 1
+  bool fUseSmoothedCorrection;  // True: Use smoothed correction. False: Use raw correction
   
   // Histograms from which the corrections are read
-  TH1D *fCorrectionTable[kMaxCentralityBins][kMaxTrackPtBins][kMaxTrackPtBins];
+  TH1D* fCorrectionTable[kMaxCentralityBins][kMaxTrackPtBins][kMaxTrackPtBins];
   
   // Methods
   int FindBinIndex(const double* array, const int nBins, const double value) const; // Find a bin index from a given array

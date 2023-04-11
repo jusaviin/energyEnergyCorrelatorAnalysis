@@ -169,8 +169,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fCentralityWeightFunctionPeripheral = NULL;
     fMultiplicityWeightFunction = NULL;
     
-    // TODO: Update the file for pp track pair efficiency corrector
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableMoreHighPt_pp2017.root");
+    // Track pair efficiency corrector for pp
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableNewBinning_pp2017_2023-04-11.root", false);
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -197,7 +197,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
     
     // Track pair efficiency corrector for PbPb
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableWithCard_PbPb2018.root");
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableWithCard_PbPb2018.root", true);
     
   } else {
     fVzWeightFunction = NULL;

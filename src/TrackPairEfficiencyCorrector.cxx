@@ -13,7 +13,8 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
   fInputFile(NULL),
   fnCentralityBins(0),
   fnTrackPtBins(0),
-  fDisableCorrection(false)
+  fDisableCorrection(false),
+  fUseSmoothedCorrection(false)
 {
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins; iCentrality++){
     for(int iTriggerPt = 0; iTriggerPt < kMaxTrackPtBins; iTriggerPt++){
@@ -27,10 +28,11 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
 /*
  * Custom constructor
  */
-TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName) :
+TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection) :
   fDisableCorrection(false)
 {
   fInputFile = TFile::Open(inputFileName, "r");
+  fUseSmoothedCorrection = useSmoothedCorrection;
   ReadCorrectionTables();
 }
 
@@ -58,11 +60,14 @@ void TrackPairEfficiencyCorrector::ReadCorrectionTables(){
   }
   fTrackPtBinBorders[fnTrackPtBins] = fCard->GetHighBinBorderTrackPairPt(fnTrackPtBins-1);
   
+  // Select the correct name for the corrections
+  const char* histogramName = fUseSmoothedCorrection ? "smoothedTrackPairEfficiencyCorrection" : "trackPairEfficiencyCorrection";  
+
   // Read all the tables from the file
   for(int iCentrality = 0; iCentrality < fnCentralityBins; iCentrality++){
     for(int iTriggerPt = 0; iTriggerPt < fnTrackPtBins; iTriggerPt++){
       for(int iAssociatedPt = 0; iAssociatedPt <= iTriggerPt; iAssociatedPt++){
-        fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt] = (TH1D*) fInputFile->Get(Form("smoothedTrackPairEfficiencyCorrection_C%dT%dA%d", iCentrality, iTriggerPt, iAssociatedPt));
+        fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt] = (TH1D*) fInputFile->Get(Form("%s_C%dT%dA%d", histogramName, iCentrality, iTriggerPt, iAssociatedPt));
       }
     }
   }
