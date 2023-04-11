@@ -8,7 +8,7 @@ McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Match dijets. 3 = Match leading jets. 4 = Anti-match dijets. 5 = Anti-match leading jets. 6 = Find the matching dijet, but do not require analysis cuts from it
 
 # Select if you want to use the jet trigger
-TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100
+TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)

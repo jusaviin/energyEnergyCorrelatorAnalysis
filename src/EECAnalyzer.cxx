@@ -491,6 +491,7 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t useDifferentReaderForJetsAndTracks = (fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenReco); // Use different forest reader for jets and tracks
   
   // Variables for trigger flags
+  Bool_t caloJet60Trigger;
   Bool_t caloJet80Trigger;
   Bool_t caloJet100Trigger;
   
@@ -725,6 +726,7 @@ void EECAnalyzer::RunAnalysis(){
       if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
       
       // Jet trigger combinations
+      caloJet60Trigger = (fJetReader->GetCaloJet60FilterBit() == 1);
       caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
       caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
       
@@ -739,6 +741,7 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 1 && !caloJet80Trigger) continue;
       if(fTriggerSelection == 2 && !caloJet100Trigger) continue;
       if(fTriggerSelection == 3 && (!caloJet80Trigger && !caloJet100Trigger)) continue;
+      if(fTriggerSelection == 4 && !caloJet60Trigger) continue;
       
       // If combining triggers, need to include event weight for events that only fire the lower trigger
       // The weight used here is the inverse of the average effective prescale in the whole sample

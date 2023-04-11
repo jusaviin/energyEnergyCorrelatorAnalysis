@@ -155,21 +155,21 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("weight",&fEventWeight,&fEventWeightBranch);
   
   // Connect the branches to the jet tree
-  const char *jetAxis[2] = {"jt","WTA"};
-  const char *genJetAxis[2] = {"","WTA"};
-  char branchName[30];
+  const char* jetAxis[2] = {"jt","WTA"};
+  const char* genJetAxis[2] = {"","WTA"};
+  const char* branchName;
   
   fJetTree->SetBranchStatus("*",0);
   fJetTree->SetBranchStatus("genpt",1);
   fJetTree->SetBranchAddress("genpt",&fJetPtArray,&fJetPtBranch);
   
   // If specified, select WTA axis for jet phi
-  sprintf(branchName,"%sgenphi",genJetAxis[fJetAxis]);
+  branchName = Form("%sgenphi",genJetAxis[fJetAxis]);
   fJetTree->SetBranchStatus(branchName,1);
   fJetTree->SetBranchAddress(branchName,&fJetPhiArray,&fJetPhiBranch);
   
   // If specified, select WTA axis for jet eta
-  sprintf(branchName,"%sgeneta",genJetAxis[fJetAxis]);
+  branchName = Form("%sgeneta",genJetAxis[fJetAxis]);
   fJetTree->SetBranchStatus(branchName,1);
   fJetTree->SetBranchAddress(branchName,&fJetEtaArray,&fJetEtaBranch);
   
@@ -188,12 +188,12 @@ void GeneratorLevelForestReader::Initialize(){
     fJetTree->SetBranchAddress("rawpt",&fRecoJetRawPtArray,&fHighPurityTrackBranch); // Reuse a branch from ForestReader that is not otherwise needed here
     
     // If specified, select WTA axis for jet phi
-    sprintf(branchName,"%sphi",jetAxis[fJetAxis]);
+    branchName = Form("%sphi",jetAxis[fJetAxis]);
     fJetTree->SetBranchStatus(branchName,1);
     fJetTree->SetBranchAddress(branchName,&fRecoJetPhiArray,&fJetMatchedPhiBranch);
     
     // If specified, select WTA axis for jet eta
-    sprintf(branchName,"%seta",jetAxis[fJetAxis]);
+    branchName = Form("%seta",jetAxis[fJetAxis]);
     fJetTree->SetBranchStatus(branchName,1);
     fJetTree->SetBranchAddress(branchName,&fRecoJetEtaArray,&fJetMatchedEtaBranch);
     
@@ -207,15 +207,25 @@ void GeneratorLevelForestReader::Initialize(){
     fHltTree->SetBranchStatus("*",0);
     
     if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
-      
+
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet60_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet60_v1",&fCaloJet60FilterBit,&fCaloJet60FilterBranch);
+
+      // Calo jet 80 trigger
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1",1);
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet80_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
       
+      // Calo jet 100 trigger
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
       
     } else { // PbPb data or MC
-      
+
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet60Eta5p1_v1",1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet60Eta5p1_v1",&fCaloJet60FilterBit,&fCaloJet60FilterBranch);
+
       // Calo jet 80 trigger
       fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1",1);
       fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
@@ -226,6 +236,7 @@ void GeneratorLevelForestReader::Initialize(){
       
     }
   } else {
+    fCaloJet60FilterBit = 1;
     fCaloJet80FilterBit = 1;
     fCaloJet100FilterBit = 1;
   }
