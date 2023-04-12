@@ -54,12 +54,13 @@ private:
   
   // Private methods
   void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt);  // Calculate energy-energy correlators
+  void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
-  Bool_t PassTrackCuts(ForestReader *trackReader, const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
-  Bool_t PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
+  Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
+  Bool_t PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
   Double_t  GetTrackEfficiencyCorrection(const Float_t trackPt, const Float_t trackEta, const Int_t hiBin); // Get the track efficiency correction for given track and event information
   Double_t GetVzWeight(const Double_t vz) const;  // Get the proper vz weighting depending on analyzed system
@@ -76,23 +77,23 @@ private:
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
   
   // Private data members
-  ForestReader *fJetReader;                 // Reader for jets in the event
-  ForestReader *fTrackReader;               // Readers for tracks in the event
+  ForestReader* fJetReader;                 // Reader for jets in the event
+  ForestReader* fTrackReader;               // Readers for tracks in the event
   std::vector<TString> fFileNames;          // Vector for all the files to loop over
-  ConfigurationCard *fCard;                 // Configuration card for the analysis
-  EECHistograms *fHistograms;               // Filled histograms
-  TF1 *fVzWeightFunction;                   // Weighting function for vz. Needed for MC.
-  TF1 *fCentralityWeightFunctionCentral;    // Weighting function for central centrality classes. Needed for MC.
-  TF1 *fCentralityWeightFunctionPeripheral; // Weighting function for peripheral centrality classes. Needed for MC.
-  TF1 *fMultiplicityWeightFunction;         // Track multiplicity based weighting function. Can be done instead of centrality weight.
-  TF1 *fPtWeightFunction;                   // Weighting function for jet pT. Needed for MC.
-  TF1 *fSmearingFunction;                   // Additional smearing for jets. Needed in systematic uncertainty study.
-  TrackingEfficiencyInterface *fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
-  JetCorrector *fJetCorrector2018;          // Class for making jet energy correction for 2018 data
-  JetUncertainty *fJetUncertainty2018;      // Class for finding uncertainty for jet pT for 2018 data
-  ReflectedConeWeight *fReflectedConeWeighter;  // Class for weighting the tracks in the reflected cone
-  TrackPairEfficiencyCorrector *fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
-  TRandom3 *fRng;                           // Random number generator
+  ConfigurationCard* fCard;                 // Configuration card for the analysis
+  EECHistograms* fHistograms;               // Filled histograms
+  TF1* fVzWeightFunction;                   // Weighting function for vz. Needed for MC.
+  TF1* fCentralityWeightFunctionCentral;    // Weighting function for central centrality classes. Needed for MC.
+  TF1* fCentralityWeightFunctionPeripheral; // Weighting function for peripheral centrality classes. Needed for MC.
+  TF1* fMultiplicityWeightFunction;         // Track multiplicity based weighting function. Can be done instead of centrality weight.
+  TF1* fPtWeightFunction;                   // Weighting function for jet pT. Needed for MC.
+  TF1* fSmearingFunction;                   // Additional smearing for jets. Needed in systematic uncertainty study.
+  TrackingEfficiencyInterface* fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
+  JetCorrector* fJetCorrector2018;          // Class for making jet energy correction for 2018 data
+  JetUncertainty* fJetUncertainty2018;      // Class for finding uncertainty for jet pT for 2018 data
+  ReflectedConeWeight* fReflectedConeWeighter;  // Class for weighting the tracks in the reflected cone
+  TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
+  TRandom3* fRng;                           // Random number generator
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type

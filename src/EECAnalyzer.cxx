@@ -1617,14 +1617,14 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHi
  * Check if a track passes all the track cuts
  *
  *  Arguments:
- *   ForestReader *trackReader = ForestReader from which the tracks are read
+ *   ForestReader* trackReader = ForestReader from which the tracks are read
  *   const Int_t iTrack = Index of the checked track in reader
- *   TH1F *trackCutHistogram = Histogram to which the track cut performance is filled
+ *   TH1F* trackCutHistogram = Histogram to which the track cut performance is filled
  *   const Bool_t bypassFill = Pass filling the track cut histograms
  *
  *   return: True if all track cuts are passed, false otherwise
  */
-Bool_t EECAnalyzer::PassTrackCuts(ForestReader *trackReader, const Int_t iTrack, TH1F *trackCutHistogram, const Bool_t bypassFill){
+Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill){
   
   // Only fill the track cut histograms for same event data
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kAllTracks);

@@ -30,7 +30,7 @@ public:
   
   // Constructors and destructor
   EECHistograms(); // Default constructor
-  EECHistograms(ConfigurationCard *newCard); // Custom constructor
+  EECHistograms(ConfigurationCard* newCard); // Custom constructor
   EECHistograms(const EECHistograms& in); // Copy constructor
   virtual ~EECHistograms(); // Destructor
   EECHistograms& operator=(const EECHistograms& obj); // Equal sign operator
@@ -39,7 +39,7 @@ public:
   void CreateHistograms();                   // Create all histograms
   void Write() const;                        // Write the histograms to a file that is opened somewhere else
   void Write(TString outputFileName) const;  // Write the histograms to a file
-  void SetCard(ConfigurationCard *newCard);  // Set a new configuration card for the histogram class
+  void SetCard(ConfigurationCard* newCard);  // Set a new configuration card for the histogram class
   
   // Histograms defined public to allow easier access to them. Should not be abused
   // Notation in comments: l = leading jet, s = subleading jet, inc - inclusive jet, uc = uncorrected, ptw = pT weighted
@@ -67,7 +67,7 @@ public:
   THnSparseF *fhEnergyEnergyCorrelatorUncorrected; // Histogram for energy-energy correlator with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorJetPt;            // Histogram for energy-energy correlator with jet pT normalization. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF *fhEnergyEnergyCorrelatorJetPtUncorrected; // Histogram for energy-energy correlator with jet pT normalization with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
-  THnSparseF *fhJetPtClosure; // Jet pT closure histograms [inclusive/leading/subleading][gen pT][centrality][q/g][reco/gen]
+  THnSparseF *fhJetPtClosure; // Jet pT closure histograms. Also information for response matrix. [gen pT][reco pT][centrality][q/g][reco/gen]
   
 private:
   

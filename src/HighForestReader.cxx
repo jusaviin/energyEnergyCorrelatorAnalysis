@@ -531,7 +531,7 @@ void HighForestReader::Initialize(){
 /*
  * Connect a new tree to the reader
  */
-void HighForestReader::ReadForestFromFile(TFile *inputFile){
+void HighForestReader::ReadForestFromFile(TFile* inputFile){
   
   // When reading a forest, we need to check if it is AOD or MiniAOD forest as there are some differences
   // The HiForest tree is renamed to HiForestInfo in MiniAODs, so we can determine the forest type from this.
