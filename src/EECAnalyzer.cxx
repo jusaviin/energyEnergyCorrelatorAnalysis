@@ -197,7 +197,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
     
     // Track pair efficiency corrector for PbPb
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableWithCard_PbPb2018.root", true);
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableNewBinning_PbPb2018_2023-04-13.root", true);
     
   } else {
     fVzWeightFunction = NULL;
