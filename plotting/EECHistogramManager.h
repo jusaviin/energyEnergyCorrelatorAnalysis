@@ -14,6 +14,7 @@
 #include "EECCard.h"
 #include "../src/EECHistograms.h"
 #include "EECBackgroundScale.h"
+#include "AlgorithmLibrary.h"
 
 /*
  * Class for drawing the histograms produced in the dijet analysis
@@ -146,6 +147,7 @@ public:
   // Setter for loading additional histograms
   void SetLoad2DHistograms(const bool loadOrNot);           // Setter for loading two-dimensional histograms
   void SetLoadJetPtClosureHistograms(const bool loadOrNot); // Setter for loading jet pT closure histograms
+  void SetLoadJetPtResponseMatrix(const bool loadOrNot);    // Setter for loading jet pT response matrix
   
   // Setters for ranges for different bins
   void SetCentralityBinRange(const int first, const int last); // Setter for centrality bin range
@@ -237,6 +239,9 @@ public:
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
   
+  // Getter for jet pT response matrix
+  TH2D* GetHistogramJetPtResponseMatrix(const int iCentrality) const;
+
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
   
@@ -282,6 +287,7 @@ private:
   bool fLoadTracks[knTrackCategories];                     // Load the track histograms
   bool fLoad2DHistograms;                                  // Load also two-dimensional (eta,phi) histograms
   bool fLoadJetPtClosureHistograms;                        // Load the jet pT closure histograms
+  bool fLoadJetPtResponseMatrix;                           // Load the jet pT response matrix
   bool fLoadMultiplicityInJetHistograms;                   // Load the multiplicity histograms within jet cone
   bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
   bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
@@ -316,54 +322,57 @@ private:
   int fnTrackPtBins;                                  // Number of track pT bins in the JCard of the data file
   int fnJetPtBinsEEC;                                 // Number of jet pT bins for the energy-energy correlator histograms
   int fnTrackPtBinsEEC;                               // Number of track pT bins for the energy-energy correlator histograms
-  
+
   // =============================================
   // ===== Histograms for the dijet analysis =====
   // =============================================
-  
+
   // Event information histograms
-  TH1D *fhVertexZ;            // Vertex z position
-  TH1D *fhVertexZWeighted;    // Weighted vertex z-position (only meaningfull for MC)
-  TH1D *fhEvents;             // Number of events surviving different event cuts
-  TH1D *fhTriggers;           // Trigger selection for the events
-  TH1D *fhTrackCuts;          // Number of tracks surviving different track cuts
-  TH1D *fhCentrality;         // Centrality of all events
-  TH1D *fhCentralityWeighted; // Weighted centrality distribution in all events (only meaningful for MC)
-  TH1D *fhPtHat;              // pT hat for MC events (only meaningful for MC)
-  TH1D *fhPtHatWeighted;      // Weighted pT hat distribution (only meaningful for MC)
-  
-  TH1D *fhMultiplicity[kMaxCentralityBins+1];              // Multiplicity form all events
-  TH1D *fhMultiplicityWeighted[kMaxCentralityBins+1];      // Efficiency weighted multiplicity form all events
-  TH2D *fhMultiplicityMap;                                 // Multiplicity vs. centrality map
-  TH2D *fhMultiplicityMapWeighted;                         // Efficiency weighted multiplicity vs. centrality map
-  
+  TH1D* fhVertexZ;            // Vertex z position
+  TH1D* fhVertexZWeighted;    // Weighted vertex z-position (only meaningfull for MC)
+  TH1D* fhEvents;             // Number of events surviving different event cuts
+  TH1D* fhTriggers;           // Trigger selection for the events
+  TH1D* fhTrackCuts;          // Number of tracks surviving different track cuts
+  TH1D* fhCentrality;         // Centrality of all events
+  TH1D* fhCentralityWeighted; // Weighted centrality distribution in all events (only meaningful for MC)
+  TH1D* fhPtHat;              // pT hat for MC events (only meaningful for MC)
+  TH1D* fhPtHatWeighted;      // Weighted pT hat distribution (only meaningful for MC)
+
+  TH1D* fhMultiplicity[kMaxCentralityBins+1];          // Multiplicity form all events
+  TH1D* fhMultiplicityWeighted[kMaxCentralityBins+1];  // Efficiency weighted multiplicity form all events
+  TH2D* fhMultiplicityMap;                             // Multiplicity vs. centrality map
+  TH2D* fhMultiplicityMapWeighted;                     // Efficiency weighted multiplicity vs. centrality map
+
   // Histograms for jets
-  TH1D *fhJetPt[kMaxCentralityBins];          // Jet pT histograms
-  TH1D *fhJetPhi[kMaxCentralityBins];         // Jet phi histograms
-  TH1D *fhJetEta[kMaxCentralityBins];         // Jet eta histograms
-  TH2D *fhJetEtaPhi[kMaxCentralityBins];      // 2D eta-phi histogram for jets
-  
+  TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms
+  TH1D* fhJetPhi[kMaxCentralityBins];     // Jet phi histograms
+  TH1D* fhJetEta[kMaxCentralityBins];     // Jet eta histograms
+  TH2D* fhJetEtaPhi[kMaxCentralityBins];  // 2D eta-phi histogram for jets
+
   // Histograms for tracks
-  TH1D *fhTrackPt[knTrackCategories][kMaxCentralityBins];                        // Track pT histograms
-  TH1D *fhTrackPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];    // Track phi histograms
-  TH1D *fhTrackEta[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];    // Track eta histograms
-  TH2D *fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1]; // 2D eta-phi histogram for track
-  
+  TH1D* fhTrackPt[knTrackCategories][kMaxCentralityBins];                         // Track pT histograms
+  TH1D* fhTrackPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];     // Track phi histograms
+  TH1D* fhTrackEta[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];     // Track eta histograms
+  TH2D* fhTrackEtaPhi[knTrackCategories][kMaxCentralityBins][kMaxTrackPtBins+1];  // 2D eta-phi histogram for track
+
   // Histograms for multiplicity and particle density within the jet cones
-  TH1D *fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
-  TH1D *fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes+1];
-  
+  TH1D* fhMultiplicityInJetCone[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][knMultiplicityInJetConeTypes][EECHistograms::knSubeventTypes+1];
+  TH1D* fhParticleDensityAroundJetAxis[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBins][EECHistograms::knJetConeTypes][knParticleDensityAroundJetAxisTypes][EECHistograms::knSubeventTypes + 1];
+
   // Histograms for maximum particle pT within the jet cone
-  TH1D *fhMaxParticlePtInJetConePtCut[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins];
-  TH1D *fhMaxParticlePtInJetConePtBin[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins+1];
-  
+  TH1D* fhMaxParticlePtInJetConePtCut[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins];
+  TH1D* fhMaxParticlePtInJetConePtBin[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins+1];
+
   // Histograms for energy-energy correlators
-  TH1D *fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1]; // Raw correlators read from data file
-  TH1D *fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels]; // Postprocessed energy-energy correlators
-  
+  TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
+  TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
+
+  // Jet pT response matrix
+  TH2D* fhJetPtResponseMatrix[kMaxCentralityBins];
+
   // Histograms for jet pT closure
-  TH1D *fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1]; // Jet pT closure
-  
+  TH1D* fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1];  // Jet pT closure
+
   // Private methods
   void InitializeFromCard(); // Initialize several member variables from EECCard
   
@@ -371,14 +380,16 @@ private:
   void NormalizeToDeltaRBinArea(TH1D* histogramInNeedOfNormalization); // Normalize each bin in a histogram histogram to DeltaR bin area
   
   // Binning related methods
-  void SetBinIndices(const char* histogramName, const int nBins, int *binIndices, const double *binBorders, const int iAxis); // Read the bin indices for given bin borders
-  void SetBinBordersAndIndices(const char* histogramName, const int nBins, double *copyBinBorders, int *binIndices, const double *binBorders, const int iAxis, const bool setIndices); // Read the bin indices for given bin borders
+  void SetBinIndices(const char* histogramName, const int nBins, int* binIndices, const double* binBorders, const int iAxis); // Read the bin indices for given bin borders
+  void SetBinBordersAndIndices(const char* histogramName, const int nBins, double *copyBinBorders, int* binIndices, const double* binBorders, const int iAxis, const bool setIndices); // Read the bin indices for given bin borders
   
   // Finders for histograms with different amount of restrictions
-  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH2D* FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(TFile *inputFile, const char *name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int nAxes, int *axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true);
+  TH1D* FindHistogram(TFile* inputFile, const char* name, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(TFile* inputFile, const char* name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
   
   // Loaders for different groups of histograms
   void LoadMultiplicityHistograms(); // Loader for multiplicity histograms
@@ -388,10 +399,11 @@ private:
   void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
   void LoadMaxParticlePtInJetConeHistograms(); // Loader for maximum particle pT in jet cone histograms
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
+  void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   
   // Generic setter for bin indice and borders
-  void SetGenericBins(const bool readBinsFromFile, const char* histogramName, const int iAxis, int nSetBins, double* setBinBorders, int* setBinIndices, const int nBins, const double *binBorders, const char* errorMessage, const int maxBins, const bool setIndices); // Generic bin setter
+  void SetGenericBins(const bool readBinsFromFile, const char* histogramName, const int iAxis, int nSetBins, double* setBinBorders, int* setBinIndices, const int nBins, const double* binBorders, const char* errorMessage, const int maxBins, const bool setIndices); // Generic bin setter
   
   // Methods for binning
   void BinSanityCheck(const int nBins, int& first, int& last); // Sanity check for given binning
@@ -404,6 +416,7 @@ private:
   void WriteParticleDensityAroundJetsHistograms();  // Write the particle density histograms around the jet axes
   void WriteMaxParticlePtWithinJetConeHistograms(); // Write the maximum particle pT within the jet cone histograms
   void WriteEnergyEnergyCorrelatorHistograms();     // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteJetPtResponseMatrix();                  // Write the jet pT response matrices
   void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
   
 };

@@ -21,6 +21,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadJets(false),
   fLoad2DHistograms(false),
   fLoadJetPtClosureHistograms(false),
+  fLoadJetPtResponseMatrix(false),
   fLoadMultiplicityInJetHistograms(false),
   fLoadMaxParticlePtWithinJetConeHistograms(false),
   fJetFlavor(0),
@@ -177,13 +178,17 @@ EECHistogramManager::EECHistogramManager() :
         } // Closure particle loop
       } // Jet eta bin loop
     } // Gen jet pT loop
+
+    // Jet pT response matrix
+    fhJetPtResponseMatrix[iCentrality] = NULL;
+
   } // Centrality loop
 }
 
 /*
  * Constructor
  */
-EECHistogramManager::EECHistogramManager(TFile *inputFile) :
+EECHistogramManager::EECHistogramManager(TFile* inputFile) :
   EECHistogramManager()
 {
   fInputFile = inputFile;
@@ -199,7 +204,7 @@ EECHistogramManager::EECHistogramManager(TFile *inputFile) :
 /*
  * Constructor
  */
-EECHistogramManager::EECHistogramManager(TFile *inputFile, EECCard *card) :
+EECHistogramManager::EECHistogramManager(TFile* inputFile, EECCard* card) :
   EECHistogramManager()
 {
   fInputFile = inputFile;
@@ -274,6 +279,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadJets(in.fLoadJets),
   fLoad2DHistograms(in.fLoad2DHistograms),
   fLoadJetPtClosureHistograms(in.fLoadJetPtClosureHistograms),
+  fLoadJetPtResponseMatrix(in.fLoadJetPtResponseMatrix),
   fLoadMultiplicityInJetHistograms(in.fLoadMultiplicityInJetHistograms),
   fLoadMaxParticlePtWithinJetConeHistograms(in.fLoadMaxParticlePtWithinJetConeHistograms),
   fJetFlavor(in.fJetFlavor),
@@ -426,6 +432,9 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
       } // Jet eta bin loop
     } // Gen jet pT loop
     
+    // Jet pT response matrix
+    fhJetPtResponseMatrix[iCentrality] = in.fhJetPtResponseMatrix[iCentrality];
+
   } // Centrality loop
 }
 
@@ -578,6 +587,9 @@ void EECHistogramManager::LoadHistograms(){
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
   
+  // Load jet pT response matrices
+  LoadJetPtResponseMatrix();
+
   // Load jet pT closure histograms
   LoadJetPtClosureHistograms();
   
@@ -1207,6 +1219,62 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
 }
 
 /*
+ * Loader for jet pT response matrix
+ *
+ * THnSparse for closure histograms is used for this:
+ *
+ *   Histogram name: jetPtClosure
+ *
+ *     Axis index                  Content of axis
+ * -----------------------------------------------------------
+ *       Axis 0              Matched generator level jet pT
+ *       Axis 1               Matched reconstructed jet pT
+ *       Axis 2                         Jet eta
+ *       Axis 3                       Centrality
+ *       Axis 4                      Quark / gluon
+ *       Axis 5             Matched reco to gen jet pT ratio
+ */
+void EECHistogramManager::LoadJetPtResponseMatrix(){
+  
+  if(!fLoadJetPtResponseMatrix) return; // Do not load the histograms if they are not selected for loading
+  
+  // Define arrays to help find the histograms
+  int axisIndices[1] = {0};
+  int lowLimits[1] = {0};
+  int highLimits[1] = {0};
+  int nRestrictionAxes = 1;
+  
+  // Define helper variables
+  int duplicateRemoverCentrality = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+
+  // Find the histogram array from which the projections are made
+  THnSparseD* histogramArray = (THnSparseD*)fInputFile->Get("jetPtClosure");
+  AlgorithmLibrary* twoDeeRebinner = new AlgorithmLibrary();
+  const int nBinsPt = 16;
+  const double binBorderPt[nBinsPt+1] = {50,80,100,120,140,160,180,200,220,240,260,280,300,350,400,450,500};
+
+  // Load all the histograms from the file
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+    // Select the bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemoverCentrality;
+        
+    // Setup centrality axis restrictions
+    axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin; // Centrality
+
+    // Project the response matrix from the closure histogram
+    fhJetPtResponseMatrix[iCentrality] = FindHistogram2D(histogramArray,1,0,nRestrictionAxes,axisIndices,lowLimits,highLimits,false);
+        
+    // Rebin the reconstructed and generator level jet pT axes
+    fhJetPtResponseMatrix[iCentrality] = twoDeeRebinner->RebinHistogram(fhJetPtResponseMatrix[iCentrality], nBinsPt, binBorderPt, nBinsPt, binBorderPt, false, false);
+        
+  } // Centrality loop
+}
+
+/*
  * Loader for jet pT closure histograms
  *
  * THnSparse for closure histograms:
@@ -1305,20 +1373,55 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
  * Extract a 2D histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
- *   TFile *inputFile = Inputfile containing the THnSparse to be read
- *   const char *name = Name of the THnSparse that is read
+ *   THnSparseD* histogramArray = Inputfile containing the THnSparse to be read
  *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
  *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
  *   int nAxes = Number of axes that are restained for the projection
- *   int *axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
- *   int *lowBinIndex = Indices of the lowest considered bins in the restriction axis
- *   int *highBinIndex = Indices of the highest considered bins in the restriction axis
+ *   int* axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
+ *   int* lowBinIndex = Indices of the lowest considered bins in the restriction axis
+ *   int* highBinIndex = Indices of the highest considered bins in the restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth){
+TH2D* EECHistogramManager::FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth){
+  
+  // Apply the restrictions in the set of axes
+  for(int i = 0; i < nAxes; i++) histogramArray->GetAxis(axisNumber[i])->SetRange(lowBinIndex[i],highBinIndex[i]);
+  
+  // Create a unique name for eeach histogram that is read from the file
+  TString newName = histogramArray->GetName();
+  for(int iBinIndex = 0; iBinIndex < nAxes; iBinIndex++){
+    newName.Append(Form("_%d=%d-%d",axisNumber[iBinIndex],lowBinIndex[iBinIndex],highBinIndex[iBinIndex]));
+  }
+  
+  // Project out the histogram and give it the created unique name
+  TH2D* projectedHistogram = (TH2D*) histogramArray->Projection(yAxis,xAxis);
+  projectedHistogram->SetName(newName.Data());
+  
+  // Apply bin width normalization to the projected histogram
+  if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
+  
+  // Return the projected histogram
+  return projectedHistogram;
+}
+
+/*
+ * Extract a 2D histogram from a given centrality bin from THnSparseD
+ *
+ *  Arguments:
+ *   TFile* inputFile = Inputfile containing the THnSparse to be read
+ *   const char* name = Name of the THnSparse that is read
+ *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
+ *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
+ *   int nAxes = Number of axes that are restained for the projection
+ *   int* axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
+ *   int* lowBinIndex = Indices of the lowest considered bins in the restriction axis
+ *   int* highBinIndex = Indices of the highest considered bins in the restriction axis
+ *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
+ */
+TH2D* EECHistogramManager::FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth){
   
   // Read the histogram with the given name from the file
-  THnSparseD *histogramArray = (THnSparseD*) inputFile->Get(name);
+  THnSparseD* histogramArray = (THnSparseD*) inputFile->Get(name);
   
   // If cannot find histogram, inform that it could not be found and return null
   if(histogramArray == nullptr){
@@ -1336,7 +1439,7 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, i
   }
   
   // Project out the histogram and give it the created unique name
-  TH2D *projectedHistogram = (TH2D*) histogramArray->Projection(yAxis,xAxis);
+  TH2D* projectedHistogram = (TH2D*) histogramArray->Projection(yAxis,xAxis);
   projectedHistogram->SetName(newName.Data());
   
   // Apply bin width normalization to the projected histogram
@@ -1350,8 +1453,8 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, i
  * Extract a 2D histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
- *   TFile *inputFile = Inputfile containing the THnSparse to be read
- *   const char *name = Name of the THnSparse that is read
+ *   TFile* inputFile = Inputfile containing the THnSparse to be read
+ *   const char* name = Name of the THnSparse that is read
  *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
  *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
  *   int restrictionAxis = Index for the axis in THnSparse that is used as a restriction for the projection
@@ -1362,7 +1465,7 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, i
  *   int highBinIndex2 = Index of the highest considered bin in the second restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
+TH2D* EECHistogramManager::FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
   int restrictionAxes[2] = {restrictionAxis,restrictionAxis2};
   int lowBinIndices[2] = {lowBinIndex,lowBinIndex2};
   int highBinIndices[2] = {highBinIndex,highBinIndex2};
@@ -1375,8 +1478,47 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, i
  * Extract a histogram with given restrictions on other axes in THnSparse
  *
  *  Arguments:
- *   TFile *inputFile = Inputfile containing the THnSparse to be read
- *   const char *name = Name of the THnSparse that is read
+ *   THnSparseD* histogramArray = Histogram array from which the desired histograms are projected
+ *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH1D
+ *   int nAxes = Number of axes that are restained for the projection
+ *   int* axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
+ *   int* lowBinIndex = Indices of the lowest considered bins in the restriction axis
+ *   int* highBinIndex = Indices of the highest considered bins in the restriction axis
+ *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
+ */
+TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth){
+  
+  // Apply the restrictions in the set of axes
+  for(int i = 0; i < nAxes; i++) histogramArray->GetAxis(axisNumber[i])->SetRange(lowBinIndex[i],highBinIndex[i]);
+  
+  // Create a unique name for each histogram that is read from the file
+  TString newName = histogramArray->GetName();
+  for(int iBinIndex = 0; iBinIndex < nAxes; iBinIndex++){
+    newName.Append(Form("_%d=%d-%d",axisNumber[iBinIndex],lowBinIndex[iBinIndex],highBinIndex[iBinIndex]));
+  }
+  
+  // Project out the histogram and give it the created unique name
+  TH1D* projectedHistogram = NULL;
+  
+  // Check that we are not trying to project a non-existing axis
+  if(xAxis < histogramArray->GetNdimensions()){
+    projectedHistogram = (TH1D*) histogramArray->Projection(xAxis);
+    projectedHistogram->SetName(newName.Data());
+  
+    // Apply bin width normalization to the projected histogram
+    if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
+  }
+  
+  // Return the projected histogram
+  return projectedHistogram;
+}
+
+/*
+ * Extract a histogram with given restrictions on other axes in THnSparse
+ *
+ *  Arguments:
+ *   TFile* inputFile = Inputfile containing the THnSparse to be read
+ *   const char* name = Name of the THnSparse that is read
  *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH1D
  *   int nAxes = Number of axes that are restained for the projection
  *   int *axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
@@ -1384,10 +1526,10 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile *inputFile, const char *name, i
  *   int *highBinIndex = Indices of the highest considered bins in the restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH1D* EECHistogramManager::FindHistogram(TFile *inputFile, const char *name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth){
+TH1D* EECHistogramManager::FindHistogram(TFile* inputFile, const char* name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth){
   
   // Read the histogram with the given name from the file
-  THnSparseD *histogramArray = (THnSparseD*) inputFile->Get(name);
+  THnSparseD* histogramArray = (THnSparseD*) inputFile->Get(name);
   
   // If cannot find histogram, inform that it could not be found and return null
   if(histogramArray == nullptr){
@@ -1405,7 +1547,7 @@ TH1D* EECHistogramManager::FindHistogram(TFile *inputFile, const char *name, int
   }
   
   // Project out the histogram and give it the created unique name
-  TH1D *projectedHistogram = NULL;
+  TH1D* projectedHistogram = NULL;
   
   // Check that we are not trying to project a non-existing axis
   if(xAxis < histogramArray->GetNdimensions()){
@@ -1424,8 +1566,8 @@ TH1D* EECHistogramManager::FindHistogram(TFile *inputFile, const char *name, int
  * Extract a histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
- *   TFile *inputFile = Inputfile containing the THnSparse to be read
- *   const char *name = Name of the THnSparse that is read
+ *   TFile* inputFile = Inputfile containing the THnSparse to be read
+ *   const char* name = Name of the THnSparse that is read
  *   int xAxis = Index for the axis in THnSparse that is projected to TH1D
  *   int restrictionAxis = Index for the axis in THnSparse that is used as a restriction for the projection
  *   int lowBinIndex = Index of the lowest considered bin in the restriction axis
@@ -1435,7 +1577,7 @@ TH1D* EECHistogramManager::FindHistogram(TFile *inputFile, const char *name, int
  *   int highBinIndex2 = Index of the highest considered bin in the second restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH1D* EECHistogramManager::FindHistogram(TFile *inputFile, const char *name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
+TH1D* EECHistogramManager::FindHistogram(TFile* inputFile, const char* name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
   int restrictionAxes[2] = {restrictionAxis,restrictionAxis2};
   int lowBinIndices[2] = {lowBinIndex,lowBinIndex2};
   int highBinIndices[2] = {highBinIndex,highBinIndex2};
@@ -1515,6 +1657,9 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   // Write the energy-energy correlator histograms to the output file
   WriteEnergyEnergyCorrelatorHistograms();
   
+  // Write the jet pT response matrices
+  WriteJetPtResponseMatrix(); 
+
   // Write the jet pT closure histograms to a file
   WriteClosureHistograms();
   
@@ -1891,6 +2036,40 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
     gDirectory->cd("../");
     
   } // Loop over different energy-energy correlator types
+  
+}
+
+/*
+ * Write the jet pT response matrices to the file that is currently open
+ */
+void EECHistogramManager::WriteJetPtResponseMatrix(){
+  
+  // Helper variable for histogram naming
+  TString histogramNamer;
+  
+  // Only write the jet pT closure histograms if they are previously loaded
+  if(fLoadJetPtResponseMatrix){
+    
+    // Create a directory for the histograms if it does not already exist
+    histogramNamer = "jetPtResponseMatrix";
+    if(!gDirectory->GetDirectory(histogramNamer.Data())) gDirectory->mkdir(histogramNamer.Data());
+    gDirectory->cd(histogramNamer.Data());
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Only write histograms that are non-NULL
+      if(fhJetPtResponseMatrix[iCentrality]) {
+        histogramNamer = Form("jetPtResponseMatrix_C%d", iCentrality);
+        fhJetPtResponseMatrix[iCentrality]->Write(histogramNamer.Data(), TObject::kOverwrite);
+      }
+
+    }  // Centrality loop
+
+    // Return back to main directory
+    gDirectory->cd("../");
+    
+  } // Writing jet pT response matrices
   
 }
 
@@ -2363,6 +2542,18 @@ void EECHistogramManager::LoadProcessedHistograms(){
     
   } // Energy-energy correlator type loop
   
+  // Load the jet pT response matrices from a processed file
+  if(fLoadJetPtResponseMatrix){
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      histogramNamer = Form("jetPtResponseMatrix/jetPtResponseMatrix_C%d", iCentrality);
+      fhJetPtResponseMatrix[iCentrality] = (TH2D*)fInputFile->Get(histogramNamer.Data());
+
+    }  // Centrality loop
+  }
+
   // Load the jet pT closure histograms from a processed file
   if(fLoadJetPtClosureHistograms){
     
@@ -2622,6 +2813,11 @@ void EECHistogramManager::SetLoad2DHistograms(const bool loadOrNot){
 // Setter for loading jet pT closure histograms
 void EECHistogramManager::SetLoadJetPtClosureHistograms(const bool loadOrNot){
   fLoadJetPtClosureHistograms = loadOrNot;
+}
+
+// Setter for loading jet pT response matrix
+void EECHistogramManager::SetLoadJetPtResponseMatrix(const bool loadOrNot){
+  fLoadJetPtResponseMatrix = loadOrNot;
 }
 
 // Setter for loaded centrality bins
@@ -2989,6 +3185,11 @@ TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyE
 // Getter for processed energy-energy correlator histograms
 TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const{
   return fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
+}
+
+// Getter for jet pT response matrix
+TH2D* EECHistogramManager::GetHistogramJetPtResponseMatrix(const int iCentrality) const{
+  return fhJetPtResponseMatrix[iCentrality];
 }
 
 // Getter for jet pT closure histograms
