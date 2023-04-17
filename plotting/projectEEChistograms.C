@@ -37,6 +37,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadEnergyEnergyCorrelatorsUncorrected = false;
   bool loadEnergyEnergyCorrelatorsJetPtUncorrected = false;
   bool loadJetPtClosure = false;
+  bool loadJetPtResponseMatrix = false;
   
   /*
    * Loading only selected histograms. Done with bitwise check of an integer
@@ -54,9 +55,10 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 10 = Load uncorrected energy-energy correlator histograms (to set: 1024)
    *  Bit 11 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 2048)
    *  Bit 12 = Load jet pT closure histograms (to set: 4096)
+   *  Bit 13 = Load jet pT response matrix (to set: 8192)
    */
   if(histogramSelection > 0){
-    std::bitset<13> bitChecker(histogramSelection);
+    std::bitset<14> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);
@@ -70,6 +72,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadEnergyEnergyCorrelatorsUncorrected = bitChecker.test(10);
     loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(11);
     loadJetPtClosure = bitChecker.test(12);
+    loadJetPtResponseMatrix = bitChecker.test(13);
   }
   
   // ====================================================
@@ -87,7 +90,8 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   const int nTrackPtBins = 7;
   const int nJetPtBinsEEC = 7;
   const int nTrackPtBinsEEC = 6;
-  double centralityBinBorders[nCentralityBins+1] = {0,10,30,50,90};   // Bin borders for centrality
+  //double centralityBinBorders[nCentralityBins+1] = {0,10,30,50,90};   // Bin borders for centrality. Use this with data.
+  double centralityBinBorders[nCentralityBins+1] = {4,14,34,54,94};   // Bin borders for centrality. Use this with shifted centrality projections.
   double trackPtBinBorders[nTrackPtBins+1] = {0.7,1,2,3,4,8,12,300};  // Bin borders for track pT
   double jetPtBinBordersEEC[nJetPtBinsEEC+1] = {120,140,160,180,200,300,500,5020}; // Bin borders for jet pT in energy-energy correlator histograms
   double trackPtBinBordersEEC[nTrackPtBinsEEC+1] = {0.7,1,2,3,4,6,300}; // Bin borders for track pT in energy-energy correlator histograms
@@ -133,7 +137,34 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     lastDrawnCentralityBin = 0;
     centralityBinBorders[0] = -0.5;
   }
-  
+
+  // If we manually define bin borders, check that they match with the ones on the file or give a warning
+  bool binFound;
+  if(!readCentralityBinsFromFile){
+    for(int iCentrality = 0; iCentrality <= nCentralityBins; iCentrality++){
+      binFound = false;
+      for(int iCardBin = 0; iCardBin < card->GetNCentralityBins(); iCardBin++){
+        if(TMath::Abs(centralityBinBorders[iCentrality] - card->GetLowBinBorderCentrality(iCardBin)) < 0.2501){
+          binFound = true;
+          break;
+        }
+        if(TMath::Abs(centralityBinBorders[iCentrality] - card->GetHighBinBorderCentrality(iCardBin)) < 0.2501){
+          binFound = true;
+          break;
+        }
+      } // Card centrality bin loop 
+      if(!binFound){
+        cout << "WARNING: " << centralityBinBorders[iCentrality] << " is not a centrality bin border in the original file." << endl;
+        cout << "Original centrality bin borders are: ";
+        for(int iCardBin = 0; iCardBin < card->GetNCentralityBins(); iCardBin++){
+          cout << card->GetLowBinBorderCentrality(iCardBin) << ", ";
+        }
+        cout << card->GetHighBinBorderCentrality(card->GetNCentralityBins()-1) << endl;
+        cout << "If you are sure you know what you are doing, you can proceed. Otherwise make sure the bin borders match." << endl;
+      } // Message to be printed if bin is not found
+    } // Centrality loop
+  }
+
   // If we change the binning, save the new binning to the card
   if(!readCentralityBinsFromFile) card->AddVector(EECCard::kCentralityBinEdges,nCentralityBins+1,centralityBinBorders);
   if(!readTrackPtBinsFromFile) card->AddVector(EECCard::kTrackPtBinEdges,nTrackPtBins+1,trackPtBinBorders);
@@ -171,6 +202,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(loadEnergyEnergyCorrelatorsJetPtUncorrected);
   histograms->SetLoad2DHistograms(true);
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
+  histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);
   histograms->SetJetFlavor(jetFlavor);
 
   // Set the binning information
