@@ -206,26 +206,32 @@ void studyJetPtUnfolding(){
   TH1D* testHistogram = (TH1D*) hGeneratorLevelEnergyEnergyCorrelator[0][firstStudiedJetPtBinEEC][firstStudiedTrackPtBinEEC]->Clone("testHistogramLul");
   testHistogram->Reset();
 
+  JDrawer* drawer = new JDrawer();
   cout << "Unfolding 120-140 distribution" << endl;
   // 80-100
   testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][1][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(2));
   cout << card[kReconstructed]->GetLowBinBorderJetPtEEC(1) << "-" << card[kReconstructed]->GetHighBinBorderJetPtEEC(1) << " bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(2) << endl;
+  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][1][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "First bin")
 
   // 100-120
   testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][2][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(3));
   cout << "100-120 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(3) << endl;
+  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][2][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Second bin")
 
   // 120-140
   testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][3][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(4));
   cout << "120-140 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(4) << endl;
+  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][3][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Third bin")
 
   // 140-160
   testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][4][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(5));
   cout << "140-160 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(5) << endl;
+  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][4][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Fourth bin")
  
   // 160-180    
   testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][5][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(6));
   cout << "160-180 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(6) << endl;
+  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][5][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Fifth bin")
   testHistogram->SetLineColor(kGreen);
 
   // **********************************
@@ -233,7 +239,7 @@ void studyJetPtUnfolding(){
   // **********************************
 
   // Prepare a JDrawer for drawing purposes
-  JDrawer* drawer = new JDrawer();
+  //JDrawer* drawer = new JDrawer();
   drawer->SetDefaultAppearanceSplitCanvas();
   drawer->SetRelativeCanvasSize(1.1,1.1);
   drawer->SetLeftMargin(0.14);
