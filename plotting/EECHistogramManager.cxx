@@ -612,10 +612,14 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
   int duplicateRemoverCentrality = -1;
   int lowerCentralityBin = 0;
   int higherCentralityBin = 0;
+  THnSparseD* histogramArray;
+
+  // Open the multidimensional histogram from which the histograms are projected
+  histogramArray = (THnSparseD*) fInputFile->Get("multiplicity");
   
   // Multiplicity histograms have more denser centrality binning than other histograms, so need to determine them separately
   TH1D* hBinner;
-  hBinner = FindHistogram(fInputFile,"multiplicity",2,0,0,0);
+  hBinner = FindHistogram(histogramArray,2,0,0,0);
   double centralityBinIndicesMultiplicity[fnCentralityBins+1];
   for(int iBin = 0; iBin < fnCentralityBins+1; iBin++){
     centralityBinIndicesMultiplicity[iBin] = hBinner->GetXaxis()->FindBin(fCentralityBinBorders[iBin]);
@@ -633,13 +637,18 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
       higherCentralityBin = centralityBinIndicesMultiplicity[fnCentralityBins]+duplicateRemoverCentrality;
     }
     
-    fhMultiplicity[iCentralityBin] = FindHistogram(fInputFile, "multiplicity", 0, 2, lowerCentralityBin, higherCentralityBin);
-    fhMultiplicityWeighted[iCentralityBin] = FindHistogram(fInputFile, "multiplicity", 1, 2, lowerCentralityBin, higherCentralityBin);
+    fhMultiplicity[iCentralityBin] = FindHistogram(histogramArray, 0, 2, lowerCentralityBin, higherCentralityBin);
+    fhMultiplicityWeighted[iCentralityBin] = FindHistogram(histogramArray, 1, 2, lowerCentralityBin, higherCentralityBin);
     
   } // Centrality loop
     
-  fhMultiplicityMap = FindHistogram2D(fInputFile, "multiplicity", 0, 2, 1, 0, 0, 0);
-  fhMultiplicityMapWeighted = FindHistogram2D(fInputFile, "multiplicity", 1, 2, 0, 0, 0, 0);
+  // Reset the ranges for all the axes in the histogram array
+  for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+    histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+  }
+
+  fhMultiplicityMap = FindHistogram2D(histogramArray, 0, 2, 1, 0, 0, 0);
+  fhMultiplicityMapWeighted = FindHistogram2D(histogramArray, 1, 2, 0, 0, 0, 0);
 }
 
 
@@ -665,6 +674,7 @@ void EECHistogramManager::LoadJetHistograms(){
   int duplicateRemoverCentrality = -1;
   int lowerCentralityBin = 0;
   int higherCentralityBin = 0;
+  THnSparseD* histogramArray;
   
   // Define arrays to help find the histograms
   int axisIndices[2] = {0};
@@ -673,13 +683,14 @@ void EECHistogramManager::LoadJetHistograms(){
   
   int nAxes = 1;           // Number of constraining axes for this iteration
   
+  // Open the multidimensional histogram from which the histograms are projected
+  histogramArray = (THnSparseD*) fInputFile->Get(fJetHistogramName);
   
   for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
     
     // Select the bin indices
     lowerCentralityBin = fCentralityBinIndices[iCentralityBin];
     higherCentralityBin = fCentralityBinIndices[iCentralityBin+1]+duplicateRemoverCentrality;
-    
     
     axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;  // Centrality
     
@@ -690,13 +701,13 @@ void EECHistogramManager::LoadJetHistograms(){
     }
     
     // Always load jet pT histograms
-    fhJetPt[iCentralityBin] = FindHistogram(fInputFile,fJetHistogramName,0,nAxes,axisIndices,lowLimits,highLimits);
+    fhJetPt[iCentralityBin] = FindHistogram(histogramArray,0,nAxes,axisIndices,lowLimits,highLimits);
     
     if(!fLoadJets) continue;  // Only load the remaining jet histograms if selected
     
-    fhJetPhi[iCentralityBin] = FindHistogram(fInputFile,fJetHistogramName,1,nAxes,axisIndices,lowLimits,highLimits);
-    fhJetEta[iCentralityBin] = FindHistogram(fInputFile,fJetHistogramName,2,nAxes,axisIndices,lowLimits,highLimits);
-    if(fLoad2DHistograms) fhJetEtaPhi[iCentralityBin] = FindHistogram2D(fInputFile,fJetHistogramName,1,2,nAxes,axisIndices,lowLimits,highLimits);
+    fhJetPhi[iCentralityBin] = FindHistogram(histogramArray,1,nAxes,axisIndices,lowLimits,highLimits);
+    fhJetEta[iCentralityBin] = FindHistogram(histogramArray,2,nAxes,axisIndices,lowLimits,highLimits);
+    if(fLoad2DHistograms) fhJetEtaPhi[iCentralityBin] = FindHistogram2D(histogramArray,1,2,nAxes,axisIndices,lowLimits,highLimits);
     
   } // Loop over centrality bins
 }
@@ -729,12 +740,21 @@ void EECHistogramManager::LoadTrackHistograms(){
   int duplicateRemoverTrackPt = -1;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
+  THnSparseD* histogramArray;
   
   // Loop over all track histograms
   for(int iTrackType = 0; iTrackType < knTrackCategories; iTrackType++){
     if(!fLoadTracks[iTrackType]) continue;  // Only load the selected track types
+
+    // Open the multidimensional histogram from which the histograms are projected
+    histogramArray = (THnSparseD*) fInputFile->Get(fTrackHistogramNames[iTrackType]);
     
     for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
+
+      // Reset the ranges for all the axes in the histogram array
+      for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+        histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+      }
       
       // Select the bin indices
       lowerCentralityBin = fCentralityBinIndices[iCentralityBin];
@@ -743,10 +763,10 @@ void EECHistogramManager::LoadTrackHistograms(){
       // Setup axes with restrictions, (3 = centrality)
       axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
       
-      fhTrackPt[iTrackType][iCentralityBin] = FindHistogram(fInputFile,fTrackHistogramNames[iTrackType],0,1,axisIndices,lowLimits,highLimits);
-      fhTrackPhi[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram(fInputFile,fTrackHistogramNames[iTrackType],1,1,axisIndices,lowLimits,highLimits);
-      fhTrackEta[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram(fInputFile,fTrackHistogramNames[iTrackType],2,1,axisIndices,lowLimits,highLimits);
-      if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram2D(fInputFile,fTrackHistogramNames[iTrackType],1,2,1,axisIndices,lowLimits,highLimits);
+      fhTrackPt[iTrackType][iCentralityBin] = FindHistogram(histogramArray,0,1,axisIndices,lowLimits,highLimits);
+      fhTrackPhi[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram(histogramArray,1,1,axisIndices,lowLimits,highLimits);
+      fhTrackEta[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram(histogramArray,2,1,axisIndices,lowLimits,highLimits);
+      if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][fnTrackPtBins] = FindHistogram2D(histogramArray,1,2,1,axisIndices,lowLimits,highLimits);
       
       for(int iTrackPtBin = fFirstLoadedTrackPtBin; iTrackPtBin <= fLastLoadedTrackPtBin; iTrackPtBin++){
         
@@ -758,9 +778,9 @@ void EECHistogramManager::LoadTrackHistograms(){
         axisIndices[1] = 0; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
         
         // Read the angle histograms in track pT bins
-        fhTrackPhi[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram(fInputFile,fTrackHistogramNames[iTrackType],1,2,axisIndices,lowLimits,highLimits);
-        fhTrackEta[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram(fInputFile,fTrackHistogramNames[iTrackType],2,2,axisIndices,lowLimits,highLimits);
-        if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram2D(fInputFile,fTrackHistogramNames[iTrackType],1,2,2,axisIndices,lowLimits,highLimits);
+        fhTrackPhi[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram(histogramArray,1,2,axisIndices,lowLimits,highLimits);
+        fhTrackEta[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram(histogramArray,2,2,axisIndices,lowLimits,highLimits);
+        if(fLoad2DHistograms) fhTrackEtaPhi[iTrackType][iCentralityBin][iTrackPtBin] = FindHistogram2D(histogramArray,1,2,2,axisIndices,lowLimits,highLimits);
         
       } // Track pT loop
     } // Centrality loop
@@ -799,9 +819,13 @@ void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
   int higherJetPtBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
+  THnSparseD* histogramArray;
   
   // Loop over multiplicity types
   for(int iMultiplicityType = 0; iMultiplicityType < knMultiplicityInJetConeTypes; iMultiplicityType++){
+
+    // Open the multidimensional histogram from which the histograms are projected
+    histogramArray = (THnSparseD*) fInputFile->Get(fMultiplicityInJetsHistogramNames[iMultiplicityType]);
     
     // Loop over centrality bins
     for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
@@ -816,6 +840,11 @@ void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
       // Loop over track pT bins
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
         
+        // Reset the ranges for all the axes in the histogram array
+        for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+          histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+        }
+
         // Select the track pT bin indices. Each bin has the total multiplicity above the lower threshold
         lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
         higherTrackPtBin = fTrackPtIndicesEEC[iTrackPt+1]+duplicateRemover;
@@ -833,7 +862,7 @@ void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
           axisIndices[2] = 4; lowLimits[2] = iSubevent+1; highLimits[2] = iSubevent+1;
           
           // Read the multiplicity histograms within the jet cone without jet pT restrictions
-          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(fInputFile, fMultiplicityInJetsHistogramNames[iMultiplicityType], 0, 3, axisIndices, lowLimits, highLimits);
+          fhMultiplicityInJetCone[iCentrality][fnJetPtBinsEEC][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(histogramArray, 0, 3, axisIndices, lowLimits, highLimits);
           
         } // Subevent loop
         
@@ -857,7 +886,7 @@ void EECHistogramManager::LoadMultiplicityInJetConeHistograms(){
             axisIndices[3] = 4; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
             
             // Read the multiplicity histograms within the jet cone without jet pT restrictions
-            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(fInputFile, fMultiplicityInJetsHistogramNames[iMultiplicityType], 0, 4, axisIndices, lowLimits, highLimits);
+            fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits);
             
           } // Subevent loop
         } // Jet pT loop
@@ -898,7 +927,7 @@ void EECHistogramManager::LoadParticleDensityHistograms(){
   int higherJetPtBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
-  THnSparseD *histogramArray;
+  THnSparseD* histogramArray;
   
   // Loop over particle density types
   for(int iParticleDensityType = 0; iParticleDensityType < knParticleDensityAroundJetAxisTypes; iParticleDensityType++){
@@ -929,40 +958,51 @@ void EECHistogramManager::LoadParticleDensityHistograms(){
           // Loop over track pT bins
         for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
 
-            // Select the track pT bin indices. Notice that we do not change the higher bin index
+          // Reset the ranges for all the axes in the histogram array
+          for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+            histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+          }
+
+          // Select the track pT bin indices. Notice that we do not change the higher bin index
           lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
 
-            // We want to also get the histograms in finer pT bins
+          // We want to also get the histograms in finer pT bins
           if(iParticleDensityType == kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == kParticlePtDensityAroundJetAxisPtBinned){
             higherTrackPtBin = fTrackPtIndicesEEC[iTrackPt+1]+duplicateRemover;
           }
 
-            // Add restriction for track pT axis (2 = track pT)
+          // Add restriction for track pT axis (2 = track pT)
           axisIndices[2] = 2; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
 
-            // Read the particle density histograms without jet pT restrictions
-          fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 3, axisIndices, lowLimits, highLimits, false);
+          // Read the particle density histograms without jet pT restrictions
+          fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes] = FindHistogram(histogramArray, 0, 3, axisIndices, lowLimits, highLimits, false);
 
-            // After the histograms are read, normalize each bin to the bin area to make the contents particle density
+          // After the histograms are read, normalize each bin to the bin area to make the contents particle density
           NormalizeToDeltaRBinArea(fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes]);
 
-            // For PbPb MC, read the particle density histograms without jet pT restrictions in subevent bins
-          if(fSystemAndEnergy.Contains("PbPb MC")){
+          // For PbPb MC, read the particle density histograms without jet pT restrictions in subevent bins
+          if(fSystemAndEnergy.Contains("PbPb MC")) {
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes; iSubevent++){
 
-                // Add a restriction for the subevent axis (5 = subevent)
-              axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+              // Add a restriction for the subevent axis (5 = subevent)
+              axisIndices[3] = 5;
+              lowLimits[3] = iSubevent+1;
+              highLimits[3] = iSubevent+1;
 
-                // Read the particle density histograms in subevent bins
-              fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 4, axisIndices, lowLimits, highLimits, false);
+              // Read the particle density histograms in subevent bins
+              fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits, false);
 
-                // After the histograms are read, normalize each bin to the bin area to make the contents particle density
+              // After the histograms are read, normalize each bin to the bin area to make the contents particle density
               NormalizeToDeltaRBinArea(fhParticleDensityAroundJetAxis[iCentrality][fnJetPtBinsEEC][iTrackPt][iJetConeType][iParticleDensityType][iSubevent]);
 
-              } // Subevent loop
-            } // PbPb MC requirement
-            
-          // Loop over jet pT bins
+            }  // Subevent loop
+
+            // Reset the range of the subevent axis before proceeding
+            histogramArray->GetAxis(5)->SetRange(0,0);
+
+          }    // PbPb MC requirement
+
+            // Loop over jet pT bins
           for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
 
             // Select the jet pT bin indices
@@ -973,7 +1013,7 @@ void EECHistogramManager::LoadParticleDensityHistograms(){
             axisIndices[3] = 1; lowLimits[3] = lowerJetPtBin; highLimits[3] = higherJetPtBin;
             
             // Read the particle density histograms
-            fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 4, axisIndices, lowLimits, highLimits, false);
+            fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits, false);
             
             // After the histograms are read, normalize each bin to the bin area to make the contents particle density
             NormalizeToDeltaRBinArea(fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][EECHistograms::knSubeventTypes]);
@@ -986,12 +1026,16 @@ void EECHistogramManager::LoadParticleDensityHistograms(){
                 axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
                 
                 // Read the particle density histograms
-                fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] = FindHistogram(fInputFile, fParticleDensityAroundJetsHistogramNames[iParticleDensityType], 0, 5, axisIndices, lowLimits, highLimits, false);
+                fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] = FindHistogram(histogramArray, 0, 5, axisIndices, lowLimits, highLimits, false);
                 
                 // After the histograms are read, normalize each bin to the bin area to make the contents particle density
                 NormalizeToDeltaRBinArea(fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent]);
                 
               } // Subevent loop
+
+              // Reset the range of the subevent axis before proceeding
+              histogramArray->GetAxis(5)->SetRange(0,0);
+
             } // PbPb MC requirement
             
           } // Jet pT loop
@@ -1035,7 +1079,7 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
   int highestTrackPtBin = 0;
-  THnSparseD *histogramArray;
+  THnSparseD* histogramArray;
   
   // Determine the highest track pT bin from the file
   histogramArray = (THnSparseD*) fInputFile->Get(fMaxParticlePtInJetConeHistogramName);
@@ -1057,6 +1101,11 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
       // Loop over jet pT bins
       for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
         
+        // Reset the ranges for all the axes in the histogram array
+        for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+          histogramArray->GetAxis(iAxis)->SetRange(0,0);
+        }
+
         // Select the jet pT bin indices
         lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
         higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
@@ -1065,7 +1114,7 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
         axisIndices[1] = 0; lowLimits[1] = lowerJetPtBin; highLimits[1] = higherJetPtBin;
         
         // Maximum particle pT within the jet cone histograms without any particle pT restrictions
-        fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 2, axisIndices, lowLimits, highLimits);
+        fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][knProjectedMaxParticlePtBins] = FindHistogram(histogramArray, 1+iMaxParticlePtType, 2, axisIndices, lowLimits, highLimits);
         
         // Loop over track pT bins
         for(int iTrackPt = 0; iTrackPt < knProjectedMaxParticlePtBins; iTrackPt++){
@@ -1076,11 +1125,11 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
           
           // Add restriction for particle pT axis (1 = signal particle pT, 2 = background particle pT)
           axisIndices[2] = 2-iMaxParticlePtType; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
-          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
+          fhMaxParticlePtInJetConePtBin[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
           
           // Add a cut for particle pT axis (1 = signal particle pT, 2 = background particle pT)
           axisIndices[2] = 2-iMaxParticlePtType; lowLimits[2] = lowerTrackPtBin; highLimits[2] = highestTrackPtBin;
-          fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(fInputFile, fMaxParticlePtInJetConeHistogramName, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
+          fhMaxParticlePtInJetConePtCut[iMaxParticlePtType][iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 1+iMaxParticlePtType, 3, axisIndices, lowLimits, highLimits);
           
         } // Track pT loop
       } // Jet pT loop
@@ -1119,7 +1168,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   int higherJetPtBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
-  THnSparseD *histogramArray;
+  THnSparseD* histogramArray;
   
   // Loop over all different energy-energy correlator histograms
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
@@ -1132,6 +1181,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     // Loop over pairing types
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
       
+
       // If reflected cone histograms are not filled in the data file, do not try to load them
       if((iPairingType == EECHistograms::kSignalReflectedConePair || iPairingType == EECHistograms::kReflectedConePair) && !fCard->GetDoReflectedCone()) continue;
       
@@ -1151,6 +1201,11 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
         // Loop over track pT bins
         for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
           
+          // Reset the ranges for all the axes in the histogram array
+          for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+            histogramArray->GetAxis(iAxis)->SetRange(0,0);
+          }
+
           // Select the track pT bin indices. Notice that we do not change the higher bin index
           lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
           
@@ -1158,7 +1213,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           axisIndices[2] = 2; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
           
           // Read the energy-energy correlator histograms without jet pT restrictions
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 3, axisIndices, lowLimits, highLimits);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3, axisIndices, lowLimits, highLimits);
           
           // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1174,9 +1229,13 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
               }
               
               // Read the energy-energy correlator histograms
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits);
               
             } // Subevent loop
+
+            // Reset the range of the subevent axis before proceeding
+            histogramArray->GetAxis(5)->SetRange(0,0);
+
           } // PbPb MC requirement
           
           // Loop over jet pT bins
@@ -1190,7 +1249,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             axisIndices[3] = 1; lowLimits[3] = lowerJetPtBin; highLimits[3] = higherJetPtBin;
             
             // Read the energy-energy correlator histograms
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 4, axisIndices, lowLimits, highLimits);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits);
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1206,9 +1265,13 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
                 }
                 
                 // Read the energy-energy correlator histograms
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(fInputFile, fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], 0, 5, axisIndices, lowLimits, highLimits);
-                
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 5, axisIndices, lowLimits, highLimits);
+
               } // Subevent loop
+
+              // Reset the range of the subevent axis before proceeding
+              histogramArray->GetAxis(5)->SetRange(0,0);
+
             } // PbPb MC requirement
             
           } // Jet pT loop
@@ -1304,12 +1367,18 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
   int duplicateRemoverCentrality = -1;
   int lowerCentralityBin = 0;
   int higherCentralityBin = 0;
+  THnSparseD* histogramArray = (THnSparseD*)fInputFile->Get("jetPtClosure");
   
   // Load all the histograms from the file
   for(int iGenJetPt = 0; iGenJetPt < knGenJetPtBins; iGenJetPt++){
     for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
       for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
         
+        // Reset the ranges for all the axes in the histogram array
+        for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+          histogramArray->GetAxis(iAxis)->SetRange(0,0);
+        }
+
         // Select the bin indices
         lowerCentralityBin = fCentralityBinIndices[iCentralityBin];
         higherCentralityBin = fCentralityBinIndices[iCentralityBin+1]+duplicateRemoverCentrality;
@@ -1327,8 +1396,10 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
           nRestrictionAxes--;
         }
         
-        fhJetPtClosure[iGenJetPt][knJetEtaBins][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
-        
+        fhJetPtClosure[iGenJetPt][knJetEtaBins][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+
+        // Reset the range for the generator level jet pT axis
+        histogramArray->GetAxis(0)->SetRange(0,0);
         
         // Eta binning for the closure histogram
         for(int iJetEta = 0; iJetEta < knJetEtaBins; iJetEta++){
@@ -1360,7 +1431,7 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
               nRestrictionAxes--;
             }
             
-            fhJetPtClosure[knGenJetPtBins][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+            fhJetPtClosure[knGenJetPtBins][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
           }
           
         } // Jet eta bin loop
@@ -1408,53 +1479,7 @@ TH2D* EECHistogramManager::FindHistogram2D(THnSparseD* histogramArray, int xAxis
  * Extract a 2D histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
- *   TFile* inputFile = Inputfile containing the THnSparse to be read
- *   const char* name = Name of the THnSparse that is read
- *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
- *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
- *   int nAxes = Number of axes that are restained for the projection
- *   int* axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
- *   int* lowBinIndex = Indices of the lowest considered bins in the restriction axis
- *   int* highBinIndex = Indices of the highest considered bins in the restriction axis
- *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
- */
-TH2D* EECHistogramManager::FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth){
-  
-  // Read the histogram with the given name from the file
-  THnSparseD* histogramArray = (THnSparseD*) inputFile->Get(name);
-  
-  // If cannot find histogram, inform that it could not be found and return null
-  if(histogramArray == nullptr){
-    cout << "Could not find " << name << ". Skipping loading this histogram." << endl;
-    return NULL;
-  }
-  
-  // Apply the restrictions in the set of axes
-  for(int i = 0; i < nAxes; i++) histogramArray->GetAxis(axisNumber[i])->SetRange(lowBinIndex[i],highBinIndex[i]);
-  
-  // Create a unique name for eeach histogram that is read from the file
-  TString newName = histogramArray->GetName();
-  for(int iBinIndex = 0; iBinIndex < nAxes; iBinIndex++){
-    newName.Append(Form("_%d=%d-%d",axisNumber[iBinIndex],lowBinIndex[iBinIndex],highBinIndex[iBinIndex]));
-  }
-  
-  // Project out the histogram and give it the created unique name
-  TH2D* projectedHistogram = (TH2D*) histogramArray->Projection(yAxis,xAxis);
-  projectedHistogram->SetName(newName.Data());
-  
-  // Apply bin width normalization to the projected histogram
-  if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
-  
-  // Return the projected histogram
-  return projectedHistogram;
-}
-
-/*
- * Extract a 2D histogram from a given centrality bin from THnSparseD
- *
- *  Arguments:
- *   TFile* inputFile = Inputfile containing the THnSparse to be read
- *   const char* name = Name of the THnSparse that is read
+ *   THnSparseD* histogramArray = Inputfile containing the THnSparse to be read
  *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
  *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
  *   int restrictionAxis = Index for the axis in THnSparse that is used as a restriction for the projection
@@ -1465,13 +1490,13 @@ TH2D* EECHistogramManager::FindHistogram2D(TFile* inputFile, const char* name, i
  *   int highBinIndex2 = Index of the highest considered bin in the second restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH2D* EECHistogramManager::FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
+TH2D* EECHistogramManager::FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
   int restrictionAxes[2] = {restrictionAxis,restrictionAxis2};
   int lowBinIndices[2] = {lowBinIndex,lowBinIndex2};
   int highBinIndices[2] = {highBinIndex,highBinIndex2};
   int nAxes = 2;
   if(highBinIndex2 == 0 && lowBinIndex2 == 0) nAxes = 1;
-  return FindHistogram2D(inputFile,name,xAxis,yAxis,nAxes,restrictionAxes,lowBinIndices,highBinIndices,normalizeToBinWidth);
+  return FindHistogram2D(histogramArray,xAxis,yAxis,nAxes,restrictionAxes,lowBinIndices,highBinIndices,normalizeToBinWidth);
 }
 
 /*
@@ -1514,60 +1539,10 @@ TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, 
 }
 
 /*
- * Extract a histogram with given restrictions on other axes in THnSparse
- *
- *  Arguments:
- *   TFile* inputFile = Inputfile containing the THnSparse to be read
- *   const char* name = Name of the THnSparse that is read
- *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH1D
- *   int nAxes = Number of axes that are restained for the projection
- *   int *axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
- *   int *lowBinIndex = Indices of the lowest considered bins in the restriction axis
- *   int *highBinIndex = Indices of the highest considered bins in the restriction axis
- *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
- */
-TH1D* EECHistogramManager::FindHistogram(TFile* inputFile, const char* name, int xAxis, int nAxes, int *axisNumber, int *lowBinIndex, int *highBinIndex, const bool normalizeToBinWidth){
-  
-  // Read the histogram with the given name from the file
-  THnSparseD* histogramArray = (THnSparseD*) inputFile->Get(name);
-  
-  // If cannot find histogram, inform that it could not be found and return null
-  if(histogramArray == nullptr){
-    cout << "Could not find " << name << ". Skipping loading this histogram." << endl;
-    return NULL;
-  }
-  
-  // Apply the restrictions in the set of axes
-  for(int i = 0; i < nAxes; i++) histogramArray->GetAxis(axisNumber[i])->SetRange(lowBinIndex[i],highBinIndex[i]);
-  
-  // Create a unique name for each histogram that is read from the file
-  TString newName = histogramArray->GetName();
-  for(int iBinIndex = 0; iBinIndex < nAxes; iBinIndex++){
-    newName.Append(Form("_%d=%d-%d",axisNumber[iBinIndex],lowBinIndex[iBinIndex],highBinIndex[iBinIndex]));
-  }
-  
-  // Project out the histogram and give it the created unique name
-  TH1D* projectedHistogram = NULL;
-  
-  // Check that we are not trying to project a non-existing axis
-  if(xAxis < histogramArray->GetNdimensions()){
-    projectedHistogram = (TH1D*) histogramArray->Projection(xAxis);
-    projectedHistogram->SetName(newName.Data());
-  
-    // Apply bin width normalization to the projected histogram
-    if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
-  }
-  
-  // Return the projected histogram
-  return projectedHistogram;
-}
-
-/*
  * Extract a histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
- *   TFile* inputFile = Inputfile containing the THnSparse to be read
- *   const char* name = Name of the THnSparse that is read
+ *   THnSparseD* histogramArray = Histogram array from which the desired histograms are projected
  *   int xAxis = Index for the axis in THnSparse that is projected to TH1D
  *   int restrictionAxis = Index for the axis in THnSparse that is used as a restriction for the projection
  *   int lowBinIndex = Index of the lowest considered bin in the restriction axis
@@ -1577,13 +1552,13 @@ TH1D* EECHistogramManager::FindHistogram(TFile* inputFile, const char* name, int
  *   int highBinIndex2 = Index of the highest considered bin in the second restriction axis
  *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
  */
-TH1D* EECHistogramManager::FindHistogram(TFile* inputFile, const char* name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
+TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2, int lowBinIndex2, int highBinIndex2, const bool normalizeToBinWidth){
   int restrictionAxes[2] = {restrictionAxis,restrictionAxis2};
   int lowBinIndices[2] = {lowBinIndex,lowBinIndex2};
   int highBinIndices[2] = {highBinIndex,highBinIndex2};
   int nAxes = 2;
   if(highBinIndex2 == 0 && lowBinIndex2 == 0) nAxes = 1;
-  return FindHistogram(inputFile,name,xAxis,nAxes,restrictionAxes,lowBinIndices,highBinIndices,normalizeToBinWidth);
+  return FindHistogram(histogramArray,xAxis,nAxes,restrictionAxes,lowBinIndices,highBinIndices,normalizeToBinWidth);
 }
 
 /*
@@ -2595,7 +2570,8 @@ void EECHistogramManager::LoadProcessedHistograms(){
  *   const int iAxis = Index of the axis used for reading bin indices
  */
 void EECHistogramManager::SetBinIndices(const char* histogramName, const int nBins, int *binIndices, const double *binBorders, const int iAxis){
-  TH1D* hBinner = FindHistogram(fInputFile,histogramName,iAxis,0,0,0);
+  THnSparseD* histogramArray = (THnSparseD*) fInputFile->Get(histogramName);
+  TH1D* hBinner = FindHistogram(histogramArray,iAxis,0,0,0);
   for(int iBin = 0; iBin < nBins+1; iBin++){
     binIndices[iBin] = hBinner->GetXaxis()->FindBin(binBorders[iBin]);
   }
@@ -2615,7 +2591,11 @@ void EECHistogramManager::SetBinIndices(const char* histogramName, const int nBi
  */
 void EECHistogramManager::SetBinBordersAndIndices(const char* histogramName, const int nBins, double *copyBinBorders, int *binIndices, const double *binBorders, const int iAxis, const bool setIndices){
   TH1D* hBinner;
-  if(setIndices) hBinner = FindHistogram(fInputFile,histogramName,iAxis,0,0,0);
+  THnSparseD* histogramArray;
+  if(setIndices) {
+    histogramArray = (THnSparseD*) fInputFile->Get(histogramName);
+    hBinner = FindHistogram(histogramArray,iAxis,0,0,0);
+  }
   for(int iBin = 0; iBin < nBins+1; iBin++){
     copyBinBorders[iBin] = binBorders[iBin];
     if(setIndices) binIndices[iBin] = hBinner->GetXaxis()->FindBin(binBorders[iBin]);

@@ -46,7 +46,7 @@ public:
   static const int kMaxTrackPtBins = 10;         // Maximum allowed number of track pT bins
   static const int knGenJetPtBins = 45;          // Number of generator level jet pT bins for jet pT closures
   static const int knJetEtaBins = 50;            // Number of jet eta bins for jet pT closures
-  static const int kMaxJetPtBinsEEC = 12;       // Maximum allowed number of jet pT bins for energy-energy correlators
+  static const int kMaxJetPtBinsEEC = 15;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
   
@@ -385,11 +385,9 @@ private:
   
   // Finders for histograms with different amount of restrictions
   TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH2D* FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int nAxes, int *axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH2D* FindHistogram2D(TFile* inputFile, const char* name, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true);
-  TH1D* FindHistogram(TFile* inputFile, const char* name, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
-  TH1D* FindHistogram(TFile* inputFile, const char* name, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
+  TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
   
   // Loaders for different groups of histograms
   void LoadMultiplicityHistograms(); // Loader for multiplicity histograms
