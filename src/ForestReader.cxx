@@ -19,10 +19,14 @@ ForestReader::ForestReader() :
   fPtHatBranch(0),
   fJetPtBranch(0),
   fJetPhiBranch(0),
+  fJetWTAPhiBranch(0),
   fJetEtaBranch(0),
+  fJetWTAEtaBranch(0),
   fJetRawPtBranch(0),
   fJetMaxTrackPtBranch(0),
   fJetRefPtBranch(0),
+  fJetRefEtaBranch(0),
+  fJetRefPhiBranch(0),
   fJetRefFlavorBranch(0),
   fJetMatchedPtBranch(0),
   fJetMatchedEtaBranch(0),
@@ -79,10 +83,10 @@ ForestReader::ForestReader() :
  *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
- *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
+ *   Int_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track tree from the forest. Optimizes speed if tracks are not needed
  */
-ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
+ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree) :
   fDataType(0),
   fUseJetTrigger(useJetTrigger),
   fJetType(jetType),
@@ -95,10 +99,14 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fPtHatBranch(0),
   fJetPtBranch(0),
   fJetPhiBranch(0),
+  fJetWTAPhiBranch(0),
   fJetEtaBranch(0),
+  fJetWTAEtaBranch(0),
   fJetRawPtBranch(0),
   fJetMaxTrackPtBranch(0),
   fJetRefPtBranch(0),
+  fJetRefEtaBranch(0),
+  fJetRefPhiBranch(0),
   fJetRefFlavorBranch(0),
   fJetMatchedPtBranch(0),
   fJetMatchedEtaBranch(0),
@@ -165,10 +173,14 @@ ForestReader::ForestReader(const ForestReader& in) :
   fPtHatBranch(in.fPtHatBranch),
   fJetPtBranch(in.fJetPtBranch),
   fJetPhiBranch(in.fJetPhiBranch),
+  fJetWTAPhiBranch(in.fJetWTAPhiBranch),
   fJetEtaBranch(in.fJetEtaBranch),
+  fJetWTAEtaBranch(in.fJetWTAEtaBranch),
   fJetRawPtBranch(in.fJetRawPtBranch),
   fJetMaxTrackPtBranch(in.fJetMaxTrackPtBranch),
   fJetRefPtBranch(in.fJetRefPtBranch),
+  fJetRefEtaBranch(in.fJetRefEtaBranch),
+  fJetRefPhiBranch(in.fJetRefPhiBranch),
   fJetRefFlavorBranch(in.fJetRefFlavorBranch),
   fJetMatchedPtBranch(in.fJetMatchedPtBranch),
   fJetMatchedEtaBranch(in.fJetMatchedEtaBranch),
@@ -236,10 +248,14 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fPtHatBranch = in.fPtHatBranch;
   fJetPtBranch = in.fJetPtBranch;
   fJetPhiBranch = in.fJetPhiBranch;
+  fJetWTAPhiBranch = in.fJetWTAPhiBranch;
   fJetEtaBranch = in.fJetEtaBranch;
+  fJetWTAEtaBranch = in.fJetWTAEtaBranch;
   fJetRawPtBranch = in.fJetRawPtBranch;
   fJetMaxTrackPtBranch = in.fJetMaxTrackPtBranch;
   fJetRefPtBranch = in.fJetRefPtBranch;
+  fJetRefEtaBranch = in.fJetRefEtaBranch;
+  fJetRefPhiBranch = in.fJetRefPhiBranch;
   fJetRefFlavorBranch = in.fJetRefFlavorBranch;
   fJetMatchedPtBranch = in.fJetMatchedPtBranch;
   fJetMatchedEtaBranch = in.fJetMatchedEtaBranch;

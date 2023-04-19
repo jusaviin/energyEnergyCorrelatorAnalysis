@@ -23,7 +23,7 @@ public:
   
   // Constructors and destructors
   GeneratorLevelForestReader();                                                 // Default constructor
-  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree = true);    // Custom constructor
+  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true);    // Custom constructor
   GeneratorLevelForestReader(const GeneratorLevelForestReader& in);             // Copy constructor
   virtual ~GeneratorLevelForestReader();                                        // Destructor
   GeneratorLevelForestReader& operator=(const GeneratorLevelForestReader& obj); // Equal sign operator
@@ -78,17 +78,21 @@ private:
   Int_t GetMatchingIndex(Int_t iJet) const; // Get the mathing reconstructed jet index for the given generator level jet
 
   // Trees in the forest
-  TTree *fHeavyIonTree;    // Tree for heavy ion event information
-  TTree *fJetTree;         // Tree for jet information
-  TTree *fHltTree;         // Tree for HLT information
-  TTree *fSkimTree;        // Tree for event selection information
-  TTree *fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
+  TTree* fHeavyIonTree;    // Tree for heavy ion event information
+  TTree* fJetTree;         // Tree for jet information
+  TTree* fHltTree;         // Tree for HLT information
+  TTree* fSkimTree;        // Tree for event selection information
+  TTree* fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
   
   // Leaves for jet tree
   Float_t fJetPtArray[fnMaxJet] = {0};         // pT:s of all the jets in an event
   Float_t fJetPhiArray[fnMaxJet] = {0};        // phis of all the jets in an event
+  Float_t fJetWTAPhiArray[fnMaxJet] = {0};     // phis of all the jets in an event from WTA axis
   Float_t fJetEtaArray[fnMaxJet] = {0};        // etas of all the jets in an event
+  Float_t fJetWTAEtaArray[fnMaxJet] = {0};     // etas of all the jets in an event from WTA axis
   Float_t fJetRefPtArray[fnMaxJet] = {0};      // reference generator level pT for a reconstructed jet
+  Float_t fJetRefEtaArray[fnMaxJet] = {0};     // reference generator level eta for a reconstructed jet
+  Float_t fJetRefPhiArray[fnMaxJet] = {0};     // reference generator level phi for a reconstructed jet
   Int_t fJetRefFlavorArray[fnMaxJet] = {0};    // flavor for initiating parton for the reference gen jet
   Float_t fRecoJetPtArray[fnMaxJet] = {0};     // Array for matched reconstructed jet pT
   Float_t fRecoJetEtaArray[fnMaxJet] = {0};    // Array for matched reconstructed jet pta
@@ -96,12 +100,12 @@ private:
   Float_t fRecoJetRawPtArray[fnMaxJet] = {0};  // Array for matched reconstructed jet raw pT
   
   // Leaves for the track tree
-  vector<float> *fTrackPtArray;       // Array for track pT:s
-  vector<float> *fTrackPhiArray;      // Array for track phis
-  vector<float> *fTrackEtaArray;      // Array for track etas
-  vector<int> *fTrackChargeArray;     // Array for track charges
-  vector<int> *fTrackSubeventArray;   // Array for track subevent indices (0 = PYTHIA, (>0) = HYDJET)
-  vector<int> *fTrackStatusArray;     // Array for Monte Carlo status (1 = final state, others = not final state)
+  vector<float>* fTrackPtArray;       // Array for track pT:s
+  vector<float>* fTrackPhiArray;      // Array for track phis
+  vector<float>* fTrackEtaArray;      // Array for track etas
+  vector<int>* fTrackChargeArray;     // Array for track charges
+  vector<int>* fTrackSubeventArray;   // Array for track subevent indices (0 = PYTHIA, (>0) = HYDJET)
+  vector<int>* fTrackStatusArray;     // Array for Monte Carlo status (1 = final state, others = not final state)
   
 };
 

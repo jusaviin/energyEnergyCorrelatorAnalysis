@@ -32,7 +32,7 @@ public:
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
-  ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree = true); // Custom constructor
+  ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true); // Custom constructor
   ForestReader(const ForestReader& in);                    // Copy constructor
   virtual ~ForestReader();                                 // Destructor
   ForestReader& operator=(const ForestReader& obj);        // Equal sign operator
@@ -121,51 +121,55 @@ protected:
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
   
   // Branches for heavy ion tree
-  TBranch *fHiVzBranch;                   // Branch for vertex z-position
-  TBranch *fHiBinBranch;                  // Branch for centrality
-  TBranch *fPtHatBranch;                  // Branch for pT hat
+  TBranch* fHiVzBranch;                   // Branch for vertex z-position
+  TBranch* fHiBinBranch;                  // Branch for centrality
+  TBranch* fPtHatBranch;                  // Branch for pT hat
   
   // Branches for jet tree
-  TBranch *fJetPtBranch;         // Branch for jet pT
-  TBranch *fJetPhiBranch;        // Branch for jet phi
-  TBranch *fJetEtaBranch;        // Branch for jet eta
-  TBranch *fJetRawPtBranch;      // Branch for raw jet pT
-  TBranch *fJetMaxTrackPtBranch; // Maximum pT for a track inside a jet
-  TBranch *fJetRefPtBranch;      // Branch for reference generator level pT for a reconstructed jet
-  TBranch *fJetRefFlavorBranch;  // Branch for flavor for the parton initiating the jet
-  TBranch *fJetMatchedPtBranch;  // Branch for the matched jet pT (reco to gen or vice versa)
-  TBranch *fJetMatchedEtaBranch; // Branch for the matched jet eta (reco to gen or vice versa)
-  TBranch *fJetMatchedPhiBranch; // Branch for the matched jet phi (reco to gen or vice versa)
-  TBranch *fEventWeightBranch;     // Branch for jet weight in MC
+  TBranch* fJetPtBranch;         // Branch for jet pT
+  TBranch* fJetPhiBranch;        // Branch for jet phi
+  TBranch* fJetWTAPhiBranch;     // Branch for jet phi from WTA axis
+  TBranch* fJetEtaBranch;        // Branch for jet eta
+  TBranch* fJetWTAEtaBranch;     // Branch for jet eta from WTA axis
+  TBranch* fJetRawPtBranch;      // Branch for raw jet pT
+  TBranch* fJetMaxTrackPtBranch; // Maximum pT for a track inside a jet
+  TBranch* fJetRefPtBranch;      // Branch for reference generator level pT for a reconstructed jet
+  TBranch* fJetRefEtaBranch;     // Branch for reference generator level eta for a reconstructed jet
+  TBranch* fJetRefPhiBranch;     // Branch for reference generator level phi for a reconstructed jet
+  TBranch* fJetRefFlavorBranch;  // Branch for flavor for the parton initiating the jet
+  TBranch* fJetMatchedPtBranch;  // Branch for the matched jet pT (reco to gen or vice versa)
+  TBranch* fJetMatchedEtaBranch; // Branch for the matched jet eta (reco to gen or vice versa)
+  TBranch* fJetMatchedPhiBranch; // Branch for the matched jet phi (reco to gen or vice versa)
+  TBranch* fEventWeightBranch;     // Branch for jet weight in MC
   
   // Branches for HLT tree
-  TBranch *fCaloJet60FilterBranch;         // Branch for calo jet 60 filter bit
-  TBranch *fCaloJet80FilterBranch;         // Branch for calo jet 80 filter bit
-  TBranch *fCaloJet100FilterBranch;        // Branch for calo jet 100 filter bit
+  TBranch* fCaloJet60FilterBranch;         // Branch for calo jet 60 filter bit
+  TBranch* fCaloJet80FilterBranch;         // Branch for calo jet 80 filter bit
+  TBranch* fCaloJet100FilterBranch;        // Branch for calo jet 100 filter bit
   
   // Branches for skim tree
-  TBranch *fPrimaryVertexBranch;           // Branch for primary vertex filter bit
-  TBranch *fBeamScrapingBranch;            // Branch for beam scraping filter bit
-  TBranch *fHBHENoiseBranch;               // Branch for HB/HE noise filter bit
-  TBranch *fHfCoincidenceBranch;           // Branch for energy recorded in at least 3 HF calorimeter towers
-  TBranch *fClusterCompatibilityBranch;    // Branch for cluster compatibility
+  TBranch* fPrimaryVertexBranch;           // Branch for primary vertex filter bit
+  TBranch* fBeamScrapingBranch;            // Branch for beam scraping filter bit
+  TBranch* fHBHENoiseBranch;               // Branch for HB/HE noise filter bit
+  TBranch* fHfCoincidenceBranch;           // Branch for energy recorded in at least 3 HF calorimeter towers
+  TBranch* fClusterCompatibilityBranch;    // Branch for cluster compatibility
   
   // Branches for track tree
-  TBranch *fTrackPtBranch;                    // Branch for track pT
-  TBranch *fTrackPtErrorBranch;               // Branch for track pT error
-  TBranch *fTrackPhiBranch;                   // Branch for track phi
-  TBranch *fTrackEtaBranch;                   // Branch for track eta
-  TBranch *fHighPurityTrackBranch;            // Branch for high purity of the track
-  TBranch *fTrackVertexDistanceZBranch;       // Branch for track distance from primary vertex in z-direction
-  TBranch *fTrackVertexDistanceZErrorBranch;  // Branch for error for track distance from primary vertex in z-direction
-  TBranch *fTrackVertexDistanceXYBranch;      // Branch for track distance from primary vertex in xy-direction
-  TBranch *fTrackVertexDistanceXYErrorBranch; // Branch for error for track distance from primary vertex in xy-direction
-  TBranch *fTrackChi2Branch;                  // Branch for track chi2 value from reconstruction fit
-  TBranch *fnTrackDegreesOfFreedomBranch;     // Branch for number of degrees of freedom in reconstruction fit
-  TBranch *fnHitsTrackerLayerBranch;          // Branch for number of hits in tracker layers
-  TBranch *fnHitsTrackBranch;                 // Branch for number of hits for the track
-  TBranch *fTrackEnergyEcalBranch;            // Branch for track energy in ECal
-  TBranch *fTrackEnergyHcalBranch;            // Branch for track energy in HCal
+  TBranch* fTrackPtBranch;                    // Branch for track pT
+  TBranch* fTrackPtErrorBranch;               // Branch for track pT error
+  TBranch* fTrackPhiBranch;                   // Branch for track phi
+  TBranch* fTrackEtaBranch;                   // Branch for track eta
+  TBranch* fHighPurityTrackBranch;            // Branch for high purity of the track
+  TBranch* fTrackVertexDistanceZBranch;       // Branch for track distance from primary vertex in z-direction
+  TBranch* fTrackVertexDistanceZErrorBranch;  // Branch for error for track distance from primary vertex in z-direction
+  TBranch* fTrackVertexDistanceXYBranch;      // Branch for track distance from primary vertex in xy-direction
+  TBranch* fTrackVertexDistanceXYErrorBranch; // Branch for error for track distance from primary vertex in xy-direction
+  TBranch* fTrackChi2Branch;                  // Branch for track chi2 value from reconstruction fit
+  TBranch* fnTrackDegreesOfFreedomBranch;     // Branch for number of degrees of freedom in reconstruction fit
+  TBranch* fnHitsTrackerLayerBranch;          // Branch for number of hits in tracker layers
+  TBranch* fnHitsTrackBranch;                 // Branch for number of hits for the track
+  TBranch* fTrackEnergyEcalBranch;            // Branch for track energy in ECal
+  TBranch* fTrackEnergyHcalBranch;            // Branch for track energy in HCal
     
   // Leaves for heavy ion tree
   Float_t fVertexZ;    // Vertex z-position

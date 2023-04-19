@@ -66,7 +66,7 @@ EECAnalyzer::EECAnalyzer() :
   fDataType(-1),
   fTriggerSelection(0),
   fJetType(0),
-  fMatchJets(false),
+  fMatchJets(0),
   fDebugLevel(0),
   fVzWeight(1),
   fCentralityWeight(1),
@@ -429,7 +429,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   fJetType = fCard->Get("JetType");              // Select the type of analyzed jets (Calo, CSPF, PuPF, FlowPF)
   fJetAxis = fCard->Get("JetAxis");              // Select between escheme and WTA axes
-  fMatchJets = (fCard->Get("MatchJets") >= 1);   // Match reconstructed and generator level jets
+  fMatchJets = fCard->Get("MatchJets");          // Match flag between reconstructed and generator level jets
   
   //*************************************************************
   //    Turn off certain track cuts for generated tracks and pp
@@ -516,7 +516,7 @@ void EECAnalyzer::RunAnalysis(){
   // Variables for jet matching and closure
   Int_t unmatchedCounter = 0;       // Number of jets that fail the matching
   Int_t matchedCounter = 0;         // Number of jets that are matched
-  Int_t nonSensicalPartonIndex = 0; // Parton index is -999 even though jets are matched
+  Bool_t antiMatchPtVeto = false;   // Reject matching if the pT is too far off
   Int_t partonFlavor = -999;        // Code for parton flavor in Monte Carlo
   Int_t matchRejectedDueToPtCounter = 0; // Counter for too large pT difference between matched jets
   
@@ -848,43 +848,40 @@ void EECAnalyzer::RunAnalysis(){
                 
               } // Track pT loop for manual calculation
               
-              if(fMinimumMaxTrackPtFraction >= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)) {
+              if(fMinimumMaxTrackPtFraction >= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)){
                 continue; // Cut for jets with only very low pT particles
               }
-              if(fMaximumMaxTrackPtFraction <= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)) {
+              if(fMaximumMaxTrackPtFraction <= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)){
                 continue; // Cut for jets where all the pT is taken by one track
               }
               
             } else {
               // Default jet quality cut, used in all other cases expect for NewRelease MC test
               
-              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) {
+              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)){
                 continue; // Cut for jets with only very low pT particles
               }
-              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)) {
+              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)){
                 continue; // Cut for jets where all the pT is taken by one track
               }
             }
           }
           
           // Jet matching between reconstructed and generator level jets
-          if(fMatchJets && !fJetReader->HasMatchingJet(jetIndex)) {
+          if((fMatchJets == 1) && !fJetReader->HasMatchingJet(jetIndex)){
             unmatchedCounter++;
             continue;
-          }
-          
+          }      
           
           // Require also reference parton flavor to be quark [-6,-1] U [1,6] or gluon (21)
           // We need to match gen jets to reco to get the parton flavor, but for reco jets it is always available in the forest
           // Here should implement an option if only quark and gluon tagged jets should be allowed in final results!
-          if(fMatchJets){
+          if(fMatchJets == 1){
             
             matchedCounter++; // For debugging purposes, count the number of matched jets
             jetFlavor = 0;    // Jet flavor. 0 = Quark jet.
             
             partonFlavor = fJetReader->GetPartonFlavor(jetIndex);
-            if(partonFlavor == -999) nonSensicalPartonIndex++;
-            //if(partonFlavor < -6 || partonFlavor > 21 || (partonFlavor > 6 && partonFlavor < 21) || partonFlavor == 0) continue;
             if(TMath::Abs(partonFlavor) == 21) jetFlavor = 1; // 1 = Gluon jet
             
           }
@@ -933,21 +930,46 @@ void EECAnalyzer::RunAnalysis(){
           if(jetPt > fJetMaximumPtCut) continue;
           
           // If we are matching jets, require that the matched jet has at least half of the reconstructed pT
-          if(fMatchJets){
+          if(fMatchJets > 0){
+            antiMatchPtVeto = false;
             if(fMcCorrelationType == kRecoReco || fMcCorrelationType == kRecoGen){
-              if(jetPt > fJetReader->GetMatchedPt(jetIndex)*2.0) {
+              if(jetPt > fJetReader->GetMatchedPt(jetIndex)*2.0){
                 matchRejectedDueToPtCounter++;
-                continue;
+                antiMatchPtVeto = true;
+                if(fMatchJets == 1) continue;
+              }
+            }
+            if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
+              if(jetPt < fJetReader->GetMatchedPt(jetIndex)/2.0){
+                matchRejectedDueToPtCounter++;
+                antiMatchPtVeto = true;
+                if(fMatchJets == 1) continue;
               }
             }
           }
+
+          // Check if an anti-matching jet exists after jet pT cuts
+          // Leave these debugging messages here for now
+          /*if(fMatchJets == 2){
+            if(!fJetReader->HasMatchingJet(jetIndex)){
+              cout << "There is an anti-mathcing jet in event: " << iEvent << endl;
+            }
+            if(antiMatchPtVeto){
+              cout << "There is a large pT gap in events: " << iEvent << endl;
+            }
+          }*/
+
+          // Anti-matching between reconstructed and generator level jets
+          if((fMatchJets == 2) && fJetReader->HasMatchingJet(jetIndex) && !antiMatchPtVeto){
+            continue;
+          }    
           
           //************************************************
           //       Fill histograms for jet pT closure
           //************************************************
           
           // Only fill is matching is enabled and histograms are selected for filling
-          if(fFillJetPtClosure && fMatchJets) FillJetPtClosureHistograms(jetIndex);
+          if(fFillJetPtClosure && (fMatchJets == 1)) FillJetPtClosureHistograms(jetIndex);
           
         } // Circle jet if
         
@@ -1208,7 +1230,7 @@ void EECAnalyzer::RunAnalysis(){
     
     // Write some debug messages if prompted
     if(fDebugLevel > 1){
-      if(fMatchJets){
+      if(fMatchJets == 1){
         cout << "There were " << matchedCounter << " matched jets." << endl;
         cout << "There were " << unmatchedCounter << " unmatched jets." << endl;
         cout << "Too large pT gap between matched jets in " << matchRejectedDueToPtCounter << " pairs." << endl;

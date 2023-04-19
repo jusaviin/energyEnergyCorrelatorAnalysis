@@ -34,10 +34,10 @@ GeneratorLevelForestReader::GeneratorLevelForestReader() :
  *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
- *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
+ *   Int_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  */
-GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
+GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree) :
   ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree),
   fHeavyIonTree(0),
   fJetTree(0),
@@ -156,7 +156,6 @@ void GeneratorLevelForestReader::Initialize(){
   
   // Connect the branches to the jet tree
   const char* jetAxis[2] = {"jt","WTA"};
-  const char* genJetAxis[2] = {"","WTA"};
   const char* branchName;
   
   fJetTree->SetBranchStatus("*",0);
@@ -164,14 +163,16 @@ void GeneratorLevelForestReader::Initialize(){
   fJetTree->SetBranchAddress("genpt",&fJetPtArray,&fJetPtBranch);
   
   // If specified, select WTA axis for jet phi
-  branchName = Form("%sgenphi",genJetAxis[fJetAxis]);
-  fJetTree->SetBranchStatus(branchName,1);
-  fJetTree->SetBranchAddress(branchName,&fJetPhiArray,&fJetPhiBranch);
+  fJetTree->SetBranchStatus("genphi",1);
+  fJetTree->SetBranchAddress("genphi",&fJetPhiArray,&fJetPhiBranch);
+  fJetTree->SetBranchStatus("WTAgenphi",1);
+  fJetTree->SetBranchAddress("WTAgenphi",&fJetWTAPhiArray,&fJetWTAPhiBranch);
   
   // If specified, select WTA axis for jet eta
-  branchName = Form("%sgeneta",genJetAxis[fJetAxis]);
-  fJetTree->SetBranchStatus(branchName,1);
-  fJetTree->SetBranchAddress(branchName,&fJetEtaArray,&fJetEtaBranch);
+  fJetTree->SetBranchStatus("geneta",1);
+  fJetTree->SetBranchAddress("geneta",&fJetEtaArray,&fJetEtaBranch);
+  fJetTree->SetBranchStatus("WTAgeneta",1);
+  fJetTree->SetBranchAddress("WTAgeneta",&fJetWTAEtaArray,&fJetWTAEtaBranch);
   
   fJetTree->SetBranchStatus("ngen",1);
   fJetTree->SetBranchAddress("ngen",&fnJets,&fJetRawPtBranch); // Reuse a branch from ForestReader that is not otherwise needed here
@@ -180,6 +181,10 @@ void GeneratorLevelForestReader::Initialize(){
   if(fMatchJets){
     fJetTree->SetBranchStatus("refpt",1);
     fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
+    fJetTree->SetBranchStatus("refeta",1);
+    fJetTree->SetBranchAddress("refeta",&fJetRefEtaArray,&fJetRefEtaBranch);
+    fJetTree->SetBranchStatus("refphi",1);
+    fJetTree->SetBranchAddress("refphi",&fJetRefPhiArray,&fJetRefPhiBranch);
     fJetTree->SetBranchStatus("refparton_flavorForB",1);
     fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
     fJetTree->SetBranchStatus("jtpt",1);
@@ -387,12 +392,14 @@ Float_t GeneratorLevelForestReader::GetJetPt(Int_t iJet) const{
 
 // Getter for jet phi
 Float_t GeneratorLevelForestReader::GetJetPhi(Int_t iJet) const{
-  return fJetPhiArray[iJet];
+  if(fJetAxis == 0) return fJetPhiArray[iJet];
+  return fJetWTAPhiArray[iJet];
 }
 
 // Getter for jet eta
 Float_t GeneratorLevelForestReader::GetJetEta(Int_t iJet) const{
-  return fJetEtaArray[iJet];
+  if(fJetAxis == 0) return fJetEtaArray[iJet];
+  return fJetWTAEtaArray[iJet];
 }
 
 // Getter for jet raw pT (not relevant for generator jets, just return regular jet pT)
@@ -507,10 +514,17 @@ Bool_t GeneratorLevelForestReader::HasMatchingJet(Int_t iJet) const{
   if(!fMatchJets) return true;
   
   // Ref pT array has pT for all the generator level jets that are matched with reconstructed jets
-  // If our generator level pT is found from this array, it has a matching reconstructed jet
+  // If our generator level pT is found from this array, check also eta and phi
+  // If all values are close by, we must have a matching jet
   Double_t jetPt = GetJetPt(iJet);
   for(Int_t iRef = 0; iRef < fnMatchedJets; iRef++){
-    if(TMath::Abs(jetPt - fJetRefPtArray[iRef]) < 0.001) return true;
+    if(TMath::Abs(fJetEtaArray[iJet] - fJetRefEtaArray[iRef]) < 0.015){
+      if(TMath::Abs(fJetPhiArray[iJet] - fJetRefPhiArray[iRef]) < 0.015){
+        if(TMath::Abs(jetPt - fJetRefPtArray[iRef]) < 0.03*jetPt) {
+          return true;
+        }
+      }
+    }
   }
   
   return false;
@@ -520,13 +534,18 @@ Bool_t GeneratorLevelForestReader::HasMatchingJet(Int_t iJet) const{
 Int_t GeneratorLevelForestReader::GetMatchingIndex(Int_t iJet) const{
   
   // Ref pT array has pT for all the generator level jets that are matched with reconstructed jets
-  // If our generator level pT is found from this array, it has a matching reconstructed jet
+  // If our generator level pT is found from this array, check also eta and phi
+  // If all values are close by, we must have a matching jet
   Double_t jetPt = GetJetPt(iJet);
   Int_t matchingIndex = -1;
   for(Int_t iRef = 0; iRef < fnMatchedJets; iRef++){
-    if(TMath::Abs(jetPt - fJetRefPtArray[iRef]) < 0.001){
-      matchingIndex = iRef;
-      break;
+    if(TMath::Abs(fJetEtaArray[iJet] - fJetRefEtaArray[iRef]) < 0.015){
+      if(TMath::Abs(fJetPhiArray[iJet] - fJetRefPhiArray[iRef]) < 0.015){
+        if(TMath::Abs(jetPt - fJetRefPtArray[iRef]) < 0.03*jetPt) {
+          matchingIndex = iRef;
+          break;
+        }
+      }
     }
   }
   
@@ -547,8 +566,8 @@ Float_t GeneratorLevelForestReader::GetMatchedPt(Int_t iJet) const{
   if(matchingIndex == -1) return -999;
   
   // Return the matching jet pT. Need raw pT for reco jets before jet corrections are in the forest
-  return fRecoJetRawPtArray[matchingIndex]; // Use this if doing jet pT correction manually
-  //return fRecoJetPtArray[matchingIndex]; // Use this if jet pT corrected in the forest
+  //return fRecoJetRawPtArray[matchingIndex]; // Use this if doing jet pT correction manually
+  return fRecoJetPtArray[matchingIndex]; // Use this if jet pT corrected in the forest
 }
 
 // Get the phi of the matched reconstructed jet

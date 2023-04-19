@@ -15,6 +15,8 @@ HighForestReader::HighForestReader() :
   fTrackTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
+  fMatchedJetWTAEtaBranch(0),
+  fMatchedJetWTAPhiBranch(0),
   fTrackAlgorithmBranch(0),
   fTrackOriginalAlgorithmBranch(0),
   fTrackMVABranch(0),
@@ -71,10 +73,10 @@ HighForestReader::HighForestReader() :
  *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet triggers
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
- *   Bool_t matchJets: True = Do matching for reco and gen jets. False = Do not require matching
+ *   Bool_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  */
-HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree) :
+HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree) :
   ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree),
   fHeavyIonTree(0),
   fJetTree(0),
@@ -83,6 +85,8 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fTrackTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
+  fMatchedJetWTAEtaBranch(0),
+  fMatchedJetWTAPhiBranch(0),
   fTrackAlgorithmBranch(0),
   fTrackOriginalAlgorithmBranch(0),
   fTrackMVABranch(0),
@@ -143,6 +147,8 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fTrackTree(in.fTrackTree),
   fnJetsBranch(in.fnJetsBranch),
   fnTracksBranch(in.fnTracksBranch),
+  fMatchedJetWTAEtaBranch(in.fMatchedJetWTAEtaBranch),
+  fMatchedJetWTAPhiBranch(in.fMatchedJetWTAPhiBranch),
   fTrackAlgorithmBranch(in.fTrackAlgorithmBranch),
   fTrackOriginalAlgorithmBranch(in.fTrackOriginalAlgorithmBranch),
   fTrackMVABranch(in.fTrackMVABranch),
@@ -208,6 +214,8 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fTrackTree = in.fTrackTree;
   fnJetsBranch = in.fnJetsBranch;
   fnTracksBranch = in.fnTracksBranch;
+  fMatchedJetWTAEtaBranch = in.fMatchedJetWTAEtaBranch;
+  fMatchedJetWTAPhiBranch = in.fMatchedJetWTAPhiBranch;
   fTrackAlgorithmBranch = in.fTrackAlgorithmBranch;
   fTrackOriginalAlgorithmBranch = in.fTrackOriginalAlgorithmBranch;
   fTrackMVABranch = in.fTrackMVABranch;
@@ -294,7 +302,6 @@ void HighForestReader::Initialize(){
   
   // Connect the branches to the jet tree
   const char* jetAxis[2] = {"jt","WTA"};
-  const char* genJetAxis[2] = {"","WTA"};
   const char* branchName;
   
   fJetTree->SetBranchStatus("*",0);
@@ -322,20 +329,26 @@ void HighForestReader::Initialize(){
   if(fDataType > kPbPb){
     fJetTree->SetBranchStatus("refpt",1);
     fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
+    fJetTree->SetBranchStatus("refeta",1);
+    fJetTree->SetBranchAddress("refeta",&fJetRefEtaArray,&fJetRefEtaBranch);
+    fJetTree->SetBranchStatus("refphi",1);
+    fJetTree->SetBranchAddress("refphi",&fJetRefPhiArray,&fJetRefPhiBranch);
     fJetTree->SetBranchStatus("refparton_flavorForB",1);
     fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
     fJetTree->SetBranchStatus("genpt",1);
     fJetTree->SetBranchAddress("genpt",&fMatchedJetPtArray,&fJetMatchedPtBranch);
     
     // If specified, select WTA axis for jet phi
-    branchName = Form("%sgenphi",genJetAxis[fJetAxis]);
-    fJetTree->SetBranchStatus(branchName,1);
-    fJetTree->SetBranchAddress(branchName,&fMatchedJetPhiArray,&fJetMatchedPhiBranch);
+    fJetTree->SetBranchStatus("genphi",1);
+    fJetTree->SetBranchAddress("genphi",&fMatchedJetPhiArray,&fJetMatchedPhiBranch);
+    fJetTree->SetBranchStatus("WTAgenphi",1);
+    fJetTree->SetBranchAddress("WTAgenphi",&fMatchedJetWTAPhiArray,&fMatchedJetWTAPhiBranch);
     
     // If specified, select WTA axis for jet eta
-    branchName = Form("%sgeneta",genJetAxis[fJetAxis]);
-    fJetTree->SetBranchStatus(branchName,1);
-    fJetTree->SetBranchAddress(branchName,&fMatchedJetEtaArray,&fJetMatchedEtaBranch);
+    fJetTree->SetBranchStatus("geneta",1);
+    fJetTree->SetBranchAddress("geneta",&fMatchedJetEtaArray,&fJetMatchedEtaBranch);
+    fJetTree->SetBranchStatus("WTAgeneta",1);
+    fJetTree->SetBranchAddress("WTAgeneta",&fMatchedJetWTAEtaArray,&fMatchedJetWTAEtaBranch);
     
     fJetTree->SetBranchStatus("ngen",1);
     fJetTree->SetBranchAddress("ngen",&fnMatchedJets,&fnMatchedJetsBranch);
@@ -777,8 +790,14 @@ Float_t HighForestReader::GetMatchedPt(Int_t iJet) const{
   // If we are not matching jets or are considering real data, this value has no meaning
   if(!fMatchJets || fDataType <= kPbPb) return 0;
   
+  // Find the index of the matching generator level jet
+  Int_t matchedIndex = GetMatchingIndex(iJet);
+  
+  // If we did not find macth, something went wrong. Return -999
+  if(matchedIndex == -1) return -999;
+
   // Return matched gen pT
-  return fJetRefPtArray[iJet];
+  return fMatchedJetPtArray[matchedIndex];
 }
 
 // Parton flavor for the parton initiating the jet
@@ -796,12 +815,15 @@ Int_t HighForestReader::GetMatchingIndex(Int_t iJet) const{
   
   // Ref pT array has pT for all the generator level jets that are matched with reconstructed jets
   // If our generator level pT is found from this array, it has a matching reconstructed jet
-  Double_t jetPt = GetMatchedPt(iJet);
   Int_t matchedIndex = -1;
-  for(Int_t iRef = 0; iRef < fnMatchedJets; iRef++){
-    if(TMath::Abs(jetPt - fMatchedJetPtArray[iRef]) < 0.001){
-      matchedIndex = iRef;
-      break;
+  for(Int_t iMatched = 0; iMatched < fnMatchedJets; iMatched++){
+    if(TMath::Abs(fJetRefEtaArray[iJet] - fMatchedJetEtaArray[iMatched]) < 0.015){
+      if(TMath::Abs(fJetRefPhiArray[iJet] - fMatchedJetPhiArray[iMatched]) < 0.015){
+        if(TMath::Abs(fJetRefPtArray[iJet] - fMatchedJetPtArray[iMatched]) < 0.03*fMatchedJetPtArray[iMatched]){
+          matchedIndex = iMatched;
+          break;
+        }
+      }
     }
   }
   
@@ -815,14 +837,15 @@ Float_t HighForestReader::GetMatchedEta(Int_t iJet) const{
   // If not matching jets, just return something because this has no meaning
   if(!fMatchJets) return 0;
   
-  // Find the index of the matching reconstructed jet
+  // Find the index of the matching generator level jet
   Int_t matchedIndex = GetMatchingIndex(iJet);
   
   // If we did not find macth, something went wrong. Return -999
   if(matchedIndex == -1) return -999;
   
   // Return the pT of the matching reconstructed jet
-  return fMatchedJetEtaArray[matchedIndex];
+  if(fJetAxis == 0) return fMatchedJetEtaArray[matchedIndex];
+  return fMatchedJetWTAEtaArray[matchedIndex];
   
 }
 
@@ -832,13 +855,14 @@ Float_t HighForestReader::GetMatchedPhi(Int_t iJet) const{
   // If not matching jets, just return something because this has no meaning
   if(!fMatchJets) return 0;
   
-  // Find the index of the matching reconstructed jet
+  // Find the index of the matching generator level jet
   Int_t matchedIndex = GetMatchingIndex(iJet);
   
   // If we did not find macth, something went wrong. Return -999
   if(matchedIndex == -1) return -999;
   
   // Return the pT of the matching reconstructed jet
-  return fMatchedJetPhiArray[matchedIndex];
+  if(fJetAxis == 0) return fMatchedJetPhiArray[matchedIndex];
+  return fMatchedJetWTAPhiArray[matchedIndex];
   
 }

@@ -99,7 +99,7 @@ private:
   Int_t fDataType;                   // Analyzed data type
   Int_t fTriggerSelection;           // 0 = Do not use any triggers, 1 = Require CaloJet80, 2 = Require CaloJet100, 3 = Require CaloJet80 or CaloJet100
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
-  Bool_t fMatchJets;                 // Match generator and reconstruction level jets
+  Int_t fMatchJets;                  // Jet matching flag. 0 = Do not match jets, 1 = Match jets, 2 = Anti-match jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
   
   // Weights for filling the MC histograms

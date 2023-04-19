@@ -24,7 +24,7 @@ public:
   
   // Constructors and destructors
   HighForestReader();                                              // Default constructor
-  HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Bool_t matchJets, Bool_t readTrackTree = true); // Custom constructor
+  HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true); // Custom constructor
   HighForestReader(const HighForestReader& in);                    // Copy constructor
   virtual ~HighForestReader();                                     // Destructor
   HighForestReader& operator=(const HighForestReader& obj);        // Equal sign operator
@@ -81,32 +81,38 @@ private:
   Int_t GetMatchingIndex(Int_t iJet) const; // Get the matching generator level jet index for the given reconstructed jet
 
   // Trees in the forest
-  TTree *fHeavyIonTree;    // Tree for heavy ion event information
-  TTree *fJetTree;         // Tree for jet information
-  TTree *fHltTree;         // Tree for high level trigger information
-  TTree *fSkimTree;        // Tree for event selection information
-  TTree *fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
+  TTree* fHeavyIonTree;    // Tree for heavy ion event information
+  TTree* fJetTree;         // Tree for jet information
+  TTree* fHltTree;         // Tree for high level trigger information
+  TTree* fSkimTree;        // Tree for event selection information
+  TTree* fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
   
   // Non-common branches for all types of trees
-  TBranch *fnJetsBranch;         // Branch for number of jets in an event
-  TBranch *fnMatchedJetsBranch;  // Branch for the number of generator level jets in an event
-  TBranch *fnTracksBranch;       // Branch for number of tracks
+  TBranch* fnJetsBranch;         // Branch for number of jets in an event
+  TBranch* fnMatchedJetsBranch;  // Branch for the number of generator level jets in an event
+  TBranch* fnTracksBranch;       // Branch for number of tracks
+  TBranch* fMatchedJetWTAEtaBranch; // Branch for matched jet eta with respect to WTA axis
+  TBranch* fMatchedJetWTAPhiBranch; // Branch for matched jet phi with respect to WTA axis
   
-  TBranch *fTrackAlgorithmBranch;         // Branch for track algorithm
-  TBranch *fTrackOriginalAlgorithmBranch; // Branch for track original algorithm
-  TBranch *fTrackMVABranch;               // Branch for track MVA
+  TBranch* fTrackAlgorithmBranch;         // Branch for track algorithm
+  TBranch* fTrackOriginalAlgorithmBranch; // Branch for track original algorithm
+  TBranch* fTrackMVABranch;               // Branch for track MVA
   
   // Leaves for jet tree
-  Float_t fJetPtArray[fnMaxJet] = {0};         // pT:s of all the jets in an event
-  Float_t fJetPhiArray[fnMaxJet] = {0};        // phis of all the jets in an event
-  Float_t fJetEtaArray[fnMaxJet] = {0};        // etas of all the jets in an event
-  Float_t fJetRawPtArray[fnMaxJet] = {0};      // raw jet pT for all the jets in an event
-  Float_t fJetMaxTrackPtArray[fnMaxJet] = {0}; // maximum track pT inside a jet for all the jets in an event
-  Float_t fJetRefPtArray[fnMaxJet] = {0};      // reference generator level pT for a reconstructed jet
-  Int_t fJetRefFlavorArray[fnMaxJet] = {0};    // flavor for initiating parton for the reference gen jet
-  Float_t fMatchedJetPtArray[fnMaxJet] = {0};  // pT:s of all the generator level jets in an event
-  Float_t fMatchedJetPhiArray[fnMaxJet] = {0}; // phis of all the generator level jets in an event
-  Float_t fMatchedJetEtaArray[fnMaxJet] = {0}; // etas of all the generator level jets in an event
+  Float_t fJetPtArray[fnMaxJet] = {0};            // pT:s of all the jets in an event
+  Float_t fJetPhiArray[fnMaxJet] = {0};           // phis of all the jets in an event
+  Float_t fJetEtaArray[fnMaxJet] = {0};           // etas of all the jets in an event
+  Float_t fJetRawPtArray[fnMaxJet] = {0};         // raw jet pT for all the jets in an event
+  Float_t fJetMaxTrackPtArray[fnMaxJet] = {0};    // maximum track pT inside a jet for all the jets in an event
+  Float_t fJetRefPtArray[fnMaxJet] = {0};         // reference generator level pT for a reconstructed jet
+  Float_t fJetRefEtaArray[fnMaxJet] = {0};        // reference generator level eta for a reconstructed jet
+  Float_t fJetRefPhiArray[fnMaxJet] = {0};        // reference generator level phi for a reconstructed jet
+  Int_t fJetRefFlavorArray[fnMaxJet] = {0};       // flavor for initiating parton for the reference gen jet
+  Float_t fMatchedJetPtArray[fnMaxJet] = {0};     // pT:s of all the generator level jets in an event
+  Float_t fMatchedJetPhiArray[fnMaxJet] = {0};    // phis of all the generator level jets in an event
+  Float_t fMatchedJetWTAPhiArray[fnMaxJet] = {0}; // phis of all the generator level jets in an event with respect to WTA axis
+  Float_t fMatchedJetEtaArray[fnMaxJet] = {0};    // etas of all the generator level jets in an event
+  Float_t fMatchedJetWTAEtaArray[fnMaxJet] = {0}; // etas of all the generator level jets in an event with respect to WTA axis
   
   // Leaves for the track tree in AOD forests
   Float_t fTrackPtArray[fnMaxTrack] = {0};                    // Array for track pT:s
@@ -130,20 +136,20 @@ private:
   Float_t fTrackMVAArray[fnMaxTrack] = {0};                   // Array for track MVA
   
   // Leaves for the track tree in MiniAOD forests
-  vector<float> *fTrackPtVector;                    // Vector for track pT:s
-  vector<float> *fTrackPtErrorVector;               // Vector for track pT errors
-  vector<float> *fTrackPhiVector;                   // Vector for track phis
-  vector<float> *fTrackEtaVector;                   // Vector for track etas
-  vector<bool> *fHighPurityTrackVector;             // Vector for the high purity of tracks
-  vector<float> *fTrackVertexDistanceZVector;       // Vector for track distance from primary vertex in z-direction
-  vector<float> *fTrackVertexDistanceZErrorVector;  // Vector for error for track distance from primary vertex in z-direction
-  vector<float> *fTrackVertexDistanceXYVector;      // Vector for track distance from primary vertex in xy-direction
-  vector<float> *fTrackVertexDistanceXYErrorVector; // Vector for error for track distance from primary vertex in xy-direction
-  vector<float> *fTrackNormalizedChi2Vector;        // Vector for normalized track chi2 value from reconstruction fit
-  vector<char> *fnHitsTrackerLayerVector;           // Vector for number of hits in tracker layers
-  vector<char> *fnHitsTrackVector;                  // Vector for number of hits for the track
-  vector<float> *fTrackEnergyEcalVector;            // Vector for track energy in ECal
-  vector<float> *fTrackEnergyHcalVector;            // Vector for track energy in HCal
+  vector<float>* fTrackPtVector;                    // Vector for track pT:s
+  vector<float>* fTrackPtErrorVector;               // Vector for track pT errors
+  vector<float>* fTrackPhiVector;                   // Vector for track phis
+  vector<float>* fTrackEtaVector;                   // Vector for track etas
+  vector<bool>* fHighPurityTrackVector;             // Vector for the high purity of tracks
+  vector<float>* fTrackVertexDistanceZVector;       // Vector for track distance from primary vertex in z-direction
+  vector<float>* fTrackVertexDistanceZErrorVector;  // Vector for error for track distance from primary vertex in z-direction
+  vector<float>* fTrackVertexDistanceXYVector;      // Vector for track distance from primary vertex in xy-direction
+  vector<float>* fTrackVertexDistanceXYErrorVector; // Vector for error for track distance from primary vertex in xy-direction
+  vector<float>* fTrackNormalizedChi2Vector;        // Vector for normalized track chi2 value from reconstruction fit
+  vector<char>* fnHitsTrackerLayerVector;           // Vector for number of hits in tracker layers
+  vector<char>* fnHitsTrackVector;                  // Vector for number of hits for the track
+  vector<float>* fTrackEnergyEcalVector;            // Vector for track energy in ECal
+  vector<float>* fTrackEnergyHcalVector;            // Vector for track energy in HCal
 
 };
 
