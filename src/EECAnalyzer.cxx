@@ -932,19 +932,10 @@ void EECAnalyzer::RunAnalysis(){
           // If we are matching jets, require that the matched jet has at least half of the reconstructed pT
           if(fMatchJets > 0){
             antiMatchPtVeto = false;
-            if(fMcCorrelationType == kRecoReco || fMcCorrelationType == kRecoGen){
-              if(jetPt > fJetReader->GetMatchedPt(jetIndex)*2.0){
-                matchRejectedDueToPtCounter++;
-                antiMatchPtVeto = true;
-                if(fMatchJets == 1) continue;
-              }
-            }
-            if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
-              if(jetPt < fJetReader->GetMatchedPt(jetIndex)/2.0){
-                matchRejectedDueToPtCounter++;
-                antiMatchPtVeto = true;
-                if(fMatchJets == 1) continue;
-              }
+            if(jetPt*0.5 > fJetReader->GetMatchedPt(jetIndex) || fJetReader->GetMatchedPt(jetIndex) * 0.5 > jetPt){
+              matchRejectedDueToPtCounter++;
+              antiMatchPtVeto = true;
+              if(fMatchJets == 1) continue;
             }
           }
 
@@ -958,6 +949,9 @@ void EECAnalyzer::RunAnalysis(){
               cout << "There is a large pT gap in events: " << iEvent << endl;
             }
           }*/
+
+          //cout << "Jet pT: " << jetPt << endl;
+          //cout << "Matched pT: " << fJetReader->GetMatchedPt(jetIndex) << endl;
 
           // Anti-matching between reconstructed and generator level jets
           if((fMatchJets == 2) && fJetReader->HasMatchingJet(jetIndex) && !antiMatchPtVeto){
