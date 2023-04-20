@@ -566,8 +566,8 @@ Float_t GeneratorLevelForestReader::GetMatchedPt(Int_t iJet) const{
   if(matchingIndex == -1) return -999;
   
   // Return the matching jet pT. Need raw pT for reco jets before jet corrections are in the forest
-  //return fRecoJetRawPtArray[matchingIndex]; // Use this if doing jet pT correction manually
-  return fRecoJetPtArray[matchingIndex]; // Use this if jet pT corrected in the forest
+  return fRecoJetRawPtArray[matchingIndex]; // Use this if doing jet pT correction manually
+  //return fRecoJetPtArray[matchingIndex]; // Use this if jet pT corrected in the forest
 }
 
 // Get the phi of the matched reconstructed jet
