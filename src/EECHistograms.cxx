@@ -271,8 +271,8 @@ void EECHistograms::CreateHistograms(){
   const Int_t nJetConeTypes = knJetConeTypes;
   
   // Binning for reco/gen ratio for closure histograms
-  const Double_t minClosureRatio = 0;    // Minimum ratio for the closure plots
-  const Double_t maxClosureRatio = 2;    // Maximum ratio for the closure plots
+  const Double_t minClosureRatio = 0.025;    // Minimum ratio for the closure plots
+  const Double_t maxClosureRatio = 2.025;    // Maximum ratio for the closure plots
   const Int_t nClosureRatioBins = 40;    // Number of closure ratio bins
   
   // Binning for multiplicity
