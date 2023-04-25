@@ -19,8 +19,9 @@ public:
   static const int kNTrackPtBins = 8;         // Maximum allowed number of track pT bins
   static const int kNJetPtBins = 7;           // Number of generator level jet pT bins for jet pT closures
   
-  EECBackgroundScale();   // Contructor
-  ~EECBackgroundScale();  // Destructor
+  EECBackgroundScale();              // Contructor
+  EECBackgroundScale(EECCard* card); // Custom contructor
+  ~EECBackgroundScale();             // Destructor
 
   // Getter for the background scale
   double GetEECBackgroundScale(const int iCentrality, const int iJetPt, const int iTrackPt) const;
@@ -39,7 +40,7 @@ private:
   double fBackgroundScale[kNCentralityBins][kNJetPtBins+1][kNTrackPtBins];
   
   // Methods
-  void InitializeArrays();
+  void InitializeArrays(const bool useGenJets = false);
   
 };
 

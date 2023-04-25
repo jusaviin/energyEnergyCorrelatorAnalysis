@@ -451,7 +451,7 @@ EECHistogramManager::~EECHistogramManager(){
 void EECHistogramManager::SubtractBackground(){
   
   double normalizationFactor;
-  EECBackgroundScale* scaleProvider = new EECBackgroundScale();
+  EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard);
   
   // TODO: Check that the binning in scale providers matches the binning in the histograms!
   
