@@ -758,6 +758,12 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 3 && caloJet80Trigger && !caloJet100Trigger){
         fTotalEventWeight = fTotalEventWeight * 2.56248;
       }
+
+      // The weight for the CaloJet60 trigger is much bigger, since the prescale is also much bigger
+      // Trigger selection bit 6 already strips away events where also CaloJet80 or CaloJet100 fires, se we do not need to repeat that condition here
+      if(fTriggerSelection == 6){
+        fTotalEventWeight = fTotalEventWeight * 35.143313;
+      }
       
       
       // Fill the event information histograms for the events that pass the event cuts
