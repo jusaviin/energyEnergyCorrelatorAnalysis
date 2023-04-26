@@ -730,18 +730,25 @@ void EECAnalyzer::RunAnalysis(){
       caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
       caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
       
+      // Fill the trigger histograms before the trigger selection
       if(fFillEventInformation){
-        if(!caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kNoTrigger);
-        if(caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet80);
-        if(!caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet100);
-        if(caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet80And100);
+        if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kNoTrigger);
+        if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet60);
+        if(!caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet80);
+        if(!caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet100);
+        if(caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet60And80);
+        if(caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet60And100);
+        if(!caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet80And100);
+        if(caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kCaloJet60And80And100);
       }
       
       // Make jet trigger selection
-      if(fTriggerSelection == 1 && !caloJet80Trigger) continue;
-      if(fTriggerSelection == 2 && !caloJet100Trigger) continue;
-      if(fTriggerSelection == 3 && (!caloJet80Trigger && !caloJet100Trigger)) continue;
-      if(fTriggerSelection == 4 && !caloJet60Trigger) continue;
+      if(fTriggerSelection == 1 && !caloJet80Trigger) continue;   // Select events with CaloJet80 trigger
+      if(fTriggerSelection == 2 && !caloJet100Trigger) continue;  // Select events with CaloJet100 trigger
+      if(fTriggerSelection == 3 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet80 OR CaloJet100 triggers
+      if(fTriggerSelection == 4 && !caloJet60Trigger) continue;   // Select events with CaloJet60 trigger
+      if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
+      if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
       
       // If combining triggers, need to include event weight for events that only fire the lower trigger
       // The weight used here is the inverse of the average effective prescale in the whole sample
@@ -761,6 +768,16 @@ void EECAnalyzer::RunAnalysis(){
         fHistograms->fhCentralityWeighted->Fill(centrality,fTotalEventWeight); // Centrality weighted with the centrality weighting function
         fHistograms->fhPtHat->Fill(ptHat);                                     // pT hat histogram
         fHistograms->fhPtHatWeighted->Fill(ptHat,fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
+
+        // Fill the trigger histograms after the trigger selection
+        if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kNoTrigger);
+        if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet60);
+        if(!caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet80);
+        if(!caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet100);
+        if(caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80);
+        if(caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And100);
+        if(!caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet80And100);
+        if(caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80And100);
       }
       
       // ======================================
@@ -819,7 +836,7 @@ void EECAnalyzer::RunAnalysis(){
             
             // I forgot to include the trackMax branch in the "NewRelease" MC production
             // This branch in correctly included in default MC and in the data production
-            // But in case we want to use the NEwRelease-files, we need to calculate trackMax manually
+            // But in case we want to use the NewRelease-files, we need to calculate trackMax manually
             // The trackMax array is initialized to -1, so if trackMax is exactly -1, we know this branch is not included in the forest.
             // This piece of code can be removed if NewRelease part of the MC is reforested or is not used anymore.
             bool isNewReleaseMC = (fJetReader->GetJetMaxTrackPt(jetIndex) == -1);

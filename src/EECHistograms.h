@@ -17,7 +17,7 @@ public:
   
   // Enumeration for event types to event histogram and track cuts for track cut histogram
   enum enumEventTypes {kAll, kPrimaryVertex, kHfCoincidence, kClusterCompatibility, kHBHENoise, kBeamScraping, kVzCut, knEventTypes};
-  enum enumTriggerBits {kNoTrigger, kOnlyCaloJet80, kOnlyCaloJet100, kCaloJet80And100, knTriggerCombinations};
+  enum enumTriggerBits {kNoTrigger, kOnlyCaloJet60, kOnlyCaloJet80, kOnlyCaloJet100, kCaloJet60And80, kCaloJet60And100, kCaloJet80And100, kCaloJet60And80And100, knTriggerCombinations};
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
   enum enumJetConeTypes{kSignalCone, kReflectedCone, knJetConeTypes};
@@ -43,10 +43,11 @@ public:
   
   // Histograms defined public to allow easier access to them. Should not be abused
   // Notation in comments: l = leading jet, s = subleading jet, inc - inclusive jet, uc = uncorrected, ptw = pT weighted
-  TH1F *fhVertexZ;                 // Vertex z-position
-  TH1F *fhVertexZWeighted;         // Weighted vertex z-position (only meaningfull for MC)
-  TH1F *fhEvents;                  // Number of events. For binning see enumEventTypes.
+  TH1F* fhVertexZ;                 // Vertex z-position
+  TH1F* fhVertexZWeighted;         // Weighted vertex z-position (only meaningfull for MC)
+  TH1F* fhEvents;                  // Number of events. For binning see enumEventTypes.
   TH1F *fhTriggers;                // Number of events selected for each trigger. For binning, see enumTriggerBits
+  TH1F *fhTriggersAfterSelection;  // Same as before, but after trigger selection. For binning, see enumTriggerBits
   TH1F *fhTrackCuts;               // Number of tracks. For binning see enumTrackCuts.
   TH1F *fhCentrality;              // Centrality information. -0.5 for pp or PYTHIA.
   TH1F *fhCentralityWeighted;      // Weighted centrality distribution (only meaningful for MC)
@@ -73,7 +74,7 @@ private:
   
   ConfigurationCard *fCard;    // Card for binning info
   const TString kEventTypeStrings[knEventTypes] = {"All", "PrimVertex", "HfCoin2Th4", "ClustCompt", "HBHENoise", "BeamScrape", "v_{z} cut"}; // Strings corresponding to event types
-  const TString kTriggerStrings[knTriggerCombinations] = {"No trigger", "CaloJet80 && !CaloJet100", "!CaloJet80 && CaloJet100", "CaloJet80 && CaloJet100"};
+  const TString kTriggerStrings[knTriggerCombinations] = {"No trigger", "60 && !80 && !100", "!60 && 80 && !100", "!60 && !80 && 100", "60 && 80 && !100", "60 && !80 && 100", "!60 && 80 && 100", "60 && 80 && 100"};
   const TString kTrackCutStrings[knTrackCuts] = {"All", "MC Charge", "MC sube", "MC status", "p_{T} cut", "#eta cut", "Track algo", "HighPurity", "p_{T} error", "vertexDist", "caloSignal", "RecoQuality"}; // String corresponding to track cuts
   
 };

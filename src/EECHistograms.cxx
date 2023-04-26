@@ -18,6 +18,7 @@ EECHistograms::EECHistograms() :
   fhVertexZWeighted(0),
   fhEvents(0),
   fhTriggers(0),
+  fhTriggersAfterSelection(0),
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
@@ -48,11 +49,12 @@ EECHistograms::EECHistograms() :
 /*
  * Custom constructor
  */
-EECHistograms::EECHistograms(ConfigurationCard *newCard) :
+EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhVertexZ(0),
   fhVertexZWeighted(0),
   fhEvents(0),
   fhTriggers(0),
+  fhTriggersAfterSelection(0),
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
@@ -88,6 +90,7 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhVertexZWeighted(in.fhVertexZWeighted),
   fhEvents(in.fhEvents),
   fhTriggers(in.fhTriggers),
+  fhTriggersAfterSelection(in.fhTriggersAfterSelection),
   fhTrackCuts(in.fhTrackCuts),
   fhCentrality(in.fhCentrality),
   fhCentralityWeighted(in.fhCentralityWeighted),
@@ -127,6 +130,7 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhVertexZWeighted = in.fhVertexZWeighted;
   fhEvents = in.fhEvents;
   fhTriggers = in.fhTriggers;
+  fhTriggersAfterSelection = in.fhTriggersAfterSelection;
   fhTrackCuts = in.fhTrackCuts;
   fhCentrality = in.fhCentrality;
   fhCentralityWeighted = in.fhCentralityWeighted;
@@ -162,6 +166,7 @@ EECHistograms::~EECHistograms(){
   delete fhVertexZWeighted;
   delete fhEvents;
   delete fhTriggers;
+  delete fhTriggersAfterSelection;
   delete fhTrackCuts;
   delete fhCentrality;
   delete fhCentralityWeighted;
@@ -189,7 +194,7 @@ EECHistograms::~EECHistograms(){
 /*
  * Set the configuration card used for the histogram class
  */
-void EECHistograms::SetCard(ConfigurationCard *newCard){
+void EECHistograms::SetCard(ConfigurationCard* newCard){
   fCard = newCard;
 }
 
@@ -383,6 +388,7 @@ void EECHistograms::CreateHistograms(){
   fhVertexZWeighted = new TH1F("vertexZweighted","vertexZweighted",nVzBins,minVz,maxVz); fhVertexZWeighted->Sumw2();
   fhEvents = new TH1F("nEvents","nEvents",knEventTypes,-0.5,knEventTypes-0.5); fhEvents->Sumw2();
   fhTriggers = new TH1F("triggers","triggers",knTriggerCombinations,-0.5,knTriggerCombinations-0.5); fhTriggers->Sumw2();
+  fhTriggersAfterSelection = new TH1F("triggersAfterSelection","triggersAfterSelection",knTriggerCombinations,-0.5,knTriggerCombinations-0.5); fhTriggersAfterSelection->Sumw2();
   fhTrackCuts = new TH1F("trackCuts","trackCuts",knTrackCuts,-0.5,knTrackCuts-0.5); fhTrackCuts->Sumw2();
   fhCentrality = new TH1F("centrality","centrality",nCentralityBins,minCentrality,maxCentrality); fhCentrality->Sumw2();
   fhCentralityWeighted = new TH1F("centralityWeighted","centralityWeighted",nCentralityBins,minCentrality,maxCentrality); fhCentralityWeighted->Sumw2();
@@ -397,6 +403,7 @@ void EECHistograms::CreateHistograms(){
   // For the trigger histogram, label each bin corresponding to a trigger selection
   for(Int_t i = 0; i < knTriggerCombinations; i++){
     fhTriggers->GetXaxis()->SetBinLabel(i+1,kTriggerStrings[i]);
+    fhTriggersAfterSelection->GetXaxis()->SetBinLabel(i+1,kTriggerStrings[i]);
   }
   
   // For the track cut histogram, label each bin corresponding to a track cut
@@ -719,6 +726,7 @@ void EECHistograms::Write() const{
   fhVertexZWeighted->Write();
   fhEvents->Write();
   fhTriggers->Write();
+  fhTriggersAfterSelection->Write();
   fhTrackCuts->Write();
   fhCentrality->Write();
   fhCentralityWeighted->Write();
