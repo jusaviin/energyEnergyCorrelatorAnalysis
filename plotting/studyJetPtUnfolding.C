@@ -18,13 +18,19 @@ void studyJetPtUnfolding(){
   TString inputFileName[knDistributionTypes];
 
   // File with the generator level distributions
-  inputFileName[kGeneratorLevel] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_newBinning_wayMoreJetPtBins_processed_2023-04-13.root";
+  inputFileName[kGeneratorLevel] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_matchJets_processed_2023-04-19.root";
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_newBinning_wayMoreJetPtBins_processed_2023-04-13.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_processed_2023-04-17.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_matchJets_processed_2023-04-18.root
 
   // File with reconstructed information
-  inputFileName[kReconstructed] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_newBinning_wayMoreJetPtBins_processed_2023-04-13.root";
+  inputFileName[kReconstructed] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_matchJets_processed_2023-04-19.root";
+  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_newBinning_wayMoreJetPtBins_processed_2023-04-13.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_processed_2023-04-17.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_wayMoreJetPtBins_matchJets_processed_2023-04-17.root
 
   // Jet pT response matrix to be used for unfolding the reconstructed information
-  inputFileName[kResponseMatrix] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtResponseMatrixMoreBins_processed_2023-01-13.root";
+  inputFileName[kResponseMatrix] = "data/PbPbMC2018_RecoGen_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_newRatioBins_processed_2023-04-21.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtResponseMatrixMoreBins_processed_2023-01-13.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtResponseMatrix_finalMcWeight_processed_2023-03-06.root
 
@@ -45,6 +51,13 @@ void studyJetPtUnfolding(){
     card[iFile] = new EECCard(inputFile[iFile]);
 
   } // File loop
+
+  // DOUBLE FOLDING!!!
+  // Start with constant reco pT bin
+  // Look at which gen pT bins correcpond to this
+  // For each gen pT bin, look at which reco pT bins correspond to these
+  // Construct the reconstructed pT back from the reconstructed pT:s
+  // This should correspond to the correct generator level distribution corresponding to the original jet pT selection!
 
   // Determine if we are dealing with pp or PbPb data
   TString collisionSystem = card[0]->GetDataType();
@@ -73,6 +86,13 @@ void studyJetPtUnfolding(){
 
   // Default binning ranges for reference
   // centrality = {0,10,30,50,90}
+
+  const bool drawUnfoldedToGeneratorLevelComparison = false;
+  const bool drawFoldedToReconstructedComparison = true;
+
+  bool saveFigures = false;
+  TString saveComment = "_firstLook";
+  TString figureFormat = "png";
     
   // ***************************************************************
   //    Create histogram managers and load the needed histograms
@@ -84,7 +104,7 @@ void studyJetPtUnfolding(){
   histograms[kGeneratorLevel] = new EECHistogramManager(inputFile[kGeneratorLevel],card[kGeneratorLevel]);
   histograms[kGeneratorLevel]->SetLoadEnergyEnergyCorrelators(true);
   histograms[kGeneratorLevel]->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
-  histograms[kGeneratorLevel]->SetJetPtBinRangeEEC(firstStudiedJetPtBinEEC,lastStudiedJetPtBinEEC);
+  histograms[kGeneratorLevel]->SetJetPtBinRangeEEC(0,card[kGeneratorLevel]->GetNJetPtBinsEEC()-1);
   histograms[kGeneratorLevel]->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   histograms[kGeneratorLevel]->LoadProcessedHistograms();
 
@@ -106,14 +126,17 @@ void studyJetPtUnfolding(){
   TH1D* hGeneratorLevelEnergyEnergyCorrelator[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hReconstructedEnergyEnergyCorrelator[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hUnfoldedEnergyEnergyCorrelator[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hFoldedGeneratorLevelEnergyEnergyCorrelator[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Ratio histograms with respect to the generator level
   TH1D* hReconstructedToGeneratorLevelRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hUnfoldedToGeneratorLevelRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hFoldedToReconstructedRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Histograms for response matrix and projections for it
   TH2D* hJetPtResponseMatrix[nCentralityBins];
   TH1D* hJetPtResponseMatrixProjection[nCentralityBins][nJetPtBinsEEC];
+  TH1D* hJetPtResponseMatrixProjectionForFolding[nCentralityBins][nJetPtBinsEEC];
 
   // Initialize all the histograms to null
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -122,6 +145,10 @@ void studyJetPtUnfolding(){
         hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = NULL; 
         hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = NULL;
         hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = NULL;
+        hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = NULL;
+        hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt] = NULL;
+        hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt] = NULL;
+        hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt] = NULL;
       } // Full jet pT loop
     } // Track pT loop
     
@@ -129,6 +156,7 @@ void studyJetPtUnfolding(){
 
     for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
       hJetPtResponseMatrixProjection[iCentrality][iJetPt] = NULL;
+      hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt] = NULL;
     } // Analysis jet pT loop
 
   }  // Centrality loop
@@ -139,7 +167,7 @@ void studyJetPtUnfolding(){
   double normalizationRegionHigh = 0.4;    // High range of the normalization region
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
         hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = histograms[kGeneratorLevel]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
 
         // Normalize the distribution to one within the normalization region
@@ -162,17 +190,24 @@ void studyJetPtUnfolding(){
     // Do the projections from the two-dimensional response matrices
     for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
       projectedBin = hJetPtResponseMatrix[iCentrality]->GetYaxis()->FindBin(card[kGeneratorLevel]->GetLowBinBorderJetPtEEC(iJetPt)+1);
-      hJetPtResponseMatrixProjection[iCentrality][iJetPt] = hJetPtResponseMatrix[iCentrality]->ProjectionX(Form("proj%d%d", iCentrality, iJetPt), projectedBin, projectedBin);
+      hJetPtResponseMatrixProjection[iCentrality][iJetPt] = hJetPtResponseMatrix[iCentrality]->ProjectionX(Form("constantGenProjection%d%d", iCentrality, iJetPt), projectedBin, projectedBin);
 
-      // Normilize the distribution to one to make it probability distribution
+      // Normilize the projection to one to make it probability distribution
       hJetPtResponseMatrixProjection[iCentrality][iJetPt]->Scale(1.0 / hJetPtResponseMatrixProjection[iCentrality][iJetPt]->Integral());
+
+      // Do the projection also with respect to the other axis
+      projectedBin = hJetPtResponseMatrix[iCentrality]->GetXaxis()->FindBin(card[kReconstructed]->GetLowBinBorderJetPtEEC(iJetPt)+1);
+      hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt] = hJetPtResponseMatrix[iCentrality]->ProjectionY(Form("constantRecoProjection%d%d", iCentrality, iJetPt), projectedBin, projectedBin);
+
+      // Normilize the projection to one to make it probability distribution
+      hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt]->Scale(1.0 / hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt]->Integral());
     } // Jet pT loop 
 
   }  // Centrality loop
 
-  // ********************************************************
-  //      Do the jet pT unfolding using the STAR method
-  // ********************************************************
+  // ***************************************************************************************************
+  //      Do the jet pT unfolding using the STAR method and test folding of generator level results
+  // ***************************************************************************************************
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
@@ -193,53 +228,33 @@ void studyJetPtUnfolding(){
         hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Clone(Form("reconstructedToGeneratorLevelRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->Divide(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]);
 
-        hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Clone(Form("reconstructedToGeneratorLevelRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Clone(Form("unfoldedToGeneratorLevelRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->Divide(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]);
+
+        // Get an empty histogram to get also folding started
+        hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = (TH1D*) hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Clone(Form("foldedGeneratorLevelEEC%d%d%d", iCentrality, iTrackPt, iJetPt));
+        hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Reset();
+
+        // Fold the generator level distributions with a probability weighted sum of the generator level distributions
+        for(int iUnfold = 1; iUnfold <= hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt]->GetNbinsX(); iUnfold++){
+          if(hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt]->GetBinContent(iUnfold) < 0.001) continue;
+          hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Add(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iUnfold-1][iTrackPt], hJetPtResponseMatrixProjectionForFolding[iCentrality][iJetPt]->GetBinContent(iUnfold));
+        }
+
+        // Calculate the ratios to reconstructed
+        hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Clone(Form("foldedToReconstructedRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt]->Divide(hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]);
 
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
   
   // **********************************
-  //            Manual test
-  // **********************************
-  TH1D* testHistogram = (TH1D*) hGeneratorLevelEnergyEnergyCorrelator[0][firstStudiedJetPtBinEEC][firstStudiedTrackPtBinEEC]->Clone("testHistogramLul");
-  testHistogram->Reset();
-
-  JDrawer* drawer = new JDrawer();
-  cout << "Unfolding 120-140 distribution" << endl;
-  // 80-100
-  testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][1][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(2));
-  cout << card[kReconstructed]->GetLowBinBorderJetPtEEC(1) << "-" << card[kReconstructed]->GetHighBinBorderJetPtEEC(1) << " bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(2) << endl;
-  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][1][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "First bin")
-
-  // 100-120
-  testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][2][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(3));
-  cout << "100-120 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(3) << endl;
-  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][2][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Second bin")
-
-  // 120-140
-  testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][3][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(4));
-  cout << "120-140 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(4) << endl;
-  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][3][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Third bin")
-
-  // 140-160
-  testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][4][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(5));
-  cout << "140-160 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(5) << endl;
-  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][4][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Fourth bin")
- 
-  // 160-180    
-  testHistogram->Add(hReconstructedEnergyEnergyCorrelator[0][5][firstStudiedTrackPtBinEEC], hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(6));
-  cout << "160-180 bin weight: " << hJetPtResponseMatrixProjection[0][firstStudiedJetPtBinEEC]->GetBinContent(6) << endl;
-  drawer->DrawHistogram(hReconstructedEnergyEnergyCorrelator[0][5][firstStudiedTrackPtBinEEC], "#Deltar", "EEC", "Fifth bin")
-  testHistogram->SetLineColor(kGreen);
-
-  // **********************************
   //         Draw the figures
   // **********************************
 
   // Prepare a JDrawer for drawing purposes
-  //JDrawer* drawer = new JDrawer();
+  JDrawer* drawer = new JDrawer();
   drawer->SetDefaultAppearanceSplitCanvas();
   drawer->SetRelativeCanvasSize(1.1,1.1);
   drawer->SetLeftMargin(0.14);
@@ -263,73 +278,151 @@ void studyJetPtUnfolding(){
   TString trackPtString;
   TString compactTrackPtString;
 
-  // Draw the response matrices to canvas
-  for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+  // Compare the true distribution to reconstructed and unfolded distributions
+  if(drawUnfoldedToGeneratorLevelComparison){
 
-    // Set the centrality information for legends and figure saving
-    if(isPbPbData){
-      centralityString = Form("Pythia+Hydjet: %.0f-%.0f", card[kGeneratorLevel]->GetLowBinBorderCentrality(iCentrality), card[kGeneratorLevel]->GetHighBinBorderCentrality(iCentrality));
-      compactCentralityString = Form("_C%.0f-%.0f", card[kGeneratorLevel]->GetLowBinBorderCentrality(iCentrality), card[kGeneratorLevel]->GetHighBinBorderCentrality(iCentrality));
-    } else {
-      centralityString = "Pythia8";
-      compactCentralityString = "_pythia8";
-    }
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
-    for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData){
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", card[kGeneratorLevel]->GetLowBinBorderCentrality(iCentrality), card[kGeneratorLevel]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", card[kGeneratorLevel]->GetLowBinBorderCentrality(iCentrality), card[kGeneratorLevel]->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
 
-      // Set the jet pT information for legends and figure saving
-      jetPtString = Form("%.0f < jet p_{T} < %.0f", histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt), histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt+1));
-      compactJetPtString = Form("_J=%.0f-%.0f", histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt), histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt+1));
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
 
-      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+        // Set the jet pT information for legends and figure saving
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt), histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt + 1));
+        compactJetPtString = Form("_J=%.0f-%.0f", histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt), histograms[kGeneratorLevel]->GetJetPtBinBorderEEC(iJetPt + 1));
 
-        // Create a new canvas for the plot
-        drawer->CreateSplitCanvas();
-  
-        // Set the track pT information for legends and figure saving
-        trackPtString = Form("%.1f < track p_{T}",histograms[kGeneratorLevel]->GetTrackPtBinBorderEEC(iTrackPt));
-        compactTrackPtString = Form("_T%.1f",histograms[kGeneratorLevel]->GetTrackPtBinBorderEEC(iTrackPt));
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++) {
 
-        // Draw first the generator level distribution
-        hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
-        hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh); 
-        drawer->SetLogY(true);
-        drawer->DrawHistogramToUpperPad(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt],"#Deltar", "EEC", " ", "");
+          // Create a new canvas for the plot
+          drawer->CreateSplitCanvas();
 
-        // Add the reconstructed and unfolded distributions to the same plot
-        hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
-        hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Draw("same");
-        hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
-        hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Draw("same");
-        testHistogram->Draw("same");
-  
-        // Add a legend to the figure
-        legend = new TLegend(0.25, 0.15, 0.5, 0.5);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+          // Set the track pT information for legends and figure saving
+          trackPtString = Form("%.1f < track p_{T}", histograms[kGeneratorLevel]->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.0f", histograms[kGeneratorLevel]->GetTrackPtBinBorderEEC(iTrackPt));
 
-        legend->AddEntry((TObject*)0, centralityString.Data(), "");
-        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+          // Draw first the generator level distribution
+          hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->SetLogY(true);
+          drawer->DrawHistogramToUpperPad(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
 
-        legend->AddEntry(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Generator level reference", "l");
-        legend->AddEntry(hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Reconstructed correlator", "l");
-        legend->AddEntry(hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Unfolded correlator", "l");
+          // Add the reconstructed and unfolded distributions to the same plot
+          hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Draw("same");
+          hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
+          hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Draw("same");
 
-        legend->Draw();
+          // Add a legend to the figure
+          legend = new TLegend(0.25, 0.15, 0.5, 0.5);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
-        // Draw the ratios to lower pad
-        drawer->SetLogY(false);
-        hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
-        hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8,1.2);
-        hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh); 
-        drawer->DrawHistogramToLowerPad(hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt],"#Deltar", "Ratio to gen", " ", "");
+          legend->AddEntry((TObject*)0, centralityString.Data(), "");
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
-        hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
-        hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->Draw("same");
+          legend->AddEntry(hGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Generator level reference", "l");
+          legend->AddEntry(hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Reconstructed correlator", "l");
+          legend->AddEntry(hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Unfolded correlator", "l");
 
-        oneLine->Draw();
+          legend->Draw();
 
-      } // Track pT loop
-    }  // Jet pT loop
-  } // Centrality loop
+          // Draw the ratios to lower pad
+          drawer->SetLogY(false);
+          hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
+          hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->DrawHistogramToLowerPad(hReconstructedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to gen", " ", "");
+
+          hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
+          hUnfoldedToGeneratorLevelRatio[iCentrality][iJetPt][iTrackPt]->Draw("same");
+
+          oneLine->Draw();
+
+          // Save the figures to a file
+          if(saveFigures) {
+            gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfolding%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          }
+
+        }  // Track pT loop
+      }    // Jet pT loop
+    }      // Centrality loop
+  }
+
+  // Compare the reconstructed distribution to folded generator level distribution
+  if(drawFoldedToReconstructedComparison) {
+
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData){
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", card[kReconstructed]->GetLowBinBorderCentrality(iCentrality), card[kReconstructed]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", card[kReconstructed]->GetLowBinBorderCentrality(iCentrality), card[kReconstructed]->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
+
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+
+        // Set the jet pT information for legends and figure saving
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", histograms[kReconstructed]->GetJetPtBinBorderEEC(iJetPt), histograms[kReconstructed]->GetJetPtBinBorderEEC(iJetPt + 1));
+        compactJetPtString = Form("_J=%.0f-%.0f", histograms[kReconstructed]->GetJetPtBinBorderEEC(iJetPt), histograms[kReconstructed]->GetJetPtBinBorderEEC(iJetPt + 1));
+
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          // Create a new canvas for the plot
+          drawer->CreateSplitCanvas();
+
+          // Set the track pT information for legends and figure saving
+          trackPtString = Form("%.1f < track p_{T}", histograms[kReconstructed]->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.0f", histograms[kReconstructed]->GetTrackPtBinBorderEEC(iTrackPt));
+
+          // Draw first the generator level distribution
+          hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->SetLogY(true);
+          drawer->DrawHistogramToUpperPad(hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
+
+          // Add the reconstructed and unfolded distributions to the same plot
+          hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Draw("same");
+
+          // Add a legend to the figure
+          legend = new TLegend(0.25, 0.15, 0.5, 0.5);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+          legend->AddEntry((TObject*)0, centralityString.Data(), "");
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+          legend->AddEntry(hReconstructedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Reconstructed correlator", "l");
+          legend->AddEntry(hFoldedGeneratorLevelEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt], "Folded correlator", "l");
+
+          legend->Draw();
+
+          // Draw the ratios to lower pad
+          drawer->SetLogY(false);
+          hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
+          hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->DrawHistogramToLowerPad(hFoldedToReconstructedRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to gen", " ", "");
+
+          oneLine->Draw();
+
+          // Save the figures to a file
+          if(saveFigures) {
+            gPad->GetCanvas()->SaveAs(Form("figures/jetPtFolding%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          }
+
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Draw folded to reconstructed comparison
 }
