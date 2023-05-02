@@ -53,5 +53,8 @@ root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",2048)'
 # Project jet pT closure histograms
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",4096)'
 
+# Project jet pT response matrices
+#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8192)'
+
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/projectEEChistograms.C

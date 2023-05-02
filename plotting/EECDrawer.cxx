@@ -817,7 +817,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
                 
                 // For logarithmic x-axis, cannot go all the way to zero
-                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
                 
                 fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
                 legend = new TLegend(0.62,0.7,0.82,0.9);
@@ -871,7 +871,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               drawnHistogram->SetLineColor(color[iTrackPt]);
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
               
               if(iTrackPt == fFirstDrawnTrackPtBinEEC){
                 namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
@@ -931,7 +931,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram->SetLineColor(color[iJetPt]);
                 
                 // For logarithmic x-axis, cannot go all the way to zero
-                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
                 
                 if(iJetPt == fFirstDrawnJetPtBinEEC){
                   namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
@@ -992,7 +992,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->AddEntry(drawnHistogram, "All combinations", "l");
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
               
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
@@ -1096,7 +1096,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel));
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
               
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
               legend = new TLegend(0.62,0.7,0.82,0.9);
@@ -1136,7 +1136,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
             drawnHistogram->SetLineColor(color[iTrackPt]);
             
             // For logarithmic x-axis, cannot go all the way to zero
-            if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+            if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
             
             if(iTrackPt == fFirstDrawnTrackPtBinEEC){
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel));
@@ -1183,7 +1183,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
               drawnHistogram->SetLineColor(color[iJetPt]);
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.001,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
               
               if(iJetPt == fFirstDrawnJetPtBinEEC){
                 namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetEnergyEnergyCorrelatorProcessSaveName(iProcessLevel));

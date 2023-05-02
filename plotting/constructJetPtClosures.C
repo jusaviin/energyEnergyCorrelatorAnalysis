@@ -155,21 +155,22 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root";
+  TString closureFileName = "data/PbPbMC2018_RecoGen_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_newRatioBins_processed_2023-04-21.root";
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_fixCentrality_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAODnewR_4pC_wtaAxis_noTrigger_jetPtClosure_processed_2023-01-30.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
   
   bool drawPtClosure = true;
-  bool drawEtaClosure = true;
+  bool drawEtaClosure = false;
   
   bool includeQuarkGluon = false; // Include only quark and only gluon jet curves
   bool drawGaussFitsPt = false;
     
-  bool fitResolution = false;  // Fit the jet pT resolution histograms
+  bool fitResolution = true;  // Fit the jet pT resolution histograms
   
-  bool saveFigures = true;  // Save the figures to file
+  bool saveFigures = false;  // Save the figures to file
   
   // ==================================================================
   // =================== Configuration ready ==========================
@@ -291,10 +292,11 @@ void constructJetPtClosures(){
   
   // Fit the resolution plots with a polynomial function
   if(fitResolution){
-      for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-          cout << "Fitting iCentrality: " << iCentrality << endl;
-          hJetPtClosureSigma[iCentrality][EECHistograms::knClosureParticleTypes]->Fit("pol4","","",minFitPt,maxFitPt);
-      } // Centrality loop
+    for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+      cout << "Fitting iCentrality: " << iCentrality << endl;
+      if(iCentrality == 2) hJetPtClosureSigma[iCentrality][EECHistograms::knClosureParticleTypes]->SetBinError(16,100);
+      hJetPtClosureSigma[iCentrality][EECHistograms::knClosureParticleTypes]->Fit("pol4","","",minFitPt,maxFitPt);
+    } // Centrality loop
   } // Fitting the resolution
   
   // Draw the closure plots

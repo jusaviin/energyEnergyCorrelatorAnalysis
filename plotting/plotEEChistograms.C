@@ -24,10 +24,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = false;
+  bool drawJets = true;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsJetPt = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
   bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
@@ -71,15 +71,15 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 1;
+  int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
   
   // Remove centrality selection from pp data
@@ -125,8 +125,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // Select the style of histograms drawn for energy-energy correlators
   const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
-  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = true;
+  const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = true;
+  bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection

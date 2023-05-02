@@ -116,6 +116,7 @@ void trackClosurePlotter(){
   // ============= //
   
   bool saveFigures = true;          // Save the figures to a file
+  TString saveComment = "_highPtTracks"; // Comment given to saved figures
     
   int ptRebin = 10;                  // Rebin for track pT closure histograms (there are 500 bins)
   int trackAngleRebin = 2;          // Rebin for track eta and phi histograms
@@ -131,10 +132,10 @@ void trackClosurePlotter(){
   int lastCentralityBin = nCentralityBins-1;
   
   int firstTrackPtBin = 0;
-  int lastTrackPtBin = nTrackPtBins-1;
+  int lastTrackPtBin = 0;
   
   // Zoom very close to one in closure plots
-  bool bigClosureZoom = true;
+  bool bigClosureZoom = false;
   
   // ============= //
   //  Config done  //
@@ -149,8 +150,8 @@ void trackClosurePlotter(){
   TFile *closureFile[knCollisionSystems][knMonteCarloTypes];
   closureFile[kPp][kRecoReco] = TFile::Open("data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_jetPtWeightForEEC_processed_2023-01-17.root");
   closureFile[kPp][kRecoGen] = TFile::Open("data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_processed_2023-01-09.root");
-  closureFile[kPbPb][kRecoReco] = TFile::Open("data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-19.root");
-  closureFile[kPbPb][kRecoGen] = TFile::Open("data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root");
+  closureFile[kPbPb][kRecoReco] = TFile::Open("data/PbPbMC2018_RecoReco_miniAOD_4pCentShift_noTrigger_highPtTrackEfficiency_processed_2023-04-18.root");
+  closureFile[kPbPb][kRecoGen] = TFile::Open("data/PbPbMC2018_RecoGen_miniAOD_4pCentShift_noTrigger_highPtTrackEfficiency_processed_2023-04-18.root");
   
   // Load the necessary histograms to histogram managers
   for(int iSystem = 0; iSystem < knCollisionSystems; iSystem++){
@@ -289,7 +290,7 @@ void trackClosurePlotter(){
       
       // Save the figures for track pT closure
       if(saveFigures){
-        figureName = Form("figures/trackPtClosure_%s%s%s.pdf", zoomerName.Data(), systemString[iSystem].Data(), centralityName.Data());
+        figureName = Form("figures/trackPtClosure%s_%s%s%s.pdf", saveComment.Data(), zoomerName.Data(), systemString[iSystem].Data(), centralityName.Data());
         gPad->GetCanvas()->SaveAs(figureName);
       }
       
@@ -298,7 +299,7 @@ void trackClosurePlotter(){
       
       // Save the figures for track eta closure
       if(saveFigures){
-        figureName = Form("figures/trackEtaClosure_%s%s%s.pdf",zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data());
+        figureName = Form("figures/trackEtaClosure%s_%s%s%s.pdf", saveComment.Data(),zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data());
         gPad->GetCanvas()->SaveAs(figureName);
       }
       
@@ -307,7 +308,7 @@ void trackClosurePlotter(){
       
       // Save the figures for track phi closure
       if(saveFigures){
-        figureName = Form("figures/trackPhiClosure_%s%s%s.pdf",zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data());
+        figureName = Form("figures/trackPhiClosure%s_%s%s%s.pdf", saveComment.Data(), zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data());
         gPad->GetCanvas()->SaveAs(figureName);
       }
       
@@ -321,7 +322,7 @@ void trackClosurePlotter(){
         
         // Save the figures for track eta closure
         if(saveFigures){
-          figureName = Form("figures/trackEtaClosure_%s%s%s%s.pdf",zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data(),trackPtName.Data());
+          figureName = Form("figures/trackEtaClosure%s_%s%s%s%s.pdf", saveComment.Data(),zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data(),trackPtName.Data());
           gPad->GetCanvas()->SaveAs(figureName);
         }
         
@@ -330,7 +331,7 @@ void trackClosurePlotter(){
         
         // Save the figures for track phi closure
         if(saveFigures){
-          figureName = Form("figures/trackPhiClosure_%s%s%s%s.pdf",zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data(),trackPtName.Data());
+          figureName = Form("figures/trackPhiClosure%s_%s%s%s%s.pdf", saveComment.Data(),zoomerName.Data(),systemString[iSystem].Data(),centralityName.Data(),trackPtName.Data());
           gPad->GetCanvas()->SaveAs(figureName);
         }
       } // Track pT loop

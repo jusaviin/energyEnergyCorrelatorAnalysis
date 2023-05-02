@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_ESchemeAxis_noTrigger_cutBadPhi_matchJets_moreDensityBins_processed_2023-03-10.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_ESchemeAxis_noTrigger_cutBadPhi_matchJets_moreDensityBins_processed_2023-03-10.root"};
+  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_twoTriggers_newDeltaRBins_newTrackEfficiencyCorrection_processed_2023-04-27.root", "data/eecAnalysis_akFlowJet_threeTriggers_newDeltaRBins_newTrackEfficiencyCorrection_processed_2023-04-27.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_newTrackPairEfficiencyCorrection_onlyBackgroundSubtracted_processed_2023-04-17.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"RecoGen", "RecoReco"};
+  TString legendComment[] = {"CaloJet80 || CaloJet100", "CaloJet60 || CaloJet80 || CaloJet100", "Gen jets + Corrected tracks"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -31,7 +31,7 @@ void compareEEChistograms(){
     if(inputFile[iDataset] == NULL){
       cout << "Error! The file " << inputFileName[iDataset].Data() << " does not exist!" << endl;
       cout << "Maybe you forgot the data/ folder path?" << endl;
-      cout << "Please give a file that exists. Will not exacute the code" << endl;
+      cout << "Please give a file that exists. Will not execute the code" << endl;
       return;
     }
   }
@@ -86,7 +86,7 @@ void compareEEChistograms(){
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_resultChange";
+  const char* figureComment = "_pythiaHydjetTrackPairEfficiency";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -104,11 +104,11 @@ void compareEEChistograms(){
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
-  double minZoom = 0.5;
-  double maxZoom = 1.5;
+  double minZoom = 0.8;
+  double maxZoom = 1.2;
   TString ratioLabel = "#frac{Reco}{Gen}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
-  bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
+  bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
   bool addEnergyToLegend = false;  // Add the collision energy from the first file to legend. Useful if all files are from same system
   
@@ -140,8 +140,8 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
-  
+  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+
   int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
   

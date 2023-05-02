@@ -464,7 +464,7 @@ void EECHistogramManager::SubtractBackground(){
     // Loop over selected bin range
     for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
-        
+
         // =================================== //
         // Histograms without jet pT selection //
         // =================================== //

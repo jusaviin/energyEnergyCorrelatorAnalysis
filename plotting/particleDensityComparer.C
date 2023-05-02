@@ -35,7 +35,7 @@ void particleDensityComparer(){
   enum enumDataType{kPythiaHydjet, kMinBiasHydjet, knDataTypes};
   
   // File containing the Pythia+Hydjet simulation result (index 0), and the one containing minimum bias Hydjet result (index 1)
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJet_MnD_wtaAxis_noTrigger_preprocessed_2022-10-21.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_moreDensityBins_processed_2023-03-09.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_MnD_eschemeAxis_noTrigger_preprocessed_2022-10-19.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_eschemeAxis_noTrigger_preprocessed_2022-10-17.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJet_updatedMultiplicityAndDensity_wtaAxis_noTrigger_preprocessed_2022-10-17.root
   // data/eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -127,8 +127,8 @@ void particleDensityComparer(){
   studyParticleDensityType[EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned] = false;
   
   // Select which plots to draw
-  const bool drawReflectedConeToHydjetRatio = true;
-  const bool drawReflectedConeToSignalRatio = false;
+  const bool drawReflectedConeToHydjetRatio = false;
+  const bool drawReflectedConeToSignalRatio = true;
   const bool drawSubeventWithinSignalConeRatio = false;
   
   bool drawMinBiasToRegularRatio[EECHistograms::knSubeventTypes+1];
@@ -279,8 +279,8 @@ void particleDensityComparer(){
           
           // Ratio between particle density in reflected cone and in the signal cone
           if(drawReflectedConeToSignalRatio){
-            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->Clone(Form("reflectedConeToSignalRatio%d%d%d%d", iParticleDensity, iCentrality, iJetPt, iTrackPt));
-            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->Divide(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]);
+            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt] = (TH1D*) hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->Clone(Form("reflectedConeToSignalRatio%d%d%d%d", iParticleDensity, iCentrality, iJetPt, iTrackPt));
+            hReflectedConeToSignalRatio[iParticleDensity][iCentrality][iJetPt][iTrackPt]->Divide(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]);
           }
           
           // Ratio between different subevent selections within the signal cone
@@ -451,30 +451,30 @@ void particleDensityComparer(){
             if(logY) drawer->SetLogY(true);
 
             // Set the x-axis ranges
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetXaxis()->SetRangeUser(0.0, maxX);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, maxX);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetXaxis()->SetRangeUser(0.0, maxX);
             
             // Find good y-ranges for plotting
             histogramYrange = std::make_pair(10e10, 0);
-            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], histogramYrange);
-            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes], histogramYrange);
+            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], histogramYrange);
+            histogramYrange = findHistogramMinMax(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet], histogramYrange);
             
             // Add some empty space to the top and the bottom of the histogram
             histogramYrange.first = histogramYrange.first - histogramYrange.first*0.1;
             histogramYrange.second = histogramYrange.second + histogramYrange.second*0.1;
             
             // Set the y-ranges for the histogram
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
             
             // Draw the histograms to the upper canvas
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]->SetLineColor(color[0]);
-            drawer->DrawHistogramToUpperPad(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], "#Deltar", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisAxisName(iParticleDensity), " ");
-            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes], "Reflected cone", "l");
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet]->SetLineColor(color[0]);
+            drawer->DrawHistogramToUpperPad(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], "#Deltar", histograms[kPythiaHydjet]->GetParticleDensityAroundJetAxisAxisName(iParticleDensity), " ");
+            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedCone][EECHistograms::kHydjet], "Reflected cone, only HYDJET", "l");
             
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->SetLineColor(color[1]);
-            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]->Draw("same");
-            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes], "Signal cone", "l");
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->SetLineColor(color[1]);
+            hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet]->Draw("same");
+            legend->AddEntry(hParticleDensity[iParticleDensity][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalCone][EECHistograms::kHydjet], "Signal cone, only HYDJET", "l");
             
             // Draw the legends to the upper pad
             legend->Draw();
