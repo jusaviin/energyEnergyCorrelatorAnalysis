@@ -1,17 +1,17 @@
-# Configuration card for energy-energy correlator jet analysis
+# Configuration card for energy-energy correlator analysis
 
 # Data type for the analysis
 DataType 1  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 
 # Select correlation type for Monte Carlo runs (Jet-Track)
 McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
-MatchJets 0 # 1 = Match generator level jets with reconstructed jets, 0 = Do not do that
+MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 
 # Select if you want to use the jet trigger
-TriggerSelection 4   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
+TriggerSelection 6   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 5 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet80 || CaloJet100, 6 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 7 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -24,7 +24,7 @@ FilledHistograms 63 # Bit 0 = Event information histograms                  (to 
 JetType 3                  # 0 = Calo jets, 1 = PF CS jets, 2 = PF PU jets, 3 = PF flow CS jets
 JetAxis 1                  # 0 = E-scheme axis, 1 = WTA axis
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
-MinJetPtCut 120            # Minimum pT of a jet accepted in the analysis
+MinJetPtCut 80             # Minimum pT of a jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a jet accepted in the analysis
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet

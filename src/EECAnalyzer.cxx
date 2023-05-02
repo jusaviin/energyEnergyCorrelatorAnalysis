@@ -761,6 +761,9 @@ void EECAnalyzer::RunAnalysis(){
 
       // The weight for the CaloJet60 trigger is much bigger, since the prescale is also much bigger
       // Trigger selection bit 6 already strips away events where also CaloJet80 or CaloJet100 fires, se we do not need to repeat that condition here
+      // The number below is extracted from the following files:
+      // eecAnalysis_akFlowJet_onlyJets_findTrigger60Weight_60sample_2023-04-26.root
+      // eecAnalysis_akFlowJet_onlyJets_findTrigger60Weight_80and100sample_2023-04-26.root
       if(fTriggerSelection == 6){
         fTotalEventWeight = fTotalEventWeight * 35.143313;
       }
