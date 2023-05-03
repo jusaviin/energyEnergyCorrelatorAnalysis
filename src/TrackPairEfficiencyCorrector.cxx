@@ -13,6 +13,7 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
   fInputFile(NULL),
   fnCentralityBins(0),
   fnTrackPtBins(0),
+  fnJetPtBins(0),
   fDisableCorrection(false),
   fUseSmoothedCorrection(false)
 {
@@ -20,6 +21,9 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
     for(int iTriggerPt = 0; iTriggerPt < kMaxTrackPtBins; iTriggerPt++){
       for(int iAssociatedPt = 0; iAssociatedPt < kMaxTrackPtBins; iAssociatedPt++){
         fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt] = NULL;
+        for(int iJetPt = 0; iJetPt < kMaxJetPtBins; iJetPt++){
+          fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt] = NULL;
+        } // Jet pT loop
       } // Associated pT loop
     } // Trigger pT loop
   } // Centrality loop
@@ -47,6 +51,7 @@ void TrackPairEfficiencyCorrector::ReadCorrectionTables(){
   // Read the dimensions of the arrays from the card
   fnCentralityBins = fCard->GetNCentralityBins();
   fnTrackPtBins = fCard->GetNTrackPairPtBins();
+  fnJetPtBins = fCard->GetNJetPtBins();
   
   // Read the centrality bin borders from the card
   for(int iCentrality = 0; iCentrality < fnCentralityBins; iCentrality++){
@@ -59,6 +64,12 @@ void TrackPairEfficiencyCorrector::ReadCorrectionTables(){
     fTrackPtBinBorders[iTrackPt] = fCard->GetLowBinBorderTrackPairPt(iTrackPt);
   }
   fTrackPtBinBorders[fnTrackPtBins] = fCard->GetHighBinBorderTrackPairPt(fnTrackPtBins-1);
+
+  // Read the jet pT bin borders from the card
+  for(int iJetPt = 0; iJetPt < fnJetPtBins; iJetPt++){
+    fJetPtBinBorders[iJetPt] = fCard->GetLowBinBorderJetPt(iJetPt);
+  }
+  fJetPtBinBorders[fnJetPtBins] = fCard->GetHighBinBorderJetPt(fnJetPtBins-1);
   
   // Select the correct name for the corrections
   const char* histogramName = fUseSmoothedCorrection ? "smoothedTrackPairEfficiencyCorrection" : "trackPairEfficiencyCorrection";  
@@ -68,6 +79,9 @@ void TrackPairEfficiencyCorrector::ReadCorrectionTables(){
     for(int iTriggerPt = 0; iTriggerPt < fnTrackPtBins; iTriggerPt++){
       for(int iAssociatedPt = 0; iAssociatedPt <= iTriggerPt; iAssociatedPt++){
         fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt] = (TH1D*) fInputFile->Get(Form("%s_C%dT%dA%d", histogramName, iCentrality, iTriggerPt, iAssociatedPt));
+        for(int iJetPt = 0; iJetPt < fnJetPtBins; iJetPt++){
+          fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt] = (TH1D*) fInputFile->Get(Form("trackPairEfficiencyCorrectionCloseToJet_C%dT%dA%dJ%d", iCentrality, iTriggerPt, iAssociatedPt, iJetPt));
+        }
       }
     }
   }
@@ -107,6 +121,13 @@ int TrackPairEfficiencyCorrector::FindTrackPtBin(const double trackPt) const{
 }
 
 /*
+ * Find jet pT bin index
+ */
+int TrackPairEfficiencyCorrector::FindJetPtBin(const double jetPt) const{
+  return FindBinIndex(fJetPtBinBorders, fnJetPtBins, jetPt);
+}
+
+/*
  * Get the weight to be given to the reflected cone track based on a data study
  *
  *  const double deltaR = DeltaR between the two tracks
@@ -114,7 +135,7 @@ int TrackPairEfficiencyCorrector::FindTrackPtBin(const double trackPt) const{
  *  const double triggerPt = Trigger particle pT
  *  const double associatedPt = Associated particle pT
  */
-double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt) const{
+double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt) const{
   
   if(fDisableCorrection) return 1;
 
@@ -122,6 +143,29 @@ double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const doub
   int iCentrality = FindCentralityBin(centrality);
   int iTriggerPt = FindTrackPtBin(triggerPt);
   int iAssociatedPt = FindTrackPtBin(associatedPt);
+
+  // If jet pT is given, use the correction with jet pT bins
+  if(jetPt > 0) { // There is no statistics for very high pT jets with very high pT tracks, so relax the jet requirement there
+    if(deltaR > 0.4) return 1;
+    int iJetPt = FindJetPtBin(jetPt);
+    // Ensure that the trigger pT is higher than associated pT
+    double correction = 1;
+    if(iTriggerPt >= iAssociatedPt){
+      correction = 1.0/fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->GetBinContent(fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->FindBin(deltaR));
+    } else {
+      correction = 1.0/fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->GetBinContent(fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->FindBin(deltaR));
+    }
+
+    // Check that the correction is sane
+    if(1.0/correction > 0.01 && 1.0/correction < 2){
+      return correction;
+    }
+
+    // If the correction does not make sense, use the correction without jet pT bins instead
+    std::cout << "Insane track pair efficiency correction in bin: triggerPt: " << iTriggerPt << " assoc pT: " << iAssociatedPt << " jetPt: " << iJetPt << std::endl;
+    std::cout << "Using the correction without jets instead" << std::endl;
+    
+  }
     
   // Ensure that the trigger pT is higher than associated pT
   if(iTriggerPt >= iAssociatedPt){

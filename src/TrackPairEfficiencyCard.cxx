@@ -126,6 +126,16 @@ int TrackPairEfficiencyCard::GetNTrackPairPtBins() const{
   return GetNBins(kTrackPairPtBinEdges);
 }
 
+// Get the number of jet pT bins
+int TrackPairEfficiencyCard::GetNJetPtBins() const{
+  return GetNBins(kJetPtBinEdgesEEC);
+}
+
+// Get the number of average eta bins
+int TrackPairEfficiencyCard::GetNAverageEtaBins() const{
+  return GetNBins(kAverageEtaBinEdges);
+}
+
 /*
  * Get a bin index based on a given value.
  * If value is out of bound, return -1
@@ -162,6 +172,16 @@ int TrackPairEfficiencyCard::GetBinIndexTrackPairPt(const double value) const{
   return GetBinIndex(kTrackPairPtBinEdges,value);
 }
 
+// Get the bin index for a given jet pT value
+int TrackPairEfficiencyCard::GetBinIndexJetPt(const double value) const{
+  return GetBinIndex(kJetPtBinEdgesEEC,value);
+}
+
+// Get the bin index for a given average eta value
+int TrackPairEfficiencyCard::GetBinIndexAverageEta(const double value) const{
+  return GetBinIndex(kAverageEtaBinEdges,value);
+}
+
 // Get the low border of i:th bin from internal index
 double TrackPairEfficiencyCard::GetLowBinBorder(const int index, const int iBin) const{
   
@@ -189,6 +209,16 @@ double TrackPairEfficiencyCard::GetLowBinBorderTrackPairPt(const int iBin) const
   return GetLowBinBorder(kTrackPairPtBinEdges,iBin);
 }
 
+// Get the low border of i:th jet pT bin
+double TrackPairEfficiencyCard::GetLowBinBorderJetPt(const int iBin) const{
+  return GetLowBinBorder(kJetPtBinEdgesEEC,iBin);
+}
+
+// Get the low border of i:th average eta bin
+double TrackPairEfficiencyCard::GetLowBinBorderAverageEta(const int iBin) const{
+  return GetLowBinBorder(kAverageEtaBinEdges,iBin);
+}
+
 // Get the high border of i:th bin from internal index
 double TrackPairEfficiencyCard::GetHighBinBorder(const int index, const int iBin) const{
   
@@ -214,6 +244,16 @@ double TrackPairEfficiencyCard::GetHighBinBorderTrackPt(const int iBin) const{
 // Get the high border of i:th track pT bin in track pair histograms
 double TrackPairEfficiencyCard::GetHighBinBorderTrackPairPt(const int iBin) const{
   return GetHighBinBorder(kTrackPairPtBinEdges,iBin);
+}
+
+// Get the high border of i:th jet pT bin
+double TrackPairEfficiencyCard::GetHighBinBorderJetPt(const int iBin) const{
+  return GetHighBinBorder(kJetPtBinEdgesEEC,iBin);
+}
+
+// Get the high border of i:th average eta bin
+double TrackPairEfficiencyCard::GetHighBinBorderAverageEta(const int iBin) const{
+  return GetHighBinBorder(kAverageEtaBinEdges,iBin);
 }
 
 /*

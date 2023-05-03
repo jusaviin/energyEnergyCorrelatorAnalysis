@@ -170,7 +170,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     
     // Track pair efficiency corrector for pp
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableNewBinning_pp2017_2023-04-11.root", false);
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableCloseToJet_pp2017_2023-05-03.root", false);
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -1387,8 +1387,8 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
         
         // Find the pair efficiency correction for the track pair
-        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2);
-        
+        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+
         // Fill the energy-energy correlator histograms
         fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
         fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 1: pT of the jet the tracks are near of
