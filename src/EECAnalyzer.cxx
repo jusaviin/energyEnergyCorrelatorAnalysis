@@ -85,6 +85,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetUncertaintyMode(0),
   fTrackEtaCut(0),
   fTrackMinPtCut(0),
+  fTrackMaxPtCut(0),
   fMaxTrackPtRelativeError(0),
   fMaxTrackDistanceToVertex(0),
   fCalorimeterSignalLimitPt(0),
@@ -102,6 +103,7 @@ EECAnalyzer::EECAnalyzer() :
   fFillEnergyEnergyCorrelators(false),
   fFillEnergyEnergyCorrelatorsUncorrected(false),
   fFillJetPtClosure(false),
+  fFillJetPtUnfoldingResponse(false),
   fMultiplicityMode(false)
 {
   // Default constructor
@@ -259,6 +261,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetUncertaintyMode(in.fJetUncertaintyMode),
   fTrackEtaCut(in.fTrackEtaCut),
   fTrackMinPtCut(in.fTrackMinPtCut),
+  fTrackMaxPtCut(in.fTrackMaxPtCut),
   fMaxTrackPtRelativeError(in.fMaxTrackPtRelativeError),
   fMaxTrackDistanceToVertex(in.fMaxTrackDistanceToVertex),
   fCalorimeterSignalLimitPt(in.fCalorimeterSignalLimitPt),
@@ -276,6 +279,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fFillEnergyEnergyCorrelators(in.fFillEnergyEnergyCorrelators),
   fFillEnergyEnergyCorrelatorsUncorrected(in.fFillEnergyEnergyCorrelatorsUncorrected),
   fFillJetPtClosure(in.fFillJetPtClosure),
+  fFillJetPtUnfoldingResponse(in.fFillJetPtUnfoldingResponse),
   fMultiplicityMode(in.fMultiplicityMode)
 {
   // Copy constructor
@@ -324,6 +328,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetUncertaintyMode = in.fJetUncertaintyMode;
   fTrackEtaCut = in.fTrackEtaCut;
   fTrackMinPtCut = in.fTrackMinPtCut;
+  fTrackMaxPtCut = in.fTrackMaxPtCut;
   fMaxTrackPtRelativeError = in.fMaxTrackPtRelativeError;
   fMaxTrackDistanceToVertex = in.fMaxTrackDistanceToVertex;
   fCalorimeterSignalLimitPt = in.fCalorimeterSignalLimitPt;
@@ -341,6 +346,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillEnergyEnergyCorrelators = in.fFillEnergyEnergyCorrelators;
   fFillEnergyEnergyCorrelatorsUncorrected = in.fFillEnergyEnergyCorrelatorsUncorrected;
   fFillJetPtClosure = in.fFillJetPtClosure;
+  fFillJetPtUnfoldingResponse = in.fFillJetPtUnfoldingResponse;
   fMultiplicityMode = in.fMultiplicityMode;
   
   return *this;
@@ -404,7 +410,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   
   fTrackEtaCut = fCard->Get("TrackEtaCut");     // Eta cut around midrapidity
-  fTrackMinPtCut = fCard->Get("MinTrackPtCut"); // Minimum pT cut
+  fTrackMinPtCut = fCard->Get("MinTrackPtCut"); // Minimum track pT cut
+  fTrackMaxPtCut = fCard->Get("MaxTrackPtCut"); // Maximum track pT cut
   fMaxTrackPtRelativeError = fCard->Get("MaxTrackPtRelativeError");   // Maximum relative error for pT
   fMaxTrackDistanceToVertex = fCard->Get("VertexMaxDistance");        // Maximum distance to primary vetrex
   fCalorimeterSignalLimitPt = fCard->Get("CalorimeterSignalLimitPt"); // Require signal in calorimeters for track above this pT
@@ -460,6 +467,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
   fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
   fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
+  fFillJetPtUnfoldingResponse = bitChecker.test(kFillJetPtUnfoldingResponse);
   
   //************************************************
   //              Debug messages
@@ -477,8 +485,9 @@ void EECAnalyzer::RunAnalysis(){
   //************************************************
   
   // Input files and forest readers for analysis
-  TFile *inputFile;
-  TFile *copyInputFile; // If we read forest for tracks and jets with different readers, we need to give different file pointers to them
+  TFile* inputFile;
+  TFile* copyInputFile;      // If we read forest for tracks and jets with different readers, we need to give different file pointers to them
+  TFile* unfoldingInputFile; // If using several readers, avoid problems by using different file pointers for different readers
   
   // Event variables
   Int_t nEvents = 0;                // Number of events
@@ -619,6 +628,10 @@ void EECAnalyzer::RunAnalysis(){
   } else {
     fTrackReader = fJetReader;
   }
+
+  if(fFillJetPtUnfoldingResponse){
+    fUnfoldingForestReader = new UnfoldingForestReader(fDataType,fJetType,fJetAxis);
+  }
   
   
   //************************************************
@@ -637,6 +650,7 @@ void EECAnalyzer::RunAnalysis(){
     currentFile = fFileNames.at(iFile);
     inputFile = TFile::Open(currentFile);
     if(useDifferentReaderForJetsAndTracks) copyInputFile = TFile::Open(currentFile);
+    if(fFillJetPtUnfoldingResponse) unfoldingInputFile = TFile::Open(currentFile);
     
     // Check that the file exists
     if(!inputFile){
@@ -668,6 +682,7 @@ void EECAnalyzer::RunAnalysis(){
     // If file is good, read the forest from the file
     fJetReader->ReadForestFromFile(inputFile);  // There might be a memory leak in handling the forest...
     if(useDifferentReaderForJetsAndTracks) fTrackReader->ReadForestFromFile(copyInputFile); // If we mix reco and gen, the reader for jets and tracks is different
+    if(fFillJetPtUnfoldingResponse) fUnfoldingForestReader->ReadForestFromFile(unfoldingInputFile);
     nEvents = fJetReader->GetNEvents();
     
 
@@ -689,6 +704,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // If track reader is not the same as jet reader, read the event to memory in trackReader
       if(useDifferentReaderForJetsAndTracks) fTrackReader->GetEvent(iEvent);
+      if(fFillJetPtUnfoldingResponse) fUnfoldingForestReader->GetEvent(iEvent);
 
       // Get vz, centrality and pT hat information
       vz = fJetReader->GetVz();
@@ -793,9 +809,12 @@ void EECAnalyzer::RunAnalysis(){
       // ===== Event quality cuts applied =====
       // ======================================
       
-      // Reset the variables used in dijet finding
+      // Centrality bin for smearing study
       centralityBin = GetCentralityBin(centrality);  // Only needed for smearing study
       
+      // The unfolding study is completely separate from regular analysis to make code easier to follow
+      if(fFillJetPtUnfoldingResponse) FillUnfoldingResponse();
+
       //****************************************************
       //    Loop over all jets and find tracks within jets
       //****************************************************
@@ -1247,6 +1266,7 @@ void EECAnalyzer::RunAnalysis(){
     // Close the input files after the event has been read
     inputFile->Close();
     if(useDifferentReaderForJetsAndTracks) copyInputFile->Close();
+    if(fFillJetPtUnfoldingResponse) unfoldingInputFile->Close();
     
     // Write some debug messages if prompted
     if(fDebugLevel > 1){
@@ -1482,6 +1502,300 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
 }
 
 
+/*
+ * Fill all the histograms needed in the unfolding study
+ *
+ */
+void EECAnalyzer::FillUnfoldingResponse(){
+
+  // Variables for jets
+  Double_t jetPt;             // Reconstructed jet pT
+  Double_t jetPhi;            // Reconstructed jet phi
+  Double_t jetEta;            // Reconstructed jet eta
+  Double_t genPt;             // Matched generator level jet pT
+  Int_t nJets;                // Number of jets
+  Double_t smearingFactor;    // Smearing factor for systematic uncertainty study
+  Double_t jetPtErrorUp;      // Jet energy scale up error for systematic study
+  Double_t jetPtErrorDown;    // Jet energy scale down error for systematic study
+
+  // Variables for tracks
+  Double_t trackPt;           // Generator level particle pT
+  Double_t trackEta;          // Generator level particle eta
+  Double_t trackPhi;          // Generator level particle phi
+  Int_t nTracks;              // Number of generator level particles
+  
+  // Variables for energy-energy correlators
+  vector<double> selectedTrackPt;     // Track pT for tracks selected for energy-energy correlator analysis
+  vector<double> relativeTrackEta;    // Track eta relative to the jet axis
+  vector<double> relativeTrackPhi;    // Track phi relative to the jet axis
+  vector<int> mathedGenIndices;       // Indices of the gen jets that have been matched with reconstructed jets
+  Double_t deltaRTrackJet;            // Delta R between reconstructed jet, and generator level particles
+
+  // Reconstructed jet loop
+  nJets = fUnfoldingForestReader->GetNJets();
+  mathedGenIndices.clear();
+  Double_t centrality = fUnfoldingForestReader->GetCentrality();
+  for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
+
+    jetPt = fUnfoldingForestReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
+    jetPhi = fUnfoldingForestReader->GetJetPhi(jetIndex);
+    jetEta = fUnfoldingForestReader->GetJetEta(jetIndex);
+
+    //  ========================================
+    //  ======== Apply jet quality cuts ========
+    //  ========================================
+
+    if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
+    if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
+
+    if(fMinimumMaxTrackPtFraction >= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
+      continue;  // Cut for jets with only very low pT particles
+    }
+    if(fMaximumMaxTrackPtFraction <= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
+      continue;  // Cut for jets where all the pT is taken by one track
+    }
+    
+
+    //  ========================================
+    //  ======= Jet quality cuts applied =======
+    //  ========================================
+
+    // For 2018 data: do a correction for the jet pT
+    fJetCorrector2018->SetJetPT(jetPt);
+    fJetCorrector2018->SetJetEta(jetEta);
+    fJetCorrector2018->SetJetPhi(jetPhi);
+
+    fJetUncertainty2018->SetJetPT(jetPt);
+    fJetUncertainty2018->SetJetEta(jetEta);
+    fJetUncertainty2018->SetJetPhi(jetPhi);
+
+    jetPt = fJetCorrector2018->GetCorrectedPT();
+
+    // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+
+    // If we are using smearing scenario, modify the jet pT using gaussian smearing
+    if(fJetUncertaintyMode == 3) {
+      smearingFactor = GetSmearingFactor(jetPt, centrality);
+      jetPt = jetPt * fRng->Gaus(1, smearingFactor);
+    }
+
+    // Second smearing scenario, where we smear the jet energy based on the uncertainties
+    if(fJetUncertaintyMode == 5) {
+      jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
+      jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
+      smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
+      jetPt = jetPt * fRng->Gaus(1, smearingFactor);
+    }
+
+    // After the jet pT can been corrected, apply analysis jet pT cuts
+    if(jetPt < fJetMinimumPtCut) continue;
+    if(jetPt > fJetMaximumPtCut) continue;
+
+    //************************************************
+    //   Do energy-energy correlation within jets
+    //************************************************
+
+    // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
+    selectedTrackPt.clear();
+    relativeTrackEta.clear();
+    relativeTrackPhi.clear();
+
+    // For now, only use generator level particles for the unfolding study
+    nTracks = fUnfoldingForestReader->GetNGenParticles();
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++) {
+
+      // Check that all the generator level particle selections are passed
+      if(!PassGenParticleSelection(fUnfoldingForestReader, iTrack)) continue;
+
+      // Find the track kinematics
+      trackPt = fUnfoldingForestReader->GetGenParticlePt(iTrack);
+      trackEta = fUnfoldingForestReader->GetGenParticleEta(iTrack);
+      trackPhi = fUnfoldingForestReader->GetGenParticlePhi(iTrack);
+
+      // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+      deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+      if(deltaRTrackJet < fJetRadius) {
+        relativeTrackPhi.push_back(trackPhi - jetPhi);
+        relativeTrackEta.push_back(trackEta - jetEta);
+        selectedTrackPt.push_back(trackPt);
+      } // Track close to jet
+    } // Track loop
+
+    // Find a matching generator level jet for the reconstructed jet
+    if(fUnfoldingForestReader->HasMatchingGenJet(jetIndex)){
+      genPt = fUnfoldingForestReader->GetMatchedGenPt(jetIndex);
+      mathedGenIndices.push_back(fUnfoldingForestReader->GetMatchingGenIndex(jetIndex));
+    } else {
+      genPt = -1;
+    }
+
+    // Calculate the energy-energy correlator within this jet
+    CalculateEnergyEnergyCorrelatorForUnfolding(selectedTrackPt, relativeTrackEta, relativeTrackPhi, jetPt, genPt);
+
+  }  // Reconstructed jet loop
+
+  // Generator level jet loop
+  nJets = fUnfoldingForestReader->GetNGeneratorJets();
+  for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
+
+    // If this index is already filled, do not fill it again
+    auto searchResult = std::find(begin(mathedGenIndices), end(mathedGenIndices), jetIndex);
+    if(searchResult != std::end(mathedGenIndices)) continue;
+
+    // If the index is not jet filled, fill it to the true distribution
+    jetPt = fUnfoldingForestReader->GetGeneratorJetPt(jetIndex);  // Get the raw pT and do manual correction later
+    jetPhi = fUnfoldingForestReader->GetGeneratorJetPhi(jetIndex);
+    jetEta = fUnfoldingForestReader->GetGeneratorJetEta(jetIndex);
+
+    //  ==========================================
+    //  ======== Apply jet kinematic cuts ========
+    //  ==========================================
+
+    if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
+    if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
+    if(jetPt < fJetMinimumPtCut) continue;                             // Cut for minimum jet pT
+    if(jetPt > fJetMaximumPtCut) continue;                             // Cut for maximum jet pT
+
+    //************************************************
+    //   Do energy-energy correlation within jets
+    //************************************************
+
+    // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
+    selectedTrackPt.clear();
+    relativeTrackEta.clear();
+    relativeTrackPhi.clear();
+
+    // For now, only use generator level particles for the unfolding study
+    nTracks = fUnfoldingForestReader->GetNGenParticles();
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+
+      // Check that all the generator level particle selections are passed
+      if(!PassGenParticleSelection(fUnfoldingForestReader, iTrack)) continue;
+
+      // Find the track kinematics
+      trackPt = fUnfoldingForestReader->GetGenParticlePt(iTrack);
+      trackEta = fUnfoldingForestReader->GetGenParticleEta(iTrack);
+      trackPhi = fUnfoldingForestReader->GetGenParticlePhi(iTrack);
+
+      // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+      deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+      if(deltaRTrackJet < fJetRadius) {
+        relativeTrackPhi.push_back(trackPhi - jetPhi);
+        relativeTrackEta.push_back(trackEta - jetEta);
+        selectedTrackPt.push_back(trackPt);
+      } // Track close to jet
+    } // Track loop
+
+    // Calculate the energy-energy correlator within this jet
+    CalculateEnergyEnergyCorrelatorForUnfolding(selectedTrackPt, relativeTrackEta, relativeTrackPhi, -1, genPt);
+
+  } // Generator level jet loop
+
+}
+
+/*
+ * Method for calculating the energy-energy correlators for tracks within the jets for unfolding
+ *
+ *  const vector<double> selectedTrackPt = pT array for tracks selected for the analysis
+ *  const vector<double> relativeTrackEta = relative eta array for tracks selected for the analysis
+ *  const vector<double> relativeTrackPhi = relative phi array for tracks selected for the analysis
+ *  const double jetPt = pT of the reconstructed jet the tracks are close to
+ *  const double genPt = pT of the generator level jet the tracks are close to
+ */
+void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt){
+  
+  // Define fillers for THnSparses
+  Double_t fillerDistribution[3]; // Axes: deltaR as a function of reco/gen jet pT, track pT cut, centrality
+  Double_t fillerResponse[4]; // Axes: deltaR as a function of reco jet pT, deltaR as a function of gen jet pT, track pT cut, centrality
+  
+  // Event information
+  Double_t centrality = fUnfoldingForestReader->GetCentrality();
+  if(fMultiplicityMode) centrality = GetCentralityFromMultiplicity(GetMultiplicity());
+  
+  // Variables for generator level particles
+  Double_t trackPt1;         // Track pT for the first track
+  Double_t trackEta1;        // Track eta for the first track
+  Double_t trackPhi1;        // Track phi for the first track
+  Double_t trackPt2;         // Track pT for the second track
+  Double_t trackEta2;        // Track eta for the second track
+  Double_t trackPhi2;        // Track phi for the second track
+  Double_t trackDeltaR;      // DeltaR between the two tracks
+  Double_t lowerTrackPt;     // Lower of the two track pT:s
+  Double_t correlatorWeight; // Weight given to the energy-energy correlator pT1*pT2
+  Int_t nTracks;             // Number of tracks
+
+  // Variables for energy-energy correlator response
+  Double_t unfoldingDeltaRGeneratorLevel; // DeltaR transformed into generator level unfulding axis
+  Double_t unfoldingDeltaRReconstructed;  // DeltaR transformed into reconstructed unfolding axis
+
+  // For MC: weight according to jet pT
+  Double_t jetPtWeight = GetJetPtWeight(jetPt);
+
+  // Find the numbers of tracks for the track loops
+  nTracks = selectedTrackPt.size();
+
+  // Loop over all the tracks in the jet cone
+  for(Int_t iFirstTrack = 0; iFirstTrack < nTracks; iFirstTrack++){
+
+    // Get the kinematics for the first track
+    trackPt1 = selectedTrackPt.at(iFirstTrack);
+    trackPhi1 = relativeTrackPhi.at(iFirstTrack);
+    trackEta1 = relativeTrackEta.at(iFirstTrack);
+
+    // Loop over the all track paris not already studied
+    for(Int_t iSecondTrack = iFirstTrack + 1; iSecondTrack < nTracks; iSecondTrack++) {
+
+      // Get the kinematics for the second track
+      trackPt2 = selectedTrackPt.at(iSecondTrack);
+      trackPhi2 = relativeTrackPhi.at(iSecondTrack);
+      trackEta2 = relativeTrackEta.at(iSecondTrack);
+
+      // Find the deltaR between the tracks
+      trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+
+      // Find the lower of the two track pT:s
+      lowerTrackPt = trackPt1;
+      if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+
+      // Calculate the weights given to the energy-energy correlators
+      correlatorWeight = trackPt1 * trackPt2;
+
+      // Transform deltaR into deltaR as a function of reconstructed jet pT
+      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt);
+
+      // Transform deltaR into deltaR as a function of generator level jet pT
+      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt);
+
+      // If both reconstructed and generator level jet pT are given, fill the response matrix
+      if(jetPt >= fJetMinimumPtCut && genPt >= fJetMinimumPtCut){
+        fillerResponse[0] = unfoldingDeltaRReconstructed;
+        fillerResponse[1] = unfoldingDeltaRGeneratorLevel;
+        fillerResponse[2] = lowerTrackPt;
+        fillerResponse[3] = centrality;
+        fHistograms->fhUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * correlatorWeight * jetPtWeight);
+      }
+
+      // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
+      if(jetPt >= fJetMinimumPtCut){
+        fillerDistribution[0] = unfoldingDeltaRReconstructed;
+        fillerDistribution[1] = lowerTrackPt;
+        fillerDistribution[2] = centrality;
+        fHistograms->fhUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeight);
+      }
+
+      // If the generator level jet pT is given, fill the generator level distribution for unfolding
+      if(genPt >= fJetMinimumPtCut){
+        fillerDistribution[0] = unfoldingDeltaRGeneratorLevel;
+        fillerDistribution[1] = lowerTrackPt;
+        fillerDistribution[2] = centrality;
+        fHistograms->fhUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeight);
+      }
+
+    }  // Inner track loop
+  }    // Outer track loop
+}
 
 /*
  * Get the proper vz weighting depending on analyzed system
@@ -1558,10 +1872,9 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centralit
   if(jetPt > 500) jetPt = 500;
   
   // Find the correct centrality bin
-  Int_t centralityBin = 0;
-  if(centrality > fCard->Get("CentralityBinEdges",2)) centralityBin++;
-  if(centrality > fCard->Get("CentralityBinEdges",3)) centralityBin++;
-  if(centrality > fCard->Get("CentralityBinEdges",4)) centralityBin++;
+  // TODO: This is dangerous and only works if there is an empty centrality bin in the beginning in card!!!!
+  // TODO: Needs to be fixed
+  Int_t centralityBin = GetCentralityBin(centrality);
   
   // Set the parameters to the smearing function. pp and PbPb have different smearing function parameters
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
@@ -1688,8 +2001,8 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
   
   // Cut for track pT
-  if(trackPt <= fTrackMinPtCut) return false;                     // Minimum pT cut
-  if(trackPt >= fJetMaximumPtCut) return false;                   // Maximum pT cut (same as for leading jets)
+  if(trackPt <= fTrackMinPtCut) return false;                   // Minimum pT cut
+  if(trackPt >= fTrackMaxPtCut) return false;                   // Maximum pT cut
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kPtCuts);
   
   // Cut for track eta
@@ -1726,6 +2039,39 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   // If passed all checks, return true
   return true;
 }
+
+/*
+ * Check if a track passes the generator level particle selection criteria
+ *
+ *  Arguments:
+ *   UnfoldingForestReader *trackReader = UnfoldingForestReader from which the generator level particles are read
+ *   const Int_t iTrack = Index of the checked track in reader
+ *
+ *   return: True if all track cuts are passed, false otherwise
+ */
+Bool_t EECAnalyzer::PassGenParticleSelection(UnfoldingForestReader* trackReader, const Int_t iTrack){
+  
+  // Cuts specific to generator level MC tracks
+  if(trackReader->GetGenParticleCharge(iTrack) == 0) return false;  // Require that the track is charged
+  
+  if(!PassSubeventCut(trackReader->GetGenParticleSubevent(iTrack))) return false;  // Require desired subevent
+  
+  Double_t trackPt = trackReader->GetGenParticlePt(iTrack);
+  
+  // Cut for track pT
+  if(trackPt <= fTrackMinPtCut) return false;       // Minimum track pT cut
+  if(trackPt >= fTrackMaxPtCut) return false;       // Maximum track pT cut
+  
+  Double_t trackEta = trackReader->GetGenParticleEta(iTrack);
+  
+  // Cut for track eta
+  if(TMath::Abs(trackEta) >= fTrackEtaCut) return false;          // Eta cut
+  
+  // If passed all checks, return true
+  return true;
+  
+}
+
 
 /*
  * Get the track efficiency correction for a given track
@@ -1788,10 +2134,10 @@ Int_t EECAnalyzer::GetCentralityBin(const Double_t centrality) const{
   
   // Find the correct centrality bin
   Int_t centralityBin = 0;
-  if(centrality > fCard->Get("CentralityBinEdges",2)) centralityBin++;
-  if(centrality > fCard->Get("CentralityBinEdges",3)) centralityBin++;
-  if(centrality > fCard->Get("CentralityBinEdges",4)) centralityBin++;
-  
+  for(int iCentrality = 1; iCentrality < fCard->GetNBin("CentralityBinEdges"); iCentrality++){
+    if(centrality > fCard->Get("CentralityBinEdges",iCentrality)) centralityBin++;
+  }
+
   return centralityBin;
 }
 
@@ -1944,4 +2290,30 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
   
   // Now eta must be positive. Subtract twice the jet radius from the value to avoid overlapping cones
   return eta - 2*fJetRadius;
+}
+
+/*
+ * Transform the deltaR value to the unfolding axis
+ *
+ *  Arguments:
+ *   const Double_t deltaR = DeltaR between the two particles
+ *   const Double_t jetPt = pT of the jets the track pair is close to
+ *
+ * return: The new value transformed into the main unfolding axis
+ */
+Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const{
+
+  const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
+  const Double_t maxDeltaR = 0.8;
+  Double_t transformedDeltaR = deltaR;
+  for(Int_t iJetPt = 1; iJetPt < nJetPtBinsEEC+1; iJetPt++){
+    if(jetPt >= fCard->Get("JetPtBinEdgesEEC",iJetPt)){
+      transformedDeltaR += maxDeltaR;
+    } else {
+      return transformedDeltaR;
+    }
+  }
+
+  // We should never reach this point. If we are here, just return error code -1
+  return -1;
 }

@@ -2,7 +2,7 @@ PROGRAM       = eecAnalysis
 
 version       = development
 CXX           = g++
-CXXFLAGS      = -g -Wall -Wno-bitwise-instead-of-logical -D$(version) 
+CXXFLAGS      = -g -Wall -D$(version) 
 LD            = g++
 LDFLAGS       = -O2
 SOFLAGS       = -shared
@@ -17,7 +17,7 @@ LDFLAGS  += $(shell root-config --libs)
         
 # Use the following form if you have classes inherint TObject
 # HDRS += $(HDRSDICT) src/Class.h ... nanoDict.h       
-HDRS += src/ForestReader.h src/HighForestReader.h src/GeneratorLevelForestReader.h src/EECHistograms.h src/EECAnalyzer.h src/ConfigurationCard.h src/JetCorrector.h src/JetUncertainty.h src/trackingEfficiency2018PbPb.h src/trackingEfficiency2017pp.h src/TrackingEfficiencyInterface.h src/ReflectedConeWeight.h src/TrackPairEfficiencyCard.h src/TrackPairEfficiencyCorrector.h
+HDRS += src/ForestReader.h src/HighForestReader.h src/GeneratorLevelForestReader.h src/UnfoldingForestReader.h src/EECHistograms.h src/EECAnalyzer.h src/ConfigurationCard.h src/JetCorrector.h src/JetUncertainty.h src/trackingEfficiency2018PbPb.h src/trackingEfficiency2017pp.h src/TrackingEfficiencyInterface.h src/ReflectedConeWeight.h src/TrackPairEfficiencyCard.h src/TrackPairEfficiencyCorrector.h
 
 SRCS = $(HDRS:.h=.cxx)
 OBJS = $(HDRS:.h=.o)

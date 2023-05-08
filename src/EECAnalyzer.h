@@ -21,6 +21,7 @@
 #include "EECHistograms.h"
 #include "HighForestReader.h"
 #include "GeneratorLevelForestReader.h"
+#include "UnfoldingForestReader.h"
 #include "JetCorrector.h"
 #include "JetUncertainty.h"
 #include "trackingEfficiency2018PbPb.h"
@@ -33,7 +34,7 @@ class EECAnalyzer{
   
 private:
   
-  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsUncorrected, kFillJetPtClosure, knFillTypes}; // Histograms to fill
+  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsUncorrected, kFillJetPtClosure, kFillJetPtUnfoldingResponse, knFillTypes}; // Histograms to fill
   enum enumSubeventCuts{kSubeventZero,kSubeventNonZero,kSubeventAny,knSubeventCuts}; // Cuts for subevent index
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   
@@ -41,7 +42,7 @@ public:
   
   // Constructors and destructor
   EECAnalyzer(); // Default constructor
-  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard); // Custom constructor
+  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard); // Custom constructor
   EECAnalyzer(const EECAnalyzer& in); // Copy constructor
   virtual ~EECAnalyzer(); // Destructor
   EECAnalyzer& operator=(const EECAnalyzer& obj); // Equal sign operator
@@ -49,17 +50,20 @@ public:
   // Methods
   void RunAnalysis();                     // Run the dijet analysis
   EECHistograms* GetHistograms() const;   // Getter for histograms
-  
-private:
+
+ private:
   
   // Private methods
   void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
+  void FillUnfoldingResponse(); // Fill the histograms needed for unfolding study
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
+  Bool_t PassGenParticleSelection(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
   Double_t  GetTrackEfficiencyCorrection(const Float_t trackPt, const Float_t trackEta, const Int_t hiBin); // Get the track efficiency correction for given track and event information
@@ -75,25 +79,27 @@ private:
   Int_t GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent combination type from two track subevents
   Int_t GetSubeventIndex(const Int_t subevent) const; // Get the subevent index for a track
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
+  Double_t TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const; // Transform the deltaR value to the unfolding axis
   
   // Private data members
-  ForestReader* fJetReader;                 // Reader for jets in the event
-  ForestReader* fTrackReader;               // Readers for tracks in the event
-  std::vector<TString> fFileNames;          // Vector for all the files to loop over
-  ConfigurationCard* fCard;                 // Configuration card for the analysis
-  EECHistograms* fHistograms;               // Filled histograms
-  TF1* fVzWeightFunction;                   // Weighting function for vz. Needed for MC.
-  TF1* fCentralityWeightFunctionCentral;    // Weighting function for central centrality classes. Needed for MC.
-  TF1* fCentralityWeightFunctionPeripheral; // Weighting function for peripheral centrality classes. Needed for MC.
-  TF1* fMultiplicityWeightFunction;         // Track multiplicity based weighting function. Can be done instead of centrality weight.
-  TF1* fPtWeightFunction;                   // Weighting function for jet pT. Needed for MC.
-  TF1* fSmearingFunction;                   // Additional smearing for jets. Needed in systematic uncertainty study.
+  ForestReader* fJetReader;                      // Reader for jets in the event
+  ForestReader* fTrackReader;                    // Reader for tracks in the event
+  UnfoldingForestReader* fUnfoldingForestReader; // Reader for unfolding study
+  std::vector<TString> fFileNames;               // Vector for all the files to loop over
+  ConfigurationCard* fCard;                      // Configuration card for the analysis
+  EECHistograms* fHistograms;                    // Filled histograms
+  TF1* fVzWeightFunction;                        // Weighting function for vz. Needed for MC.
+  TF1* fCentralityWeightFunctionCentral;         // Weighting function for central centrality classes. Needed for MC.
+  TF1* fCentralityWeightFunctionPeripheral;      // Weighting function for peripheral centrality classes. Needed for MC.
+  TF1* fMultiplicityWeightFunction;              // Track multiplicity based weighting function. Can be done instead of centrality weight.
+  TF1* fPtWeightFunction;                        // Weighting function for jet pT. Needed for MC.
+  TF1* fSmearingFunction;                        // Additional smearing for jets. Needed in systematic uncertainty study.
   TrackingEfficiencyInterface* fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
-  JetCorrector* fJetCorrector2018;          // Class for making jet energy correction for 2018 data
-  JetUncertainty* fJetUncertainty2018;      // Class for finding uncertainty for jet pT for 2018 data
-  ReflectedConeWeight* fReflectedConeWeighter;  // Class for weighting the tracks in the reflected cone
+  JetCorrector* fJetCorrector2018;               // Class for making jet energy correction for 2018 data
+  JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
+  ReflectedConeWeight* fReflectedConeWeighter;   // Class for weighting the tracks in the reflected cone
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
-  TRandom3* fRng;                           // Random number generator
+  TRandom3* fRng;                                // Random number generator
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
@@ -121,7 +127,8 @@ private:
   Double_t fMaximumMaxTrackPtFraction; // Cut for jets consisting only from one high pT
   Int_t fJetUncertaintyMode;           // Use uncertainty for jet pT. 0 = Nominal, 1 = Minus uncertainty, 2 = Plus uncertainty
   Double_t fTrackEtaCut;               // Eta cut around midrapidity
-  Double_t fTrackMinPtCut;             // Minimum pT cut
+  Double_t fTrackMinPtCut;             // Minimum pT cut for tracks
+  Double_t fTrackMaxPtCut;             // Maximum pT cut for tracks
   Double_t fMaxTrackPtRelativeError;   // Maximum relative error for pT
   Double_t fMaxTrackDistanceToVertex;  // Maximum distance to primary vetrex
   Double_t fCalorimeterSignalLimitPt;  // Require signal in calorimeters for track above this pT
@@ -145,6 +152,7 @@ private:
   Bool_t fFillEnergyEnergyCorrelators;            // Fill energy-energy correlator histograms
   Bool_t fFillEnergyEnergyCorrelatorsUncorrected; // Fill uncorrected energy-energy correlator histograms
   Bool_t fFillJetPtClosure;                       // Fill jet pT closure histograms
+  Bool_t fFillJetPtUnfoldingResponse;             // Fill the jet pT unfolding response
   
   // Weighting mode flag for MC
   Bool_t fMultiplicityMode;       // True: Weight multiplicity to match the data. False: Weight centrality to match the data

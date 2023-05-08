@@ -40,6 +40,9 @@ EECHistograms::EECHistograms() :
   fhEnergyEnergyCorrelatorJetPt(0),
   fhEnergyEnergyCorrelatorJetPtUncorrected(0),
   fhJetPtClosure(0),
+  fhUnfoldingMeasured(0),
+  fhUnfoldingTruth(0),
+  fhUnfoldingResponse(0),
   fCard(0)
 {
   // Default constructor
@@ -76,6 +79,9 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhEnergyEnergyCorrelatorJetPt(0),
   fhEnergyEnergyCorrelatorJetPtUncorrected(0),
   fhJetPtClosure(0),
+  fhUnfoldingMeasured(0),
+  fhUnfoldingTruth(0),
+  fhUnfoldingResponse(0),
   fCard(newCard)
 {
   // Custom constructor
@@ -112,10 +118,13 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhEnergyEnergyCorrelatorJetPt(in.fhEnergyEnergyCorrelatorJetPt),
   fhEnergyEnergyCorrelatorJetPtUncorrected(in.fhEnergyEnergyCorrelatorJetPtUncorrected),
   fhJetPtClosure(in.fhJetPtClosure),
+  fhUnfoldingMeasured(in.fhUnfoldingMeasured),
+  fhUnfoldingTruth(in.fhUnfoldingTruth),
+  fhUnfoldingResponse(in.fhUnfoldingResponse),
   fCard(in.fCard)
 {
   // Copy constructor
-  
+
 }
 
 /*
@@ -152,6 +161,9 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhEnergyEnergyCorrelatorJetPt = in.fhEnergyEnergyCorrelatorJetPt;
   fhEnergyEnergyCorrelatorJetPtUncorrected = in.fhEnergyEnergyCorrelatorJetPtUncorrected;
   fhJetPtClosure = in.fhJetPtClosure;
+  fhUnfoldingMeasured = in.fhUnfoldingMeasured;
+  fhUnfoldingTruth = in.fhUnfoldingTruth;
+  fhUnfoldingResponse = in.fhUnfoldingResponse;
   fCard = in.fCard;
   
   return *this;
@@ -188,7 +200,9 @@ EECHistograms::~EECHistograms(){
   delete fhEnergyEnergyCorrelatorJetPt;
   delete fhEnergyEnergyCorrelatorJetPtUncorrected;
   delete fhJetPtClosure;
-  
+  delete fhUnfoldingMeasured;
+  delete fhUnfoldingTruth;
+  delete fhUnfoldingResponse;
 }
 
 /*
@@ -206,8 +220,8 @@ void EECHistograms::CreateHistograms(){
   // ======== Common binning information for histograms =========
   
   // Centrality
-  const Double_t minCentrality = -0.75;   // Minimum centrality bin, is negative since hiBin is -1 for pp
-  const Double_t maxCentrality = 100.25;  // Maximum centrality bin
+  const Double_t minCentrality = -1;   // Minimum centrality bin is negative since hiBin is -0.5 for pp
+  const Double_t maxCentrality = 100;  // Maximum centrality bin
   const Int_t nCentralityBins = 202;      // Number of centrality bins
   
   // Jet pT
@@ -340,6 +354,18 @@ void EECHistograms::CreateHistograms(){
     deltaRBinsEEC[iDeltaR] = (minDeltaREEC+binnerShift)*TMath::Exp(iDeltaR*deltaRlogBinWidth)-binnerShift;
   }
   
+  // Binning for the two-dimensional unfolding response
+  const Int_t nUnfoldingBins = nDeltaRBinsEEC*nJetPtBinsEEC;
+  const Double_t minUnfoldingBin = 0;
+  const Double_t maxUnfoldingBin = nJetPtBinsEEC*maxDeltaREEC;
+  Double_t fullUnfoldingBinning[nUnfoldingBins+1];
+  for(int iDeltaR = 0; iDeltaR < nDeltaRBinsEEC; iDeltaR++){
+    for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+      fullUnfoldingBinning[iDeltaR+iJetPt*nDeltaRBinsEEC] = deltaRBinsEEC[iDeltaR]+maxDeltaREEC*iJetPt;
+    }
+  }
+  fullUnfoldingBinning[nUnfoldingBins] = maxUnfoldingBin;
+
   // Arrays for creating THnSparses
   const Int_t nAxesMultiplicity = 3;
   Int_t nBinsMultiplicity[nAxesMultiplicity];
@@ -380,6 +406,16 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsJetClosure[nAxesJetClosure];
   Double_t lowBinBorderJetClosure[nAxesJetClosure];
   Double_t highBinBorderJetClosure[nAxesJetClosure];
+
+  const Int_t nAxesJetPtUnfoldDistribution = 3;
+  Int_t nBinsJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
+  Double_t lowBinBorderJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
+  Double_t highBinBorderJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
+
+  const Int_t nAxesJetPtUnfoldResponse = 4;
+  Int_t nBinsJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
+  Double_t lowBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
+  Double_t highBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
   
   
   // ======== Plain TH1 histograms ========
@@ -714,6 +750,66 @@ void EECHistograms::CreateHistograms(){
   // Set custom centrality bins for histograms
   fhJetPtClosure->SetBinEdges(3,wideCentralityBins);
   
+  // ======== RooUnfold compatible energy-energy correlator distributions. Assume only jet pT is unfolded ========
+
+  // Axis 0 for the jet pT unfolding distribution histogram: deltaR in jet pT bins
+  nBinsJetPtUnfoldDistribution[0] = nUnfoldingBins;          // nBins for the unfolded quantities in reconstructed level
+  lowBinBorderJetPtUnfoldDistribution[0] = minUnfoldingBin;  // low bin border for the unfolded quantities in reconstructed level
+  highBinBorderJetPtUnfoldDistribution[0] = maxUnfoldingBin; // high bin border for the unfolded quantities in reconstructed level
+
+  // Axis 1 for the jet pT unfolding distribution histogram: track pT
+  nBinsJetPtUnfoldDistribution[1] = nTrackPtBinsEEC;        // nBins for track pT in energy-energy correlator histograms
+  lowBinBorderJetPtUnfoldDistribution[1] = minTrackPtEEC;   // low bin border for track pT in energy-energy correlator histograms
+  highBinBorderJetPtUnfoldDistribution[1] = maxTrackPtEEC;  // high bin border for track pT in energy-energy correlator histograms
+
+  // Axis 2 for the jet pT unfolding distribution histogram: centrality
+  nBinsJetPtUnfoldDistribution[2] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderJetPtUnfoldDistribution[2] = minCentrality;    // low bin border for centrality
+  highBinBorderJetPtUnfoldDistribution[2] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for jet pT unfolding distributions
+  fhUnfoldingMeasured = new THnSparseF("jetPtUnfoldingMeasured", "jetPtUnfoldingMeasured", nAxesJetPtUnfoldDistribution, nBinsJetPtUnfoldDistribution, lowBinBorderJetPtUnfoldDistribution, highBinBorderJetPtUnfoldDistribution); fhUnfoldingMeasured->Sumw2();
+  fhUnfoldingTruth = new THnSparseF("jetPtUnfoldingTruth", "jetPtUnfoldingTruth", nAxesJetPtUnfoldDistribution, nBinsJetPtUnfoldDistribution, lowBinBorderJetPtUnfoldDistribution, highBinBorderJetPtUnfoldDistribution); fhUnfoldingTruth->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhUnfoldingMeasured->SetBinEdges(0, fullUnfoldingBinning);
+  fhUnfoldingTruth->SetBinEdges(0, fullUnfoldingBinning);
+  fhUnfoldingMeasured->SetBinEdges(1, trackPtBinsEEC);
+  fhUnfoldingTruth->SetBinEdges(1, trackPtBinsEEC);
+  fhUnfoldingMeasured->SetBinEdges(2, wideCentralityBins);
+  fhUnfoldingTruth->SetBinEdges(2, wideCentralityBins);
+
+  // ======== RooUnfold compatible response matrix. Assume only jet pT is unfolded ========
+
+  // Axis 0 for the jet pT unfolding response histogram: deltaR in generator level jet pT bins
+  nBinsJetPtUnfoldResponse[0] = nUnfoldingBins;          // nBins for the unfolded quantities in reconstructed level
+  lowBinBorderJetPtUnfoldResponse[0] = minUnfoldingBin;  // low bin border for the unfolded quantities in reconstructed level
+  highBinBorderJetPtUnfoldResponse[0] = maxUnfoldingBin; // high bin border for the unfolded quantities in reconstructed level
+  
+  // Axis 1 for the jet pT unfolding response histogram: deltaR in reconstructed jet pT bins
+  nBinsJetPtUnfoldResponse[1] = nUnfoldingBins;          // nBins for the unfolded quantities in generator level
+  lowBinBorderJetPtUnfoldResponse[1] = minUnfoldingBin;  // low bin border for the unfolded quantities in generator level
+  highBinBorderJetPtUnfoldResponse[1] = maxUnfoldingBin; // high bin border for the unfolded quantities in generator level
+  
+  // Axis 2 for the jet pT unfolding response histogram: track pT
+  nBinsJetPtUnfoldResponse[2] = nTrackPtBinsEEC;        // nBins for track pT in energy-energy correlator histograms
+  lowBinBorderJetPtUnfoldResponse[2] = minTrackPtEEC;   // low bin border for track pT in energy-energy correlator histograms
+  highBinBorderJetPtUnfoldResponse[2] = maxTrackPtEEC;  // high bin border for track pT in energy-energy correlator histograms
+
+  // Axis 3 for the jet pT unfolding response histogram: centrality
+  nBinsJetPtUnfoldResponse[3] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderJetPtUnfoldResponse[3] = minCentrality;    // low bin border for centrality
+  highBinBorderJetPtUnfoldResponse[3] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for jet pT unfolding response
+  fhUnfoldingResponse = new THnSparseF("jetPtUnfoldingResponse", "jetPtUnfoldingResponse", nAxesJetPtUnfoldResponse, nBinsJetPtUnfoldResponse, lowBinBorderJetPtUnfoldResponse, highBinBorderJetPtUnfoldResponse); fhUnfoldingResponse->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhUnfoldingResponse->SetBinEdges(0, fullUnfoldingBinning);
+  fhUnfoldingResponse->SetBinEdges(1, fullUnfoldingBinning);
+  fhUnfoldingResponse->SetBinEdges(2, trackPtBinsEEC);
+  fhUnfoldingResponse->SetBinEdges(3, wideCentralityBins);
+
 }
 
 /*
@@ -748,7 +844,9 @@ void EECHistograms::Write() const{
   fhEnergyEnergyCorrelatorJetPt->Write();
   fhEnergyEnergyCorrelatorJetPtUncorrected->Write();
   fhJetPtClosure->Write();
-  
+  fhUnfoldingMeasured->Write();
+  fhUnfoldingTruth->Write();
+  fhUnfoldingResponse->Write();
 }
 
 /*

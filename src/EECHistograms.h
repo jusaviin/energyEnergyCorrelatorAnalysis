@@ -24,10 +24,7 @@ public:
   enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, knPairingTypes}; // Pair tracks from same jet or from reflected jet cone
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
   enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations};
-  
-  // Naming for the multiplicity histograms
-  
-  
+    
   // Constructors and destructor
   EECHistograms(); // Default constructor
   EECHistograms(ConfigurationCard* newCard); // Custom constructor
@@ -70,6 +67,11 @@ public:
   THnSparseF* fhEnergyEnergyCorrelatorJetPtUncorrected; // Histogram for energy-energy correlator with jet pT normalization with uncorrected tracks. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhJetPtClosure; // Jet pT closure histograms. Also information for response matrix. [gen pT][reco pT][centrality][q/g][reco/gen]
   
+  // Extra histogram for unfolding study
+  THnSparseF* fhUnfoldingMeasured;  // Measured disribution for unfolding
+  THnSparseF* fhUnfoldingTruth;     // Truth distribution for unfolding
+  THnSparseF* fhUnfoldingResponse;  // Unfolding response matrix
+
 private:
   
   ConfigurationCard* fCard;    // Card for binning info
