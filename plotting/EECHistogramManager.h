@@ -40,6 +40,9 @@ public:
   
   // Indices for different energy-energy correlator processing levels
   enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, knEnergyEnergyCorrelatorProcessingLevels};
+
+  // Indices for unfolding distributions
+  enum enumUnfoldingDistribution{kUnfoldingMeasured, kUnfoldingTruth, knUnfoldingDistributionTypes};
   
   // Dimensions for histogram arrays
   static const int kMaxCentralityBins = 5;       // Maximum allowed number of centrality bins
@@ -92,13 +95,16 @@ private:
   const char* fMaxParticlePtInJetConeSaveName[knMaxParticlePtWithinJetConeTypes] = {"maxParticlePtInJet", "maxBackgroundParticlePtInJet"};
   const char* fMaxParticlePtInJetConeAxisName[knMaxParticlePtWithinJetConeTypes] = {"Max particle p_{T}  (GeV)", "Max background p_{T}  (GeV)"};
   const double fProjectedMaxParticlePtBinBorders[knProjectedMaxParticlePtBins+1] = {10,15,20,30,40,50,500};
+
+  // Naming for jet pT unfolding distributions
+  const char* fJetPtUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"jetPtUnfoldingMeasured", "jetPtUnfoldingTruth"};
   
 public:
   
   EECHistogramManager();                                    // Default constructor
-  EECHistogramManager(TFile *inputFile);                    // Constructor
-  EECHistogramManager(TFile *inputFile, EECCard *card);   // Constructor with card
-  EECHistogramManager(const EECHistogramManager& in);     // Copy constructor
+  EECHistogramManager(TFile* inputFile);                    // Constructor
+  EECHistogramManager(TFile* inputFile, EECCard* card);     // Constructor with card
+  EECHistogramManager(const EECHistogramManager& in);       // Copy constructor
   ~EECHistogramManager();                                   // Destructor
   
   void LoadHistograms();          // Load the histograms from the inputfile
@@ -141,6 +147,9 @@ public:
   void SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(const bool loadOrNot); // Setter for loading jet pT weighted energy-energy correlators without tracking efficiency
   void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadJetPt, const bool loadUncorrected, const bool loadJetPtUncorrected); // Setter for loading all energy-energy correlators
   
+  // Setters for jet pT unfolding study
+  void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the jet pT unfolding study
+
   // Setter for jet flavor
   void SetJetFlavor(const int iFlavor);  // For Monte Carlo, can select if we are looking for quark or gluon initiated jets
   
@@ -245,6 +254,11 @@ public:
   // Getter for jet pT closure histograms
   TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
   
+  // Getters for jet pT unfolding histograms
+  TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const; // Getter for measured jet pT unfolding distribution
+  TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
+  TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
+
   TH1D* GetOneDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0, int bin6 = 0, int bin7 = 0) const; // Getter for any one-dimensional histogram based on input string
   TH2D* GetTwoDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0) const; // Getter for any two-dimensional histogram based on input string
   
@@ -273,8 +287,8 @@ public:
 private:
   
   // Data members
-  TFile *fInputFile;                  // File from which the histograms are read
-  EECCard *fCard;                   // Card inside the data file for binning, cut collision system etc. information
+  TFile* fInputFile;                  // File from which the histograms are read
+  EECCard* fCard;                     // Card inside the data file for binning, cut collision system etc. information
   TString fSystemAndEnergy;           // Collision system (pp,PbPb,pp MC,PbPb MC,localTest) and energy
   TString fCompactSystemAndEnergy;    // Same a before but without white spaces and dots
   
@@ -292,6 +306,7 @@ private:
   bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
   bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
+  bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   
   // ==============================================
@@ -373,6 +388,10 @@ private:
   // Histograms for jet pT closure
   TH1D* fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1];  // Jet pT closure
 
+  // Histograms for jet pT unfolding study
+  TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
+  TH2D* fhJetPtUnfoldingResponse[kMaxCentralityBins][kMaxTrackPtBinsEEC];
+
   // Private methods
   void InitializeFromCard(); // Initialize several member variables from EECCard
   
@@ -399,6 +418,7 @@ private:
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
+  void LoadJetPtUnfoldingHistograms(); // Loader for jet pT unfolding histograms
   
   // Generic setter for bin indice and borders
   void SetGenericBins(const bool readBinsFromFile, const char* histogramName, const int iAxis, int nSetBins, double* setBinBorders, int* setBinIndices, const int nBins, const double* binBorders, const char* errorMessage, const int maxBins, const bool setIndices); // Generic bin setter
@@ -416,6 +436,7 @@ private:
   void WriteEnergyEnergyCorrelatorHistograms();     // Write the energy-energy correlator histograms to the file that is currently open
   void WriteJetPtResponseMatrix();                  // Write the jet pT response matrices
   void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
+  void WriteJetPtUnfoldingHistograms();             // Write the jet pT unfolding histograms to the output file
   
 };
 

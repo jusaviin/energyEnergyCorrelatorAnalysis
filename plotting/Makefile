@@ -1,7 +1,7 @@
 PROGRAM       = DrawingClasses
 version       = EEC
 CXX           = g++
-CXXFLAGS      = -O -Wall -Wno-bitwise-instead-of-logical -Wno-sizeof-pointer-div -fPIC -D$(version) # Add -g for debugger
+CXXFLAGS      = -O -Wall -fPIC -D$(version) # Add -g for debugger
 LD            = g++
 LDFLAGS       = -O
 SOFLAGS       = -shared

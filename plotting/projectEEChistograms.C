@@ -38,6 +38,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadEnergyEnergyCorrelatorsJetPtUncorrected = false;
   bool loadJetPtClosure = false;
   bool loadJetPtResponseMatrix = false;
+  bool loadJetPtUnfoldingHistograms = false;
   
   /*
    * Loading only selected histograms. Done with bitwise check of an integer
@@ -56,6 +57,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 11 = Load uncorrected jet pT weighted energy-energy correlator histograms (to set: 2048)
    *  Bit 12 = Load jet pT closure histograms (to set: 4096)
    *  Bit 13 = Load jet pT response matrix (to set: 8192)
+   *  Bit 14 = Load jet pT unfolding histograms (to set: 16384)
    */
   if(histogramSelection > 0){
     std::bitset<14> bitChecker(histogramSelection);
@@ -73,6 +75,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadEnergyEnergyCorrelatorsJetPtUncorrected = bitChecker.test(11);
     loadJetPtClosure = bitChecker.test(12);
     loadJetPtResponseMatrix = bitChecker.test(13);
+    loadJetPtUnfoldingHistograms = bitChecker.test(14);
   }
   
   // ====================================================
@@ -80,7 +83,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   // ====================================================
   
   // Option to read all the binning information from EECCard used to create the file
-  const bool readCentralityBinsFromFile = false;
+  const bool readCentralityBinsFromFile = true;
   const bool readTrackPtBinsFromFile = true;
   const bool readEECJetPtBinsFromFile = true;
   const bool readEECTrackPtBinsFromFile = true;
@@ -203,6 +206,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoad2DHistograms(true);
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);
+  histograms->SetLoadJetPtUnfoldingHistograms(loadJetPtUnfoldingHistograms);
   histograms->SetJetFlavor(jetFlavor);
 
   // Set the binning information
