@@ -7,22 +7,28 @@
  */
 void unfoldJetPtWithRooUnfold(){
 
+  enum enumEnergyEnergyCorrelatorFileType{kDataFile, kTruthReferenceFile, kNFileTypes};
+
   // **********************************
   //       Open the input files
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_firstUnfoldingTest_noBinWidthNormalized_processed_2023-05-08.root";
+  TString unfoldingInputFileName = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_firstUnfoldingTest_processed_2023-05-08.root
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_firstUnfoldingTest_noBinWidthNormalized_processed_2023-05-08.root
 
   // Name of the file containing the data that needs to be unfolded
-  TString dataInputFileName = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_newBinning_wayMoreJetPtBins_processed_2023-04-13.root";
+  TString energyEnergyCorrelatorInputFileName[kNFileTypes];
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root";
+
+  // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
+  const bool ignoreTruthReferenceFile = false; 
 
   // Open the input files
   TFile* unfoldingInputFile = TFile::Open(unfoldingInputFileName);
-  TFile* dataInputFile = TFile::Open(dataInputFileName);
-
+  
   if(unfoldingInputFile == NULL) {
     cout << "Error! The file " << unfoldingInputFileName.Data() << " does not exist!" << endl;
     cout << "Maybe you forgot the data/ folder path?" << endl;
@@ -30,78 +36,89 @@ void unfoldJetPtWithRooUnfold(){
     return;
   }
 
-  if(dataInputFile == NULL) {
-    cout << "Error! The file " << dataInputFileName.Data() << " does not exist!" << endl;
-    cout << "Maybe you forgot the data/ folder path?" << endl;
-    cout << "Will not execute the code" << endl;
-    return;
-  }
-
-  // For binning information, read the card from the unfolding file
+  // For the binning information, read the card from the energy-energy correlator file
   EECCard* unfoldingCard = new EECCard(unfoldingInputFile);
-  EECCard* dataCard = new EECCard(dataInputFile);
+
+  TFile* energyEnergyCorrelatorInputFile[kNFileTypes];
+  EECCard* energyenergyCorrelatorCard[kNFileTypes]; 
+  for(int iFileType = 0; iFileType < kNFileTypes-ignoreTruthReferenceFile; iFileType++){
+
+    energyEnergyCorrelatorInputFile[iFileType] = TFile::Open(energyEnergyCorrelatorInputFileName[iFileType]);
+
+    if(energyEnergyCorrelatorInputFile[iFileType] == NULL) {
+      cout << "Error! The file " << energyEnergyCorrelatorInputFileName[iFileType].Data() << " does not exist!" << endl;
+      cout << "Maybe you forgot the data/ folder path?" << endl;
+      cout << "Will not execute the code" << endl;
+      return;
+    }
+
+    // For binning information, read the card from the energy-energy correlator file
+    energyenergyCorrelatorCard[iFileType] = new EECCard(energyEnergyCorrelatorInputFile[iFileType]);
+  }
 
   // Determine if we are dealing with pp or PbPb data
   TString collisionSystem = unfoldingCard->GetDataType();
   bool isPbPbData = collisionSystem.Contains("PbPb");
   
-  // *************************************************************************************
-  //       Check that the centrality, jet and track pT bins match with the two files
-  // *************************************************************************************
+  // **********************************************************************************
+  //       Check that the centrality, jet and track pT bins match with the files
+  // **********************************************************************************
 
-  bool dataSystemIsPbPb = dataCard->GetDataType().Contains("PbPb");
-  if(isPbPbData != dataSystemIsPbPb){
-    cout << "You are trying to unfold pp with PbPb unfolding histograms or vice versa!" << endl;
-    cout << "Please ensure that the data and unfolding histograms are comparible!" << endl;
-  }
+  for(int iFileType = 0; iFileType < kNFileTypes - ignoreTruthReferenceFile; iFileType++) {
 
-  // Only check compatible centrality bins for PbPb
-  if(isPbPbData){
-    if(unfoldingCard->GetNCentralityBins() != dataCard->GetNCentralityBins()){
-      cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
+    if(isPbPbData != (energyenergyCorrelatorCard[iFileType]->GetDataType().Contains("PbPb"))) {
+      cout << "You are trying to unfold pp with PbPb unfolding histograms or vice versa!" << endl;
+      cout << "Please ensure that the data and unfolding histograms are comparible!" << endl;
     }
-    for(int iCentrality = 0; iCentrality < unfoldingCard->GetNCentralityBins(); iCentrality++){
-      if(TMath::Abs(unfoldingCard->GetLowBinBorderCentrality(iCentrality) - dataCard->GetLowBinBorderCentrality(iCentrality)) > 5){
+
+    // Only check compatible centrality bins for PbPb
+    if(isPbPbData) {
+      if(unfoldingCard->GetNCentralityBins() != energyenergyCorrelatorCard[iFileType]->GetNCentralityBins()) {
         cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
         return;
       }
-      if(TMath::Abs(unfoldingCard->GetHighBinBorderCentrality(iCentrality) - dataCard->GetHighBinBorderCentrality(iCentrality)) > 5){
-        cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
+      for(int iCentrality = 0; iCentrality < unfoldingCard->GetNCentralityBins(); iCentrality++) {
+        if(TMath::Abs(unfoldingCard->GetLowBinBorderCentrality(iCentrality) - energyenergyCorrelatorCard[iFileType]->GetLowBinBorderCentrality(iCentrality)) > 5) {
+          cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
+          return;
+        }
+        if(TMath::Abs(unfoldingCard->GetHighBinBorderCentrality(iCentrality) - energyenergyCorrelatorCard[iFileType]->GetHighBinBorderCentrality(iCentrality)) > 5) {
+          cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
+          return;
+        }
+      }
+    }  // Checking compatible centrality bins
+
+    if(unfoldingCard->GetNTrackPtBinsEEC() != energyenergyCorrelatorCard[iFileType]->GetNTrackPtBinsEEC()) {
+      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+      return;
+    }
+    for(int iTrackPt = 0; iTrackPt < unfoldingCard->GetNTrackPtBinsEEC(); iTrackPt++) {
+      if(TMath::Abs(unfoldingCard->GetLowBinBorderTrackPtEEC(iTrackPt) - energyenergyCorrelatorCard[iFileType]->GetLowBinBorderTrackPtEEC(iTrackPt)) > 0.01) {
+        cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
         return;
       }
-    }
-  } // Checking compatible centrality bins
+      if(TMath::Abs(unfoldingCard->GetHighBinBorderTrackPtEEC(iTrackPt) - energyenergyCorrelatorCard[iFileType]->GetHighBinBorderTrackPtEEC(iTrackPt)) > 0.01) {
+        cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+        return;
+      }
+    }  // Checking the compatibility of track pT bins
 
-  if(unfoldingCard->GetNTrackPtBinsEEC() != dataCard->GetNTrackPtBinsEEC()){
-    cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
-    return;
-  }
-  for(int iTrackPt = 0; iTrackPt < unfoldingCard->GetNTrackPtBinsEEC(); iTrackPt++){
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderTrackPtEEC(iTrackPt) - dataCard->GetLowBinBorderTrackPtEEC(iTrackPt)) > 0.01){
-      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderTrackPtEEC(iTrackPt) - dataCard->GetHighBinBorderTrackPtEEC(iTrackPt)) > 0.01){
-      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-  } // Checking the compatibility of track pT bins
-
-  if(unfoldingCard->GetNJetPtBinsEEC() != dataCard->GetNJetPtBinsEEC()){
-    cout << "Error! Jet pT bins do not match between the two files! Cannot execute the code!" << endl;
-    return;
-  }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++){
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - dataCard->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01){
+    if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[iFileType]->GetNJetPtBinsEEC()) {
       cout << "Error! Jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - dataCard->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01){
-      cout << "Error! Jet pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-  } // Checking the compatibility of jet pT bins
+    for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+      if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[iFileType]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+        cout << "Error! Jet pT bins do not match between the two files! Cannot execute the code!" << endl;
+        return;
+      }
+      if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[iFileType]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+        cout << "Error! Jet pT bins do not match between the two files! Cannot execute the code!" << endl;
+        return;
+      }
+    }  // Checking the compatibility of jet pT bins
+  }
 
   // ********************************************************
   //       Binning configuration for the unfolding study
@@ -116,17 +133,21 @@ void unfoldJetPtWithRooUnfold(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = 0;
   
-  int firstStudiedTrackPtBinEEC = 1;
+  int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
 
-  int firstStudiedJetPtBinEEC = 4;
-  int lastStudiedJetPtBinEEC = 4;
+  int firstStudiedJetPtBinEEC = 2;
+  int lastStudiedJetPtBinEEC = 5;
 
   // Default binning ranges for reference
   // centrality = {0,10,30,50,90}
 
-  bool saveFigures = false;
-  TString saveComment = "_firstLook";
+  const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
+  const bool drawTruthToTruthComparison = false;       // Compare truth from unfolding histograms to truth from energy-energy correlator histograms
+  const bool drawMeasuredToMeasuredComparison = false; // Compare reconstructed unfolding histograms to reconstructed energy-energy correlator histograms
+
+  bool saveFigures = true;
+  TString saveComment = "_matrixInversionDefaultRooUnfold";
   TString figureFormat = "png";
     
   // ***************************************************************
@@ -141,12 +162,15 @@ void unfoldJetPtWithRooUnfold(){
   unfoldingHistograms->LoadProcessedHistograms();
 
   // Load the data histograms to be unfolded from the data histogram manager
-  EECHistogramManager* dataHistograms = new EECHistogramManager(dataInputFile, dataCard);
-  dataHistograms->SetLoadEnergyEnergyCorrelators(true);
-  dataHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
-  dataHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
-  dataHistograms->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
-  dataHistograms->LoadProcessedHistograms();
+  EECHistogramManager* energyEnergyCorrelatorHistograms[kNFileTypes];
+  for(int iFileType = 0; iFileType < kNFileTypes - ignoreTruthReferenceFile; iFileType++){
+    energyEnergyCorrelatorHistograms[iFileType] = new EECHistogramManager(energyEnergyCorrelatorInputFile[iFileType], energyenergyCorrelatorCard[iFileType]);
+    energyEnergyCorrelatorHistograms[iFileType]->SetLoadEnergyEnergyCorrelators(true);
+    energyEnergyCorrelatorHistograms[iFileType]->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
+    energyEnergyCorrelatorHistograms[iFileType]->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
+    energyEnergyCorrelatorHistograms[iFileType]->SetJetPtBinRangeEEC(0, energyenergyCorrelatorCard[iFileType]->GetNJetPtBinsEEC());
+    energyEnergyCorrelatorHistograms[iFileType]->LoadProcessedHistograms();
+  }
 
   // Histograms that are needed to create the unfolding response
   TH1D* hUnfoldingMeasured[nCentralityBins][nTrackPtBinsEEC];
@@ -155,6 +179,7 @@ void unfoldJetPtWithRooUnfold(){
   TH1D* hUnfoldedDistribution[nCentralityBins][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorForUnfolding[nCentralityBins][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorsFromData[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorsTruthReference[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // RooUnfold response object
   RooUnfoldResponse* rooResponse[nCentralityBins][nTrackPtBinsEEC];
@@ -170,6 +195,7 @@ void unfoldJetPtWithRooUnfold(){
       rooResponse[iCentrality][iTrackPt] = NULL;
       for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
         energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = NULL;
+        energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt] = NULL;
       }
     } // Track pT loop
   }  // Centrality loop
@@ -183,7 +209,11 @@ void unfoldJetPtWithRooUnfold(){
       rooResponse[iCentrality][iTrackPt] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality][iTrackPt], hUnfoldingTruth[iCentrality][iTrackPt], hUnfoldingResponse[iCentrality][iTrackPt]);
 
       for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
-        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = dataHistograms->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kDataFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+
+        if(!ignoreTruthReferenceFile){
+          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kTruthReferenceFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        }
       } // Jet pT loop
     } // Track pT loop
   }  // Centrality loop
@@ -220,6 +250,8 @@ void unfoldJetPtWithRooUnfold(){
   TH1D* hUnfolded[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hMeasuredToTruthRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hUnfoldedToTruthRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hTruthToTruthRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hMeasuredToMeasuredRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Initialize the dissected histograms to null
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -230,6 +262,8 @@ void unfoldJetPtWithRooUnfold(){
         hUnfolded[iCentrality][iJetPt][iTrackPt] = NULL;
         hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt] = NULL;
         hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt] = NULL;
+        hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt] = NULL;
+        hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt] = NULL;
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
@@ -283,6 +317,8 @@ void unfoldJetPtWithRooUnfold(){
         hMeasured[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hMeasured[iCentrality][iJetPt][iTrackPt]->Integral(hMeasured[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hMeasured[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
         hTruth[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hTruth[iCentrality][iJetPt][iTrackPt]->Integral(hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
         hUnfolded[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hUnfolded[iCentrality][iJetPt][iTrackPt]->Integral(hUnfolded[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hUnfolded[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
+        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Integral(energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
+        energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->Integral(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
@@ -292,10 +328,16 @@ void unfoldJetPtWithRooUnfold(){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
         hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hMeasured[iCentrality][iJetPt][iTrackPt]->Clone(Form("measuredToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(hTruth[iCentrality][iJetPt][iTrackPt]);
+        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]);
 
         hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hUnfolded[iCentrality][iJetPt][iTrackPt]->Clone(Form("unfoldedToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(hTruth[iCentrality][iJetPt][iTrackPt]);
+        hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]);
+
+        hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hTruth[iCentrality][iJetPt][iTrackPt]->Clone(Form("truthToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
+        hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]);
+
+        hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hMeasured[iCentrality][iJetPt][iTrackPt]->Clone(Form("measuredToMeasuredRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
+        hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]);
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
@@ -327,74 +369,216 @@ void unfoldJetPtWithRooUnfold(){
   TString trackPtString;
   TString compactTrackPtString;
 
-  for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+  if(drawUnfoldedToTruthComparison){
 
-    // Set the centrality information for legends and figure saving
-    if(isPbPbData) {
-      centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
-      compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
-    } else {
-      centralityString = "Pythia8";
-      compactCentralityString = "_pythia8";
-    }
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
-    for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
-      // Set the jet pT information for legends and figure saving
-      jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt + 1));
-      compactJetPtString = Form("_J=%.0f-%.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt + 1));
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData) {
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
 
-      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-        // Create a new canvas for the plot
-        drawer->CreateSplitCanvas();
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
 
-        // Set the track pT information for legends and figure saving
-        trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-        compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+        // Set the jet pT information for legends and figure saving
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+        compactJetPtString = Form("_J=%.0f-%.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
 
-        // Draw first the generator level distribution
-        hTruth[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
-        hTruth[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
-        drawer->SetLogY(true);
-        drawer->DrawHistogramToUpperPad(hTruth[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-        // Add the reconstructed and unfolded distributions to the same plot
-        hMeasured[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
-        hMeasured[iCentrality][iJetPt][iTrackPt]->Draw("same");
-        hUnfolded[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
-        hUnfolded[iCentrality][iJetPt][iTrackPt]->Draw("same");
+          // Create a new canvas for the plot
+          drawer->CreateSplitCanvas();
 
-        // Add a legend to the figure
-        legend = new TLegend(0.25, 0.15, 0.5, 0.5);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+          // Set the track pT information for legends and figure saving
+          trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
 
-        legend->AddEntry((TObject*)0, centralityString.Data(), "");
-        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+          // Draw first the generator level distribution
+          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->SetLogY(true);
+          drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
 
-        legend->AddEntry(hTruth[iCentrality][iJetPt][iTrackPt], "Generator level reference", "l");
-        legend->AddEntry(hMeasured[iCentrality][iJetPt][iTrackPt], "Reconstructed correlator", "l");
-        legend->AddEntry(hUnfolded[iCentrality][iJetPt][iTrackPt], "Unfolded correlator", "l");
+          // Add the reconstructed and unfolded distributions to the same plot
+          hMeasured[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hMeasured[iCentrality][iJetPt][iTrackPt]->Draw("same");
+          hUnfolded[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
+          hUnfolded[iCentrality][iJetPt][iTrackPt]->Draw("same");
 
-        legend->Draw();
+          // Add a legend to the figure
+          legend = new TLegend(0.25, 0.15, 0.5, 0.5);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
-        // Draw the ratios to lower pad
-        drawer->SetLogY(false);
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
-        drawer->DrawHistogramToLowerPad(hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to truth", " ", "");
+          legend->AddEntry((TObject*)0, centralityString.Data(), "");
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
-        hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
-        hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->Draw("same");
+          legend->AddEntry(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt], "Generator level reference", "l");
+          legend->AddEntry(hMeasured[iCentrality][iJetPt][iTrackPt], "Reconstructed correlator", "l");
+          legend->AddEntry(hUnfolded[iCentrality][iJetPt][iTrackPt], "Unfolded correlator (matrix inversion)", "l");
 
-        oneLine->Draw();
+          legend->Draw();
 
-        // Save the figures to a file
-        if(saveFigures) {
-          gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingWithRooUnfold%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
-        }
+          // Draw the ratios to lower pad
+          drawer->SetLogY(false);
+          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
+          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->DrawHistogramToLowerPad(hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to truth", " ", "");
 
-      } // Track pT loop
-    } // Jet pT loop
-  } // Centrality loop
+          hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
+          hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt]->Draw("same");
+
+          oneLine->Draw();
+
+          // Save the figures to a file
+          if(saveFigures) {
+            gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingWithRooUnfoldTruthCheck%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          }
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Unfolded to truth comparison
+
+  if(drawTruthToTruthComparison){
+
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData) {
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
+
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+
+        // Set the jet pT information for legends and figure saving
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+        compactJetPtString = Form("_J=%.0f-%.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          // Create a new canvas for the plot
+          drawer->CreateSplitCanvas();
+
+          // Set the track pT information for legends and figure saving
+          trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+
+          // Draw first the generator level distribution
+          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->SetLogY(true);
+          drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
+
+          // Add the reconstructed and unfolded distributions to the same plot
+          hTruth[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hTruth[iCentrality][iJetPt][iTrackPt]->Draw("same");
+
+          // Add a legend to the figure
+          legend = new TLegend(0.25, 0.15, 0.5, 0.5);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+          legend->AddEntry((TObject*)0, centralityString.Data(), "");
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+          legend->AddEntry(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt], "EEC truth", "l");
+          legend->AddEntry(hTruth[iCentrality][iJetPt][iTrackPt], "Unfolding truth", "l");
+
+          legend->Draw();
+
+          // Draw the ratios to lower pad
+          drawer->SetLogY(false);
+          hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
+          hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->DrawHistogramToLowerPad(hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to EEC truth", " ", "");
+
+          oneLine->Draw();
+
+          // Save the figures to a file
+          if(saveFigures) {
+            gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingWithRooUnfoldTruthSanityCheck%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          }
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Truth histogram sanity check
+
+  if(drawMeasuredToMeasuredComparison){
+
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData) {
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
+
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+
+        // Set the jet pT information for legends and figure saving
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+        compactJetPtString = Form("_J=%.0f-%.0f", unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt), unfoldingHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          // Create a new canvas for the plot
+          drawer->CreateSplitCanvas();
+
+          // Set the track pT information for legends and figure saving
+          trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+
+          // Draw first the generator level distribution
+          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->SetLogY(true);
+          drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "");
+
+          // Add the reconstructed and unfolded distributions to the same plot
+          hMeasured[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hMeasured[iCentrality][iJetPt][iTrackPt]->Draw("same");
+
+          // Add a legend to the figure
+          legend = new TLegend(0.25, 0.15, 0.5, 0.5);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+          legend->AddEntry((TObject*)0, centralityString.Data(), "");
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+          legend->AddEntry(energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt], "EEC measured", "l");
+          legend->AddEntry(hMeasured[iCentrality][iJetPt][iTrackPt], "Unfolding measured", "l");
+
+          legend->Draw();
+
+          // Draw the ratios to lower pad
+          drawer->SetLogY(false);
+          hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+          hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.8, 1.2);
+          hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+          drawer->DrawHistogramToLowerPad(hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "Ratio to EEC measured", " ", "");
+
+          oneLine->Draw();
+
+          // Save the figures to a file
+          if(saveFigures) {
+            gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingWithRooUnfoldMeasuredSanityCheck%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          }
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Measured histogram sanity check comparison
 }
