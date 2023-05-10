@@ -1527,7 +1527,7 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
         // Add restriction for track pT axis (1 = track pT)
         axisIndices[1] = 1; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
 
-        fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = FindHistogram(histogramArray,0,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+        fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = FindHistogram(histogramArray,0,nRestrictionAxes,axisIndices,lowLimits,highLimits,false);
       }
 
     } // Centrality loop
@@ -1555,7 +1555,7 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
       // Add restriction for track pT axis (2 = track pT)
       axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
 
-      fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+      fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
     }
 
   }  // Centrality loop
