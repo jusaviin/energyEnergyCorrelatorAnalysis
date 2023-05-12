@@ -1407,7 +1407,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
         
         // Find the pair efficiency correction for the track pair
-        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2);
 
         // Fill the energy-energy correlator histograms
         fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
@@ -1763,10 +1763,10 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       correlatorWeight = trackPt1 * trackPt2;
 
       // Transform deltaR into deltaR as a function of reconstructed jet pT
-      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt);
+      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt, kUnfoldingReconstructed);
 
       // Transform deltaR into deltaR as a function of generator level jet pT
-      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt);
+      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt, kUnfoldingTruth);
 
       // If both reconstructed and generator level jet pT are given, fill the response matrix
       if(jetPt >= fJetMinimumPtCut && genPt >= fJetMinimumPtCut){
@@ -2298,16 +2298,18 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
  *  Arguments:
  *   const Double_t deltaR = DeltaR between the two particles
  *   const Double_t jetPt = pT of the jets the track pair is close to
+ *   const Int_t unfoldingAxis = Select the type of unfolding axis (reconstructed/generator level)
  *
  * return: The new value transformed into the main unfolding axis
  */
-Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const{
+Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt, const Int_t unfoldingAxis) const{
 
-  const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
+  const char* unfoldingBinName[kNUnfoldingAxes] = {"JetPtBinEdgesUnfoldingReco", "JetPtBinEdgesUnfoldingTruth"};
+  const Int_t nJetPtBinsEEC = fCard->GetNBin(unfoldingBinName[unfoldingAxis]);
   const Double_t maxDeltaR = 0.8;
   Double_t transformedDeltaR = deltaR;
   for(Int_t iJetPt = 1; iJetPt < nJetPtBinsEEC+1; iJetPt++){
-    if(jetPt >= fCard->Get("JetPtBinEdgesEEC",iJetPt)){
+    if(jetPt >= fCard->Get(unfoldingBinName[unfoldingAxis],iJetPt)){
       transformedDeltaR += maxDeltaR;
     } else {
       return transformedDeltaR;

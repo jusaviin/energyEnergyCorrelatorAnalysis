@@ -58,6 +58,10 @@ JetRadius 0.4      # Radius around jets used to calculate the correlations
 JetPtBinEdgesEEC 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for EEC
 TrackPtBinEdgesEEC 0.7 1 1.5 2 2.5 3 3.5 4 300 # Track pT bin edges for EEC
 
+# Configuration for unfolding response matrices
+JetPtBinEdgesUnfoldingReco 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for unfolding response matrix in reconstructed level
+JetPtBinEdgesUnfoldingTruth 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for unfolding response matrix in truth level
+
 # Binning for THnSparses
 CentralityBinEdges  0 10 30 50 90  # Centrality binning
 TrackPtBinEdges     0.7 1 2 3 4 8 12 300                   # Track pT binning
