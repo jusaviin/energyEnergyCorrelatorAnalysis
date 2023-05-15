@@ -49,7 +49,7 @@ public:
   static const int kMaxTrackPtBins = 10;         // Maximum allowed number of track pT bins
   static const int knGenJetPtBins = 45;          // Number of generator level jet pT bins for jet pT closures
   static const int knJetEtaBins = 50;            // Number of jet eta bins for jet pT closures
-  static const int kMaxJetPtBinsEEC = 15;       // Maximum allowed number of jet pT bins for energy-energy correlators
+  static const int kMaxJetPtBinsEEC = 20;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
   
@@ -98,6 +98,7 @@ private:
 
   // Naming for jet pT unfolding distributions
   const char* fJetPtUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"jetPtUnfoldingMeasured", "jetPtUnfoldingTruth"};
+  const char* fJetPtResponseMatrixName = "jetPtUnfoldingResponse";
   
 public:
   
@@ -109,14 +110,17 @@ public:
   
   void LoadHistograms();          // Load the histograms from the inputfile
   void Write(const char* fileName, const char* fileOption);          // Write all the loaded histograms into a file
-  void WriteProcessed(const char *fileName, const char* fileOption); // Write the processed histograms into a file
+  void WriteProcessed(const char* fileName, const char* fileOption); // Write the processed histograms into a file
   void LoadProcessedHistograms(); // Load processed histograms from the inputfile
   
   // Setters for binning information
-  void SetCentralityBins(const bool readBinsFromFile, const int nBins, const double *binBorders, bool setIndices = true); // Set up centrality bin indices according to provided bin borders
-  void SetTrackPtBins(const bool readBinsFromFile, const int nBins, const double *binBorders, bool setIndices = true);    // Set up track pT bin indices according to provided bin borders
-  void SetJetPtBinsEEC(const bool readBinsFromFile, const int nBins, const double *binBorders, bool setIndices = true);   // Set up jet pT bin indices for energy-energy correlator according to provided bin borders
-  void SetTrackPtBinsEEC(const bool readBinsFromFile, const int nBins, const double *binBorders, bool setIndices = true); // Set up track pT bin indices for energy-energy correlator according to provided bin borders
+  void SetCentralityBins(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true); // Set up centrality bin indices according to provided bin borders
+  void SetTrackPtBins(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true);    // Set up track pT bin indices according to provided bin borders
+  void SetJetPtBinsEEC(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true);   // Set up jet pT bin indices for energy-energy correlator according to provided bin borders
+  void SetTrackPtBinsEEC(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true); // Set up track pT bin indices for energy-energy correlator according to provided bin borders
+  void SetJetPtBinsUnfoldingReco(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true);   // Set up reconstructed jet pT bin indices for unfolding response matrix according to provided bin borders
+  void SetJetPtBinsUnfoldingTruth(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices = true);   // Set up generator level jet pT bin indices for unfolding response matrix according to provided bin borders
+
   
   // Setters for event information and dijets
   void SetLoadEventInformation(const bool loadOrNot); // Setter for loading event information
@@ -159,21 +163,27 @@ public:
   void SetLoadJetPtResponseMatrix(const bool loadOrNot);    // Setter for loading jet pT response matrix
   
   // Setters for ranges for different bins
-  void SetCentralityBinRange(const int first, const int last); // Setter for centrality bin range
-  void SetTrackPtBinRange(const int first, const int last);    // Setter for track pT bin range
-  void SetJetPtBinRangeEEC(const int first, const int last);   // Setter for jet pT bin range in energy-energy correlator histograms
-  void SetTrackPtBinRangeEEC(const int first, const int last); // Setter for track pT bin range in energy-energy correlator histograms
+  void SetCentralityBinRange(const int first, const int last);          // Setter for centrality bin range
+  void SetTrackPtBinRange(const int first, const int last);             // Setter for track pT bin range
+  void SetJetPtBinRangeEEC(const int first, const int last);            // Setter for jet pT bin range in energy-energy correlator histograms
+  void SetTrackPtBinRangeEEC(const int first, const int last);          // Setter for track pT bin range in energy-energy correlator histograms
+  void SetJetPtBinRangeUnfoldingReco(const int first, const int last);  // Setter for reconstructed jet pT bin range in unfolding response matrices
+  void SetJetPtBinRangeUnfoldingTruth(const int first, const int last); // Setter for generator level jet pT bin range in unfolding response matrices
   
   // Getters for number of bins in histograms
-  int GetNCentralityBins() const;  // Getter for the number of centrality bins
-  int GetNTrackPtBins() const;     // Getter for the number of track pT bins
-  int GetNJetPtBinsEEC() const;    // Getter for the number of jet pT bins in energy-energy correlator histograms
-  int GetNTrackPtBinsEEC() const;  // Getter for the number of track pT bins in energy-energy correlator histograms
+  int GetNCentralityBins() const;          // Getter for the number of centrality bins
+  int GetNTrackPtBins() const;             // Getter for the number of track pT bins
+  int GetNJetPtBinsEEC() const;            // Getter for the number of jet pT bins in energy-energy correlator histograms
+  int GetNTrackPtBinsEEC() const;          // Getter for the number of track pT bins in energy-energy correlator histograms
+  int GetNJetPtBinsUnfoldingReco() const;  // Getter for the number of reconstructed jet pT bins in unfolding response matrices
+  int GetNJetPtBinsUnfoldingTruth() const; // Getter for the number of generator level jet pT bins in unfolding response matrices
   double GetCentralityBinBorder(const int iCentrality) const;  // Getter for i:th centrality bin border
   double GetTrackPtBinBorder(const int iTrackPt) const;        // Getter for i:th track pT bin border
   double GetJetPtBinBorderEEC(const int iJetPt) const;         // Getter for i:th jet pT bin border in energy-energy correlator histograms
   double GetTrackPtBinBorderEEC(const int iTrackPt) const;     // Getter for i:th track pT bin border in energy-energy correlator histograms
   double GetMaxTrackPtWithinJetConeBinBorder(const int iTrackPt) const; // Getter for i:th track pT bin border in projections for maximum particle pT within the jet cone
+  double GetJetPtBinBorderUnfoldingReco(const int iJetPt) const;  // Getter for i:th reconstructed jet pT bin border in unfolding response matrices
+  double GetJetPtBinBorderUnfoldingTruth(const int iJetPt) const; // Getter for i:th generator level jet pT bin border in unfolding response matrices
   
   // Getters for histogram and axis naming
   const char* GetTrackHistogramName(int iTrackType) const; // Getter for track histogram name
@@ -264,14 +274,18 @@ public:
   
   
   // Getters for the loaded centrality and track pT bins
-  int GetFirstCentralityBin() const;  // Get the first loaded centrality bin
-  int GetLastCentralityBin() const;   // Get the last loaded centrality bin
-  int GetFirstTrackPtBin() const;     // Get the first loaded track pT bin
-  int GetLastTrackPtBin() const;      // Get the last loaded track pT bin
-  int GetFirstJetPtBinEEC() const;    // Get the first loaded energy-energy correlator jet pT bin
-  int GetLastJetPtBinEEC() const;     // Get the last loaded energy-energy correlator jet pT bin
-  int GetFirstTrackPtBinEEC() const;  // Get the first loaded energy-energy correlator track pT bin
-  int GetLastTrackPtBinEEC() const;   // Get the last loaded energy-energy correlator track pT bin
+  int GetFirstCentralityBin() const;          // Get the first loaded centrality bin
+  int GetLastCentralityBin() const;           // Get the last loaded centrality bin
+  int GetFirstTrackPtBin() const;             // Get the first loaded track pT bin
+  int GetLastTrackPtBin() const;              // Get the last loaded track pT bin
+  int GetFirstJetPtBinEEC() const;            // Get the first loaded energy-energy correlator jet pT bin
+  int GetLastJetPtBinEEC() const;             // Get the last loaded energy-energy correlator jet pT bin
+  int GetFirstTrackPtBinEEC() const;          // Get the first loaded energy-energy correlator track pT bin
+  int GetLastTrackPtBinEEC() const;           // Get the last loaded energy-energy correlator track pT bin
+  int GetFirstJetPtBinUnfoldingReco() const;  // Get the first loaded reconstructed jet pT bin in unfolding response matrices
+  int GetLastJetPtBinUnfoldingReco() const;   // Get the last loaded reconstructed jet pT bin in unfolding response matrices
+  int GetFirstJetPtBinUnfoldingTruth() const; // Get the first loaded generator level jet pT bin in unfolding response matrices
+  int GetLastJetPtBinUnfoldingTruth() const;  // Get the last loaded generator level jet pT bin in unfolding response matrices
   
   // Getters for normalization information
   int GetNEvents() const;                      // Getter for the number of events passing the cuts
@@ -321,22 +335,32 @@ private:
   int fLastLoadedJetPtBinEEC;     // Last loaded jet pT bin for the energy-energy correlator histograms
   int fFirstLoadedTrackPtBinEEC;  // First loaded track pT bin for the energy-energy correlator histograms
   int fLastLoadedTrackPtBinEEC;   // Last loaded track pT bin for the energy-energy correlator histograms
+  int fFirstLoadedJetPtBinUnfoldingReco;  // First loaded reconstructed jet pT bin for the unfolding response matrices
+  int fLastLoadedJetPtBinUnfoldingReco;   // Last loaded reconstructed jet pT bin for the unfolding response matrices
+  int fFirstLoadedJetPtBinUnfoldingTruth; // First loaded generator level jet pT bin for the unfolding response matrices
+  int fLastLoadedJetPtBinUnfoldingTruth;  // Last loaded generator level jet pT bin for the unfolding response matrices
   
   // =============================================
   // ============ Binning information ============
   // =============================================
-  int fCentralityBinIndices[kMaxCentralityBins+1];    // Indices for centrality bins in centrality binned histograms
-  double fCentralityBinBorders[kMaxCentralityBins+1]; // Centrality bin borders, from which bin indices are obtained
-  int fTrackPtBinIndices[kMaxTrackPtBins+1];          // Indices for track pT bins in track eta and phi histograms
-  double fTrackPtBinBorders[kMaxTrackPtBins+1];       // Track pT bin borders, from which bin indices are obtained
-  int fJetPtIndicesEEC[kMaxJetPtBinsEEC+1];           // Indices for jet pT bins in energy-energy correlator histograms
-  double fJetPtBinBordersEEC[kMaxJetPtBinsEEC+1];     // Jet pT bin borders in energy-energy correlator histograms
-  int fTrackPtIndicesEEC[kMaxTrackPtBinsEEC+1];       // Indices for track pT bins in energy-energy correlator histograms
-  double fTrackPtBinBordersEEC[kMaxTrackPtBinsEEC+1]; // Track pT bin borders in energy-energy correlator histograms
-  int fnCentralityBins;                               // Number of centrality bins in the JCard of the data file
-  int fnTrackPtBins;                                  // Number of track pT bins in the JCard of the data file
-  int fnJetPtBinsEEC;                                 // Number of jet pT bins for the energy-energy correlator histograms
-  int fnTrackPtBinsEEC;                               // Number of track pT bins for the energy-energy correlator histograms
+  int fCentralityBinIndices[kMaxCentralityBins+1];           // Indices for centrality bins in centrality binned histograms
+  double fCentralityBinBorders[kMaxCentralityBins+1];        // Centrality bin borders, from which bin indices are obtained
+  int fTrackPtBinIndices[kMaxTrackPtBins+1];                 // Indices for track pT bins in track eta and phi histograms
+  double fTrackPtBinBorders[kMaxTrackPtBins+1];              // Track pT bin borders, from which bin indices are obtained
+  int fJetPtIndicesEEC[kMaxJetPtBinsEEC+1];                  // Indices for jet pT bins in energy-energy correlator histograms
+  double fJetPtBinBordersEEC[kMaxJetPtBinsEEC+1];            // Jet pT bin borders in energy-energy correlator histograms
+  int fTrackPtIndicesEEC[kMaxTrackPtBinsEEC+1];              // Indices for track pT bins in energy-energy correlator histograms
+  double fTrackPtBinBordersEEC[kMaxTrackPtBinsEEC+1];        // Track pT bin borders in energy-energy correlator histograms
+  int fJetPtIndicesUnfoldingReco[kMaxJetPtBinsEEC+1];        // Indices for reconstructed jet pT bins in unfolding response matrix
+  double fJetPtBinBordersUnfoldingReco[kMaxJetPtBinsEEC+1];  // Reconstructed jet pT bin borders in unfolding response matrix
+  int fJetPtIndicesUnfoldingTruth[kMaxJetPtBinsEEC+1];       // Indices for generator level jet pT bins in unfolding response matrix
+  double fJetPtBinBordersUnfoldingTruth[kMaxJetPtBinsEEC+1]; // Generator level jet pT bin borders in unfolding response matrix
+  int fnCentralityBins;                                      // Number of centrality bins in the JCard of the data file
+  int fnTrackPtBins;                                         // Number of track pT bins in the JCard of the data file
+  int fnJetPtBinsEEC;                                        // Number of jet pT bins for the energy-energy correlator histograms
+  int fnTrackPtBinsEEC;                                      // Number of track pT bins for the energy-energy correlator histograms
+  int fnJetPtBinsUnfoldingReco;                              // Number of reconstructed jet pT bins for the unfolding response matrix
+  int fnJetPtBinsUnfoldingTruth;                             // Number of generator level jet pT bins for the unfolding response matrix
 
   // =============================================
   // ===== Histograms for the dijet analysis =====
