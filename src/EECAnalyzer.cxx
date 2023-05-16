@@ -93,6 +93,8 @@ EECAnalyzer::EECAnalyzer() :
   fChi2QualityCut(0),
   fMinimumTrackHits(0),
   fSubeventCut(0),
+  fReconstructedJetMinimumPtCut(0),
+  fGeneratorJetMinimumPtCut(0),
   fMcCorrelationType(0),
   fJetRadius(0.4),
   fDoReflectedCone(false),
@@ -269,6 +271,8 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fChi2QualityCut(in.fChi2QualityCut),
   fMinimumTrackHits(in.fMinimumTrackHits),
   fSubeventCut(in.fSubeventCut),
+  fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
+  fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
   fDoReflectedCone(in.fDoReflectedCone),
@@ -336,6 +340,8 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fChi2QualityCut = in.fChi2QualityCut;
   fMinimumTrackHits = in.fMinimumTrackHits;
   fSubeventCut = in.fSubeventCut;
+  fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
+  fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
   fDoReflectedCone = in.fDoReflectedCone;
@@ -405,6 +411,13 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
   
+  //****************************************
+  //   Extra jet cuts for unfolding study
+  //****************************************
+
+  fReconstructedJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingReco",0);
+  fGeneratorJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingTruth",0);
+
   //****************************************
   //        Track selection cuts
   //****************************************
@@ -1590,7 +1603,7 @@ void EECAnalyzer::FillUnfoldingResponse(){
     }
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
-    if(jetPt < fJetMinimumPtCut) continue;
+    if(jetPt < fReconstructedJetMinimumPtCut) continue;
     if(jetPt > fJetMaximumPtCut) continue;
 
     //************************************************
@@ -1645,7 +1658,7 @@ void EECAnalyzer::FillUnfoldingResponse(){
     if(searchResult != std::end(mathedGenIndices)) continue;
 
     // If the index is not jet filled, fill it to the true distribution
-    jetPt = fUnfoldingForestReader->GetGeneratorJetPt(jetIndex); 
+    genPt = fUnfoldingForestReader->GetGeneratorJetPt(jetIndex); 
     jetPhi = fUnfoldingForestReader->GetGeneratorJetPhi(jetIndex);
     jetEta = fUnfoldingForestReader->GetGeneratorJetEta(jetIndex);
 
@@ -1655,8 +1668,8 @@ void EECAnalyzer::FillUnfoldingResponse(){
 
     if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
     if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
-    if(jetPt < fJetMinimumPtCut) continue;                             // Cut for minimum jet pT
-    if(jetPt > fJetMaximumPtCut) continue;                             // Cut for maximum jet pT
+    if(genPt < fGeneratorJetMinimumPtCut) continue;                    // Cut for minimum jet pT
+    if(genPt > fJetMaximumPtCut) continue;                             // Cut for maximum jet pT
 
     //************************************************
     //   Do energy-energy correlation within jets
@@ -1769,7 +1782,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt, kUnfoldingTruth);
 
       // If both reconstructed and generator level jet pT are given, fill the response matrix
-      if(jetPt >= fJetMinimumPtCut && genPt >= fJetMinimumPtCut){
+      if(jetPt >= fReconstructedJetMinimumPtCut && genPt >= fGeneratorJetMinimumPtCut){
         fillerResponse[0] = unfoldingDeltaRReconstructed;
         fillerResponse[1] = unfoldingDeltaRGeneratorLevel;
         fillerResponse[2] = lowerTrackPt;
@@ -1778,7 +1791,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       }
 
       // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
-      if(jetPt >= fJetMinimumPtCut){
+      if(jetPt >= fReconstructedJetMinimumPtCut){
         fillerDistribution[0] = unfoldingDeltaRReconstructed;
         fillerDistribution[1] = lowerTrackPt;
         fillerDistribution[2] = centrality;
@@ -1786,7 +1799,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       }
 
       // If the generator level jet pT is given, fill the generator level distribution for unfolding
-      if(genPt >= fJetMinimumPtCut){
+      if(genPt >= fGeneratorJetMinimumPtCut){
         fillerDistribution[0] = unfoldingDeltaRGeneratorLevel;
         fillerDistribution[1] = lowerTrackPt;
         fillerDistribution[2] = centrality;

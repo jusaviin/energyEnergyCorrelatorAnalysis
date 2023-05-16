@@ -137,6 +137,10 @@ public:
   Double_t fChi2QualityCut;            // Quality cut for track reconstruction
   Double_t fMinimumTrackHits;          // Quality cut for track hits
   Int_t fSubeventCut;                  // Cut for the subevent index
+
+  // Extra jet cuts for jet pT unfolding
+  Double_t fReconstructedJetMinimumPtCut;  // Minimum jet pT cut for reconstructed jets for jet pT unfolding
+  Double_t fGeneratorJetMinimumPtCut;      // Minimum jet pT cut for generator level jets for jet pT unfolding
   
   // Correlation type for Monte Carlo
   Int_t fMcCorrelationType;            // Correlation type for Monte Carlo. See enumeration enumMcCorrelationType
