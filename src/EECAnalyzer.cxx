@@ -1645,7 +1645,7 @@ void EECAnalyzer::FillUnfoldingResponse(){
     if(searchResult != std::end(mathedGenIndices)) continue;
 
     // If the index is not jet filled, fill it to the true distribution
-    jetPt = fUnfoldingForestReader->GetGeneratorJetPt(jetIndex);  // Get the raw pT and do manual correction later
+    jetPt = fUnfoldingForestReader->GetGeneratorJetPt(jetIndex); 
     jetPhi = fUnfoldingForestReader->GetGeneratorJetPhi(jetIndex);
     jetEta = fUnfoldingForestReader->GetGeneratorJetEta(jetIndex);
 
@@ -1850,8 +1850,9 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  *   return: Multiplicative correction factor for the jet pT
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
+  return 1; // Disable jet pT weight for now
   if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
-  
+
   return fPtWeightFunction->Eval(jetPt);
 }
 
