@@ -737,9 +737,9 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   
   // Legend helper variable
   TLegend *legend;
-  double legendX1 = 0.37; // Default x1 location for the legend
+  double legendX1 = 0.27; // Default x1 location for the legend
   double legendY1 = 0.1;  // Default y1 location for the legend
-  double legendX2 = 0.57; // Default x2 location for the legend
+  double legendX2 = 0.47; // Default x2 location for the legend
   double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
   
   // If we are not doing log-log drawing, move the legend to top right corner
@@ -763,7 +763,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   
   // Change drawing ranges in case of logarithmic x-axis
   double minRangeX = 0;
-  double maxRangeX = 0.8;
+  double maxRangeX = 0.4;
   if(fLogDeltaR) minRangeX = 0.006;
   
   // Loop over energy-energy correlator types

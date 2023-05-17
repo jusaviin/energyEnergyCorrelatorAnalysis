@@ -27,19 +27,19 @@ class EECComparingDrawer {
   
 private:
   static const int knMaxRatios = 10;  // Maximum number or ratio plots per one canvas
-  int fColors[knMaxRatios] = {kRed,kBlue,kMagenta,kCyan,kGreen+4,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
+  int fColors[knMaxRatios] = {kRed,kBlue,kGreen+3,kMagenta,kCyan,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
   
-  void SetHistogramStyle(TH1 *histogram, double rangeX, const char* xTitle); // Style setting for histograms in big canvas
+  void SetHistogramStyle(TH1* histogram, double rangeX, const char* xTitle); // Style setting for histograms in big canvas
   
 public:
   
-  EECComparingDrawer(EECHistogramManager *baseHistograms);  // Constructor
+  EECComparingDrawer(EECHistogramManager* baseHistograms);  // Constructor
   ~EECComparingDrawer();                 // Destructor
   
   void DrawHistograms();          // Draw the histograms
   
   // Add histograms to draw together with base histograms
-  void AddHistogramToDraw(EECHistogramManager *additionalHistogram);
+  void AddHistogramToDraw(EECHistogramManager* additionalHistogram);
   void AddLegendComment(TString comment);
   
   // Setter for event information

@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_twoTriggers_newDeltaRBins_newTrackEfficiencyCorrection_processed_2023-04-27.root", "data/eecAnalysis_akFlowJet_threeTriggers_newDeltaRBins_newTrackEfficiencyCorrection_processed_2023-04-27.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newDeltaRBins_newTrackPairEfficiencyCorrection_onlyBackgroundSubtracted_processed_2023-04-17.root"};
+  TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_newBinning_processed_2023-04-11.root", "data/ppMC2017_GenReco_Pythia8_pfJets_wtaAxis_newBinning_noTrackPairEfficiency_processed_2023-04-11.root", "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newBinning_fixCentrality_processed_2023-04-10.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_fixCentrality_processed_2023-04-10.root", "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_trackEfficiencyCorrectionWithJetPt_processed_2023-05-03.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"CaloJet80 || CaloJet100", "CaloJet60 || CaloJet80 || CaloJet100", "Gen jets + Corrected tracks"};
+  TString legendComment[] = {"Gen jets + gen particles", "Gen jets + reco tracks", "Gen jets + corr tracks", "Reco jets + corr tracks (new)"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -84,9 +84,9 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = false;
+  bool saveFigures = true;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_pythiaHydjetTrackPairEfficiency";
+  const char* figureComment = "_pythiaTrackPairEfficiency";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -104,8 +104,8 @@ void compareEEChistograms(){
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
-  double minZoom = 0.8;
-  double maxZoom = 1.2;
+  double minZoom = 0.6;
+  double maxZoom = 1.4;
   TString ratioLabel = "#frac{Reco}{Gen}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
@@ -140,7 +140,7 @@ void compareEEChistograms(){
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
   int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
 
   int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
