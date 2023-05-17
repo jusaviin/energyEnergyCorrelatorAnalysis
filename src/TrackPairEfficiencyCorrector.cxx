@@ -162,7 +162,7 @@ double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const doub
     }
 
     // If the correction does not make sense, use the correction without jet pT bins instead
-    std::cout << "Insane track pair efficiency correction in bin: triggerPt: " << iTriggerPt << " assoc pT: " << iAssociatedPt << " jetPt: " << iJetPt << std::endl;
+    std::cout << "Insane track pair efficiency correction in bin: triggerPt: " << iTriggerPt << " assoc pT: " << iAssociatedPt << " jetPt: " << iJetPt  << " deltaR: " << deltaR << std::endl;
     std::cout << "Using the correction without jets instead" << std::endl;
     
   }

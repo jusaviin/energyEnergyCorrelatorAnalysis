@@ -174,7 +174,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     
     // Track pair efficiency corrector for pp
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableCloseToJet_pp2017_2023-05-03.root", false);
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-05-17.root", false);
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -201,7 +201,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
     
     // Track pair efficiency corrector for PbPb
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrectionTableNewBinning_PbPb2018_2023-04-17.root", true);
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_PbPb2018_32DeltaRBins_2023-05-17.root", false);
     
   } else {
     fVzWeightFunction = NULL;
@@ -1420,7 +1420,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
         
         // Find the pair efficiency correction for the track pair
-        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2);
+        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
 
         // Fill the energy-energy correlator histograms
         fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
