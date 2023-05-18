@@ -95,6 +95,7 @@ EECAnalyzer::EECAnalyzer() :
   fSubeventCut(0),
   fReconstructedJetMinimumPtCut(0),
   fGeneratorJetMinimumPtCut(0),
+  fLowerTruthUnfoldingBins(0),
   fMcCorrelationType(0),
   fJetRadius(0.4),
   fDoReflectedCone(false),
@@ -273,6 +274,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSubeventCut(in.fSubeventCut),
   fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
   fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
+  fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
   fDoReflectedCone(in.fDoReflectedCone),
@@ -342,6 +344,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSubeventCut = in.fSubeventCut;
   fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
   fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
+  fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
   fDoReflectedCone = in.fDoReflectedCone;
@@ -417,6 +420,15 @@ void EECAnalyzer::ReadConfigurationFromCard(){
 
   fReconstructedJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingReco",0);
   fGeneratorJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingTruth",0);
+
+  fLowerTruthUnfoldingBins = 0;
+  for(Int_t iJetPt = 0; iJetPt < fCard->GetNBin("JetPtBinEdgesUnfoldingTruth")+1; iJetPt++){
+    if(fCard->Get("JetPtBinEdgesUnfoldingTruth",iJetPt) < fReconstructedJetMinimumPtCut){
+      fLowerTruthUnfoldingBins++;
+    } else {
+      break;
+    }
+  }
 
   //****************************************
   //        Track selection cuts
@@ -2321,7 +2333,7 @@ Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Doub
   const char* unfoldingBinName[kNUnfoldingAxes] = {"JetPtBinEdgesUnfoldingReco", "JetPtBinEdgesUnfoldingTruth"};
   const Int_t nJetPtBinsEEC = fCard->GetNBin(unfoldingBinName[unfoldingAxis]);
   const Double_t maxDeltaR = 0.8;
-  Double_t transformedDeltaR = deltaR;
+  Double_t transformedDeltaR = deltaR + fLowerTruthUnfoldingBins*maxDeltaR*(1-unfoldingAxis);
   for(Int_t iJetPt = 1; iJetPt < nJetPtBinsEEC+1; iJetPt++){
     if(jetPt >= fCard->Get(unfoldingBinName[unfoldingAxis],iJetPt)){
       transformedDeltaR += maxDeltaR;

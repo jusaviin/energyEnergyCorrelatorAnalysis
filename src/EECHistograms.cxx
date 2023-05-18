@@ -352,6 +352,16 @@ void EECHistograms::CreateHistograms(){
     jetPtBinsUnfoldingTruth[iJetPt] = fCard->Get("JetPtBinEdgesUnfoldingTruth",iJetPt);
   }
 
+  // Determine the number of truth bins before the lowest reconstructed bin
+  Int_t nLowerTruthBins = 0;
+  for(Int_t iJetPt = 0; iJetPt < nJetPtBinsUnfoldingTruth+1; iJetPt++){
+    if(jetPtBinsUnfoldingTruth[iJetPt] < jetPtBinsUnfoldingReco[0]){
+      nLowerTruthBins++;
+    } else {
+      break;
+    }
+  }
+
   // DeltaR binning for track density
   const Int_t nDeltaRBinsTrackDensity = 80;
   const Double_t minDeltaRTrackDensity = 0;
@@ -370,12 +380,12 @@ void EECHistograms::CreateHistograms(){
   
   // Binning for the two-dimensional unfolding response reconstructed axis
   const Int_t nUnfoldingBinsReco = nDeltaRBinsEEC*nJetPtBinsUnfoldingReco;
-  const Double_t minUnfoldingBinReco = 0;
-  const Double_t maxUnfoldingBinReco = nJetPtBinsUnfoldingReco*maxDeltaREEC;
+  const Double_t minUnfoldingBinReco = nLowerTruthBins*maxDeltaREEC;
+  const Double_t maxUnfoldingBinReco = nLowerTruthBins*maxDeltaREEC + nJetPtBinsUnfoldingReco*maxDeltaREEC;
   Double_t fullUnfoldingBinningReco[nUnfoldingBinsReco+1];
   for(int iDeltaR = 0; iDeltaR < nDeltaRBinsEEC; iDeltaR++){
     for(int iJetPt = 0; iJetPt < nJetPtBinsUnfoldingReco; iJetPt++){
-      fullUnfoldingBinningReco[iDeltaR+iJetPt*nDeltaRBinsEEC] = deltaRBinsEEC[iDeltaR]+maxDeltaREEC*iJetPt;
+      fullUnfoldingBinningReco[iDeltaR+iJetPt*nDeltaRBinsEEC] = nLowerTruthBins*maxDeltaREEC + deltaRBinsEEC[iDeltaR] + maxDeltaREEC*iJetPt;
     }
   }
   fullUnfoldingBinningReco[nUnfoldingBinsReco] = maxUnfoldingBinReco;
