@@ -5,7 +5,7 @@
 /*
  * Reser underflow and overflow bins for a one-dimensional histogram
  */
-void removeOutOfRange(TH1D *histogramInNeedOfTrimming){
+void removeOutOfRange(TH1D* histogramInNeedOfTrimming){
    histogramInNeedOfTrimming->SetBinContent(0, 0);
    histogramInNeedOfTrimming->SetBinContent(histogramInNeedOfTrimming->GetNbinsX()+1, 0);
 }
@@ -13,7 +13,7 @@ void removeOutOfRange(TH1D *histogramInNeedOfTrimming){
 /*
  * Reser underflow and overflow bins for a two-dimensional histogram
  */
-void removeOutOfRange(TH2D *histogramInNeedOfTrimming)
+void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
 {
    int NX = histogramInNeedOfTrimming->GetNbinsX();
    int NY = histogramInNeedOfTrimming->GetNbinsY();
@@ -46,18 +46,18 @@ void unfoldJetPtWithRooUnfold(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_unfoldingHistograms_part1_processed_2023-05-12.root";
+  TString unfoldingInputFileName = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_unfoldingHistograms_part1_processed_2023-05-10.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_unfoldingHistograms_part1_processed_2023-05-12.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_reconstructedForUnfolding_part2_processed_2023-05-12.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_reconstructedForUnfolding_part2_processed_2023-05-10.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_reconstructedForUnfolding_part2_processed_2023-05-12.root
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_truthReferenceForUnfolding_part2_processed_2023-05-12.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_truthReferenceForUnfolding_part2_processed_2023-05-10.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_truthReferenceForUnfolding_part2_processed_2023-05-12.root
@@ -186,7 +186,7 @@ void unfoldJetPtWithRooUnfold(){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 0;
+  int lastStudiedCentralityBin = nCentralityBins-1;
   
   int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
@@ -208,13 +208,14 @@ void unfoldJetPtWithRooUnfold(){
   const int iterationKey[] = {1,2,3,4,5};
   const bool calculateConditionNumber = false;
 
-  const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
+  const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
   const bool drawTruthToTruthComparison = false;       // Compare truth from unfolding histograms to truth from energy-energy correlator histograms
   const bool drawMeasuredToMeasuredComparison = false; // Compare reconstructed unfolding histograms to reconstructed energy-energy correlator histograms
+  const bool drawResponseMatrix = true;               // Draw the used response matrices
 
-  bool saveFigures = false;
-  TString saveComment = "_firstLookPbPbBayes";
-  TString figureFormat = "png";
+  bool saveFigures = true;
+  TString saveComment = "_example";
+  TString figureFormat = "pdf";
     
   // ***************************************************************
   //    Create histogram managers and load the needed histograms
@@ -324,8 +325,8 @@ void unfoldJetPtWithRooUnfold(){
         auto singular_values = svd[iCentrality][iTrackPt]->GetSig(); // this is a vector with the singular values, i.e., the diagonal elements of S. They are ordered from largest to smallest.
         cout << "Condition number for centrality bin " << iCentrality << " iTrackPt: " << iTrackPt << endl;
         cout << singular_values.Max() / singular_values.Min() << endl;
-      }  // Track pT loop
-    }    // Centrality loop
+      } // Track pT loop
+    } // Centrality loop
   }
 
   // ********************************************************
@@ -737,4 +738,43 @@ void unfoldJetPtWithRooUnfold(){
       } // Jet pT loop
     } // Centrality loop
   } // Measured histogram sanity check comparison
+
+  if(drawResponseMatrix){
+
+    drawer->Reset();
+    drawer->SetRelativeCanvasSize(1.1,1.2);
+    drawer->SetLogZ(true);
+    drawer->SetLogX(false);
+    drawer->SetLeftMargin(0.12);
+    drawer->SetTopMargin(0.07);
+    drawer->SetRightMargin(0.12);
+    drawer->SetTitleOffsetY(0.8);
+
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData) {
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard->GetLowBinBorderCentrality(iCentrality), unfoldingCard->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
+
+      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+        // Set the track pT information for legends and figure saving
+        trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+        compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+
+        drawer->DrawHistogram(hUnfoldingResponse[iCentrality][iTrackPt], "Reco (#Deltar #otimes jet p_{T})", "Gen (#Deltar #otimes jet p_{T})", Form("Response for %s, %s", centralityString.Data(), trackPtString.Data()), "colz");
+
+        // Save the figures to a file
+        if(saveFigures) {
+          gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingResponse%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+        }
+
+      } // Track pT loop
+    } // Centrality loop
+  } // Drawing response matrices
 }
