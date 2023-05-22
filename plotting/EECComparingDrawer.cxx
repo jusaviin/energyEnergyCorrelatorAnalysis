@@ -763,7 +763,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   
   // Change drawing ranges in case of logarithmic x-axis
   double minRangeX = 0;
-  double maxRangeX = 0.4;
+  double maxRangeX = 0.39;
   if(fLogDeltaR) minRangeX = 0.006;
   
   // Loop over energy-energy correlator types
@@ -878,7 +878,7 @@ void EECComparingDrawer::DrawProcessedEnergyEnergyCorrelators(){
   
   // Change drawing ranges in case of logarithmic x-axis
   double minRangeX = 0;
-  double maxRangeX = 0.4;
+  double maxRangeX = 0.39;
   if(fLogDeltaR) minRangeX = 0.006;
   
   // Loop over energy-energy correlator types
