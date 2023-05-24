@@ -39,7 +39,7 @@ void ReadFileList(std::vector<TString> &fileNameVector, TString fileNameFile, in
 {
   
   // Possible location for the input files
-  const char *fileLocation[] = {"root://xrootd.rcac.purdue.edu/", "root://eoscms.cern.ch/", "root://xrootd-vanderbilt.sites.opensciencegrid.org/", "root://cmsxrootd.fnal.gov/"};
+  const char *fileLocation[] = {"root://eos.cms.rcac.purdue.edu/", "root://eoscms.cern.ch/", "root://xrootd-vanderbilt.sites.opensciencegrid.org/", "root://cmsxrootd.fnal.gov/"};
   
   // Set up the file names file for reading
   ifstream file_stream(fileNameFile);
