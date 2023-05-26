@@ -45,6 +45,20 @@ AlgorithmLibrary::~AlgorithmLibrary()
  *
  *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
  *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
+ */
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax){
+  
+  // Use the whole histogram as a search range
+  std::pair<double,double> searchRange = std::make_pair(1, histogram->GetNbinsX());
+  return FindHistogramMinMax(histogram, currentMinMax, searchRange);
+  
+}
+
+/*
+ * Find the minimum and maximum values from a histogram. They must be more extreme than the current values
+ *
+ *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
+ *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
  *             std::pair<double,double> searchRange = Range from which the minimum and maximum values are searched
  */
 std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
