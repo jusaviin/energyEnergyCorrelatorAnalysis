@@ -495,7 +495,10 @@ void EECHistogramManager::SubtractBackground(){
   double normalizationFactor;
   EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard);
   
-  // TODO: Check that the binning in scale providers matches the binning in the histograms!
+  // Bin borders that are searched from the background scaler
+  std::pair<double,double> centralityBinBorders;
+  std::pair<double,double> jetPtBinBorders;
+  std::pair<double,double> trackPtBinBorders;
   
   // Loop over the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
@@ -505,7 +508,11 @@ void EECHistogramManager::SubtractBackground(){
     
     // Loop over selected bin range
     for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      centralityBinBorders = fCard->GetBinBordersCentrality(iCentrality);
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+        trackPtBinBorders = fCard->GetBinBordersTrackPtEEC(iTrackPt);
+        jetPtBinBorders.first = fCard->GetLowBinBorderJetPtEEC(0);
+        jetPtBinBorders.second = fCard->GetHighBinBorderJetPtEEC(fCard->GetNJetPtBinsEEC()-1);
 
         // =================================== //
         // Histograms without jet pT selection //
@@ -522,7 +529,7 @@ void EECHistogramManager::SubtractBackground(){
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
         
         // After the background is normalized, we still need to scale it with a scaling factor taking into account the excess background fluctuations in the jet cone
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(iCentrality, fnJetPtBinsEEC, iTrackPt));
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtBinBorders));
         
         // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
@@ -533,6 +540,7 @@ void EECHistogramManager::SubtractBackground(){
         // =================================== //
         
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+          jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
           // First find the correct histogram and normalize it to one
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt, iJetPt));
@@ -545,7 +553,7 @@ void EECHistogramManager::SubtractBackground(){
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
           
           // After the background is normalized, we still need to scale it with a scaling factor taking into account the excess background fluctuations in the jet cone
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(iCentrality, iJetPt, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtBinBorders));
           
           // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));

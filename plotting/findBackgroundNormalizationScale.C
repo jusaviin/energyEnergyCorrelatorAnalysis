@@ -7,9 +7,11 @@
 void findBackgroundNormalizationScale(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_fixCentrality_processed_2023-03-06.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_processed_2023-05-20.root";
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_fixCentrality_processed_2023-03-08.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_fixCentrality_processed_2023-03-06.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_processed_2023-05-20.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_noJetPtWeight_processed_2023-05-26.root
   
   // Open the input file
   TFile *inputFile = TFile::Open(inputFileName);

@@ -129,6 +129,12 @@ public:
   double GetHighBinBorderTrackPtEEC(const int iBin) const; // Get the high border of i:th track pT bin in energy-energy correlator analysis
   double GetHighBinBorderJetPtUnfoldingReco(const int iBin) const;  // Get the high border of i:th reconsturcted jet pT bin in the unfolding response matrix
   double GetHighBinBorderJetPtUnfoldingTruth(const int iBin) const; // Get the high border of i:th generator level jet pT bin in the unfolding response matrix
+  std::pair<double,double> GetBinBordersCentrality(const int iBin) const; // Get the bin borders of the i:th centrality bin
+  std::pair<double,double> GetBinBordersTrackPt(const int iBin) const; // Get the bin borders of the i:th track pT bin
+  std::pair<double,double> GetBinBordersJetPtEEC(const int iBin) const; // Get the bin borders of the i:th jet pT bin in energy-energy correlator analysis
+  std::pair<double,double> GetBinBordersTrackPtEEC(const int iBin) const; // Get the bin borders of the i:th track pT bin in energy-energy correlator analysis
+  std::pair<double,double> GetBinBordersJetPtUnfoldingReco(const int iBin) const; // Get the bin borders of the i:th reconsturcted jet pT bin in the unfolding response matrix
+  std::pair<double,double> GetBinBordersJetPtUnfoldingTruth(const int iBin) const; // Get the bin borders of the i:th generator level jet pT bin in the unfolding response matrix
   int GetBinIndexCentrality(const double value) const;     // Get the bin index for a given centrality value
   int GetBinIndexTrackPt(const double value) const;        // Get the bin index for a given track pT value
   int GetBinIndexJetPtEEC(const double value) const;       // Get the bin index for a given jet pT value in energy-energy correlator analysis

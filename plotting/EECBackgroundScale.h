@@ -15,29 +15,31 @@ class EECBackgroundScale {
 public:
  
   // Dimensions for the arrays are defined by the files used the obtain the weights. They should be copied from the file to here
-  static const int kNCentralityBins = 4;      // Maximum allowed number of centrality bins
-  static const int kNTrackPtBins = 8;         // Maximum allowed number of track pT bins
-  static const int kNJetPtBins = 7;           // Number of generator level jet pT bins for jet pT closures
+  static const int kNCentralityBins = 4;      // Number of centrality bins for which background scale is determined
+  static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
+  static const int kNJetPtBins = 20;          // Number of jet pT bins for which the background scale is determined
   
   EECBackgroundScale();              // Contructor
   EECBackgroundScale(EECCard* card); // Custom contructor
   ~EECBackgroundScale();             // Destructor
 
   // Getter for the background scale
-  double GetEECBackgroundScale(const int iCentrality, const int iJetPt, const int iTrackPt) const;
-  
-  // Check that the binning is the same in the file we are correcting, and in the file used to produce the correction
-  bool CheckBinBorders(EECCard* card) const;
+  double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const std::pair<double,double> trackPtBinBorders) const;
   
 private:
   
-  // Binning information in the study used to fit the particle density distributions
-  const double kCentralityBinBorders[kNCentralityBins+1] = {0, 10, 30, 50, 90};
-  const double kJetPtBinBorders[kNJetPtBins+1] = {120, 140, 160, 180, 200, 300, 500, 5020};
-  const double kTrackPtBinBorders[kNTrackPtBins+1] = {0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4, 300};
+  // Binning information for the scaling tables
+  const double fCentralityBinBorderLow[kNCentralityBins] = {0, 10, 30, 50};
+  const double fCentralityBinBorderHigh[kNCentralityBins] = {10, 30, 50, 90};
+  const double fCentralityBinBorderLowShifted[kNCentralityBins] = {4, 14, 34, 54};
+  const double fCentralityBinBorderHighShifted[kNCentralityBins] = {14, 34, 54, 94};
+  const double fJetPtBinBorderLow[kNJetPtBins] = {60, 70, 80, 90, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 500, 60, 200, 120};
+  const double fJetPtBinBorderHigh[kNJetPtBins] = {70, 80, 90, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 500, 5020, 5020, 300, 5020};
+  const double fTrackPtBinBorderLow[kNTrackPtBins] = {0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4};
+  const double fTrackPtBinBorderHigh[kNTrackPtBins] = {1, 1.5, 2, 2.5, 3, 3.5, 4, 300};
 
   // Arrays that hold the information about linear fits to the particle density distributions
-  double fBackgroundScale[kNCentralityBins][kNJetPtBins+1][kNTrackPtBins];
+  double fBackgroundScale[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   
   // Methods
   void InitializeArrays(const bool useGenJets = false);

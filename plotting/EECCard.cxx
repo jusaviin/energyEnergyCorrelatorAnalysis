@@ -406,6 +406,37 @@ double EECCard::GetHighBinBorderJetPtUnfoldingTruth(const int iBin) const{
   return GetHighBinBorder(kJetPtBinEdgesUnfoldingTruth,iBin);
 }
 
+// Get the bin borders of the i:th centrality bin
+std::pair<double,double> EECCard::GetBinBordersCentrality(const int iBin) const{
+  return std::make_pair(GetLowBinBorderCentrality(iBin), GetHighBinBorderCentrality(iBin)); 
+}
+
+// Get the bin borders of the i:th track pT bin
+std::pair<double,double> EECCard::GetBinBordersTrackPt(const int iBin) const{
+  return std::make_pair(GetLowBinBorderTrackPt(iBin), GetHighBinBorderTrackPt(iBin)); 
+}
+
+// Get the bin borders of the i:th jet pT bin in energy-energy correlator analysis
+std::pair<double,double> EECCard::GetBinBordersJetPtEEC(const int iBin) const{
+  return std::make_pair(GetLowBinBorderJetPtEEC(iBin), GetHighBinBorderJetPtEEC(iBin)); 
+}
+
+// Get the bin borders of the i:th track pT bin in energy-energy correlator analysis
+std::pair<double,double> EECCard::GetBinBordersTrackPtEEC(const int iBin) const{
+  return std::make_pair(GetLowBinBorderTrackPtEEC(iBin), GetHighBinBorderTrackPtEEC(iBin)); 
+}
+
+// Get the bin borders of the i:th reconsturcted jet pT bin in the unfolding response matrix
+std::pair<double,double> EECCard::GetBinBordersJetPtUnfoldingReco(const int iBin) const{
+  return std::make_pair(GetLowBinBorderJetPtUnfoldingReco(iBin), GetHighBinBorderJetPtUnfoldingReco(iBin)); 
+}
+
+// Get the bin borders of the i:th generator level jet pT bin in the unfolding response matrix
+std::pair<double,double> EECCard::GetBinBordersJetPtUnfoldingTruth(const int iBin) const{
+  return std::make_pair(GetLowBinBorderJetPtUnfoldingTruth(iBin), GetHighBinBorderJetPtUnfoldingTruth(iBin)); 
+} 
+
+
 /*
  * Add one-dimensional vector to the card
  *
