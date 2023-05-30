@@ -165,9 +165,9 @@ void findBackgroundNormalizationScale(){
         } else {
           cout << "}";
           if(iCentrality < nCentralityBins-1){
-            cout << ", // " << "120 GeV < jet pT" << endl;
+            cout << ", // " << histograms->GetJetPtBinBorderEEC(0) << " GeV < jet pT" << endl;
           } else {
-            cout << " // " << "120 GeV < jet pT" << endl;
+            cout << " // " << histograms->GetJetPtBinBorderEEC(0) << " GeV < jet pT" << endl;
           }
         }
         
