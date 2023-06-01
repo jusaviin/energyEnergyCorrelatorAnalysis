@@ -264,11 +264,11 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets){
  *
  *  const std::pair<double,double> centralityBinBorders = Centrality bin borders for the scaling factor
  *  const std::pair<double,double> jetPtBinBorders = Jet pT bin borders for the scaling factor
- *  const std::pair<double,double> trackPtBinBorders = Track pT bin borders for the scaling factor
+ *  const double trackPtLowBorder = Lower track pT bin border for the scaling factor. All tracks above this are used
  *
  *  return: Scaling factor corresponding to the bin with the given bin borders
  */
-double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const std::pair<double,double> trackPtBinBorders) const{
+double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const{
 
   // ******************************************************************** //
   // First, find the bin indices that correspond to the input bin borders //
@@ -304,17 +304,15 @@ double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> 
   // Search if the given track pT bin borders are included in the background scale table
   int trackPtIndex = -1;
   for(int iTrackPt = 0; iTrackPt < kNTrackPtBins; iTrackPt++){
-    if(TMath::Abs(fTrackPtBinBorderLow[iTrackPt] - trackPtBinBorders.first) < epsilon){
-      if(TMath::Abs(fTrackPtBinBorderHigh[iTrackPt] - trackPtBinBorders.second) < epsilon){
-        trackPtIndex = iTrackPt;
-        break;
-      }
+    if(TMath::Abs(fTrackPtBinBorderLow[iTrackPt] - trackPtLowBorder) < epsilon){
+      trackPtIndex = iTrackPt;
+      break;
     }
   } // Loop over track pT bins included in the scaling table
 
   // If track pT bin is not found, print an error message and return -1 to show we did not find a proper scaling factor.
   if(trackPtIndex == -1){
-    std::cout << "EECBackgroundScale::Error! Track pT bin " << trackPtBinBorders.first << "-" << trackPtBinBorders.second << " GeV was not found from the table." << std::endl;
+    std::cout << "EECBackgroundScale::Error! Track pT > " << trackPtLowBorder << " GeV bin was not found from the table." << std::endl;
     std::cout << "Cannot provide a background scaling factor. Please check your code for errors." << std::endl;
     return -1;
   }

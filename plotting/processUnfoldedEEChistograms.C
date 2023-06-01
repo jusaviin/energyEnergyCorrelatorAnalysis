@@ -2,19 +2,20 @@
 #include "EECHistogramManager.h"
 
 /*
- * Macro for processing energy-energy correlator histograms. Currently the following processing steps are done:
- *  1) The energy-energy correlator is normalized
- *  2) The reflected cone background estimate is normalized
- *  3) The reflected cone background estimate is subtracted from the normalized energy-energy correlator to extract the signal
+ * Macro for processing the unfolded energy-energy correlator histograms. Currently the following processing steps are done:
+ *  1) Normalize the reflected cone background to match the distribution level after unfolding
+ *  2) Subtract the normalized reflected cone background from the unfolded distribution to extract signal
+ *
+ * Notice that the input file must contain both raw and unfolded energy-energy correlators for this to work.
  *
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
  */
-void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = ""){
+void processUnfoldedEEChistograms(TString fileName, TString outputFileName){
 
   // Print the file name to console
-  cout << "Processing histograms from " << fileName.Data() << endl;
+  cout << "Processing unfolded histograms from " << fileName.Data() << endl;
   
   // We want to update more information to the file
   const char* fileWriteMode = "UPDATE";
@@ -33,9 +34,9 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   }
   
   // Load the card from the file and read the collision system
-  EECCard *card = new EECCard(inputFile);
-  
-  // The git hash here will be replaced by the latest commit hash by processEnergyEnergyCorrelators.sh script
+  EECCard* card = new EECCard(inputFile);
+
+  // The git hash here will be replaced by the latest commit hash by processUnfoldedEnergyEnergyCorrelators.sh script
   const char* gitHash = "GITHASHHERE";
   card->AddProcessGitHash(gitHash);
   
@@ -52,13 +53,18 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(false);
   histograms->SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(false);
 
+  // Set the bin ranges to those for which the unfolded histograms are available
+  histograms->SetCentralityBinRange(card->GetFirstUnfoldedCentralityBin(), card->GetLastUnfoldedCentralityBin());
+  histograms->SetTrackPtBinRangeEEC(card->GetFirstUnfoldedTrackPtBin(), card->GetLastUnfoldedTrackPtBin());
+  histograms->SetJetPtBinRangeEEC(card->GetFirstUnfoldedJetPtBin(), card->GetLastUnfoldedJetPtBin());
+
   // Load the histograms from the file
   histograms->LoadProcessedHistograms();
   
-  // Subtract the background from the energy-energy correlator histograms
-  histograms->SubtractBackground();
+  // Subtract the background from the unfolded energy-energy correlator histograms
+  histograms->SubtractBackgroundFromUnfolded();
   
-  // Add the processed histograms to the file
-  histograms->WriteProcessed(outputFileName,fileWriteMode);
+  // Save the processed histograms to the file
+  histograms->WriteProcessedAfterUnfolding(outputFileName,fileWriteMode);
   
 }

@@ -61,6 +61,12 @@ public:
     kPtHatBinEdges,               // pT hat bin edges
     kDoReflectedCone,             // 0 = No background estimation, 1 = Estimate background using reflected cone
     kApplyReflectedConeWeight,    // 0 = Do not weight the reflected cone particles, 1 = Weight the reflected cone particles
+    kFirstUnfoldedCentralityBin,  // Index of the first centrality bin that has been unfolded
+    kLastUnfoldedCentralityBin,   // Index of the last centrality bin that has been unfolded
+    kFirstUnfoldedTrackPtBin,     // Index of the first track pT bin that has been unfolded
+    kLastUnfoldedTrackPtBin,      // Index of the last track pT bin that has been unfolded
+    kFirstUnfoldedJetPtBin,       // Index of the first jet pT bin that has been unfolded
+    kLastUnfoldedJetPtBin,        // Index of the last jet pT bin that has been unfolded
     knEntries};                   // Number of entries in the card
   
   // Enumeration for input files used in postprocessing
@@ -69,7 +75,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
+  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
   const char *fFileNameType[knFileNames] = {"input", "response matrix"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
@@ -110,7 +116,7 @@ public:
   TString GetAlternativeDataType(const bool includeMCtype = true) const; // Getter for alternative data type string
   void Write(TDirectory* file);            // Write the contents of the card to a file
   void WriteProcessHash(TDirectory* file); // Write the git hash used for processing histograms to the file
-  void WriteUnfoldHash(TDirectory* file);  // Write the git hash used for unfolding energy-energy correlators to the file
+  void WriteUnfoldInfo(TDirectory* file);  // Write the information about parameters used in unfolding energy-energy correlators
   void Print() const;                      // Print the contents of the card to the console
   
   int GetNCentralityBins() const; // Get the number of centrality bins
@@ -155,6 +161,12 @@ public:
   int FindBinIndexJetPtUnfoldingReco(const std::pair<double,double> binBorders) const;  // Find if a reconstructed jet pT bin in unfolding response matrix with given borders exists and return its index
   int FindBinIndexJetPtUnfoldingTruth(const double lowBorder, const double highBorder) const; // Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
   int FindBinIndexJetPtUnfoldingTruth(const std::pair<double,double> binBorders) const; // Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
+  int GetFirstUnfoldedCentralityBin() const; // Getter for the first unfolded centrality bin index
+  int GetLastUnfoldedCentralityBin() const;  // Getter for the last unfolded centrality bin index
+  int GetFirstUnfoldedTrackPtBin() const;    // Getter for the first unfolded track pT bin index
+  int GetLastUnfoldedTrackPtBin() const;     // Getter for the last unfolded track pT bin index
+  int GetFirstUnfoldedJetPtBin() const;      // Getter for the first unfolded jet pT bin index
+  int GetLastUnfoldedJetPtBin() const;       // Getter for the last unfolded jet pT bin index
   int GetSubeventCut() const;      // Get the index for used subevent cut
   int GetJetType() const;          // Get the jet type index
   double GetJetPtCut() const;      // Get the minimum jet pT cut

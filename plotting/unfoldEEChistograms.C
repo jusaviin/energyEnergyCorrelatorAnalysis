@@ -330,9 +330,18 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName){
   // *********************************************************************
   
   // First, add the git hash used to unfold the histograms to the card
+  int firstUnfoldedJetPtBin = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(0));
+  int lastUnfoldedJetPtBin = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(nUnfoldedJetPtBins-1));
   const char* gitHash = "GITHASHHERE";
   dataCard->AddUnfoldingGitHash(gitHash);
   dataCard->AddFileName(EECCard::kResponseMatrixFile, unfoldConfigurationProvider->GetResponseFileName());
+  dataCard->AddOneDimensionalVector(EECCard::kFirstUnfoldedCentralityBin, firstStudiedCentralityBin);
+  dataCard->AddOneDimensionalVector(EECCard::kLastUnfoldedCentralityBin, lastStudiedCentralityBin);
+  dataCard->AddOneDimensionalVector(EECCard::kFirstUnfoldedTrackPtBin, firstStudiedTrackPtBinEEC);
+  dataCard->AddOneDimensionalVector(EECCard::kLastUnfoldedTrackPtBin, lastStudiedTrackPtBinEEC);
+  dataCard->AddOneDimensionalVector(EECCard::kFirstUnfoldedJetPtBin, firstUnfoldedJetPtBin);
+  dataCard->AddOneDimensionalVector(EECCard::kLastUnfoldedJetPtBin, lastUnfoldedJetPtBin);
+
 
   EECHistogramManager* histogramsSavedToFile = new EECHistogramManager(dataCard);
   histogramsSavedToFile->SetLoadEnergyEnergyCorrelators(true);

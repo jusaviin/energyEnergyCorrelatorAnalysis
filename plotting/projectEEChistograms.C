@@ -60,7 +60,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 14 = Load jet pT unfolding histograms (to set: 16384)
    */
   if(histogramSelection > 0){
-    std::bitset<14> bitChecker(histogramSelection);
+    std::bitset<15> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);

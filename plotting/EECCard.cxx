@@ -119,6 +119,35 @@ TString EECCard::GetAlternativeDataType(const bool includeMCtype) const{
   return fDataTypeStringWithoutMCType;
 }
 
+// Getter for the first unfolded centrality bin index
+int EECCard::GetFirstUnfoldedCentralityBin() const{
+  return (*fCardEntries[kFirstUnfoldedCentralityBin])[1];
+}
+
+// Getter for the last unfolded centrality bin index
+int EECCard::GetLastUnfoldedCentralityBin() const{
+  return (*fCardEntries[kLastUnfoldedCentralityBin])[1];
+}  
+
+// Getter for the first unfolded track pT bin index
+int EECCard::GetFirstUnfoldedTrackPtBin() const{
+  return (*fCardEntries[kFirstUnfoldedTrackPtBin])[1];
+}
+
+// Getter for the last unfolded track pT bin index
+int EECCard::GetLastUnfoldedTrackPtBin() const{
+  return (*fCardEntries[kLastUnfoldedTrackPtBin])[1];
+} 
+
+// Getter for the first unfolded jet pT bin index
+int EECCard::GetFirstUnfoldedJetPtBin() const{
+  return (*fCardEntries[kFirstUnfoldedJetPtBin])[1];
+} 
+
+// Getter for the last unfolded jet pT bin index
+int EECCard::GetLastUnfoldedJetPtBin() const{
+  return (*fCardEntries[kLastUnfoldedJetPtBin])[1];
+} 
 
 /*
  *  Getter for subevent cut
@@ -608,15 +637,23 @@ void EECCard::Write(TDirectory* file){
 /*
  * Write the git hash used for unfolding energy-energy correlators to the file
  */
-void EECCard::WriteUnfoldHash(TDirectory* file){
+void EECCard::WriteUnfoldInfo(TDirectory* file){
   
   // Go to a directory to store the card parameters
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
   file->cd("JCard");
   
-  // Write the git hash used to precess the histograms
+  // Write the git hash used to unfold the histograms
   if(fUnfoldingGitHash) fUnfoldingGitHash->Write("UnfoldingGitHash");
-  
+
+  // Write the file name for the response matrix
+  if(fFileNames[kResponseMatrixFile]) fFileNames[kResponseMatrixFile]->Write(fFileNameSaveName[kResponseMatrixFile]);
+
+  // Write the unfold entries
+  for(int iEntry = kFirstUnfoldedCentralityBin; iEntry <= kLastUnfoldedJetPtBin; iEntry++){
+    if(fCardEntries[iEntry])  fCardEntries[iEntry]->Write(fCardEntryNames[iEntry]);
+  }
+
   // Return back to the main directory
   file->cd("../");
   
@@ -631,7 +668,7 @@ void EECCard::WriteProcessHash(TDirectory* file){
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
   file->cd("JCard");
   
-  // Write the git hash used to precess the histograms
+  // Write the git hash used to process the histograms
   if(fProcessGitHash) fProcessGitHash->Write("ProcessGitHash");
   
   // Return back to the main directory

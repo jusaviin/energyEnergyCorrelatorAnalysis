@@ -23,7 +23,7 @@ public:
   ~EECBackgroundScale();             // Destructor
 
   // Getter for the background scale
-  double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const std::pair<double,double> trackPtBinBorders) const;
+  double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;
   
 private:
   
@@ -35,7 +35,6 @@ private:
   const double fJetPtBinBorderLow[kNJetPtBins] = {60, 70, 80, 90, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 500, 60, 200, 120};
   const double fJetPtBinBorderHigh[kNJetPtBins] = {70, 80, 90, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 500, 5020, 5020, 300, 5020};
   const double fTrackPtBinBorderLow[kNTrackPtBins] = {0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4};
-  const double fTrackPtBinBorderHigh[kNTrackPtBins] = {1, 1.5, 2, 2.5, 3, 3.5, 4, 300};
 
   // Arrays that hold the information about linear fits to the particle density distributions
   double fBackgroundScale[kNCentralityBins][kNJetPtBins][kNTrackPtBins];

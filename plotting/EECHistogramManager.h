@@ -39,7 +39,7 @@ public:
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
   
   // Indices for different energy-energy correlator processing levels
-  enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, knEnergyEnergyCorrelatorProcessingLevels};
+  enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, kEnergyEnergyCorrelatorBackgroundAfterUnfolding, kEnergyEnergyCorrelatorUnfoldedSignal, knEnergyEnergyCorrelatorProcessingLevels};
 
   // Indices for unfolding distributions
   enum enumUnfoldingDistribution{kUnfoldingMeasured, kUnfoldingTruth, knUnfoldingDistributionTypes};
@@ -75,7 +75,7 @@ private:
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
   const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC/jet pT", "Uncorrected EEC", "Uncorrected EEC/jet pT"};
-  const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded"};
+  const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded", "BackgroundAfterUnfolding", "UnfoldedSignal"};
   
   // Naming for closure particle
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
@@ -113,6 +113,7 @@ public:
   void Write(const char* fileName, const char* fileOption);          // Write all the loaded histograms into a file
   void WriteProcessed(const char* fileName, const char* fileOption); // Write the processed histograms into a file
   void WriteUnfoldedEnergyEnergyCorrelators(const char* fileName, const char* fileOption); // Write the unfolded energy-energy correlators to a file
+  void WriteProcessedAfterUnfolding(const char* fileName, const char* fileOption); // Write the processed energy-energy correlators after unfolding into a file
   void LoadProcessedHistograms(); // Load processed histograms from the inputfile
   
   // Setters for binning information
@@ -301,7 +302,8 @@ public:
   EECCard* GetCard() const;  // Getter for the JCard
   
   // Post-processing the energy-energy correlator histograms
-  void SubtractBackground();  // Subtract the background from the energy-energy correlator histograms
+  void SubtractBackground();             // Subtract the background from the energy-energy correlator histograms
+  void SubtractBackgroundFromUnfolded(); // Subtract the background from unfolded energy-energy correlator histograms
   
 private:
   
