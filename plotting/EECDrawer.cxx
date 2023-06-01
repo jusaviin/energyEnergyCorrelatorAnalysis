@@ -928,7 +928,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
-                drawnHistogram->SetLineColor(color[iJetPt]);
+                drawnHistogram->SetLineColor(color[iJetPt-fFirstDrawnJetPtBinEEC]);
                 
                 // For logarithmic x-axis, cannot go all the way to zero
                 if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
