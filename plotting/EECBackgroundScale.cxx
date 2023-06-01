@@ -280,14 +280,14 @@ double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> 
   // Search if the given centrality bin borders are included in the background scale table
   int centralityIndex = -1;
   for(int iCentrality = 0; iCentrality < kNCentralityBins; iCentrality++){
-    if(TMath::Abs(fCentralityBinBorderLow[iCentrality] - centralityBinBorders.first < epsilon)){
-      if(TMath::Abs(fCentralityBinBorderHigh[iCentrality] - centralityBinBorders.second < epsilon)){
+    if(TMath::Abs(fCentralityBinBorderLow[iCentrality] - centralityBinBorders.first) < epsilon){
+      if(TMath::Abs(fCentralityBinBorderHigh[iCentrality] - centralityBinBorders.second) < epsilon){
         centralityIndex = iCentrality;
         break;
       }
     }
-    if(TMath::Abs(fCentralityBinBorderLowShifted[iCentrality] - centralityBinBorders.first < epsilon)){
-      if(TMath::Abs(fCentralityBinBorderHighShifted[iCentrality] - centralityBinBorders.second < epsilon)){
+    if(TMath::Abs(fCentralityBinBorderLowShifted[iCentrality] - centralityBinBorders.first) < epsilon){
+      if(TMath::Abs(fCentralityBinBorderHighShifted[iCentrality] - centralityBinBorders.second) < epsilon){
         centralityIndex = iCentrality;
         break;
       }
@@ -304,8 +304,8 @@ double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> 
   // Search if the given track pT bin borders are included in the background scale table
   int trackPtIndex = -1;
   for(int iTrackPt = 0; iTrackPt < kNTrackPtBins; iTrackPt++){
-    if(TMath::Abs(fTrackPtBinBorderLow[iTrackPt] - trackPtBinBorders.first < epsilon)){
-      if(TMath::Abs(fTrackPtBinBorderHigh[iTrackPt] - trackPtBinBorders.second < epsilon)){
+    if(TMath::Abs(fTrackPtBinBorderLow[iTrackPt] - trackPtBinBorders.first) < epsilon){
+      if(TMath::Abs(fTrackPtBinBorderHigh[iTrackPt] - trackPtBinBorders.second) < epsilon){
         trackPtIndex = iTrackPt;
         break;
       }
@@ -322,8 +322,8 @@ double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> 
   // Search if the given jet pT bin borders are included in the background scale table
   int jetPtIndex = -1;
   for(int iJetPt = 0; iJetPt < kNJetPtBins; iJetPt++){
-    if(TMath::Abs(fJetPtBinBorderLow[iJetPt] - jetPtBinBorders.first < epsilon)){
-      if(TMath::Abs(fJetPtBinBorderHigh[iJetPt] - jetPtBinBorders.second < epsilon)){
+    if(TMath::Abs(fJetPtBinBorderLow[iJetPt] - jetPtBinBorders.first) < epsilon){
+      if(TMath::Abs(fJetPtBinBorderHigh[iJetPt] - jetPtBinBorders.second) < epsilon){
         jetPtIndex = iJetPt;
         break;
       }

@@ -2,7 +2,6 @@
 #define EECBACKGROUNDSCALE_H
 
 // Own includes
-#include "../src/EECHistograms.h"
 #include "EECCard.h"
 
 /*
