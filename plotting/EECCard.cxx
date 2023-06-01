@@ -18,7 +18,8 @@ EECCard::EECCard(TFile *inFile):
   fAlternativeDataTypeString(""),
   fGitHash(0),
   fProjectionGitHash(0),
-  fProcessGitHash(0)
+  fProcessGitHash(0),
+  fUnfoldingGitHash(0)
 {
 
   // Read the vectors from the input file
@@ -53,6 +54,7 @@ void EECCard::ReadVectors(){
   fGitHash = (TObjString*) gDirectory->Get("GitHash");
   fProjectionGitHash = (TObjString*) gDirectory->Get("ProjectionGitHash");
   fProcessGitHash = (TObjString*) gDirectory->Get("ProcessGitHash");
+  fUnfoldingGitHash = (TObjString*) gDirectory->Get("UnfoldingGitHash");
 
   // Read the TVectorT<float>:s
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
@@ -501,7 +503,7 @@ void EECCard::AddFileName(int entryIndex, TString fileName){
  */
 void EECCard::AddProjectionGitHash(const char* gitHash){
   
-  // Convert the const char* to TObjString and add it to the file name array
+  // Convert the const char* to TObjString and assign it to projection git hash
   fProjectionGitHash = new TObjString(gitHash);
   
 }
@@ -514,8 +516,21 @@ void EECCard::AddProjectionGitHash(const char* gitHash){
  */
 void EECCard::AddProcessGitHash(const char* gitHash){
   
-  // Convert the const char* to TObjString and add it to the file name array
+  // Convert the const char* to TObjString and assign it to processing git hash
   fProcessGitHash = new TObjString(gitHash);
+  
+}
+
+/*
+ * Add a git hash used to unfold the energy-energy correlators to the card
+ *
+ * Arguments:
+ *  const char* gitHash = Git hash to be added for unfolding
+ */
+void EECCard::AddUnfoldingGitHash(const char* gitHash){
+  
+  // Convert the const char* to TObjString and assign it to unfolding git hash
+  fUnfoldingGitHash = new TObjString(gitHash);
   
 }
 
@@ -543,6 +558,7 @@ void EECCard::Print() const{
   std::cout << std::endl;
   
   if(fProjectionGitHash != NULL) std::cout << "Git hash for projections: " << fProjectionGitHash->String().Data() << std::endl;
+  if(fUnfoldingGitHash != NULL) std::cout << "Git hash for unfolding: " << fUnfoldingGitHash->String().Data() << std::endl;
   
   for(int iFileName = 0; iFileName < knFileNames; iFileName++){
     if(fFileNames[iFileName]){
@@ -557,7 +573,7 @@ void EECCard::Print() const{
 /*
  * Write the contents of the EECCard to a file
  */
-void EECCard::Write(TDirectory *file){
+void EECCard::Write(TDirectory* file){
   
   // Create a directory to store the card parameters
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
@@ -579,7 +595,10 @@ void EECCard::Write(TDirectory *file){
     if(fFileNames[iFileName]) fFileNames[iFileName]->Write(fFileNameSaveName[iFileName]);
   }
   
-  // Write the git hash used to precess the histograms
+  // Write the git hash used to unfold the energy-energy correlators
+  if(fUnfoldingGitHash) fUnfoldingGitHash->Write("UnfoldingGitHash");
+
+  // Write the git hash used to process the histograms
   if(fProcessGitHash) fProcessGitHash->Write("ProcessGitHash");
   
   // Return back to the main directory
@@ -587,9 +606,26 @@ void EECCard::Write(TDirectory *file){
 }
 
 /*
+ * Write the git hash used for unfolding energy-energy correlators to the file
+ */
+void EECCard::WriteUnfoldHash(TDirectory* file){
+  
+  // Go to a directory to store the card parameters
+  if(!file->GetDirectory("JCard")) file->mkdir("JCard");
+  file->cd("JCard");
+  
+  // Write the git hash used to precess the histograms
+  if(fUnfoldingGitHash) fUnfoldingGitHash->Write("UnfoldingGitHash");
+  
+  // Return back to the main directory
+  file->cd("../");
+  
+}
+
+/*
  * Write the git hash used for processing histograms to the file
  */
-void EECCard::WriteProcessHash(TDirectory *file){
+void EECCard::WriteProcessHash(TDirectory* file){
   
   // Go to a directory to store the card parameters
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");

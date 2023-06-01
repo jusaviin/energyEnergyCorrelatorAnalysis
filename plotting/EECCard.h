@@ -64,14 +64,14 @@ public:
     knEntries};                   // Number of entries in the card
   
   // Enumeration for input files used in postprocessing
-  enum enumFileNames{kInputFileName,knFileNames};
+  enum enumFileNames{kInputFileName, kResponseMatrixFile, knFileNames};
   
 private:
   
   // Names for each entry read from the configuration card
   const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight"};
-  const char *fFileNameType[knFileNames] = {"input"};
-  const char *fFileNameSaveName[knFileNames] = {"InputFile"};
+  const char *fFileNameType[knFileNames] = {"input", "response matrix"};
+  const char *fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
   TFile* fInputFile;         // Input file from which all the data is read
   TString fCardDirectory;    // Path to the ConfigurationCard directory
@@ -88,6 +88,7 @@ private:
   TObjString* fGitHash;
   TObjString* fProjectionGitHash;
   TObjString* fProcessGitHash;
+  TObjString* fUnfoldingGitHash;
   
   // Vectors for all the lines inside the card
   TVectorT<float>* fCardEntries[knEntries];   // Array of all the vectors in the card
@@ -109,6 +110,7 @@ public:
   TString GetAlternativeDataType(const bool includeMCtype = true) const; // Getter for alternative data type string
   void Write(TDirectory* file);            // Write the contents of the card to a file
   void WriteProcessHash(TDirectory* file); // Write the git hash used for processing histograms to the file
+  void WriteUnfoldHash(TDirectory* file);  // Write the git hash used for unfolding energy-energy correlators to the file
   void Print() const;                      // Print the contents of the card to the console
   
   int GetNCentralityBins() const; // Get the number of centrality bins
@@ -163,6 +165,7 @@ public:
   void AddFileName(int entryIndex, TString fileName); // Add a file name to the card
   void AddProjectionGitHash(const char* gitHash); // Add a git hash used to project the histograms to the file
   void AddProcessGitHash(const char* gitHash); // Add a git hash used to process the histograms in the file
+  void AddUnfoldingGitHash(const char* gitHash); // Add a git hash used to do jet pT unfolding for the energy-energy correlators
   
 };
 

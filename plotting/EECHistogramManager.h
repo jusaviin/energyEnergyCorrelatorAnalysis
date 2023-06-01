@@ -39,7 +39,7 @@ public:
   enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
   
   // Indices for different energy-energy correlator processing levels
-  enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, knEnergyEnergyCorrelatorProcessingLevels};
+  enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, knEnergyEnergyCorrelatorProcessingLevels};
 
   // Indices for unfolding distributions
   enum enumUnfoldingDistribution{kUnfoldingMeasured, kUnfoldingTruth, knUnfoldingDistributionTypes};
@@ -75,7 +75,7 @@ private:
   // Naming for energy-energy correlator histograms
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
   const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC/jet pT", "Uncorrected EEC", "Uncorrected EEC/jet pT"};
-  const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal"};
+  const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded"};
   
   // Naming for closure particle
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
@@ -103,14 +103,16 @@ private:
 public:
   
   EECHistogramManager();                                    // Default constructor
-  EECHistogramManager(TFile* inputFile);                    // Constructor
-  EECHistogramManager(TFile* inputFile, EECCard* card);     // Constructor with card
+  EECHistogramManager(TFile* inputFile);                    // Constructor with input file
+  EECHistogramManager(TFile* inputFile, EECCard* card);     // Constructor with input file and card
+  EECHistogramManager(EECCard* card);                       // Constructor with card
   EECHistogramManager(const EECHistogramManager& in);       // Copy constructor
   ~EECHistogramManager();                                   // Destructor
   
   void LoadHistograms();          // Load the histograms from the inputfile
   void Write(const char* fileName, const char* fileOption);          // Write all the loaded histograms into a file
   void WriteProcessed(const char* fileName, const char* fileOption); // Write the processed histograms into a file
+  void WriteUnfoldedEnergyEnergyCorrelators(const char* fileName, const char* fileOption); // Write the unfolded energy-energy correlators to a file
   void LoadProcessedHistograms(); // Load processed histograms from the inputfile
   
   // Setters for binning information
@@ -170,6 +172,9 @@ public:
   void SetJetPtBinRangeUnfoldingReco(const int first, const int last);  // Setter for reconstructed jet pT bin range in unfolding response matrices
   void SetJetPtBinRangeUnfoldingTruth(const int first, const int last); // Setter for generator level jet pT bin range in unfolding response matrices
   
+  // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
+  void SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt);
+
   // Getters for number of bins in histograms
   int GetNCentralityBins() const;          // Getter for the number of centrality bins
   int GetNTrackPtBins() const;             // Getter for the number of track pT bins

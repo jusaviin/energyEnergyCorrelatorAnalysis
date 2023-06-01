@@ -201,7 +201,7 @@ EECHistogramManager::EECHistogramManager() :
 }
 
 /*
- * Constructor
+ * Constructor with input file
  */
 EECHistogramManager::EECHistogramManager(TFile* inputFile) :
   EECHistogramManager()
@@ -217,13 +217,26 @@ EECHistogramManager::EECHistogramManager(TFile* inputFile) :
 }
 
 /*
- * Constructor
+ * Constructor with input file and input card
  */
 EECHistogramManager::EECHistogramManager(TFile* inputFile, EECCard* card) :
   EECHistogramManager()
 {
   fInputFile = inputFile;
   
+  // Initialize values using the information in card
+  fCard = card;
+  InitializeFromCard();
+  
+}
+
+/*
+ * Constructor with input card
+ */
+EECHistogramManager::EECHistogramManager(EECCard* card) :
+  EECHistogramManager()
+{
+
   // Initialize values using the information in card
   fCard = card;
   InitializeFromCard();
@@ -2312,12 +2325,11 @@ void EECHistogramManager::WriteJetPtUnfoldingHistograms(){
  *
  *  const char* fileName = Name of the file to which the histograms are written
  *  const char* fileOption = Option given to the file when it is loaded
- *  const bool updateCard = True: Existing card is updated. False: New card is written.
  */
 void EECHistogramManager::WriteProcessed(const char* fileName, const char* fileOption){
   
   // Create the output file
-  TFile *outputFile = new TFile(fileName,fileOption);
+  TFile* outputFile = new TFile(fileName,fileOption);
   
   // Helper variable for renaming the saved histograms
   TString folderNamer;
@@ -2378,6 +2390,65 @@ void EECHistogramManager::WriteProcessed(const char* fileName, const char* fileO
     fCard->Write(outputFile);
   } else {
     fCard->WriteProcessHash(outputFile);
+  }
+  
+  // Close the file after everything is written
+  outputFile->Close();
+  
+  // Delete the outputFile object
+  delete outputFile;
+  
+}
+
+/*
+ * Write the unfolded energy-energy correlators to a file
+ *
+ *  const char* fileName = Name of the file to which the histograms are written
+ *  const char* fileOption = Option given to the file when it is loaded
+ */
+void EECHistogramManager::WriteUnfoldedEnergyEnergyCorrelators(const char* fileName, const char* fileOption){
+  
+  // Create the output file
+  TFile* outputFile = new TFile(fileName,fileOption);
+  
+  // Helper variable for renaming the saved histograms
+  TString folderNamer;
+  
+  // Go through the unfolded histograms and write them to file
+  
+  // Loop over energy-energy correlator histogram types
+  for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
+    
+    // Use this flag in the other macro to indicate which types of correlators have been unfolded
+    if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;
+    
+    // Create a directory for the histograms if it does not already exist
+    folderNamer = Form("%sProcessed", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
+    if(!gDirectory->GetDirectory(folderNamer)) gDirectory->mkdir(folderNamer);
+    gDirectory->cd(folderNamer);
+    
+    // Loop over selected bin range
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+          // Write unfolded histograms
+          if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Write(nullptr, TObject::kOverwrite);
+            
+        } // Loop over jet pT bins
+      } // Loop over track pT bins
+    } // Loop over centrality bins
+    
+    // Return back to main directory
+    gDirectory->cd("../");
+    
+  } // Loop over different energy-energy correlator types
+  
+  // If a JCard does not exist in the target file, create one 
+  if(!gDirectory->GetDirectory("JCard")){
+    fCard->Write(outputFile);
+  } else {
+    fCard->WriteUnfoldHash(outputFile);
   }
   
   // Close the file after everything is written
@@ -3114,6 +3185,43 @@ void EECHistogramManager::SetJetPtBinRangeUnfoldingTruth(const int first, const 
   
   // Sanity check for jet pT bins in energy-energy correlator histograms
   BinSanityCheck(fnJetPtBinsUnfoldingTruth,fFirstLoadedJetPtBinUnfoldingTruth,fLastLoadedJetPtBinUnfoldingTruth);
+}
+
+// Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
+void EECHistogramManager::SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // Do a sanity check for the input bin indices
+  if(iEnergyEnergyCorrelatorType < 0 || iEnergyEnergyCorrelatorType >= knEnergyEnergyCorrelatorTypes){
+    cout << "EECHistogramManager::ERROR in SetUnfoldedEnergyEnergyCorrelator" << endl;
+    cout << "Energy-energy correlator type index " << iEnergyEnergyCorrelatorType << " is out of range 0-" << knEnergyEnergyCorrelatorTypes-1 << "!" << endl;
+    cout << "Cannot set the unfolded energy-energy correlator. Please check your code." << endl;
+    return;
+  }
+
+  if(iCentrality < 0 || iCentrality >=kMaxCentralityBins){
+    cout << "EECHistogramManager::ERROR in SetUnfoldedEnergyEnergyCorrelator" << endl;
+    cout << "Centrality index " << iCentrality << " is out of range 0-" << kMaxCentralityBins-1 << "!" << endl;
+    cout << "Cannot set the unfolded energy-energy correlator. Please check your code." << endl;
+    return;
+  }
+
+  if(iJetPt < 0 || iJetPt >=kMaxJetPtBinsEEC){
+    cout << "EECHistogramManager::ERROR in SetUnfoldedEnergyEnergyCorrelator" << endl;
+    cout << "Jet pT index " << iJetPt << " is out of range 0-" << kMaxJetPtBinsEEC-1 << "!" << endl;
+    cout << "Cannot set the unfolded energy-energy correlator. Please check your code." << endl;
+    return;
+  }
+
+  if(iTrackPt < 0 || iTrackPt >=kMaxTrackPtBinsEEC){
+    cout << "EECHistogramManager::ERROR in SetUnfoldedEnergyEnergyCorrelator" << endl;
+    cout << "Track pT index " << iTrackPt << " is out of range 0-" << kMaxTrackPtBinsEEC-1 << "!" << endl;
+    cout << "Cannot set the unfolded energy-energy correlator. Please check your code." << endl;
+    return;
+  }
+
+  // If we are not out of bounds from the histogram array dimensions, copy the energy-energy correlator histogram to the array
+  fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded] = (TH1D*) unfoldedEnergyEnergyCorrelator->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfolded], iCentrality, iTrackPt, iJetPt));
+
 }
 
 // Sanity check for set bins

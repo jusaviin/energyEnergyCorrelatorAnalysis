@@ -1,0 +1,49 @@
+#ifndef EECUNFOLDCONFIGURATION_H
+#define EECUNFOLDCONFIGURATION_H
+
+// Own includes
+#include "EECCard.h"
+
+/*
+ * EECUnfoldConfiguration class
+ *
+ * Class whose purpose is to provide unfolding configuration for the data
+ */
+class EECUnfoldConfiguration {
+  
+public:
+ 
+  // Dimensions for the arrays are defined by the files used the obtain the iteration numbers
+  static const int kNCentralityBins = 4;      // Number of centrality bins for which background scale is determined
+  static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
+  
+  EECUnfoldConfiguration();               // Constructor
+  EECUnfoldConfiguration(EECCard* card);  // Custom constructor with a card
+  ~EECUnfoldConfiguration();              // Destructor
+
+  // Getter for unfolding configuration
+  double GetNumberOfIterations(const std::pair<double,double> centralityBinBorders, double trackPtBorderLow) const; // Getter for the number of iterations
+  TString GetResponseFileName() const; // Getter for the name of the file containing the response matrices
+  
+private:
+  
+  // Private variables
+  bool fIsPbPbData;                // Flag for PbPb data, read from card
+  TString fResponseMatrixFileName; // Response matrix file name for which the configuration is determined
+
+  // Binning information for the scaling tables
+  const double fCentralityBinBorderLow[kNCentralityBins] = {0, 10, 30, 50};
+  const double fCentralityBinBorderHigh[kNCentralityBins] = {10, 30, 50, 90};
+  const double fCentralityBinBorderLowShifted[kNCentralityBins] = {4, 14, 34, 54};
+  const double fCentralityBinBorderHighShifted[kNCentralityBins] = {14, 34, 54, 94};
+  const double fTrackPtBinBorderLow[kNTrackPtBins] = {0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4};
+
+  // Array that holds the best number of iterations for each response matrix
+  double fBestNumberOfIterations[kNCentralityBins][kNTrackPtBins];
+  
+  // Initialize the number of iterations array based on the predefined configuration index
+  void InitializeArrays();
+  
+};
+
+#endif
