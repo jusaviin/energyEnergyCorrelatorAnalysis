@@ -45,20 +45,17 @@ void determineNumberOfUnfoldingIterations(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part1_processed_2023-05-20.root";
+  TString unfoldingInputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part2_processed_2023-05-20.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_unfoldingHistograms_part1_processed_2023-05-10.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part1_processed_2023-05-20.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part1_processed_2023-05-20.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_reconstructedForUnfolding_part2_processed_2023-05-10.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part1_processed_2023-05-20.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_truthReferenceForUnfolding_part2_processed_2023-05-10.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
 
   // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
@@ -187,7 +184,7 @@ void determineNumberOfUnfoldingIterations(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 3;
   int lastStudiedTrackPtBinEEC = 5;
 
   // Select explicitly the jet pT bins that we are going to unfold
@@ -213,7 +210,7 @@ void determineNumberOfUnfoldingIterations(){
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
 
   const bool writeChi2ToFile = true; // Write the chi2 histograms to file
-  TString outputFileName = "chi2Histograms_PbPb_regular_2023-05-25.root";
+  TString outputFileName = "chi2Files/chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root";
 
   bool saveFigures = false;
   TString saveComment = "_bayesSwapped";
@@ -320,14 +317,16 @@ void determineNumberOfUnfoldingIterations(){
   // Next, we need to transform the data histograms into a format that can be read by RooUnfold
   // For this, we will need to combine the jet pT and deltaR axes
   int nDeltaRBinsData = energyEnergyCorrelatorsFromData[firstStudiedCentralityBin][0][firstStudiedTrackPtBinEEC]->GetNbinsX();
+  double jetPtLowerBound;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt] = (TH1D*) hUnfoldingMeasured[iCentrality][iTrackPt]->Clone(Form("dataCorrelatorForUnfolding%d%d", iCentrality, iTrackPt));
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->Reset();
       for(int iJetPt = 0; iJetPt < nJetPtBinsMeasured; iJetPt++){
+        jetPtLowerBound = energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt);
         for(int iBin = 1; iBin <= nDeltaRBinsData; iBin++){
           // Check what happens if the measured jet pT is capped at 80
-          if(iJetPt < 2){
+          if(jetPtLowerBound < 80){
             energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, 0);
             energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, 0);
             } else {

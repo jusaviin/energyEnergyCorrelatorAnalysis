@@ -145,9 +145,9 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 0;
+  int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 3;
   int lastStudiedTrackPtBinEEC = 5;
 
   // Select explicitly the jet pT bins that we are going to unfold

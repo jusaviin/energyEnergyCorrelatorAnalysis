@@ -23,6 +23,13 @@ EECBackgroundScale::EECBackgroundScale(EECCard* card){
 }
 
 /*
+ * Custom constructor
+ */
+EECBackgroundScale::EECBackgroundScale(const bool useGenJets){
+  InitializeArrays(useGenJets);
+}
+
+/*
  * Destructor
  */
 EECBackgroundScale::~EECBackgroundScale(){

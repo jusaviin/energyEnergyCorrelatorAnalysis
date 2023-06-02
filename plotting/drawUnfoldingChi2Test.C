@@ -12,7 +12,11 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Histograms_PbPb_regular_2023-05-25.root", "chi2Histograms_PbPb_swapped_2023-05-25.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root", "chi2Files/chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root"};
+  // chi2Histograms_pp_regular_2023-05-26.root
+  // chi2Histograms_pp_swapped_2023-05-26.root
+  // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
+  // chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root
 
   // Open the input files and read the card containing binning information
   TFile* inputFile[nInputFiles];
@@ -110,11 +114,17 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 5;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 4;
+  int lastStudiedTrackPtBinEEC = 4;
 
   int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
+
+  const bool drawChi2map = true;                      // Draw the chi2 values for individual jet pT bins
+  const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
+  const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
+  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -126,44 +136,106 @@ void drawUnfoldingChi2Test(){
   }
 
   // Set manually the best number of iteration determined totally objectively
-  bestNumberOfIterations[0][0][5] = 8; // Centrality = 0-10, track pT > 3 GeV, 120 < jet pT < 140
-  bestNumberOfIterations[0][1][5] = 4; // Centrality = 0-10, track pT > 3 GeV, 140 < jet pT < 160
-  bestNumberOfIterations[0][2][5] = 3; // Centrality = 0-10, track pT > 3 GeV, 160 < jet pT < 180
-  bestNumberOfIterations[0][3][5] = 3; // Centrality = 0-10, track pT > 3 GeV, 180 < jet pT < 200
-  bestNumberOfIterations[1][0][5] = 5; // Centrality = 10-30, track pT > 3 GeV, 120 < jet pT < 140
-  bestNumberOfIterations[1][1][5] = 3; // Centrality = 10-30, track pT > 3 GeV, 140 < jet pT < 160
-  bestNumberOfIterations[1][2][5] = 3; // Centrality = 10-30, track pT > 3 GeV, 160 < jet pT < 180
-  bestNumberOfIterations[1][3][5] = 4; // Centrality = 10-30, track pT > 3 GeV, 180 < jet pT < 200
-  bestNumberOfIterations[2][0][5] = 4; // Centrality = 30-50, track pT > 3 GeV, 120 < jet pT < 140
-  bestNumberOfIterations[2][1][5] = 8; // Centrality = 30-50, track pT > 3 GeV, 140 < jet pT < 160
-  bestNumberOfIterations[2][2][5] = 5; // Centrality = 30-50, track pT > 3 GeV, 160 < jet pT < 180
-  bestNumberOfIterations[2][3][5] = 4; // Centrality = 30-50, track pT > 3 GeV, 180 < jet pT < 200
-  bestNumberOfIterations[3][0][5] = 3; // Centrality = 50-90, track pT > 3 GeV, 120 < jet pT < 140
-  bestNumberOfIterations[3][1][5] = 3; // Centrality = 50-90, track pT > 3 GeV, 140 < jet pT < 160
-  bestNumberOfIterations[3][2][5] = 3; // Centrality = 50-90, track pT > 3 GeV, 160 < jet pT < 180
-  bestNumberOfIterations[3][3][5] = 8; // Centrality = 50-90, track pT > 3 GeV, 180 < jet pT < 200
+  if(isPbPbData){
+    bestNumberOfIterations[0][0][3] = 5;  // Centrality = 0-10, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][1][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[0][2][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[0][3][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[1][0][3] = 5;  // Centrality = 10-30, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[1][1][3] = 3;  // Centrality = 10-30, track pT > 2 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[1][2][3] = 3;  // Centrality = 10-30, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[1][3][3] = 5;  // Centrality = 10-30, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[2][0][3] = 4;  // Centrality = 30-50, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][1][3] = 3;  // Centrality = 30-50, track pT > 2 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[2][2][3] = 5;  // Centrality = 30-50, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][3][3] = 4;  // Centrality = 30-50, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][0][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[3][1][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[3][2][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[3][3][3] = 8;  // Centrality = 50-90, track pT > 2 GeV, 180 < jet pT < 200
 
-  const bool drawChi2map = false;
-  const bool drawUnfoldedToTruthComparison = false;
-  const bool drawBestIterationRatioComparison = true;
+    bestNumberOfIterations[0][0][4] = 6;  // Centrality = 0-10, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][1][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[0][2][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[0][3][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[1][0][4] = 5;  // Centrality = 10-30, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[1][1][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[1][2][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[1][3][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[2][0][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][1][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[2][2][4] = 5;  // Centrality = 30-50, track pT > 2.5 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][3][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][0][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[3][1][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[3][2][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[3][3][4] = 8;  // Centrality = 50-90, track pT > 2.5 GeV, 180 < jet pT < 200
 
-  bool saveFigures = true;
-  TString saveComment = "_splitComparison";
+    bestNumberOfIterations[0][0][5] = 8;  // Centrality = 0-10, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][1][5] = 4;  // Centrality = 0-10, track pT > 3 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[0][2][5] = 3;  // Centrality = 0-10, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[0][3][5] = 3;  // Centrality = 0-10, track pT > 3 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[1][0][5] = 5;  // Centrality = 10-30, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[1][1][5] = 3;  // Centrality = 10-30, track pT > 3 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[1][2][5] = 3;  // Centrality = 10-30, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[1][3][5] = 4;  // Centrality = 10-30, track pT > 3 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[2][0][5] = 4;  // Centrality = 30-50, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][1][5] = 8;  // Centrality = 30-50, track pT > 3 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[2][2][5] = 5;  // Centrality = 30-50, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][3][5] = 4;  // Centrality = 30-50, track pT > 3 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][0][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[3][1][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[3][2][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[3][3][5] = 8;  // Centrality = 50-90, track pT > 3 GeV, 180 < jet pT < 200
+
+    // Best number of iteratios determined for combining all jet pT bins
+    if(oneIterationPerMatrix) {
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][3] = 4;  // Centrality = 0-10, track pT > 2 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][3] = 4;  // Centrality = 10-30, track pT > 2 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][3] = 3;  // Centrality = 30-50, track pT > 2 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
+
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
+
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 5;  // Centrality = 0-10, track pT > 3 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][5] = 4;  // Centrality = 10-30, track pT > 3 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][5] = 4;  // Centrality = 30-50, track pT > 3 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
+    }
+  } else {
+    bestNumberOfIterations[0][0][5] = 7;  // pp, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][1][5] = 3;  // pp, track pT > 3 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[0][2][5] = 7;  // pp, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[0][3][5] = 2;  // pp, track pT > 3 GeV, 180 < jet pT < 200
+
+    // Best number of iteratios determined for combining all jet pT bins
+    if(oneIterationPerMatrix) {
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 2;  // pp, track pT > 3 GeV
+    }
+  }
+
+  bool saveFigures = false;
+  TString saveComment = "_splitComparisonSingleIteration";
   TString figureFormat = "pdf";
 
   // Histograms for chi2 and error2 map
-  TH1D* hChi2map[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles];
-  TH1D* hErrorMap[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles];
+  TH1D* hChi2map[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles+1];
+  TH1D* hChi2combined[nCentralityBins][nTrackPtBinsEEC][nInputFiles+1];
+  TH1D* hErrorMap[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles+1];
 
   // Initialize all the histograms to null
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
     for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
-        for(int iFile = 0; iFile < nInputFiles; iFile++){
+      for(int iFile = 0; iFile < nInputFiles+1; iFile++){
+        for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
           hChi2map[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           hErrorMap[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
-        } // File loop
-      } // Jet pT loop
+        } // Jet pT loop
+        hChi2combined[iCentrality][iTrackPt][iFile] = NULL;
+      } // File loop
     } // Track pT loop
   }  // Centrality loop
 
@@ -175,6 +247,33 @@ void drawUnfoldingChi2Test(){
           hChi2map[iCentrality][iJetPt][iTrackPt][iFile] = (TH1D*) inputFile[iFile]->Get(Form("chi2map/chi2map%d%d%d", iCentrality, iTrackPt, iJetPt));
           hErrorMap[iCentrality][iJetPt][iTrackPt][iFile] = (TH1D*) inputFile[iFile]->Get(Form("errorMap/errorMap%d%d%d", iCentrality, iTrackPt, iJetPt));
         } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // File loop
+
+  // Add all the files together for a combined result
+  for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+    for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+        hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2map[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2map%d%d%d", iCentrality, iTrackPt, iJetPt));
+        for(int iFile = 1; iFile < nInputFiles; iFile++){
+          hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
+        }
+        for(int iBin = 1; iBin <= hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetNbinsX(); iBin++){
+          hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->SetBinContent(iBin, hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetBinContent(iBin) / nInputFiles);
+        }
+      } // Jet pT loop
+    } // Track pT loop
+  } // Centrality loop
+
+  // Combine the chi2 values from each response matrix to a single grand chi2 value
+  for(int iFile = 0; iFile < nInputFiles+1; iFile++){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+        hChi2combined[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2map[iCentrality][0][iTrackPt][iFile]->Clone(Form("combinedChi2%d%d%d", iCentrality, iTrackPt, iFile));
+        for(int iJetPt = 1; iJetPt < nJetPtBins; iJetPt++){
+          hChi2combined[iCentrality][iTrackPt][iFile]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
+        }
       } // Track pT loop
     } // Centrality loop
   } // File loop
@@ -282,7 +381,7 @@ void drawUnfoldingChi2Test(){
 
           // Find good y-ranges for plotting
           histogramYrange = std::make_pair(10e10, 0);
-          for(int iFile = 0; iFile < nInputFiles; iFile++){
+          for(int iFile = 0; iFile < nInputFiles+1; iFile++){
             histogramYrange = methods->FindHistogramMinMax(hChi2map[iCentrality][iJetPt][iTrackPt][iFile], histogramYrange);
           }
           // Add some empty space to the top and the bottom of the histogram
@@ -295,14 +394,14 @@ void drawUnfoldingChi2Test(){
           hChi2map[iCentrality][iJetPt][iTrackPt][0]->SetMarkerColor(fileColor[0]);
           drawer->DrawHistogram(hChi2map[iCentrality][iJetPt][iTrackPt][0], "Number of iterations", "#chi^{2}", " ", "p");
 
-          for(int iFile = 1; iFile < nInputFiles; iFile++){
+          for(int iFile = 1; iFile < nInputFiles+1; iFile++){
             hChi2map[iCentrality][iJetPt][iTrackPt][iFile]->SetMarkerStyle(fileMarker[iFile]);
             hChi2map[iCentrality][iJetPt][iTrackPt][iFile]->SetMarkerColor(fileColor[iFile]);
             hChi2map[iCentrality][iJetPt][iTrackPt][iFile]->Draw("p,same");
           }
 
           // Add a legend to the figure
-          legend = new TLegend(0.18, 0.57, 0.43, 0.87);
+          legend = new TLegend(0.18, 0.54, 0.43, 0.87);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
           legend->AddEntry((TObject*)0, centralityString.Data(), "");
@@ -312,6 +411,7 @@ void drawUnfoldingChi2Test(){
           for(int iFile = 0; iFile < nInputFiles; iFile++){
             legend->AddEntry(hChi2map[iCentrality][iJetPt][iTrackPt][iFile], Form("Split %d", iFile+1), "p");
           }
+          legend->AddEntry(hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles], Form("Split average"), "p");
 
           legend->Draw();
 
@@ -322,6 +422,69 @@ void drawUnfoldingChi2Test(){
 
         } // Track pT loop
       } // Jet pT loop
+    } // Centrality loop
+  } // Drawing chi2 map
+
+  if(drawChi2combined){
+
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+
+      // Set the centrality information for legends and figure saving
+      if(isPbPbData) {
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard[0]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[0]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard[0]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[0]->GetHighBinBorderCentrality(iCentrality));
+      } else {
+        centralityString = "Pythia8";
+        compactCentralityString = "_pythia8";
+      }
+
+      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+        // Set the track pT information for legends and figure saving
+        trackPtString = Form("%.1f < track p_{T}", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        compactTrackPtString = Form("_T%.0f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+
+        // Find good y-ranges for plotting
+        histogramYrange = std::make_pair(10e10, 0);
+        for(int iFile = 0; iFile < nInputFiles+1; iFile++){
+          histogramYrange = methods->FindHistogramMinMax(hChi2combined[iCentrality][iTrackPt][iFile], histogramYrange);
+        }
+        // Add some empty space to the top and the bottom of the histogram
+        histogramYrange.first = TMath::Max(0.0, histogramYrange.first - histogramYrange.second*0.05);
+        histogramYrange.second = histogramYrange.second + histogramYrange.second*0.06;
+
+        // Draw the chi2 map to the canvas
+        hChi2combined[iCentrality][iTrackPt][0]->GetYaxis()->SetRangeUser(histogramYrange.first, histogramYrange.second);
+        hChi2combined[iCentrality][iTrackPt][0]->SetMarkerStyle(fileMarker[0]);
+        hChi2combined[iCentrality][iTrackPt][0]->SetMarkerColor(fileColor[0]);
+        drawer->DrawHistogram(hChi2combined[iCentrality][iTrackPt][0], "Number of iterations", "#chi^{2}", " ", "p");
+
+        for(int iFile = 1; iFile < nInputFiles+1; iFile++){
+          hChi2combined[iCentrality][iTrackPt][iFile]->SetMarkerStyle(fileMarker[iFile]);
+          hChi2combined[iCentrality][iTrackPt][iFile]->SetMarkerColor(fileColor[iFile]);
+          hChi2combined[iCentrality][iTrackPt][iFile]->Draw("p,same");
+        }
+
+        // Add a legend to the figure
+        legend = new TLegend(0.18, 0.54, 0.43, 0.87);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+        legend->AddEntry((TObject*)0, centralityString.Data(), "");
+        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+        for(int iFile = 0; iFile < nInputFiles; iFile++){
+          legend->AddEntry(hChi2combined[iCentrality][iTrackPt][iFile], Form("Split %d", iFile+1), "p");
+        }
+        legend->AddEntry(hChi2combined[iCentrality][iTrackPt][nInputFiles], Form("Split average"), "p");
+
+        legend->Draw();
+
+        // Save the figures to a file
+        if(saveFigures) {
+          gPad->GetCanvas()->SaveAs(Form("figures/chi2combined%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+         }
+
+      } // Track pT loop
     } // Centrality loop
   } // Drawing chi2 map
 

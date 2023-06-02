@@ -584,7 +584,7 @@ void EECHistogramManager::SubtractBackground(){
 void EECHistogramManager::SubtractBackgroundFromUnfolded(){
   
   double scalingFactor;
-  EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard);
+  EECBackgroundScale* scaleProvider = new EECBackgroundScale(true); // Always use gen level correction for unfolded histograms
   
   // Bin borders that are searched from the background scaler
   std::pair<double,double> centralityBinBorders;

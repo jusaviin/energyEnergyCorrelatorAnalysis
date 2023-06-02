@@ -74,7 +74,17 @@ void EECUnfoldConfiguration::InitializeArrays(){
   // The latest configuration for PbPb
   if(fIsPbPbData){
 
-    fResponseMatrixFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part1_processed_2023-05-20.root";
+    fResponseMatrixFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part2_processed_2023-05-20.root";
+
+    fBestNumberOfIterations[0][3] = 4;  // Centrality = 0-10, track pT > 2 GeV
+    fBestNumberOfIterations[1][3] = 4;  // Centrality = 10-30, track pT > 2 GeV
+    fBestNumberOfIterations[2][3] = 3;  // Centrality = 30-50, track pT > 2 GeV
+    fBestNumberOfIterations[3][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
+
+    fBestNumberOfIterations[0][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV
+    fBestNumberOfIterations[1][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
+    fBestNumberOfIterations[2][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV
+    fBestNumberOfIterations[3][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
 
     fBestNumberOfIterations[0][5] = 5;  // Centrality = 0-10, track pT > 3 GeV
     fBestNumberOfIterations[1][5] = 4;  // Centrality = 10-30, track pT > 3 GeV

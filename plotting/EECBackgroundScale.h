@@ -18,9 +18,10 @@ public:
   static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
   static const int kNJetPtBins = 20;          // Number of jet pT bins for which the background scale is determined
   
-  EECBackgroundScale();              // Contructor
-  EECBackgroundScale(EECCard* card); // Custom contructor
-  ~EECBackgroundScale();             // Destructor
+  EECBackgroundScale();                      // Constructor
+  EECBackgroundScale(EECCard* card);         // Custom constructor
+  EECBackgroundScale(const bool useGenJets); // Custom constructor
+  ~EECBackgroundScale();                     // Destructor
 
   // Getter for the background scale
   double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;
