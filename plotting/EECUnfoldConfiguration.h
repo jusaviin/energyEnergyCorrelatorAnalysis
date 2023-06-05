@@ -13,12 +13,16 @@ class EECUnfoldConfiguration {
   
 public:
  
+  // Helper enumeration for different defined Monte Carlo splits and systematic parameter sets
+  enum enumUnfoldingParameterSet{kDefault, kJetPtResolutionUncertainty, kJetEnergyScaleUncertainty, kNParameterSets};
+  enum enumMonteCalroSplit{kWholeDataset, kMonteCarloSplit1, kMonteCarloSplit2, kNDatasetSplits};
+
   // Dimensions for the arrays are defined by the files used the obtain the iteration numbers
   static const int kNCentralityBins = 4;      // Number of centrality bins for which background scale is determined
   static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
   
   EECUnfoldConfiguration();               // Constructor
-  EECUnfoldConfiguration(EECCard* card);  // Custom constructor with a card
+  EECUnfoldConfiguration(EECCard* card, const int iSplit = 0, const int iSystematic = 0);  // Custom constructor with a card
   ~EECUnfoldConfiguration();              // Destructor
 
   // Getter for unfolding configuration
@@ -29,6 +33,8 @@ private:
   
   // Private variables
   bool fIsPbPbData;                // Flag for PbPb data, read from card
+  int fSystematicIndex;            // Index for systematic uncertainty study
+  int fSplitIndex;                 // Index for the MC split. 0 = Whole dataset. 1 = Split 1, 2 = Split 2
   TString fResponseMatrixFileName; // Response matrix file name for which the configuration is determined
 
   // Binning information for the scaling tables

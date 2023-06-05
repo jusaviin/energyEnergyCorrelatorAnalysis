@@ -37,8 +37,16 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
+ *   const int iSplit = The Monte Carlo split used to derive the response matrix
+ *                      0: Use the full Monte Carlo statistics to construct the response matrix
+ *                      1: Use the first half of the Monte Carlo statistics to construct the response matrix
+ *                      2: Use the second half of the Monte Carlo statistics to construct the response matrix
+ *   const int iSystematic = Index for unfolding systematic uncertainty study
+ *                           0: Default results, no systematic study
+ *                           1: Evaluate systematic uncertainties for jet pT resolution
+ *                           2: Evaluate systematic uncertainties for jet energy scale
  */
-void unfoldEEChistograms(TString dataFileName, TString outputFileName){
+void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0){
 
   // **********************************
   //       Open the input files
@@ -61,7 +69,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName){
   bool isPbPbData = collisionSystem.Contains("PbPb");
 
   // Use the information from the dataCard to create an unfolding configuration
-  EECUnfoldConfiguration *unfoldConfigurationProvider = new EECUnfoldConfiguration(dataCard);
+  EECUnfoldConfiguration* unfoldConfigurationProvider = new EECUnfoldConfiguration(dataCard, iSplit, iSystematic);
 
   // Open the response matric file based on the information on the unfolding configuration
   TFile* responseInputFile = TFile::Open(unfoldConfigurationProvider->GetResponseFileName());
