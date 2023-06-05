@@ -46,21 +46,21 @@ void unfoldJetPtWithRooUnfold(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root";
+  TString unfoldingInputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_smearJetPtResolution_responseMatrix_part1_processed_2023-06-02.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_unfoldingHistograms_part1_processed_2023-05-10.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_unfoldingHistograms_part1_processed_2023-05-12.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part1_processed_2023-05-20.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_reconstructedForUnfolding_part2_processed_2023-05-10.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_reconstructedForUnfolding_part2_processed_2023-05-12.root
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root";
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_truthReferenceForUnfolding_part2_processed_2023-05-10.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_truthReferenceForUnfolding_part2_processed_2023-05-12.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
 
   // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
   const bool ignoreTruthReferenceFile = false; 
@@ -186,7 +186,7 @@ void unfoldJetPtWithRooUnfold(){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = nCentralityBins-1;
+  int lastStudiedCentralityBin = 0;
   
   int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
@@ -203,18 +203,19 @@ void unfoldJetPtWithRooUnfold(){
   // Default binning ranges for reference
   // centrality = {0,10,30,50,90}
 
-  const int iUnfoldMethod = kMatrixInversionUnfold; // Select the unfolding method
+  const bool useBackgroundSubtractedForMeasured = false; // true = Unfold background subtracted measurement, false = Unfold measurement before background subtraction
+  const int iUnfoldMethod = kBayesianUnfold; // Select the unfolding method
   const int nIterations = (iUnfoldMethod == kMatrixInversionUnfold) ? 1 : 5; // Number of iterations used with the regularized unfolding
   const int iterationKey[] = {1,2,3,4,5};
   const bool calculateConditionNumber = false;
 
-  const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
+  const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
   const bool drawTruthToTruthComparison = false;       // Compare truth from unfolding histograms to truth from energy-energy correlator histograms
   const bool drawMeasuredToMeasuredComparison = false; // Compare reconstructed unfolding histograms to reconstructed energy-energy correlator histograms
-  const bool drawResponseMatrix = true;               // Draw the used response matrices
+  const bool drawResponseMatrix = false;               // Draw the used response matrices
 
-  bool saveFigures = true;
-  TString saveComment = "_example";
+  bool saveFigures = false;
+  TString saveComment = "_matrixInversion";
   TString figureFormat = "pdf";
     
   // ***************************************************************
@@ -287,11 +288,19 @@ void unfoldJetPtWithRooUnfold(){
       rooResponse[iCentrality][iTrackPt] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality][iTrackPt], hUnfoldingTruth[iCentrality][iTrackPt], hUnfoldingResponse[iCentrality][iTrackPt]);
 
       for(int iJetPt = 0; iJetPt < nJetPtBinsMeasured; iJetPt++){
-        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kDataFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        if(useBackgroundSubtractedForMeasured){
+          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kDataFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorSignal);
+        } else {
+          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kDataFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        }
       } // Measured jet pT loop
       if(!ignoreTruthReferenceFile){
         for(int iJetPt = 0; iJetPt < nJetPtBinsTruth; iJetPt++){
-          energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kTruthReferenceFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+          if(useBackgroundSubtractedForMeasured){
+            energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kTruthReferenceFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorSignal);
+          } else {
+            energyEnergyCorrelatorsTruthReference[iCentrality][iJetPt][iTrackPt] = energyEnergyCorrelatorHistograms[kTruthReferenceFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+          }
         } // Truth jet pT loop
       } // If for reading the truth file 
     } // Track pT loop
@@ -300,14 +309,22 @@ void unfoldJetPtWithRooUnfold(){
   // Next, we need to transform the data histograms into a format that can be read by RooUnfold
   // For this, we will need to combine the jet pT and deltaR axes
   int nDeltaRBinsData = energyEnergyCorrelatorsFromData[firstStudiedCentralityBin][0][firstStudiedTrackPtBinEEC]->GetNbinsX();
+  double jetPtLowerBound;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt] = (TH1D*) hUnfoldingMeasured[iCentrality][iTrackPt]->Clone(Form("dataCorrelatorForUnfolding%d%d", iCentrality, iTrackPt));
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->Reset();
       for(int iJetPt = 0; iJetPt < nJetPtBinsMeasured; iJetPt++){
+        jetPtLowerBound = energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt);
         for(int iBin = 1; iBin <= nDeltaRBinsData; iBin++){
-          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
-          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
+          // Check what happens if the measured jet pT is capped at 80
+          if(jetPtLowerBound < 80){
+            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, 0);
+            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, 0);
+          } else {
+            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
+            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
+          }
         } // DeltaR bin loop
       } // Jet pT loop
     } // Track pT loop
@@ -390,8 +407,8 @@ void unfoldJetPtWithRooUnfold(){
   double previousBinWidth = 0;
   double currentBinWidth = 0;
   int nDeltaRBins = 0;
-  for(int iBin = 1; iBin < hUnfoldingMeasured[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetNbinsX(); iBin++){
-    currentBinWidth = hUnfoldingMeasured[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetBinWidth(iBin);
+  for(int iBin = 1; iBin < hUnfoldingTruth[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetNbinsX(); iBin++){
+    currentBinWidth = hUnfoldingTruth[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetBinWidth(iBin);
     if(currentBinWidth < previousBinWidth) break;
     previousBinWidth = currentBinWidth;
     nDeltaRBins++;
@@ -399,7 +416,7 @@ void unfoldJetPtWithRooUnfold(){
 
   double deltaRBinning[nDeltaRBins+1];
   for(int iBin = 1; iBin <= nDeltaRBins+1; iBin++){
-    deltaRBinning[iBin-1] = hUnfoldingMeasured[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetBinLowEdge(iBin);
+    deltaRBinning[iBin-1] = hUnfoldingTruth[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetBinLowEdge(iBin);
   }
 
   // Create new histograms for the chosen bin range
