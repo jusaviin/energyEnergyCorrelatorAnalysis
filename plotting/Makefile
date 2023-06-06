@@ -13,7 +13,7 @@ LDFLAGS  = $(shell root-config --libs)
 
 CXXFLAGS  += $(INCS)
 
-HDRS	+= AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECUnfoldConfiguration.h
+HDRS	+= AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECUnfoldConfiguration.h SystematicUncertaintyOrganizer.h
 
 
 SRCS = $(HDRS:.h=.cxx)
