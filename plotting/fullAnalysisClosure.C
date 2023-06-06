@@ -82,8 +82,8 @@ void fullAnalysisClosure(){
   std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_genLevelCheck";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_noSystematicUncertainties";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms

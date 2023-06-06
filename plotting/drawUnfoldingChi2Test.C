@@ -12,9 +12,9 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root", "chi2Files/chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root"};
-  // chi2Histograms_pp_regular_2023-05-26.root
-  // chi2Histograms_pp_swapped_2023-05-26.root
+  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_split1_systematicForJetPtUncertainty_2023-06-05.root", "chi2Files/chi2Histograms_pp_split2_systematicForJetPtUncertainty_2023-06-05.root"};
+  // chi2Histograms_pp_split1_2023-06-05.root
+  // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
   // chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root
 
@@ -114,14 +114,14 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 4;
-  int lastStudiedTrackPtBinEEC = 4;
+  int firstStudiedTrackPtBinEEC = 3;
+  int lastStudiedTrackPtBinEEC = 5;
 
   int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
-  const bool drawChi2map = true;                      // Draw the chi2 values for individual jet pT bins
-  const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
+  const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
+  const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
   const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
   const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
@@ -218,7 +218,7 @@ void drawUnfoldingChi2Test(){
   }
 
   bool saveFigures = false;
-  TString saveComment = "_splitComparisonSingleIteration";
+  TString saveComment = "_systematicUncertaintyJetResolution";
   TString figureFormat = "pdf";
 
   // Histograms for chi2 and error2 map

@@ -45,16 +45,20 @@ void determineNumberOfUnfoldingIterations(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part2_processed_2023-05-20.root";
-  // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
+  TString unfoldingInputFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix_part2_processed_2023-06-02.root";
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_responseMatrix_part1_processed_2023-06-02.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtResolution_responseMatrix_part1_processed_2023-06-02.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix_part1_processed_2023-06-02.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part1_processed_2023-05-20.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_smearJetPtResolution_responseMatrix_part1_processed_2023-06-02.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_smearJetPtUncertainty_responseMatrix_part1_processed_2023-06-02.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part1_processed_2023-05-20.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part1_processed_2023-06-05.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_regularHistogramsForUnfolding_part2_processed_2023-05-09.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part1_processed_2023-05-20.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_truthReferenceForUnfolding_part1_processed_2023-06-05.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
 
@@ -210,7 +214,7 @@ void determineNumberOfUnfoldingIterations(){
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
 
   const bool writeChi2ToFile = true; // Write the chi2 histograms to file
-  TString outputFileName = "chi2Files/chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root";
+  TString outputFileName = "chi2Files/chi2Histograms_pp_split2_systematicForJetPtUncertainty_2023-06-05.root";
 
   bool saveFigures = false;
   TString saveComment = "_bayesSwapped";
