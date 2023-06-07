@@ -6,7 +6,7 @@ if [ "$#" -lt 1 ]; then
   echo "fileName = Name of the file containing the energy-energy correlators that needs unfolding"
   echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the unfolded histograms"
   echo "-s split = Split index for response matrix. 0 = Full MC stats. 1 = First half of stats. 2 = Second half of stats. Default = 0."
-  echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Default, 1 = Jet energy resolution uncertainty, 2 = Jet energy scale uncertainty. Default = 0."
+  echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Nominal result, 1 = Jet energy resolution uncertainty, 2 = Jet energy scale uncertainty. Default = 0."
   exit
 fi
 

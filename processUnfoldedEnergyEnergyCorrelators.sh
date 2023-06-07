@@ -1,21 +1,33 @@
 #!/bin/bash
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+if [ "$#" -lt 1 ]; then
   echo "Usage of the script:"
-  echo "$0 [fileName] <outputFileName>"
-  echo "fileName = Name of the file for which unfolded energy-energy correlator histograms are processed"
-  echo "outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the processed histograms"
+  echo "$0 fileName [-o outputFileName] [-u systemticUncertainty]"
+  echo "fileName = Name of the file for which energy-energy correlator histograms are processed"
+  echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the processed histograms"
+  echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Nominal result, 1 = Background scale from 2% centrality shift, 2 = Background scale from 6% centrality shift"
   exit
 fi
 
 FILENAME=$1    # Name of the files for processing
+shift # Shift the positional argument such that optional ones are properly seen afterwards
 
-# if second argument is given, use that as output file. Otherwise update input file.
-if [ "$#" -gt 1 ]; then
-  OUTPUTFILE=$2
-else
-  OUTPUTFILE=$FILENAME
-fi
+# Read the optional arguments
+while getopts ":o:u:" opt; do
+case $opt in
+o) OUTPUTFILE="$OPTARG"
+;;
+u) SYSTEMATIC="$OPTARG"
+;;
+\?) echo "Invalid option -$OPTARG" >&2
+exit 1
+;;
+esac
+done
+
+# Set default values to optional arguments if they are not given
+OUTPUTFILE=${OUTPUTFILE:-$FILENAME}
+SYSTEMATIC=${SYSTEMATIC:-0}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -24,7 +36,7 @@ GITHASH=`git rev-parse HEAD`
 sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/processUnfoldedEEChistograms.C
 
 # Process the unfolded energy-energy correlator histograms
-root -l -b -q 'plotting/processUnfoldedEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'")'
+root -l -b -q 'plotting/processUnfoldedEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${SYSTEMATIC}')'
 
 # Put the placeholder string back to the histogram processing file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/processUnfoldedEEChistograms.C

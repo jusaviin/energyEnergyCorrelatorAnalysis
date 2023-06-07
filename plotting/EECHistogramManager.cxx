@@ -502,11 +502,16 @@ EECHistogramManager::~EECHistogramManager(){
 
 /*
  * Normalize the energy-energy correlator distributions and subtract the background from them
+ *
+ *  const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *                          0: Nominal results, no systematic uncertainty estimation
+ *                          1: Systematic uncertainty derived from 2% centrality shifted simulation
+ *                          2: Systematic uncertainty derived from 6% centrality shifted simulation
  */
-void EECHistogramManager::SubtractBackground(){
+void EECHistogramManager::SubtractBackground(const int iSystematic){
   
   double normalizationFactor;
-  EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard);
+  EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard, iSystematic);
   
   // Bin borders that are searched from the background scaler
   std::pair<double,double> centralityBinBorders;
@@ -580,11 +585,16 @@ void EECHistogramManager::SubtractBackground(){
 
 /*
  * Subtract the background from unfolded histograms
+ *
+ *  const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *                          0: Nominal results, no systematic uncertainty estimation
+ *                          1: Systematic uncertainty derived from 2% centrality shifted simulation
+ *                          2: Systematic uncertainty derived from 6% centrality shifted simulation
  */
-void EECHistogramManager::SubtractBackgroundFromUnfolded(){
+void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
   
   double scalingFactor;
-  EECBackgroundScale* scaleProvider = new EECBackgroundScale(true); // Always use gen level correction for unfolded histograms
+  EECBackgroundScale* scaleProvider = new EECBackgroundScale(true, iSystematic); // Always use gen level correction for unfolded histograms
   
   // Bin borders that are searched from the background scaler
   std::pair<double,double> centralityBinBorders;

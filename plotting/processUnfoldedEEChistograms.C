@@ -11,8 +11,12 @@
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
+ *   const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *                           0: Nominal results, no systematic uncertainty estimation
+ *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
+ *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
  */
-void processUnfoldedEEChistograms(TString fileName, TString outputFileName){
+void processUnfoldedEEChistograms(TString fileName, TString outputFileName, const int iSystematic){
 
   // Print the file name to console
   cout << "Processing unfolded histograms from " << fileName.Data() << endl;
@@ -62,7 +66,7 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName){
   histograms->LoadProcessedHistograms();
   
   // Subtract the background from the unfolded energy-energy correlator histograms
-  histograms->SubtractBackgroundFromUnfolded();
+  histograms->SubtractBackgroundFromUnfolded(iSystematic);
   
   // Save the processed histograms to the file
   histograms->WriteProcessedAfterUnfolding(outputFileName,fileWriteMode);

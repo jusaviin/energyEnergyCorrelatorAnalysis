@@ -10,8 +10,12 @@
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
+ *   const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *                           0: Nominal results, no systematic uncertainty estimation
+ *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
+ *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
  */
-void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = ""){
+void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = "", const int iSystematic){
 
   // Print the file name to console
   cout << "Processing histograms from " << fileName.Data() << endl;
@@ -56,7 +60,7 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   histograms->LoadProcessedHistograms();
   
   // Subtract the background from the energy-energy correlator histograms
-  histograms->SubtractBackground();
+  histograms->SubtractBackground(iSystematic);
   
   // Add the processed histograms to the file
   histograms->WriteProcessed(outputFileName,fileWriteMode);

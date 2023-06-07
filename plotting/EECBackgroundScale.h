@@ -13,15 +13,18 @@ class EECBackgroundScale {
   
 public:
  
+  // Enumeration for different methods used to determine background scaling factors
+  enum enumBackgroundSystematicChoice{kNominalResult, k2pShiftedMonteCarlo, k6pShiftedMonteCarlo, kNBackgroundScaleChoices};
+
   // Dimensions for the arrays are defined by the files used the obtain the weights. They should be copied from the file to here
   static const int kNCentralityBins = 4;      // Number of centrality bins for which background scale is determined
   static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
   static const int kNJetPtBins = 20;          // Number of jet pT bins for which the background scale is determined
   
-  EECBackgroundScale();                      // Constructor
-  EECBackgroundScale(EECCard* card);         // Custom constructor
-  EECBackgroundScale(const bool useGenJets); // Custom constructor
-  ~EECBackgroundScale();                     // Destructor
+  EECBackgroundScale();                                            // Constructor
+  EECBackgroundScale(EECCard* card, const int iSystmatic);         // Custom constructor
+  EECBackgroundScale(const bool useGenJets, const int iSystemtic); // Custom constructor
+  ~EECBackgroundScale() = default;                                 // Destructor
 
   // Getter for the background scale
   double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;
@@ -41,7 +44,7 @@ private:
   double fBackgroundScale[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
   
   // Methods
-  void InitializeArrays(const bool useGenJets = false);
+  void InitializeArrays(const bool useGenJets = false, const int iSystematic = 0);
   
 };
 
