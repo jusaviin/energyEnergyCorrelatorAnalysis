@@ -50,6 +50,18 @@ void estimateSystematicUncertainties(){
   EECCard* jetEnergyScaleCard = new EECCard(jetEnergyScaleFile);
   EECHistogramManager* jetEnergyScaleHistogramManager = new EECHistogramManager(jetEnergyScaleFile, jetEnergyScaleCard);
   loadRelevantHistograms(jetEnergyScaleHistogramManager);
+
+  // Results where background scaling factor is determined from 2% or 6% shifted simulation instead of nominal 4%
+  TFile* backgroundSubtractionFile[2];
+  backgroundSubtractionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_processed_backgroundScaleUncertainty2pShift_2023-05-23.root");
+  backgroundSubtractionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_processed_backgroundScaleUncertainty6pShift_2023-05-23.root");
+  EECCard* backgroundSubtractionCard[2];
+  EECHistogramManager* backgroundSubtractionHistogramManager[2];
+  for(int iBackgroundSubtractionFile = 0; iBackgroundSubtractionFile < 2; iBackgroundSubtractionFile++){
+    backgroundSubtractionCard[iBackgroundSubtractionFile] = new EECCard(backgroundSubtractionFile[iBackgroundSubtractionFile]);
+    backgroundSubtractionHistogramManager[iBackgroundSubtractionFile] = new EECHistogramManager(backgroundSubtractionFile[iBackgroundSubtractionFile], backgroundSubtractionCard[iBackgroundSubtractionFile]);
+    loadRelevantHistograms(backgroundSubtractionHistogramManager[iBackgroundSubtractionFile]);
+  }
   
   // ==================================================================
   // ========================= Configuration ==========================
@@ -100,6 +112,7 @@ void estimateSystematicUncertainties(){
   TH1D* nominalEnergyEnergyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* jetEnergyResolutionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* jetEnergyScaleUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* backgroundSubtractionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
 
   // Histograms to hold the systematic uncertainty results
   TH1D* energyEnergyCorrelatorSystematicUncertainties[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -111,6 +124,9 @@ void estimateSystematicUncertainties(){
         nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
         jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
         jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
+        for(int iFile = 0; iFile < 2; iFile++){
+          backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
+        }
         for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++){
           energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
         }
@@ -153,6 +169,19 @@ void estimateSystematicUncertainties(){
 
         // Normalize the jet energy scale histograms to one
         jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        for(int iFile = 0; iFile < 2; iFile++){
+
+          // Read the background subtraction uncertainty histograms
+          iCentralityMatched = backgroundSubtractionCard[iFile]->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+          iTrackPtMatched = backgroundSubtractionCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+          iJetPtMatched = backgroundSubtractionCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+          backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = backgroundSubtractionHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+          // Normalize the background subtraction histograms to one
+          backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        }
 
       } // Track pT loop
     } // Jet pT loop
@@ -215,6 +244,28 @@ void estimateSystematicUncertainties(){
     } // Centrality loop
   } // Jet energy scale uncertainty
   
+  // ================================================== //
+  //   Uncertainty coming from background subtraction   //
+  // ================================================== //
+  
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kBackgroundSubtraction]){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kBackgroundSubtraction] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+
+          // Draw example plots on how the uncertainty is obtained
+          if(plotExample && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+            legendNames[0] = "Bg scale from 2% shift";
+            legendNames[1] = "Bg scale from 6% shift";
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kBackgroundSubtraction), analysisDeltaR, ratioZoom);
+          }
+      
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Jet energy resolution uncertainty
   
   // ============================================= //
   //   Add all uncertainty sources in quadrature   //
