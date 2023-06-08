@@ -4,14 +4,15 @@
 
 /*
  * Macro for validating the background subtraction algorithm. In Pythia+Hydjet simulation, we can directly compare the extracted
- * signal to the true signal. It is done in this macro.
+ * signal to the true signal. It is done in this macro. Note that the input file must contain both regular and processed histograms.
  */
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root";
+  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_noJetPtWeight_processed_backgroundTest_2023-05-26.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -40,20 +41,19 @@ void validateBackgroundSubtraction(){
   
   // Select which histograms are fitted
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = nCentralityBins-1;
+  int lastDrawnCentralityBin = 0;
   
-  int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 6;
+  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = nTrackPtBinsEEC-1;
+  int firstDrawnTrackPtBinEEC = 5;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
   studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator] = true;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorJetPt] = false;
+  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = false;
   studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = false;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorJetPtUncorrected] = false;
   
   // Find index of one energy-energy correlator that is drawn
   int studiedEnergyEnergyCorrelatorType = -1;
@@ -72,7 +72,7 @@ void validateBackgroundSubtraction(){
   std::pair<double,double> ratioZoom = std::make_pair(0.9, 1.1);
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_genLevelCheck";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
@@ -82,9 +82,8 @@ void validateBackgroundSubtraction(){
     
   // Choose the energy-energy correlator types to load
   histograms->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-  histograms->SetLoadEnergyEnergyCorrelatorsJetPt(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorJetPt]);
+  histograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency]);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected]);
-  histograms->SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorJetPtUncorrected]);
     
   // Choose the bin ranges
   histograms->SetCentralityBinRange(0,nCentralityBins-1);
@@ -119,7 +118,7 @@ void validateBackgroundSubtraction(){
   // Helper histograms
   TH1D *helperHistogram;
   double normalizationFactor;
-  std::pair<double,double> drawingRange = std::make_pair(0.001, 0.4);
+  std::pair<double,double> drawingRange = std::make_pair(0.006, 0.39);
   double epsilon = 0.0000001;
   int lowSignalBin, highSignalBin;
   

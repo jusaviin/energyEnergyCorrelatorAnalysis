@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_newBinning_processed_2023-04-11.root", "data/ppMC2017_GenReco_Pythia8_pfJets_wtaAxis_newBinning_noTrackPairEfficiency_processed_2023-04-11.root", "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newBinning_fixCentrality_processed_2023-04-10.root", "data/PbPbMC2018_GenReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_newBinning_fixCentrality_processed_2023-04-10.root", "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_trackEfficiencyCorrectionWithJetPt_processed_2023-05-03.root"};
+  TString inputFileName[] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root", "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part2_processed_2023-05-20.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_32deltaRBins_trackPairEfficiencyWithoutJets_processed_2023-05-19.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_32deltaRBins_trackPairEfficiencyWithJets_processed_2023-05-19.root", "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_trackEfficiencyCorrectionWithJetPt_processed_2023-05-03.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Gen jets + gen particles", "Gen jets + reco tracks", "Gen jets + corr tracks", "Reco jets + corr tracks (new)"};
+  TString legendComment[] = {"Reco jets + gen particles", "Reco jets + reco tracks", "Reco jets + corr tracks (no jets)", "Reco jets + corr tracks (with jets)"};
   
   // Try to open the files
   TFile *inputFile[nDatasets];
@@ -59,13 +59,12 @@ void compareEEChistograms(){
   
   // Energy-energy correlators
   bool drawEnergyEnergyCorrelators = true;
-  bool drawEnergyEnergyCorrelatorsJetPt = false;
+  bool drawEnergyEnergyCorrelatorsNoTrackEfficiency = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
-  bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
   
   // Select which pairing types to draw
-  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which processed energy-energy correlators to draw
@@ -84,9 +83,9 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = true;
+  bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_pythiaTrackPairEfficiency";
+  const char* figureComment = "_pythiaHydjetTrackPairEfficiencyPerformance";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -139,8 +138,8 @@ void compareEEChistograms(){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = 0; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 6;
+  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
 
   int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
@@ -170,9 +169,8 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
     histograms[iDataset]->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
-    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
-    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
     
     histograms[iDataset]->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
     histograms[iDataset]->SetTrackPtBinRange(firstDrawnTrackPtBin,lastDrawnTrackPtBin);
@@ -210,9 +208,8 @@ void compareEEChistograms(){
   drawer->SetDrawParticlePtDensityAroundJetAxisPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   
   drawer->SetDrawEnergyEnergyCorrelator(drawEnergyEnergyCorrelators);
-  drawer->SetDrawEnergyEnergyCorrelatorJetPt(drawEnergyEnergyCorrelatorsJetPt);
+  drawer->SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
   drawer->SetDrawEnergyEnergyCorrelatorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
-  drawer->SetDrawEnergyEnergyCorrelatorJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
   
   drawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
   drawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);

@@ -12,7 +12,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_split1_systematicForJetPtUncertainty_2023-06-05.root", "chi2Files/chi2Histograms_pp_split2_systematicForJetPtUncertainty_2023-06-05.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_split1_2023-06-05.root", "chi2Files/chi2Histograms_pp_split2_2023-06-05.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
@@ -114,17 +114,17 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 3;
+  int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
 
   int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
   const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
-  const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
+  const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
-  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
-  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
+  const bool drawBestIterationRatioComparison = true; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -209,16 +209,16 @@ void drawUnfoldingChi2Test(){
     bestNumberOfIterations[0][0][5] = 7;  // pp, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[0][1][5] = 3;  // pp, track pT > 3 GeV, 140 < jet pT < 160
     bestNumberOfIterations[0][2][5] = 7;  // pp, track pT > 3 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[0][3][5] = 2;  // pp, track pT > 3 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[0][3][5] = 5;  // pp, track pT > 3 GeV, 180 < jet pT < 200
 
     // Best number of iteratios determined for combining all jet pT bins
     if(oneIterationPerMatrix) {
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 2;  // pp, track pT > 3 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 6;  // pp, track pT > 3 GeV
     }
   }
 
-  bool saveFigures = false;
-  TString saveComment = "_systematicUncertaintyJetResolution";
+  bool saveFigures = true;
+  TString saveComment = "_splitComparisonSingleIteration";
   TString figureFormat = "pdf";
 
   // Histograms for chi2 and error2 map

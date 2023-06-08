@@ -36,9 +36,8 @@ EECHistograms::EECHistograms() :
   fhParticleMultiplicityInReflectedConeUncorrected(0),
   fhMaxPtParticleInJet(0),
   fhEnergyEnergyCorrelator(0),
-  fhEnergyEnergyCorrelatorUncorrected(0),
-  fhEnergyEnergyCorrelatorJetPt(0),
-  fhEnergyEnergyCorrelatorJetPtUncorrected(0),
+  fhEnergyEnergyCorrelatorNoTrackEfficiency(0),
+  fhEnergyEnergyCorrelatorUncorrected(0),  
   fhJetPtClosure(0),
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
@@ -75,9 +74,8 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhParticleMultiplicityInReflectedConeUncorrected(0),
   fhMaxPtParticleInJet(0),
   fhEnergyEnergyCorrelator(0),
-  fhEnergyEnergyCorrelatorUncorrected(0),
-  fhEnergyEnergyCorrelatorJetPt(0),
-  fhEnergyEnergyCorrelatorJetPtUncorrected(0),
+  fhEnergyEnergyCorrelatorNoTrackEfficiency(0),
+  fhEnergyEnergyCorrelatorUncorrected(0),  
   fhJetPtClosure(0),
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
@@ -114,9 +112,8 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhParticleMultiplicityInReflectedConeUncorrected(in.fhParticleMultiplicityInReflectedConeUncorrected),
   fhMaxPtParticleInJet(in.fhMaxPtParticleInJet),
   fhEnergyEnergyCorrelator(in.fhEnergyEnergyCorrelator),
+  fhEnergyEnergyCorrelatorNoTrackEfficiency(in.fhEnergyEnergyCorrelatorNoTrackEfficiency),
   fhEnergyEnergyCorrelatorUncorrected(in.fhEnergyEnergyCorrelatorUncorrected),
-  fhEnergyEnergyCorrelatorJetPt(in.fhEnergyEnergyCorrelatorJetPt),
-  fhEnergyEnergyCorrelatorJetPtUncorrected(in.fhEnergyEnergyCorrelatorJetPtUncorrected),
   fhJetPtClosure(in.fhJetPtClosure),
   fhUnfoldingMeasured(in.fhUnfoldingMeasured),
   fhUnfoldingTruth(in.fhUnfoldingTruth),
@@ -157,9 +154,8 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhParticleMultiplicityInReflectedConeUncorrected = in.fhParticleMultiplicityInReflectedConeUncorrected;
   fhMaxPtParticleInJet = in.fhMaxPtParticleInJet;
   fhEnergyEnergyCorrelator = in.fhEnergyEnergyCorrelator;
+  fhEnergyEnergyCorrelatorNoTrackEfficiency = in.fhEnergyEnergyCorrelatorNoTrackEfficiency;
   fhEnergyEnergyCorrelatorUncorrected = in.fhEnergyEnergyCorrelatorUncorrected;
-  fhEnergyEnergyCorrelatorJetPt = in.fhEnergyEnergyCorrelatorJetPt;
-  fhEnergyEnergyCorrelatorJetPtUncorrected = in.fhEnergyEnergyCorrelatorJetPtUncorrected;
   fhJetPtClosure = in.fhJetPtClosure;
   fhUnfoldingMeasured = in.fhUnfoldingMeasured;
   fhUnfoldingTruth = in.fhUnfoldingTruth;
@@ -196,9 +192,8 @@ EECHistograms::~EECHistograms(){
   delete fhParticleMultiplicityInReflectedConeUncorrected;
   delete fhMaxPtParticleInJet;
   delete fhEnergyEnergyCorrelator;
+  delete fhEnergyEnergyCorrelatorNoTrackEfficiency;
   delete fhEnergyEnergyCorrelatorUncorrected;
-  delete fhEnergyEnergyCorrelatorJetPt;
-  delete fhEnergyEnergyCorrelatorJetPtUncorrected;
   delete fhJetPtClosure;
   delete fhUnfoldingMeasured;
   delete fhUnfoldingTruth;
@@ -723,30 +718,26 @@ void EECHistograms::CreateHistograms(){
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
   fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();
+  fhEnergyEnergyCorrelatorNoTrackEfficiency = new THnSparseF("energyEnergyCorrelatorNoTrackEfficiency", "energyEnergyCorrelatorNoTrackEfficiency", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorNoTrackEfficiency->Sumw2();
   fhEnergyEnergyCorrelatorUncorrected = new THnSparseF("energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorUncorrected", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorUncorrected->Sumw2();
-  fhEnergyEnergyCorrelatorJetPt = new THnSparseF("energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorJetPt", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorJetPt->Sumw2();
-  fhEnergyEnergyCorrelatorJetPtUncorrected = new THnSparseF("energyEnergyCorrelatorJetPtUncorrected", "energyEnergyCorrelatorJetPtUncorrected", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorJetPtUncorrected->Sumw2();
+  
   
   // Set custom bin borders for histograms
-  fhEnergyEnergyCorrelator->SetBinEdges(0,deltaRBinsEEC);                      // DeltaR bins
-  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(0,deltaRBinsEEC);           // DeltaR bins
-  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(0,deltaRBinsEEC);                 // DeltaR bins
-  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(0,deltaRBinsEEC);      // DeltaR bins
+  fhEnergyEnergyCorrelator->SetBinEdges(0,deltaRBinsEEC);                       // DeltaR bins
+  fhEnergyEnergyCorrelatorNoTrackEfficiency->SetBinEdges(0,deltaRBinsEEC);      // DeltaR bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(0,deltaRBinsEEC);            // DeltaR bins
   
-  fhEnergyEnergyCorrelator->SetBinEdges(1,jetPtBinsEEC);                       // Jet pT bins
-  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(1,jetPtBinsEEC);            // Jet pT bins
-  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(1,jetPtBinsEEC);                  // Jet pT bins
-  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(1,jetPtBinsEEC);       // Jet pT bins
+  fhEnergyEnergyCorrelator->SetBinEdges(1,jetPtBinsEEC);                        // Jet pT bins
+  fhEnergyEnergyCorrelatorNoTrackEfficiency->SetBinEdges(1,jetPtBinsEEC);       // Jet pT bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(1,jetPtBinsEEC);             // Jet pT bins
   
-  fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                     // Track pT bins
-  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(2,trackPtBinsEEC);          // Track pT bins
-  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(2,trackPtBinsEEC);                // Track pT bins
-  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(2,trackPtBinsEEC);     // Track pT bins
+  fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                      // Track pT bins
+  fhEnergyEnergyCorrelatorNoTrackEfficiency->SetBinEdges(2,trackPtBinsEEC);     // Track pT bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(2,trackPtBinsEEC);           // Track pT bins
   
-  fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                 // Centrality bins
-  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(3,wideCentralityBins);      // Centrality bins
-  fhEnergyEnergyCorrelatorJetPt->SetBinEdges(3,wideCentralityBins);            // Centrality bins
-  fhEnergyEnergyCorrelatorJetPtUncorrected->SetBinEdges(3,wideCentralityBins); // Centrality bins
+  fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                  // Centrality bins
+  fhEnergyEnergyCorrelatorNoTrackEfficiency->SetBinEdges(3,wideCentralityBins); // Centrality bins
+  fhEnergyEnergyCorrelatorUncorrected->SetBinEdges(3,wideCentralityBins);       // Centrality bins
   
   // ======== THnSparses for jet pT closures ========
   
@@ -887,9 +878,8 @@ void EECHistograms::Write() const{
   fhParticleMultiplicityInReflectedConeUncorrected->Write();
   fhMaxPtParticleInJet->Write();
   fhEnergyEnergyCorrelator->Write();
+  fhEnergyEnergyCorrelatorNoTrackEfficiency->Write();
   fhEnergyEnergyCorrelatorUncorrected->Write();
-  fhEnergyEnergyCorrelatorJetPt->Write();
-  fhEnergyEnergyCorrelatorJetPtUncorrected->Write();
   fhJetPtClosure->Write();
   fhUnfoldingMeasured->Write();
   fhUnfoldingTruth->Write();

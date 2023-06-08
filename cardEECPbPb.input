@@ -11,7 +11,7 @@ MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 TriggerSelection 2   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 5 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet80 || CaloJet100, 6 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 3 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -45,7 +45,7 @@ MinimumTrackHits 11         # Require this many hits for each track
 SubeventCut 2               # Cut on subevent index. 0 = 0, 1 = (>0), 2 = no cut
 
 # Flags for residual correction method
-DisableTrackPairEfficiencyCorrection 1 # 0 = Do not disable the correction. 1 = Disable the correction
+DisableTrackPairEfficiencyCorrection 0 # 0 = Do not disable the correction. 1 = Disable the correction
 
 # Cuts for event selection
 ZVertexCut 15       # Maximum vz value for accepted tracks

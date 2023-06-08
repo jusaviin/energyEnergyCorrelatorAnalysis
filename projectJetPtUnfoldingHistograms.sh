@@ -41,23 +41,20 @@ sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
 # Project regular energy-energy correlator histograms
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
 
-# Project jet pT weighted energy-energy correlator histograms
+# Project energy-energy correlator histograms without single track efficiency corrections
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
 
-# Project uncorrected energy-energy correlator histograms
+# Project energy-energy correlator histograms without single and pair track efficiency corrections
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
 
-# Project uncorrected jet pT weighted energy-energy correlator histograms
+# Project jet pT closure histograms
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",2048)'
 
-# Project jet pT closure histograms
+# Project jet pT response matrices
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",4096)'
 
-# Project jet pT response matrices
-#root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8192)'
-
 # Project jet pT unfolding histograms
-root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",16384)'
+root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8192)'
 
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/projectEEChistograms.C

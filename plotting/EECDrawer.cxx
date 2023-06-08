@@ -1366,27 +1366,22 @@ void EECDrawer::SetDrawEnergyEnergyCorrelor(const bool drawOrNot){
   fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelator] = drawOrNot;
 }
 
-// Setter for drawing jet pT weighted energy-energy correlator
-void EECDrawer::SetDrawEnergyEnergyCorrelorJetPt(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorJetPt] = drawOrNot;
+// Setter for drawing energy-energy correlators without single track efficiency corrections
+void EECDrawer::SetDrawEnergyEnergyCorrelorNoTrackEfficiency(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = drawOrNot;
 }
 
-// Setter for drawing uncorrected energy-energy correlator
+// Setter for drawing energy-energy correlators without single and pair track efficiency corrections
 void EECDrawer::SetDrawEnergyEnergyCorrelorUncorrected(const bool drawOrNot){
   fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = drawOrNot;
 }
 
-// Setter for drawing uncorrected jet pT weighted energy-energy correlator
-void EECDrawer::SetDrawEnergyEnergyCorrelorJetPtUncorrected(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorJetPtUncorrected] = drawOrNot;
-}
 
 // Setter for drawing all energy-energy correlators
-void EECDrawer::SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawJetPt, const bool drawUncorrected, const bool drawJetPtUncorrected){
+void EECDrawer::SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected){
   SetDrawEnergyEnergyCorrelor(drawRegular);
-  SetDrawEnergyEnergyCorrelorJetPt(drawJetPt);
+  SetDrawEnergyEnergyCorrelorNoTrackEfficiency(drawNoTrackEfficiency);
   SetDrawEnergyEnergyCorrelorUncorrected(drawUncorrected);
-  SetDrawEnergyEnergyCorrelorJetPtUncorrected(drawJetPtUncorrected);
 }
 
 // Setter for drawing the individual energy-energy correlator histograms

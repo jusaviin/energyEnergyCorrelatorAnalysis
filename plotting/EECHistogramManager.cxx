@@ -3210,27 +3210,21 @@ void EECHistogramManager::SetLoadEnergyEnergyCorrelators(const bool loadOrNot){
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelator] = loadOrNot;
 }
 
-// Setter for loading jet pT weighted energy-energy correlators
-void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsJetPt(const bool loadOrNot){
-  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorJetPt] = loadOrNot;
+// Setter for loading energy-energy correlators without single track efficiency corrections
+void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorNoTrackEfficiency] = loadOrNot;
 }
 
-// Setter for loading energy-energy correlators without tracking efficiency
+// Setter for loading energy-energy correlators without single and pair track efficiency corrections
 void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsUncorrected(const bool loadOrNot){
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorUncorrected] = loadOrNot;
 }
 
-// Setter for loading jet pT weighted energy-energy correlators without tracking efficiency
-void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(const bool loadOrNot){
-  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorJetPtUncorrected] = loadOrNot;
-}
-
 // Setter for loading all energy-energy correlators
-void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadJetPt, const bool loadUncorrected, const bool loadJetPtUncorrected){
+void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadNoTrackEfficiency, const bool loadUncorrected){
   SetLoadEnergyEnergyCorrelators(loadRegular);
-  SetLoadEnergyEnergyCorrelatorsJetPt(loadJetPt);
+  SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(loadNoTrackEfficiency);
   SetLoadEnergyEnergyCorrelatorsUncorrected(loadUncorrected);
-  SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(loadJetPtUncorrected);
 }
 
 // Setter for loading histograms needed in the jet pT unfolding study

@@ -24,13 +24,12 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = true;
+  bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = false;
-  bool drawEnergyEnergyCorrelatorsJetPt = false;
+  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelatorsNoTrackEfficiency = false;
   bool drawEnergyEnergyCorrelatorsUncorrected = false;
-  bool drawEnergyEnergyCorrelatorsJetPtUncorrected = false;
   bool drawMultiplicityHistograms = false;
   bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
@@ -76,8 +75,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
   
-  int firstDrawnJetPtBinEEC = 0;
-  int lastDrawnJetPtBinEEC = nJetPtBinsEEC-1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 6;
+  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 5;
   int lastDrawnTrackPtBinEEC = 5;
@@ -94,8 +93,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
-  const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
+  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSignalReflectedConeEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which processed energy-energy correlators to draw
@@ -119,7 +118,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const char* style3D = "surf1";
   
   // Select the style of histograms drawn for particle density histograms
-  const bool drawIndividualParticleDensities = true;
+  const bool drawIndividualParticleDensities = false;
   const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
@@ -175,9 +174,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   histograms->SetLoadMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone || drawMaxBackgroundParticlePtWithinJetCone);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
-  histograms->SetLoadEnergyEnergyCorrelatorsJetPt(drawEnergyEnergyCorrelatorsJetPt);
+  histograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
   histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
-  histograms->SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
   histograms->SetLoad2DHistograms(true);
   
   histograms->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
@@ -202,9 +200,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   resultDrawer->SetDrawTracks(drawTracks);
   resultDrawer->SetDrawTracksUncorrected(drawUncorrectedTracks);
   resultDrawer->SetDrawEnergyEnergyCorrelor(drawEnergyEnergyCorrelators);
-  resultDrawer->SetDrawEnergyEnergyCorrelorJetPt(drawEnergyEnergyCorrelatorsJetPt);
+  resultDrawer->SetDrawEnergyEnergyCorrelorNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
   resultDrawer->SetDrawEnergyEnergyCorrelorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
-  resultDrawer->SetDrawEnergyEnergyCorrelorJetPtUncorrected(drawEnergyEnergyCorrelatorsJetPtUncorrected);
   
   resultDrawer->SetDrawMultiplicityInJetCone(drawMultiplicityInJetCone);
   resultDrawer->SetDrawMultiplicityInReflectedCone(drawMultiplicityInReflectedCone);

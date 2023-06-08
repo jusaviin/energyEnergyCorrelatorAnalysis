@@ -1342,7 +1342,6 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Double_t trackEfficiencyCorrection2;    // Efficiency correction for the first track
   Double_t trackPairEfficiencyCorrection; // Efficiency correction for track pair efficiency
   Double_t correlatorWeight;            // Weight given to the energy-energy correlator pT1*pT2
-  Double_t correlatorWeightJetPt;       // Alternative weight given to the energy-energy correlator (pT1*pT2)/ jet pT^2
   Int_t subeventTrack1;    // Subevent index for the first track (0 = pythia, > 0 = hydjet)
   Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
   Int_t subeventCombination;      // Subevent combination type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet)
@@ -1429,7 +1428,6 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         
         // Calculate the weights given to the energy-energy correlators
         correlatorWeight = trackPt1*trackPt2;
-        correlatorWeightJetPt = correlatorWeight / (jetPt * jetPt);
         
         // Find the pair efficiency correction for the track pair
         trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
@@ -1443,11 +1441,11 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
         if(fFillEnergyEnergyCorrelators){
           fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight*correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPt->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * trackPairEfficiencyCorrection * fTotalEventWeight*correlatorWeightJetPt * reflectedConeWeight1*reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram
         }
         if(fFillEnergyEnergyCorrelatorsUncorrected) {
-          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight *  correlatorWeight * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the uncorrected energy-energy correlator histogram
-          fHistograms->fhEnergyEnergyCorrelatorJetPtUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight*correlatorWeightJetPt * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the uncorrected energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelatorNoTrackEfficiency->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator without single track efficiency corrections
+          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight *  correlatorWeight * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram without both single and pair track efficiency corrections
+          
         }
         
       } // Inner track loop
@@ -1928,7 +1926,7 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centralit
     }
   }
   
-  // Calculation for resolution worsening: we assume the jet energy resolution is a Gassian distribution with some certain sigma, if you would like to add a Gassian noise to make it worse, the sigma getting larger, then it obeys the random variable rule that X=Y+Z, where Y~N(y, sigmay) and Z~N(z,sigmaz), then X~N(y+z, sqrt(sigmay^2+sigmaz^2))). In this case, we assume that noise and the resolution are independent.
+  // Calculation for resolution worsening: we assume the jet energy resolution is a Gaussian distribution with some certain sigma, if you would like to add a Gaussian noise to make it worse, the sigma getting larger, then it obeys the random variable rule that X=Y+Z, where Y~N(y, sigmay) and Z~N(z,sigmaz), then X~N(y+z, sqrt(sigmay^2+sigmaz^2))). In this case, we assume that noise and the resolution are independent.
   // So let assume the sigmay is the jet energy resolution, then you want the sigmax = 1.2sigmay
   // which means that the sigmaz = sigmay * sqrt(1.2^2-1)
   

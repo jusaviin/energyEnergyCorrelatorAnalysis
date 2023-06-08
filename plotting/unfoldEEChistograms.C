@@ -45,8 +45,9 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                           0: Default results, no systematic study
  *                           1: Evaluate systematic uncertainties for jet pT resolution
  *                           2: Evaluate systematic uncertainties for jet energy scale
+ *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  */
-void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0){
+void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){
 
   // **********************************
   //       Open the input files
@@ -184,7 +185,9 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   // Load the data histograms to be unfolded from the data histogram manager
   EECHistogramManager* dataHistograms = new EECHistogramManager(dataInputFile, dataCard);
-  dataHistograms->SetLoadEnergyEnergyCorrelators(true);
+  dataHistograms->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
+  dataHistograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency);
+  dataHistograms->SetLoadEnergyEnergyCorrelatorsUncorrected(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorUncorrected);
   dataHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
   dataHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   dataHistograms->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
@@ -232,7 +235,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       rooResponse[iCentrality][iTrackPt] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality][iTrackPt], hUnfoldingTruth[iCentrality][iTrackPt], hUnfoldingResponse[iCentrality][iTrackPt]);
 
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
-        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = dataHistograms->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = dataHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
       } // Measured jet pT loop
     } // Track pT loop
   } // Centrality loop

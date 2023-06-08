@@ -65,10 +65,9 @@ public:
   
   // Setters for energy-energy correlators
   void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                  // Setter for drawing energy-energy correlator
-  void SetDrawEnergyEnergyCorrelorJetPt(const bool drawOrNot);             // Setter for drawing jet pT weighted energy-energy correlator
-  void SetDrawEnergyEnergyCorrelorUncorrected(const bool drawOrNot);       // Setter for drawing uncorrected energy-energy correlator
-  void SetDrawEnergyEnergyCorrelorJetPtUncorrected(const bool drawOrNot);  // Setter for drawing uncorrected jet pT weighted energy-energy correlator
-  void SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawJetPt, const bool drawUncorrected, const bool drawJetPtUncorrected); // Setter for drawing all energy-energy correlators
+  void SetDrawEnergyEnergyCorrelorNoTrackEfficiency(const bool drawOrNot); // Setter for drawing energy-energy correlators without single track efficiency corrections
+  void SetDrawEnergyEnergyCorrelorUncorrected(const bool drawOrNot);       // Setter for drawing energy-energy correlators without single and pair track efficiency corrections
+  void SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected); // Setter for drawing all energy-energy correlators
   
   // Setters for drawing different figures for energy-energy correlators
   void SetDrawSingleEnergyEnergyCorrelators(const bool drawOrNot);             // Setter for drawing the individual energy-energy correlator histograms

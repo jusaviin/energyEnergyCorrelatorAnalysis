@@ -36,7 +36,7 @@ public:
   enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
   
   // Indices for different energy-energy correlator categories
-  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorJetPt, kEnergyEnergyCorrelatorUncorrected, kEnergyEnergyCorrelatorJetPtUncorrected, knEnergyEnergyCorrelatorTypes};
+  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorNoTrackEfficiency, kEnergyEnergyCorrelatorUncorrected, knEnergyEnergyCorrelatorTypes};
   
   // Indices for different energy-energy correlator processing levels
   enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, kEnergyEnergyCorrelatorBackgroundAfterUnfolding, kEnergyEnergyCorrelatorUnfoldedSignal, knEnergyEnergyCorrelatorProcessingLevels};
@@ -73,8 +73,8 @@ private:
   const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})", "#rho(N_{ch})", "#rho(p_{T}^{ch})"};
   
   // Naming for energy-energy correlator histograms
-  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorJetPt", "energyEnergyCorrelatorUncorrected", "energyEnergyCorrelatorJetPtUncorrected"};
-  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC/jet pT", "Uncorrected EEC", "Uncorrected EEC/jet pT"};
+  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorNoTrackEfficiency", "energyEnergyCorrelatorUncorrected"};
+  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC without track eff", "Uncorrected EEC"};
   const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded", "BackgroundAfterUnfolding", "UnfoldedSignal"};
   
   // Naming for closure particle
@@ -148,11 +148,10 @@ public:
   void SetLoadMaxParticlePtWithinJetCone(const bool loadOrNot);
   
   // Setters for energy-energy correlator histograms
-  void SetLoadEnergyEnergyCorrelators(const bool loadOrNot);                 // Setter for loading energy-energy correlators
-  void SetLoadEnergyEnergyCorrelatorsJetPt(const bool loadOrNot);            // Setter for loading jet pT weighted energy-energy correlators
-  void SetLoadEnergyEnergyCorrelatorsUncorrected(const bool loadOrNot);      // Setter for loading energy-energy correlators without tracking efficiency
-  void SetLoadEnergyEnergyCorrelatorsJetPtUncorrected(const bool loadOrNot); // Setter for loading jet pT weighted energy-energy correlators without tracking efficiency
-  void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadJetPt, const bool loadUncorrected, const bool loadJetPtUncorrected); // Setter for loading all energy-energy correlators
+  void SetLoadEnergyEnergyCorrelators(const bool loadOrNot);                  // Setter for loading energy-energy correlators
+  void SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(const bool loadOrNot); // Setter for loading energy-energy correlators without single track efficiency corrections
+  void SetLoadEnergyEnergyCorrelatorsUncorrected(const bool loadOrNot);       // Setter for loading energy-energy correlators without single and pair track efficiency corrections
+  void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadNoTrackEfficiency, const bool loadUncorrected); // Setter for loading all energy-energy correlators
   
   // Setters for jet pT unfolding study
   void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the jet pT unfolding study

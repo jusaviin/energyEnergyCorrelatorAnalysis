@@ -1366,30 +1366,23 @@ void EECComparingDrawer::SetDrawEnergyEnergyCorrelator(const bool drawOrNot){
   CheckFlagsEnergyEnergyCorrelator();
 }
 
-// Setter for drawing energy-energy correlators
-void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorJetPt(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorJetPt] = drawOrNot;
+// Setter for drawing energy-energy correlators without single track efficiency corrections
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = drawOrNot;
   CheckFlagsEnergyEnergyCorrelator();
 }
 
-// Setter for drawing energy-energy correlators
+// Setter for drawing energy-energy correlators without single and pair track efficiency corrections
 void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorUncorrected(const bool drawOrNot){
   fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = drawOrNot;
   CheckFlagsEnergyEnergyCorrelator();
 }
 
-// Setter for drawing energy-energy correlators
-void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorJetPtUncorrected(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorJetPtUncorrected] = drawOrNot;
-  CheckFlagsEnergyEnergyCorrelator(); 
-}
-
 // Setter for drawing all energy-energy correlators
-void EECComparingDrawer::SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawJetPt, const bool drawUncorrected, const bool drawJetPtUncorrected){
+void EECComparingDrawer::SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected){
   SetDrawEnergyEnergyCorrelator(drawRegular);
-  SetDrawEnergyEnergyCorrelatorJetPt(drawJetPt);
+  SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(drawNoTrackEfficiency);
   SetDrawEnergyEnergyCorrelatorUncorrected(drawUncorrected);
-  SetDrawEnergyEnergyCorrelatorJetPtUncorrected(drawJetPtUncorrected);
 }
 
 // Setter for drawing same jet energy-energy correlators
