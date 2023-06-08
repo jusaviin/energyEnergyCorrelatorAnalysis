@@ -96,8 +96,8 @@ void fakeFakeBackgroundPlotter(){
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
   studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator] = true;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = false;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = false;
+  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus] = false;
+  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = false;
   
   // Select which plots to draw
   const bool drawFakeFakeForConstantJetPt = false;
@@ -123,8 +123,8 @@ void fakeFakeBackgroundPlotter(){
     
     // Choose the energy-energy correlator types to load
     histograms[iDataType]->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-    histograms[iDataType]->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency]);
-    histograms[iDataType]->SetLoadEnergyEnergyCorrelatorsUncorrected(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected]);
+    histograms[iDataType]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
+    histograms[iDataType]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
     
     // Choose the bin ranges
     histograms[iDataType]->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);

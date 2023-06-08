@@ -34,7 +34,7 @@ class EECAnalyzer{
   
 private:
   
-  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsUncorrected, kFillJetPtClosure, kFillJetPtUnfoldingResponse, knFillTypes}; // Histograms to fill
+  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsSystematics, kFillJetPtClosure, kFillJetPtUnfoldingResponse, knFillTypes}; // Histograms to fill
   enum enumSubeventCuts{kSubeventZero,kSubeventNonZero,kSubeventAny,knSubeventCuts}; // Cuts for subevent index
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix 
@@ -138,6 +138,9 @@ public:
   Double_t fMinimumTrackHits;          // Quality cut for track hits
   Int_t fSubeventCut;                  // Cut for the subevent index
 
+  // Systematic variations
+  Double_t fTrackEfficiencyVariation;  // Relative amount with which the tracking efficiency corrections are varied to estimate systematic uncertainties
+
   // Extra jet cuts for jet pT unfolding
   Double_t fReconstructedJetMinimumPtCut;  // Minimum jet pT cut for reconstructed jets for jet pT unfolding
   Double_t fGeneratorJetMinimumPtCut;      // Minimum jet pT cut for generator level jets for jet pT unfolding
@@ -156,7 +159,7 @@ public:
   Bool_t fFillTrackHistograms;                    // Fill inclusive tracks and tracks in dijet events
   Bool_t fFillJetConeHistograms;                  // Fill particle multiplicity and density histograms around the jet cone
   Bool_t fFillEnergyEnergyCorrelators;            // Fill energy-energy correlator histograms
-  Bool_t fFillEnergyEnergyCorrelatorsUncorrected; // Fill uncorrected energy-energy correlator histograms
+  Bool_t fFillEnergyEnergyCorrelatorsSystematics; // Fill energy-energy correlator histograms for systematic uncertainty analysis
   Bool_t fFillJetPtClosure;                       // Fill jet pT closure histograms
   Bool_t fFillJetPtUnfoldingResponse;             // Fill the jet pT unfolding response
   

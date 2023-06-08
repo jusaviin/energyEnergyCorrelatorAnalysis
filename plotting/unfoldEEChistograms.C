@@ -186,8 +186,8 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   // Load the data histograms to be unfolded from the data histogram manager
   EECHistogramManager* dataHistograms = new EECHistogramManager(dataInputFile, dataCard);
   dataHistograms->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsUncorrected(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorUncorrected);
+  dataHistograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus);
+  dataHistograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
   dataHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
   dataHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   dataHistograms->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());

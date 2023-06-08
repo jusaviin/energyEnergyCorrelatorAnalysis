@@ -1270,7 +1270,7 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
  *
  * THnSparse for energy-energy correlators:
  *
- *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorJetPt/energyEnergyCorrelatorUncorrected/energyEnergyCorrelatorJetPtUncorrected
+ *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus
  *
  *     Axis index       Content of axis                Note
  * ----------------------------------------------------------------------
@@ -3210,21 +3210,21 @@ void EECHistogramManager::SetLoadEnergyEnergyCorrelators(const bool loadOrNot){
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelator] = loadOrNot;
 }
 
-// Setter for loading energy-energy correlators without single track efficiency corrections
-void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(const bool loadOrNot){
-  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorNoTrackEfficiency] = loadOrNot;
+// Setter for loading energy-energy correlators with positive track efficiency variation
+void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorEfficiencyVariationPlus] = loadOrNot;
 }
 
-// Setter for loading energy-energy correlators without single and pair track efficiency corrections
-void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsUncorrected(const bool loadOrNot){
-  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorUncorrected] = loadOrNot;
+// Setter for loading energy-energy correlators with negative track efficiency variation
+void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorEfficiencyVariationMinus] = loadOrNot;
 }
 
 // Setter for loading all energy-energy correlators
-void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadNoTrackEfficiency, const bool loadUncorrected){
+void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus){
   SetLoadEnergyEnergyCorrelators(loadRegular);
-  SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(loadNoTrackEfficiency);
-  SetLoadEnergyEnergyCorrelatorsUncorrected(loadUncorrected);
+  SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(loadEfficiencyVariationPlus);
+  SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEfficiencyVariationMinus);
 }
 
 // Setter for loading histograms needed in the jet pT unfolding study

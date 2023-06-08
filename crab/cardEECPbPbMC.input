@@ -44,6 +44,9 @@ Chi2QualityCut 0.15         # Maximum accepted chi2/(nDof*nHits) for tracks
 MinimumTrackHits 11         # Require this many hits for each track 
 SubeventCut 1               # Cut on subevent index. 0 = 0, 1 = (>0), 2 = no cut
 
+# Systematic variations applied
+TrackEfficiencyVariation 0.024 # For tracking uncertainties, vary the efficiency correction by 2.4%
+
 # Flags for residual correction method
 DisableTrackPairEfficiencyCorrection 1 # 0 = Do not disable the correction. 1 = Disable the correction
 

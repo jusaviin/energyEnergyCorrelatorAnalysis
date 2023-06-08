@@ -93,6 +93,7 @@ EECAnalyzer::EECAnalyzer() :
   fChi2QualityCut(0),
   fMinimumTrackHits(0),
   fSubeventCut(0),
+  fTrackEfficiencyVariation(0.024),
   fReconstructedJetMinimumPtCut(0),
   fGeneratorJetMinimumPtCut(0),
   fLowerTruthUnfoldingBins(0),
@@ -104,7 +105,7 @@ EECAnalyzer::EECAnalyzer() :
   fFillTrackHistograms(false),
   fFillJetConeHistograms(false),
   fFillEnergyEnergyCorrelators(false),
-  fFillEnergyEnergyCorrelatorsUncorrected(false),
+  fFillEnergyEnergyCorrelatorsSystematics(false),
   fFillJetPtClosure(false),
   fFillJetPtUnfoldingResponse(false),
   fMultiplicityMode(false)
@@ -272,6 +273,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fChi2QualityCut(in.fChi2QualityCut),
   fMinimumTrackHits(in.fMinimumTrackHits),
   fSubeventCut(in.fSubeventCut),
+  fTrackEfficiencyVariation(in.fTrackEfficiencyVariation),
   fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
   fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
   fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
@@ -283,7 +285,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fFillTrackHistograms(in.fFillTrackHistograms),
   fFillJetConeHistograms(in.fFillJetConeHistograms),
   fFillEnergyEnergyCorrelators(in.fFillEnergyEnergyCorrelators),
-  fFillEnergyEnergyCorrelatorsUncorrected(in.fFillEnergyEnergyCorrelatorsUncorrected),
+  fFillEnergyEnergyCorrelatorsSystematics(in.fFillEnergyEnergyCorrelatorsSystematics),
   fFillJetPtClosure(in.fFillJetPtClosure),
   fFillJetPtUnfoldingResponse(in.fFillJetPtUnfoldingResponse),
   fMultiplicityMode(in.fMultiplicityMode)
@@ -342,6 +344,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fChi2QualityCut = in.fChi2QualityCut;
   fMinimumTrackHits = in.fMinimumTrackHits;
   fSubeventCut = in.fSubeventCut;
+  fTrackEfficiencyVariation = in.fTrackEfficiencyVariation;
   fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
   fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
   fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
@@ -353,7 +356,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillTrackHistograms = in.fFillTrackHistograms;
   fFillJetConeHistograms = in.fFillJetConeHistograms;
   fFillEnergyEnergyCorrelators = in.fFillEnergyEnergyCorrelators;
-  fFillEnergyEnergyCorrelatorsUncorrected = in.fFillEnergyEnergyCorrelatorsUncorrected;
+  fFillEnergyEnergyCorrelatorsSystematics = in.fFillEnergyEnergyCorrelatorsSystematics;
   fFillJetPtClosure = in.fFillJetPtClosure;
   fFillJetPtUnfoldingResponse = in.fFillJetPtUnfoldingResponse;
   fMultiplicityMode = in.fMultiplicityMode;
@@ -447,6 +450,12 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fSubeventCut = fCard->Get("SubeventCut");     // Required subevent type
 
   //****************************************
+  //        Systematic variations
+  //****************************************
+
+  fTrackEfficiencyVariation = fCard->Get("TrackEfficiencyVariation"); // Relative amount with which the tracking efficiency corrections are varied to estimate systematic uncertainties
+
+  //****************************************
   //    Correlation type for Monte Carlo
   //****************************************
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) {
@@ -490,7 +499,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fFillTrackHistograms = bitChecker.test(kFillTracks);
   fFillJetConeHistograms = bitChecker.test(kFillJetConeHistograms);
   fFillEnergyEnergyCorrelators = bitChecker.test(kFillEnergyEnergyCorrelators);
-  fFillEnergyEnergyCorrelatorsUncorrected = bitChecker.test(kFillEnergyEnergyCorrelatorsUncorrected);
+  fFillEnergyEnergyCorrelatorsSystematics = bitChecker.test(kFillEnergyEnergyCorrelatorsSystematics);
   fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
   fFillJetPtUnfoldingResponse = bitChecker.test(kFillJetPtUnfoldingResponse);
   
@@ -1065,7 +1074,7 @@ void EECAnalyzer::RunAnalysis(){
         //   Do energy-energy correlation within jets
         //************************************************
         
-        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected || fFillJetConeHistograms){
+        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
           for(int iPairingType = 0; iPairingType < 2; iPairingType++){
@@ -1228,7 +1237,7 @@ void EECAnalyzer::RunAnalysis(){
           } // Fill multiplicity in jets and maximum track pT within the jet cone histograms
           
           // Calculate the energy-energy correlator within this jet
-          if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsUncorrected){
+          if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics){
             CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
           }
           
@@ -1442,9 +1451,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         if(fFillEnergyEnergyCorrelators){
           fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight*correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram
         }
-        if(fFillEnergyEnergyCorrelatorsUncorrected) {
-          fHistograms->fhEnergyEnergyCorrelatorNoTrackEfficiency->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator without single track efficiency corrections
-          fHistograms->fhEnergyEnergyCorrelatorUncorrected->Fill(fillerEnergyEnergyCorrelator, fTotalEventWeight *  correlatorWeight * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram without both single and pair track efficiency corrections
+        if(fFillEnergyEnergyCorrelatorsSystematics) {
+          // For first systematic variation, increase the track efficiency corrections by the defined amount
+          fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 + trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 + trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);
+
+          // For second systematic variation, decrease the track efficiency corrections by the defined amount
+          fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 - trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 - trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight *  correlatorWeight * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);
           
         }
         

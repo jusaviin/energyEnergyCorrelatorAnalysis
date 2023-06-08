@@ -41,10 +41,10 @@ sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
 # Project regular energy-energy correlator histograms
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
 
-# Project energy-energy correlator histograms without single track efficiency corrections
+# Project energy-energy correlator histograms with positive track efficiency variation
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
 
-# Project energy-energy correlator histograms without single and pair track efficiency corrections
+# Project energy-energy correlator histograms with negative track efficiency variation
 #root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
 
 # Project jet pT closure histograms

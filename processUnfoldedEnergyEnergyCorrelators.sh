@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 1 ]; then
   echo "Usage of the script:"
-  echo "$0 fileName [-o outputFileName] [-u systemticUncertainty]"
+  echo "$0 fileName [-o outputFileName] [-u systematicUncertainty]"
   echo "fileName = Name of the file for which energy-energy correlator histograms are processed"
   echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the processed histograms"
   echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Nominal result, 1 = Background scale from 2% centrality shift, 2 = Background scale from 6% centrality shift"

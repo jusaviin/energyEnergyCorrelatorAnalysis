@@ -68,10 +68,10 @@ public:
   void SetDrawAllParticleDensitiesAroundJetAxis(const bool drawRegular, const bool drawPt, const bool drawPtBinned, const bool drawPtWeightedPtBinned); // Setter for drawing all particle densities around jet axis
   
   // Setters for energy-energy correaltors
-  void SetDrawEnergyEnergyCorrelator(const bool drawOrNot);                  // Setter for drawing energy-energy correlators
-  void SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(const bool drawOrNot); // Setter for drawing energy-energy correlators without single track efficiency corrections
-  void SetDrawEnergyEnergyCorrelatorUncorrected(const bool drawOrNot);       // Setter for drawing energy-energy correlators without single and pair track efficiency corrections
-  void SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected);  // Setter for drawing all energy-energy correlators
+  void SetDrawEnergyEnergyCorrelator(const bool drawOrNot);                         // Setter for drawing energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(const bool drawOrNot);  // Setter for drawing energy-energy correlators with positive track efficiency variation
+  void SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(const bool drawOrNot); // Setter for drawing energy-energy correlators with negative track efficiency variation
+  void SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus);  // Setter for drawing all energy-energy correlators
   
   // Setters for drawing different pairing types
   void SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot);              // Setter for drawing same jet energy-energy correlators

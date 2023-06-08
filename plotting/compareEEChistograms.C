@@ -59,8 +59,8 @@ void compareEEChistograms(){
   
   // Energy-energy correlators
   bool drawEnergyEnergyCorrelators = true;
-  bool drawEnergyEnergyCorrelatorsNoTrackEfficiency = false;
-  bool drawEnergyEnergyCorrelatorsUncorrected = false;
+  bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
+  bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   
   // Select which pairing types to draw
   const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
@@ -169,8 +169,8 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
     histograms[iDataset]->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
-    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
-    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
     
     histograms[iDataset]->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
     histograms[iDataset]->SetTrackPtBinRange(firstDrawnTrackPtBin,lastDrawnTrackPtBin);
@@ -208,8 +208,8 @@ void compareEEChistograms(){
   drawer->SetDrawParticlePtDensityAroundJetAxisPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   
   drawer->SetDrawEnergyEnergyCorrelator(drawEnergyEnergyCorrelators);
-  drawer->SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
-  drawer->SetDrawEnergyEnergyCorrelatorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
+  drawer->SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
+  drawer->SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   
   drawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
   drawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);

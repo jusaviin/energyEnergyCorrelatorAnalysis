@@ -28,8 +28,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   bool drawEnergyEnergyCorrelators = true;
-  bool drawEnergyEnergyCorrelatorsNoTrackEfficiency = false;
-  bool drawEnergyEnergyCorrelatorsUncorrected = false;
+  bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
+  bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawMultiplicityHistograms = false;
   bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
@@ -174,8 +174,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   histograms->SetLoadMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone || drawMaxBackgroundParticlePtWithinJetCone);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
-  histograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
-  histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   histograms->SetLoad2DHistograms(true);
   
   histograms->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
@@ -200,8 +200,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   resultDrawer->SetDrawTracks(drawTracks);
   resultDrawer->SetDrawTracksUncorrected(drawUncorrectedTracks);
   resultDrawer->SetDrawEnergyEnergyCorrelor(drawEnergyEnergyCorrelators);
-  resultDrawer->SetDrawEnergyEnergyCorrelorNoTrackEfficiency(drawEnergyEnergyCorrelatorsNoTrackEfficiency);
-  resultDrawer->SetDrawEnergyEnergyCorrelorUncorrected(drawEnergyEnergyCorrelatorsUncorrected);
+  resultDrawer->SetDrawEnergyEnergyCorrelorEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
+  resultDrawer->SetDrawEnergyEnergyCorrelorEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   
   resultDrawer->SetDrawMultiplicityInJetCone(drawMultiplicityInJetCone);
   resultDrawer->SetDrawMultiplicityInReflectedCone(drawMultiplicityInReflectedCone);

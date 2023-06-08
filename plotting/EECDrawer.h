@@ -64,10 +64,10 @@ public:
   void SetDrawMaxBackgroundParticlePtWithinJetCone(const bool drawOrNot);  // Setter for drawing the maximum background particle pT within the jet cone histograms
   
   // Setters for energy-energy correlators
-  void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                  // Setter for drawing energy-energy correlator
-  void SetDrawEnergyEnergyCorrelorNoTrackEfficiency(const bool drawOrNot); // Setter for drawing energy-energy correlators without single track efficiency corrections
-  void SetDrawEnergyEnergyCorrelorUncorrected(const bool drawOrNot);       // Setter for drawing energy-energy correlators without single and pair track efficiency corrections
-  void SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected); // Setter for drawing all energy-energy correlators
+  void SetDrawEnergyEnergyCorrelor(const bool drawOrNot);                         // Setter for drawing energy-energy correlator
+  void SetDrawEnergyEnergyCorrelorEfficiencyVariationPlus(const bool drawOrNot);  // Setter for drawing energy-energy correlators with positive track efficiency variation
+  void SetDrawEnergyEnergyCorrelorEfficiencyVariationMinus(const bool drawOrNot); // Setter for drawing energy-energy correlators with negative track efficiency variation
+  void SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus); // Setter for drawing all energy-energy correlators
   
   // Setters for drawing different figures for energy-energy correlators
   void SetDrawSingleEnergyEnergyCorrelators(const bool drawOrNot);             // Setter for drawing the individual energy-energy correlator histograms

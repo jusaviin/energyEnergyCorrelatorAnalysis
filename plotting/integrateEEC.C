@@ -52,8 +52,8 @@ void integrateEEC(){
   // Select the types of energy-energy correlators to integrate
   bool integrateEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
   integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator] = true;
-  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = false;
-  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = false;
+  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus] = false;
+  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = false;
   
   int integratedEnergyEnergyCorrelatorIndex = 0;
   
@@ -62,8 +62,8 @@ void integrateEEC(){
   
   // Choose the energy-energy correlator types to load
   histograms->SetLoadEnergyEnergyCorrelators(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-  histograms->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency]);
-  histograms->SetLoadEnergyEnergyCorrelatorsUncorrected(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected]);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
   
   // Choose the bin ranges
   histograms->SetCentralityBinRange(firstIntegratedCentralityBin,lastIntegratedCentralityBin);

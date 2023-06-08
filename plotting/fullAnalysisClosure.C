@@ -70,8 +70,8 @@ void fullAnalysisClosure(){
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
   studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator] = true;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = false;
-  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = false;
+  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus] = false;
+  studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = false;
   
   // Logarithmic axes
   const bool logDeltaR = true;
@@ -93,8 +93,8 @@ void fullAnalysisClosure(){
 
       // Choose the energy-energy correlator types to load
       histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsNoTrackEfficiency(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsUncorrected(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
 
       // Choose the bin ranges
       histograms[iFile][iSplit]->SetCentralityBinRange(0, card[iFile][iSplit]->GetNCentralityBins() - 1);

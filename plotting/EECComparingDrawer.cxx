@@ -1366,23 +1366,23 @@ void EECComparingDrawer::SetDrawEnergyEnergyCorrelator(const bool drawOrNot){
   CheckFlagsEnergyEnergyCorrelator();
 }
 
-// Setter for drawing energy-energy correlators without single track efficiency corrections
-void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorNoTrackEfficiency] = drawOrNot;
+// Setter for drawing energy-energy correlators with positive track efficiency variation
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus] = drawOrNot;
   CheckFlagsEnergyEnergyCorrelator();
 }
 
-// Setter for drawing energy-energy correlators without single and pair track efficiency corrections
-void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorUncorrected(const bool drawOrNot){
-  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorUncorrected] = drawOrNot;
+// Setter for drawing energy-energy correlators with negative track efficiency variation
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = drawOrNot;
   CheckFlagsEnergyEnergyCorrelator();
 }
 
 // Setter for drawing all energy-energy correlators
-void EECComparingDrawer::SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawNoTrackEfficiency, const bool drawUncorrected){
+void EECComparingDrawer::SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus){
   SetDrawEnergyEnergyCorrelator(drawRegular);
-  SetDrawEnergyEnergyCorrelatorNoTrackEfficiency(drawNoTrackEfficiency);
-  SetDrawEnergyEnergyCorrelatorUncorrected(drawUncorrected);
+  SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(drawEfficiencyVariationPlus);
+  SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(drawEfficiencyVariationMinus);
 }
 
 // Setter for drawing same jet energy-energy correlators
