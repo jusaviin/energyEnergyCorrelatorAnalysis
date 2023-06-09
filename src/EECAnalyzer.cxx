@@ -733,7 +733,7 @@ void EECAnalyzer::RunAnalysis(){
     //         Main event loop for each file
     //************************************************
     
-    for(Int_t iEvent = 0; iEvent < 5; iEvent++){ // nEvents
+    for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
       
       //************************************************
       //         Read basic event information
