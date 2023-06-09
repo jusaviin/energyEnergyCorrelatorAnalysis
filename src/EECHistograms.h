@@ -62,8 +62,10 @@ public:
   THnSparseF* fhParticleMultiplicityInReflectedConeUncorrected; // Uncorrected multiplicity of particles within the reflected jet cones
   THnSparseF* fhMaxPtParticleInJet;                // Histogram for maximum pT particle found in the jet
   THnSparseF* fhEnergyEnergyCorrelator;                  // Histogram for energy-energy correlator. Axes: [dR][jetPt][trackPt][centrality]
-  THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationPlus;  // Histogram for energy-energy correlator with track efficiency correction increased by 2.4% Axes: [dR][jetPt][trackPt][centrality]
-  THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationMinus; // Histogram for energy-energy correlator with track efficiency correction decreased by 2.4%. Axes: [dR][jetPt][trackPt][centrality]
+  THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationPlus;  // Histogram for energy-energy correlator with track efficiency correction increased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
+  THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationMinus; // Histogram for energy-energy correlator with track efficiency correction decreased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
+  THnSparseF* fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;  // Histogram for energy-energy correlator with track pair efficiency correction increased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
+  THnSparseF* fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus; // Histogram for energy-energy correlator with track pair efficiency correction decreased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhJetPtClosure; // Jet pT closure histograms. Also information for response matrix. [gen pT][reco pT][centrality][q/g][reco/gen]
   
   // Extra histogram for unfolding study

@@ -41,10 +41,10 @@ root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128)'
 # Project regular energy-energy correlator histograms
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256)'
 
-# Project energy-energy correlator histograms with positive track efficiency variation
+# Project energy-energy correlator histograms with track efficiency variations
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",512)'
 
-# Project energy-energy correlator histograms with negative track efficiency variation
+# Project energy-energy correlator histograms with track pair efficiency variations
 root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",1024)'
 
 # Project jet pT closure histograms

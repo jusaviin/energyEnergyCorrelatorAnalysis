@@ -55,6 +55,8 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   histograms->SetLoadEnergyEnergyCorrelators(true);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(false);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(false);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(false);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(false);
 
   // Set the bin ranges to those for which the unfolded histograms are available
   histograms->SetCentralityBinRange(card->GetFirstUnfoldedCentralityBin(), card->GetLastUnfoldedCentralityBin());

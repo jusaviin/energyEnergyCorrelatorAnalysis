@@ -71,7 +71,9 @@ public:
   void SetDrawEnergyEnergyCorrelator(const bool drawOrNot);                         // Setter for drawing energy-energy correlators
   void SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(const bool drawOrNot);  // Setter for drawing energy-energy correlators with positive track efficiency variation
   void SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(const bool drawOrNot); // Setter for drawing energy-energy correlators with negative track efficiency variation
-  void SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus);  // Setter for drawing all energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorPairEfficiencyVariationPlus(const bool drawOrNot);  // Setter for drawing energy-energy correlators with positive track pair efficiency variation
+  void SetDrawEnergyEnergyCorrelatorPairEfficiencyVariationMinus(const bool drawOrNot); // Setter for drawing energy-energy correlators with negative track pair efficiency variation
+  void SetDrawAllEnergyEnergyCorrelators(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus, const bool drawPairEfficiencyVariationPlus, const bool drawPairEfficiencyVariationMinus);  // Setter for drawing all energy-energy correlators
   
   // Setters for drawing different pairing types
   void SetDrawSameJetEnergyEnergyCorrelators(const bool drawOrNot);              // Setter for drawing same jet energy-energy correlators

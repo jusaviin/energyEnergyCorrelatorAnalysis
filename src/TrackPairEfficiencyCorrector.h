@@ -26,8 +26,8 @@ public:
   TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection);   // Custom constructor
   ~TrackPairEfficiencyCorrector() = default;        // Destructor
   
-  double GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt = -1) const;
-  
+  std::pair<double,double> GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt = -1) const;
+
   void ReadCorrectionTables(); // Initialize the correction tables from file
   
   void SetDisableCorrection(const bool disable); // Setter for disabling the correction

@@ -5,9 +5,20 @@ if [ "$#" -lt 1 ]; then
   echo "$0 fileName [-o outputFileName] [-s split] [-u systematicUncertainty] [-e energyEnergyCorrelatorType]"
   echo "fileName = Name of the file containing the energy-energy correlators that needs unfolding"
   echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the unfolded histograms"
-  echo "-s split = Split index for response matrix. 0 = Full MC stats. 1 = First half of stats. 2 = Second half of stats. Default = 0."
-  echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Nominal result, 1 = Jet energy resolution uncertainty, 2 = Jet energy scale uncertainty. Default = 0."
-  echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. 0 = Regular energy-energy correlator, 1 = Energy-energy correlator without single track efficiencies, 2 = Energy-energy correlator without single and pair track efficiencies. Default = 0."
+  echo "-s split = Split index for response matrix. Default: 0."
+  echo "   0 = Full MC statistics"
+  echo "   1 = First half of statistics"
+  echo "   2 = Second half of statistics"
+  echo "-u systematicUncertainty = Index for systematic uncertainty. Default: 0."
+  echo "   0 = Nominal result"
+  echo "   1 = Jet energy resolution uncertainty"
+  echo "   2 = Jet energy scale uncertainty"
+  echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. Default: 0."
+  echo "   0 = Regular energy-energy correlator"
+  echo "   1 = Energy-energy correlator with positive track efficiency variation"
+  echo "   2 = Energy-energy correlator with negative track efficiency variation"
+  echo "   3 = Energy-energy correlator with positive track pair efficiency variation"
+  echo "   4 = Energy-energy correlator with negative track pair efficiency variation"
   exit
 fi
 

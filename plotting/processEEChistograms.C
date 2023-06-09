@@ -54,6 +54,8 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   histograms->SetLoadEnergyEnergyCorrelators(true);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(false);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(false);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(false);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(false);
 
   // Load the histograms from the file
   histograms->LoadProcessedHistograms();

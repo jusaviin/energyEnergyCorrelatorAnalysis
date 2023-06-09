@@ -24,7 +24,7 @@ void compareEEChistograms(){
   TString legendComment[] = {"Reco jets + gen particles", "Reco jets + reco tracks", "Reco jets + corr tracks (no jets)", "Reco jets + corr tracks (with jets)"};
   
   // Try to open the files
-  TFile *inputFile[nDatasets];
+  TFile* inputFile[nDatasets];
   for(int iDataset = 0; iDataset < nDatasets; iDataset++){
     // Open the file for the given dataset
     inputFile[iDataset] = TFile::Open(inputFileName[iDataset]);
@@ -37,7 +37,7 @@ void compareEEChistograms(){
   }
    
   // Read the EECCard from the first file. This is used to gain binning information, and assumed to be the same in other files too
-  EECCard *card = new EECCard(inputFile[0]);
+  EECCard* card = new EECCard(inputFile[0]);
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
@@ -61,6 +61,8 @@ void compareEEChistograms(){
   bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
+  bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
+  bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = false;
   
   // Select which pairing types to draw
   const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
@@ -151,7 +153,7 @@ void compareEEChistograms(){
   // ==================================================================
   // ================= Setup EECHistogramManagers =====================
   // ==================================================================
-  EECHistogramManager *histograms[nDatasets];
+  EECHistogramManager* histograms[nDatasets];
   
   for(int iDataset = 0; iDataset < nDatasets; iDataset++){
     
@@ -171,6 +173,8 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
     
     histograms[iDataset]->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
     histograms[iDataset]->SetTrackPtBinRange(firstDrawnTrackPtBin,lastDrawnTrackPtBin);
@@ -186,7 +190,7 @@ void compareEEChistograms(){
   // ==== Setup EECComparingDrawer and draw the comparison plots ======
   // ==================================================================
   
-  EECComparingDrawer *drawer = new EECComparingDrawer(histograms[0]);
+  EECComparingDrawer* drawer = new EECComparingDrawer(histograms[0]);
   drawer->AddLegendComment(legendComment[0]);
   for(int i = 1; i < nDatasets; i++){
     drawer->AddHistogramToDraw(histograms[i]);
@@ -210,6 +214,8 @@ void compareEEChistograms(){
   drawer->SetDrawEnergyEnergyCorrelator(drawEnergyEnergyCorrelators);
   drawer->SetDrawEnergyEnergyCorrelatorEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
   drawer->SetDrawEnergyEnergyCorrelatorEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
+  drawer->SetDrawEnergyEnergyCorrelatorPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
+  drawer->SetDrawEnergyEnergyCorrelatorPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
   
   drawer->SetDrawSameJetEnergyEnergyCorrelators(drawSameJetEnergyEnergyCorrelator);
   drawer->SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedConeEnergyEnergyCorrelator);

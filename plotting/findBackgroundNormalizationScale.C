@@ -18,7 +18,7 @@ void findBackgroundNormalizationScale(){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_6pCentShift_noTrigger_cutBadPhi_noJetPtWeight_forBackgroundScale_processed_2023-06-06.root
   
   // Open the input file
-  TFile *inputFile = TFile::Open(inputFileName);
+  TFile* inputFile = TFile::Open(inputFileName);
   
   if(inputFile == NULL){
     cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
@@ -28,7 +28,7 @@ void findBackgroundNormalizationScale(){
   }
   
   // Load the card from the file and read the collision system
-  EECCard *card = new EECCard(inputFile);
+  EECCard* card = new EECCard(inputFile);
   TString collisionSystem = card->GetDataType();
   
   // ====================================================
@@ -51,6 +51,8 @@ void findBackgroundNormalizationScale(){
   integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator] = true;
   integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus] = false;
   integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = false;
+  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus] = false;
+  integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus] = false;
   
   // Determine an inxed of a drawn energy-energy correlator
   int lowestEnergyEnergyCorrelatorIndex = -1;
@@ -62,12 +64,14 @@ void findBackgroundNormalizationScale(){
   }
     
   // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager *histograms = new EECHistogramManager(inputFile,card);
+  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
   // Choose the energy-energy correlator types to load
   histograms->SetLoadEnergyEnergyCorrelators(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus]);
   
   // Choose the bin ranges
   histograms->SetCentralityBinRange(0,nCentralityBins);

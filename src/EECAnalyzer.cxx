@@ -733,7 +733,7 @@ void EECAnalyzer::RunAnalysis(){
     //         Main event loop for each file
     //************************************************
     
-    for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
+    for(Int_t iEvent = 0; iEvent < 5; iEvent++){ // nEvents
       
       //************************************************
       //         Read basic event information
@@ -1366,6 +1366,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Int_t startIndex;        // First index when looping over the second tracks
   Int_t reflectedConeWeight1; // Weight given to the first particle if it is from the reflected cone
   Int_t reflectedConeWeight2; // Weight given to the second particle if it is from the reflected cone
+
+  // Variables for systematic uncertainty study
+  Double_t trackPairEfficiencyError;            // Error of the evaluated track pair efficiency
+  Double_t trackPairInefficiency;               // Value for track pair inefficiency
+  Double_t trackPairInefficiencyVariation;      // Systematic variation applied for the track pair inefficiency
+  Double_t variedTrackPairEfficiencyCorrection; // Varied correction for track pair efficiency
   
   // Variables for the number of tracks
   Int_t nTracks1;
@@ -1448,7 +1454,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         correlatorWeight = trackPt1*trackPt2;
         
         // Find the pair efficiency correction for the track pair
-        trackPairEfficiencyCorrection = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+        std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
 
         // Fill the energy-energy correlator histograms
         fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
@@ -1458,7 +1464,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
         fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
         if(fFillEnergyEnergyCorrelators){
-          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight*correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram
+          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);  // Fill the energy-energy correlator histogram
         }
         if(fFillEnergyEnergyCorrelatorsSystematics) {
           // For first systematic variation, increase the track efficiency corrections by the defined amount
@@ -1466,9 +1472,21 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 
           // For second systematic variation, decrease the track efficiency corrections by the defined amount
           fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 - trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 - trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight *  correlatorWeight * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);
-          
-        }
-        
+
+          // For the systematic uncertainties vary the track pair inefficiency either by twice the track efficiency uncertainty or by it's error, which one is bigger
+          trackPairInefficiency = 1.0 - (1.0 / trackPairEfficiencyCorrection);
+          trackPairInefficiencyVariation = (2*fTrackEfficiencyVariation*trackPairInefficiency > trackPairEfficiencyError) ? 2*fTrackEfficiencyVariation*trackPairInefficiency : trackPairEfficiencyError;
+          variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency + trackPairInefficiencyVariation));
+
+          // Fill the histogram with decresed track pair efficiency
+          fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight); 
+
+          // Next, vary the track pair inefficiency to the other direction
+          variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency - trackPairInefficiencyVariation));
+
+          // Fill the histogarm with increased track pair efficiency
+          fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * reflectedConeWeight1 * reflectedConeWeight2 * jetPtWeight);
+        } // Fill systematic uncertainty evaluation correlators 
       } // Inner track loop
     } // Outer track loop
   } // Loop over pairing types (same jet/reflected cone jet)

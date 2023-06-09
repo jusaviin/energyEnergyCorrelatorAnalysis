@@ -1376,12 +1376,23 @@ void EECDrawer::SetDrawEnergyEnergyCorrelorEfficiencyVariationMinus(const bool d
   fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus] = drawOrNot;
 }
 
+// Setter for drawing energy-energy correlators with positive track pair efficiency variation
+void EECDrawer::SetDrawEnergyEnergyCorrelorPairEfficiencyVariationPlus(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus] = drawOrNot;
+}
+
+// Setter for drawing energy-energy correlators with negative track pair efficiency variation
+void EECDrawer::SetDrawEnergyEnergyCorrelorPairEfficiencyVariationMinus(const bool drawOrNot){
+  fDrawEnergyEnergyCorrelators[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus] = drawOrNot;
+}
 
 // Setter for drawing all energy-energy correlators
-void EECDrawer::SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus){
+void EECDrawer::SetDrawAllEnergyEnergyCorrelors(const bool drawRegular, const bool drawEfficiencyVariationPlus, const bool drawEfficiencyVariationMinus, const bool drawPairEfficiencyVariationPlus, const bool drawPairEfficiencyVariationMinus){
   SetDrawEnergyEnergyCorrelor(drawRegular);
   SetDrawEnergyEnergyCorrelorEfficiencyVariationPlus(drawEfficiencyVariationPlus);
   SetDrawEnergyEnergyCorrelorEfficiencyVariationMinus(drawEfficiencyVariationMinus);
+  SetDrawEnergyEnergyCorrelorPairEfficiencyVariationPlus(drawPairEfficiencyVariationPlus);
+  SetDrawEnergyEnergyCorrelorPairEfficiencyVariationMinus(drawPairEfficiencyVariationMinus);
 }
 
 // Setter for drawing the individual energy-energy correlator histograms

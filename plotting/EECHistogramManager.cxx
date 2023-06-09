@@ -1270,7 +1270,8 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
  *
  * THnSparse for energy-energy correlators:
  *
- *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus
+ *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus/
+ *                   energyEnergyCorrelatorPairEfficiencyVariationPlus/energyEnergyCorrelatorPairEfficiencyVariationMinus
  *
  *     Axis index       Content of axis                Note
  * ----------------------------------------------------------------------
@@ -3220,11 +3221,23 @@ void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorEfficiencyVariationMinus] = loadOrNot;
 }
 
+// Setter for loading energy-energy correlators with positive track pair efficiency variation 
+void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorPairEfficiencyVariationPlus] = loadOrNot;
+}
+
+// Setter for loading energy-energy correlators with negative track pair efficiency variation  
+void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorPairEfficiencyVariationMinus] = loadOrNot;
+} 
+
 // Setter for loading all energy-energy correlators
-void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus){
+void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus){
   SetLoadEnergyEnergyCorrelators(loadRegular);
   SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(loadEfficiencyVariationPlus);
   SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEfficiencyVariationMinus);
+  SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadPairEfficiencyVariationPlus);
+  SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadPairEfficiencyVariationMinus);
 }
 
 // Setter for loading histograms needed in the jet pT unfolding study

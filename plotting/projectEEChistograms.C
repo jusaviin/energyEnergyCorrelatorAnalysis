@@ -35,6 +35,8 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadEnergyEnergyCorrelators = true;
   bool loadEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
+  bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
+  bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = false;
   bool loadJetPtClosure = false;
   bool loadJetPtResponseMatrix = false;
   bool loadJetPtUnfoldingHistograms = false;
@@ -51,8 +53,8 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 6 = Load particle pT density histograms around jet axes (to set: 64)
    *  Bit 7 = Load maximum particle pT within the jet cone histograms (to set: 128)
    *  Bit 8 = Load energy-energy correlator histograms (to set: 256)
-   *  Bit 9 = Load energy-energy correlator histograms with positive track efficiency variation(to set: 512)
-   *  Bit 10 = Load energy-energy correlator histograms with negative track efficiency variation (to set: 1024)
+   *  Bit 9 = Load energy-energy correlator histograms with track efficiency variations (to set: 512)
+   *  Bit 10 = Load energy-energy correlator histograms with track pair efficiency variation (to set: 1024)
    *  Bit 11 = Load jet pT closure histograms (to set: 2048)
    *  Bit 12 = Load jet pT response matrix (to set: 4096)
    *  Bit 13 = Load jet pT unfolding histograms (to set: 8192)
@@ -69,7 +71,9 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadMaxParticlePtWithinJetCone = bitChecker.test(7);
     loadEnergyEnergyCorrelators = bitChecker.test(8);
     loadEnergyEnergyCorrelatorsEfficiencyVariationPlus = bitChecker.test(9);
-    loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = bitChecker.test(10);
+    loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = bitChecker.test(9);
+    loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = bitChecker.test(10);
+    loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = bitChecker.test(10);
     loadJetPtClosure = bitChecker.test(11);
     loadJetPtResponseMatrix = bitChecker.test(12);
     loadJetPtUnfoldingHistograms = bitChecker.test(13);
@@ -199,6 +203,8 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadEnergyEnergyCorrelators(loadEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(loadEnergyEnergyCorrelatorsEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsEfficiencyVariationMinus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
   histograms->SetLoad2DHistograms(true);
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);

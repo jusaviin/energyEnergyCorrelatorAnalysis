@@ -134,31 +134,36 @@ int TrackPairEfficiencyCorrector::FindJetPtBin(const double jetPt) const{
  *  const double centrality = Centrality of the event
  *  const double triggerPt = Trigger particle pT
  *  const double associatedPt = Associated particle pT
+ *
+ *  return: std::pair<double,double> where the first number is the correction, and the second is the error of the track pair efficiency
  */
-double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt) const{
+std::pair<double,double> TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt) const{
   
-  if(fDisableCorrection) return 1;
+  if(fDisableCorrection) return std::make_pair(1,0);
 
   // Determine the correct bin from the centrality and track pT values
   int iCentrality = FindCentralityBin(centrality);
   int iTriggerPt = FindTrackPtBin(triggerPt);
   int iAssociatedPt = FindTrackPtBin(associatedPt);
+  double correction = 1;
+  double error = 0;
 
   // If jet pT is given, use the correction with jet pT bins
-  if(jetPt > 0) { // There is no statistics for very high pT jets with very high pT tracks, so relax the jet requirement there
-    if(deltaR > 0.4) return 1;
+  if(jetPt > 0) { // There are no statistics for very high pT jets with very high pT tracks, so relax the jet requirement there
+    if(deltaR > 0.4) return std::make_pair(1,0);
     int iJetPt = FindJetPtBin(jetPt);
     // Ensure that the trigger pT is higher than associated pT
-    double correction = 1;
     if(iTriggerPt >= iAssociatedPt){
       correction = 1.0/fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->GetBinContent(fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->FindBin(deltaR));
+      error = fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->GetBinError(fCorrectionTableCloseToJet[iCentrality][iTriggerPt][iAssociatedPt][iJetPt]->FindBin(deltaR));
     } else {
       correction = 1.0/fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->GetBinContent(fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->FindBin(deltaR));
+      error = fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->GetBinError(fCorrectionTableCloseToJet[iCentrality][iAssociatedPt][iTriggerPt][iJetPt]->FindBin(deltaR));
     }
 
     // Check that the correction is sane
     if(1.0/correction > 0.01 && 1.0/correction < 2){
-      return correction;
+      return std::make_pair(correction,error);
     }
 
     // If the correction does not make sense, use the correction without jet pT bins instead
@@ -169,9 +174,13 @@ double TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCorrection(const doub
     
   // Ensure that the trigger pT is higher than associated pT
   if(iTriggerPt >= iAssociatedPt){
-    return 1.0/fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->GetBinContent(fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->FindBin(deltaR));
+    correction = 1.0/fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->GetBinContent(fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->FindBin(deltaR));
+    error = fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->GetBinError(fCorrectionTable[iCentrality][iTriggerPt][iAssociatedPt]->FindBin(deltaR));
+  } else {
+    correction = 1.0/fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->GetBinContent(fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->FindBin(deltaR));
+    error = fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->GetBinError(fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->FindBin(deltaR));
   }
-  return 1.0/fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->GetBinContent(fCorrectionTable[iCentrality][iAssociatedPt][iTriggerPt]->FindBin(deltaR));
+  return std::make_pair(correction, error);
 }
 
 // Setter for disabling the correction

@@ -30,6 +30,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
+  bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
+  bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = false;
   bool drawMultiplicityHistograms = false;
   bool drawParticleDensityAroundJets = false;
   bool drawParticlePtDensityAroundJets = false;
@@ -39,7 +41,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawMaxBackgroundParticlePtWithinJetCone = false;
   
   // Open the input file
-  TFile *inputFile = TFile::Open(inputFileName);
+  TFile* inputFile = TFile::Open(inputFileName);
   
   if(inputFile == NULL){
     cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
@@ -49,7 +51,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   }
   
   // Load the card from the file and read the collision system
-  EECCard *card = new EECCard(inputFile);
+  EECCard* card = new EECCard(inputFile);
   TString collisionSystem = card->GetDataType();
     
   // ====================================================
@@ -160,7 +162,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // ============================ //
     
   // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager *histograms = new EECHistogramManager(inputFile,card);
+  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
   // Set which histograms to draw from the input file
   histograms->SetLoadEventInformation(drawEventInformation);
@@ -176,6 +178,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
   histograms->SetLoad2DHistograms(true);
   
   histograms->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
@@ -192,7 +196,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // ============================ //
   
   // Create a new EECDrawer
-  EECDrawer *resultDrawer = new EECDrawer(histograms);
+  EECDrawer* resultDrawer = new EECDrawer(histograms);
 
   // Set which histograms to draw and the drawing style to use
   resultDrawer->SetDrawEventInformation(drawEventInformation);
@@ -202,6 +206,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   resultDrawer->SetDrawEnergyEnergyCorrelor(drawEnergyEnergyCorrelators);
   resultDrawer->SetDrawEnergyEnergyCorrelorEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
   resultDrawer->SetDrawEnergyEnergyCorrelorEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
+  resultDrawer->SetDrawEnergyEnergyCorrelorPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
+  resultDrawer->SetDrawEnergyEnergyCorrelorPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
   
   resultDrawer->SetDrawMultiplicityInJetCone(drawMultiplicityInJetCone);
   resultDrawer->SetDrawMultiplicityInReflectedCone(drawMultiplicityInReflectedCone);
