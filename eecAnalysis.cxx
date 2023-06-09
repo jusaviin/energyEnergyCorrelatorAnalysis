@@ -1,6 +1,6 @@
 // C++ includes
 #include <iostream>   // Input/output stream. Needed for cout.
-#include <fstream>    // File stream for intup/output to/from files
+#include <fstream>    // File stream for input/output to/from files
 #include <stdlib.h>   // Standard utility libraries
 #include <assert.h>   // Standard c++ debugging tool. Terminates the program if expression given evaluates to 0.
 #include <vector>     // C++ vector class
