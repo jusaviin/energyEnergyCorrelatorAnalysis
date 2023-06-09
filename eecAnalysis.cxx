@@ -39,7 +39,7 @@ void ReadFileList(std::vector<TString> &fileNameVector, TString fileNameFile, in
 {
   
   // Possible location for the input files
-  const char *fileLocation[] = {"root://eos.cms.rcac.purdue.edu/", "root://eoscms.cern.ch/", "root://xrootd-vanderbilt.sites.opensciencegrid.org/", "root://cmsxrootd.fnal.gov/"};
+  const char* fileLocation[] = {"root://eos.cms.rcac.purdue.edu/", "root://eoscms.cern.ch/", "root://xrootd-vanderbilt.sites.opensciencegrid.org/", "root://cmsxrootd.fnal.gov/"};
   
   // Set up the file names file for reading
   ifstream file_stream(fileNameFile);
@@ -67,9 +67,9 @@ void ReadFileList(std::vector<TString> &fileNameVector, TString fileNameFile, in
           
         } else {
           // For crab running, the line will have format ["file1", "file2", ... , "fileN"]
-          TObjArray *fileNameArray = lineString.Tokenize(" ");  // Tokenize the string from every ' ' character
+          TObjArray* fileNameArray = lineString.Tokenize(" ");  // Tokenize the string from every ' ' character
           int numberOfFiles = fileNameArray->GetEntries();
-          TObjString *currentFileNameObject;
+          TObjString* currentFileNameObject;
           TString currentFileName;
           for(int i = 0; i < numberOfFiles; i++){   // Loop over all the files in the array
             currentFileNameObject = (TObjString *)fileNameArray->At(i);
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   }
   
   // Read the other command line arguments
-  const char *cardName = argv[2];
+  const char* cardName = argv[2];
   TString outputFileName = argv[3];
   const int fileSearchIndex = atoi(argv[4]);
   
@@ -173,15 +173,15 @@ int main(int argc, char **argv) {
   ReadFileList(fileNameVector,fileNameFile,debugLevel,fileSearchIndex,runLocal);
   
   // Variable for histograms in the analysis
-  EECHistograms *histograms;
+  EECHistograms* histograms;
   
   // Run the analysis over the list of files
-  EECAnalyzer *eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard);
+  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard);
   eecAnalysis->RunAnalysis();
   histograms = eecAnalysis->GetHistograms();
   
   // Write the histograms and card to file
-  TFile *outputFile = new TFile(outputFileName, "RECREATE");
+  TFile* outputFile = new TFile(outputFileName, "RECREATE");
   histograms->Write();
   configurationCard->WriteCard(outputFile);
   outputFile->Close();
