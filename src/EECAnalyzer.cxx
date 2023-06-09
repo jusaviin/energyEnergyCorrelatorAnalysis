@@ -94,6 +94,7 @@ EECAnalyzer::EECAnalyzer() :
   fMinimumTrackHits(0),
   fSubeventCut(0),
   fTrackEfficiencyVariation(0.024),
+  fTrackSelectionVariation(""),
   fReconstructedJetMinimumPtCut(0),
   fGeneratorJetMinimumPtCut(0),
   fLowerTruthUnfoldingBins(0),
@@ -181,7 +182,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
     // Track correction for 2018 PbPb data
-    fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", false, "trackCorrectionTables/PbPb2018/");
+    fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", fTrackSelectionVariation, false, "trackCorrectionTables/PbPb2018/");
     
     // The vz weight function is rederived from the miniAOD dataset.
     // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: d4eab1cd188da72f5a81b8902cb6cc55ea1baf23
@@ -274,6 +275,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMinimumTrackHits(in.fMinimumTrackHits),
   fSubeventCut(in.fSubeventCut),
   fTrackEfficiencyVariation(in.fTrackEfficiencyVariation),
+  fTrackSelectionVariation(in.fTrackSelectionVariation),
   fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
   fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
   fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
@@ -345,6 +347,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMinimumTrackHits = in.fMinimumTrackHits;
   fSubeventCut = in.fSubeventCut;
   fTrackEfficiencyVariation = in.fTrackEfficiencyVariation;
+  fTrackSelectionVariation = in.fTrackSelectionVariation;
   fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
   fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
   fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
@@ -454,6 +457,12 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
 
   fTrackEfficiencyVariation = fCard->Get("TrackEfficiencyVariation"); // Relative amount with which the tracking efficiency corrections are varied to estimate systematic uncertainties
+
+  // Determine the correct efficiency table to use based on track selection cuts
+  fTrackSelectionVariation = "";
+  if(TMath::Abs(fMaxTrackPtRelativeError-0.05) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-2) < 0.001 && TMath::Abs(fChi2QualityCut-0.15) < 0.001) fTrackSelectionVariation = "Tight";
+  if(TMath::Abs(fMaxTrackPtRelativeError-0.15) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-5) < 0.001) fTrackSelectionVariation = "Loose";
+  
 
   //****************************************
   //    Correlation type for Monte Carlo

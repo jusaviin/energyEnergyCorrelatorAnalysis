@@ -28,10 +28,10 @@ private:
 
   bool isQuiet;
 
-  TFile * trkEff;
-  TH2F * eff;
-  TH2F * fake;
-  TH2F * sec;
+  TFile* trkEff;
+  TH2F* eff;
+  TH2F* fake;
+  TH2F* sec;
 
 };
 

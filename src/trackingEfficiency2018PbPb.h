@@ -12,7 +12,7 @@
 class TrkEff2018PbPb : public TrackingEfficiencyInterface{
 public:
 
-  TrkEff2018PbPb( std::string collectionName = "general", bool isQuiet_ = false ,std::string filePath = "");
+  TrkEff2018PbPb( std::string collectionName = "general", std::string quality = "", bool isQuiet_ = false ,std::string filePath = "");
   virtual ~TrkEff2018PbPb();
 
   float getCorrection(float pt, float eta, int hiBin);
@@ -26,12 +26,12 @@ private:
   std::string mode;
   bool isQuiet;
 
-  TFile * trkEff;
-  TFile * trkFake;
-  TH3F * eff;
-  TH3F * fake;
+  TFile* trkEff;
+  TFile* trkFake;
+  TH3F* eff;
+  TH3F* fake;
 
-  TH2D * effPix[5];
+  TH2D* effPix[5];
 
 };
 

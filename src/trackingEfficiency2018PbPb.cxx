@@ -41,7 +41,7 @@ float TrkEff2018PbPb::getEfficiency( float pt, float eta, int hiBin, bool passes
     if(  !checkBounds(pt, eta, hiBin) ) return 0;
   }
   
-  if( mode.compare("general") == 0){
+  if( mode.compare("general") == 0 || mode.compare("generalMB-") == 0 || mode.compare("generalMB+") == 0){
     return eff->GetBinContent( eff->FindBin(eta, pt, hiBin) );
   }
   
@@ -65,7 +65,7 @@ float TrkEff2018PbPb::getFake( float pt, float eta, int hiBin, bool passesCheck)
     if(  !checkBounds(pt, eta, hiBin) ) return 0;
   }
   
-  if( mode.compare("general") == 0){
+  if( mode.compare("general") == 0 || mode.compare("generalMB-") == 0 || mode.compare("generalMB+") == 0){
     return fake->GetBinContent( fake->FindBin(eta, pt, hiBin) );
   }
   
@@ -79,16 +79,19 @@ float TrkEff2018PbPb::getFake( float pt, float eta, int hiBin, bool passesCheck)
 }
 
 
-TrkEff2018PbPb::TrkEff2018PbPb(std::string collectionName, bool isQuiet_, std::string filePath){
+TrkEff2018PbPb::TrkEff2018PbPb(std::string collectionName, std::string quality, bool isQuiet_, std::string filePath){
   isQuiet = isQuiet_;
   mode = collectionName;
   
   std::cout << "Searching tracking corrections from folder: " << filePath << std::endl;
+  std::cout << "Using " << (quality.compare("") == 0 ? "nominal" : quality) << " track efficiency tables." << std::endl;
   
   if( collectionName.compare("general") == 0 ){
     if(!isQuiet) std::cout << "TrkEff2018PbPb class opening in general tracks mode!" << std::endl;
     
-    trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_highPt.root").c_str(),"open");
+    if( quality.compare("Loose") == 0 ) trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_highPt_Loose.root").c_str(),"open");
+    else if( quality.compare("Tight") == 0 ) trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_highPt_Tight.root").c_str(),"open");
+    else trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_highPt.root").c_str(),"open");
     
     if( !(trkEff->IsOpen() ) ){
       std::cout << "WARNING, COULD NOT FIND TRACK EFFICIENCY FILE FOR GENERAL TRACKS!" << std::endl;
@@ -96,16 +99,54 @@ TrkEff2018PbPb::TrkEff2018PbPb(std::string collectionName, bool isQuiet_, std::s
       eff = (TH3F*) trkEff->Get("Eff3D");
     }
     
-    trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB.root").c_str(),"open");
+    if( quality.compare("Loose") == 0) trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_Loose.root").c_str(),"open");
+    else if( quality.compare("Tight") == 0) trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_Tight.root").c_str(),"open");
+    else trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB.root").c_str(),"open");
     
     if( !(trkFake->IsOpen() ) ){
       std::cout << "WARNING, COULD NOT FIND TRACK FAKE FILE FOR GENERAL TRACKS!" << std::endl;
     } else {
       fake = (TH3F*) trkFake->Get("Fak3D");
     }
+  
+  } else if( collectionName.compare("generalMB+") == 0 ){
+    if(!isQuiet) std::cout << "TrkEff2018PbPb class opening in general tracks positive mode!" << std::endl;
     
+    trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_ChargePlus.root").c_str(),"open");
     
+    if( !(trkEff->IsOpen() ) ){
+      std::cout << "WARNING, COULD NOT FIND TRACK EFFICIENCY FILE FOR GENERAL TRACKS!" << std::endl;
+    } else {
+      eff = (TH3F*) trkEff->Get("Eff3D");
+    }
     
+    trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_ChargePlus.root").c_str(),"open");
+    
+    if( !(trkFake->IsOpen() ) ){
+      std::cout << "WARNING, COULD NOT FIND TRACK FAKE FILE FOR GENERAL TRACKS!" << std::endl;
+    } else {
+      fake = (TH3F*) trkFake->Get("Fak3D");
+    }
+  
+  } else if( collectionName.compare("generalMB-") == 0 ){
+    if(!isQuiet) std::cout << "TrkEff2018PbPb class opening in general tracks negative mode!" << std::endl;
+    
+    trkEff = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_ChargeMinus.root").c_str(),"open");
+    
+    if( !(trkEff->IsOpen() ) ){
+      std::cout << "WARNING, COULD NOT FIND TRACK EFFICIENCY FILE FOR GENERAL TRACKS!" << std::endl;
+    } else {
+      eff = (TH3F*) trkEff->Get("Eff3D");
+    }
+    
+    trkFake = TFile::Open( (filePath + "2018PbPb_Efficiency_GeneralTracks_MB_ChargeMinus.root").c_str(),"open");
+    
+    if( !(trkFake->IsOpen() ) ){
+      std::cout << "WARNING, COULD NOT FIND TRACK FAKE FILE FOR GENERAL TRACKS!" << std::endl;
+    } else {
+      fake = (TH3F*) trkFake->Get("Fak3D");
+    }
+      
   } else if( collectionName.compare("pixel") == 0) {
     if(!isQuiet) std::cout << "TrkEff2018PbPb class opening in pixel tracks mode!" << std::endl;
     
@@ -121,9 +162,10 @@ TrkEff2018PbPb::TrkEff2018PbPb(std::string collectionName, bool isQuiet_, std::s
       effPix[4] = (TH2D*) trkEff->Get("Eff_50_100");
     }
     
+
   } else {
-    std::cout << "Error! Incorrect collectionName parameter in TrkEff2018PbPb constructor.  Please try 'general' or 'pixel'" << std::endl;
-  }
+    std::cout << "Error! incorrect collectionName parameter in TrkEff2018PbPb constructor.  Please try 'general', 'generalMB+', 'generalMB-', or 'pixel.'" << std::endl;
+  } 
 }
 
 TrkEff2018PbPb::~TrkEff2018PbPb(){
