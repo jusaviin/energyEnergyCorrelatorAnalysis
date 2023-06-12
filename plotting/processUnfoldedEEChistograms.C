@@ -15,8 +15,9 @@
  *                           0: Nominal results, no systematic uncertainty estimation
  *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
  *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
+ *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  */
-void processUnfoldedEEChistograms(TString fileName, TString outputFileName, const int iSystematic){
+void processUnfoldedEEChistograms(TString fileName, TString outputFileName, const int iSystematic, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){
 
   // Print the file name to console
   cout << "Processing unfolded histograms from " << fileName.Data() << endl;
@@ -52,11 +53,11 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
   // Load all energy-energy correlators
-  histograms->SetLoadEnergyEnergyCorrelators(true);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(false);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(false);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(false);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(false);
+  histograms->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus);
 
   // Set the bin ranges to those for which the unfolded histograms are available
   histograms->SetCentralityBinRange(card->GetFirstUnfoldedCentralityBin(), card->GetLastUnfoldedCentralityBin());

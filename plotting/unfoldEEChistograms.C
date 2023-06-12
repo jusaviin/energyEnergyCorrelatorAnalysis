@@ -357,7 +357,11 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
 
   EECHistogramManager* histogramsSavedToFile = new EECHistogramManager(dataCard);
-  histogramsSavedToFile->SetLoadEnergyEnergyCorrelators(true);
+  histogramsSavedToFile->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
+  histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus);
+  histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
+  histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus);
+  histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus);
   histogramsSavedToFile->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
   histogramsSavedToFile->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   histogramsSavedToFile->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
@@ -366,7 +370,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         jetPtUnfoldIndex = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
-        histogramsSavedToFile->SetUnfoldedEnergyEnergyCorrelator(hUnfolded[iCentrality][iJetPt][iTrackPt], EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, jetPtUnfoldIndex, iTrackPt);
+        histogramsSavedToFile->SetUnfoldedEnergyEnergyCorrelator(hUnfolded[iCentrality][iJetPt][iTrackPt], iEnergyEnergyCorrelator, iCentrality, jetPtUnfoldIndex, iTrackPt);
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
