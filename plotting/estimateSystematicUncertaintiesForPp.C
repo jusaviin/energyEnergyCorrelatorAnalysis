@@ -87,7 +87,7 @@ void estimateSystematicUncertaintiesForPp(){
   
   const bool printUncertainties = false;
   
-  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which tha analysis is done
+  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.6, 1.4);         // Y-axis zoom for rations
   
   TString outputFileName = "systematicUncertainties/systematicUncertaintiesForPp_firstLook_2023-06-13.root";
@@ -99,7 +99,7 @@ void estimateSystematicUncertaintiesForPp(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = true;
+  plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = false;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -358,6 +358,9 @@ void estimateSystematicUncertaintiesForPp(){
         } // Uncertainty loop
       } // Track pT loop
     } // Jet pT loop
+
+    // Write the card from the nominal file, since all indices are syncronized with that
+    nominalResultCard->Write(outputFile);
 
     outputFile->Close();
   }
