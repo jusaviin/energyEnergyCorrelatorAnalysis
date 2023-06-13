@@ -5,8 +5,6 @@
 
 #include <algorithm>
 
-const int kMaxPtBins = 6; // Maximum number of pT bins that is used to extract the pT variation uncertainty
-
 // Function definitions. Implementations after the main macro.
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
@@ -77,7 +75,7 @@ void estimateSystematicUncertainties(){
   }
 
   // Results with varied single and pair track efficiency
-  TFile* trackEfficiencyFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_trackingSystematics_processed_2023-06-09.root");
+  TFile* trackEfficiencyFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_trackingSystematics_processed_2023-06-12.root");
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
   loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
@@ -120,7 +118,8 @@ void estimateSystematicUncertainties(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
+  plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = true;
+  plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================

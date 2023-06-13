@@ -645,7 +645,134 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets, const int iSyst
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
+
+  // ================================================== //
+  //                                                    // 
+  //                 Tables for pp                      //
+  //                                                    //
+  // ================================================== //
+
+  // For pp, the default option is to not subtractr background, since it is assumed to be negligible.
+  // For systematic check, we provide numbers the are acquired from 85-95% PYTHIA+HYDJET simulation
+  // This very peripheral bin should give a decent approximation for the scaling factors in pp
+
+  // The first part of the array gives the results for reconstructed jets.
+  // The macro used for the study is findBackgroundNormalizationScale.C
+  // The file that was used to produce all the numbers is PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_peripheralBins_noTrigger_cutBadPhi_noJetPtWeight_forBackgroundScale_processed_2023-06-06.root
+  // Git hash: ab2fa4f4278049fc41e668400d1654f0c15be615
+
+  double energyEnergyCorrelatorBackgroundScaleFactorsPp[2][20][8] =
+  {
+  {{4.58745,5.35941,8.01473,14.0303,25.7855,50.2083,98.8163,286.475}, // 60 < jet pT < 70 GeV
+  {4.74257,5.59104,8.16176,14.1769,27.8535,72.8084,161.902,312.44}, // 70 < jet pT < 80 GeV
+  {4.69831,5.62265,8.51227,14.25,26.2998,49.5523,118.293,431.057}, // 80 < jet pT < 90 GeV
+  {5.00999,6.04347,9.64987,18.2766,32.6413,97.0844,286.32,730.111}, // 90 < jet pT < 100 GeV
+  {5.30026,6.43662,10.327,19.4306,41.1585,82.0149,182.868,398.295}, // 100 < jet pT < 110 GeV
+  {5.4632,6.71661,10.7952,18.427,36.5765,83.4401,169.638,492.78}, // 110 < jet pT < 120 GeV
+  {5.8321,7.16483,11.5235,21.6059,43.7546,80.4965,274.01,1245.51}, // 120 < jet pT < 140 GeV
+  {5.98009,7.46035,12.6091,26.729,57.7728,112.302,240.537,618.208}, // 140 < jet pT < 160 GeV
+  {6.25546,7.80494,13.3514,26.1831,60.4526,145.731,431.796,1419.51}, // 160 < jet pT < 180 GeV
+  {6.60095,8.25185,14.3678,30.9036,68.8567,171.137,406.091,859.747}, // 180 < jet pT < 200 GeV
+  {6.50735,7.99483,13.6128,26.2324,50.3326,109.995,297.663,610.752}, // 200 < jet pT < 220 GeV
+  {7.3337,9.40914,16.728,33.6867,96.015,229.464,347.535,469.932}, // 220 < jet pT < 240 GeV
+  {7.34203,9.38437,16.7122,32.7869,73.5484,159.108,367.617,548.867}, // 240 < jet pT < 260 GeV
+  {7.73611,10.0695,17.8309,37.3679,85.5466,162.828,438.605,18977.6}, // 260 < jet pT < 280 GeV
+  {7.64584,9.76279,17.2105,34.3928,72.2878,124.153,346.396,656.995}, // 280 < jet pT < 300 GeV 
+  {8.85882,11.69,21.7387,45.6162,92.2504,194.248,474.194,1216.92}, // 300 < jet pT < 500 GeV
+  {9.66177,12.7929,23.486,44.8257,111.433,471.461,1009.59,2309.4}, // 500 < jet pT < 5020 GeV
+  {4.91617,5.86689,9.00285,16.1059,31.0348,67.098,150.282,406.551}, // 60 GeV < jet pT
+  {-1,     -1,     -1,     -1,     -1,     -1,     -1,     -1}, // 200 < jet pT < 300 GeV
+  {-1,     -1,     -1,     -1,     -1,     -1,     -1,     -1}}, // 120 GeV < jet pT
   
+
+  // The second part of the array gives the same numbers for a generator level jet study
+  // The file used for the numbers: PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_peripheralBins_noTrigger_cutBadPhi_noJetPtWeight_forBackgroundScale_processed_2023-06-06.root
+  // Git hash: ab2fa4f4278049fc41e668400d1654f0c15be615
+
+  {{4.58745,5.35941,8.01473,14.0303,25.7855,50.2083,98.8163,286.475}, // 60 < jet pT < 70 GeV
+   {4.74257,5.59104,8.16176,14.1769,27.8535,72.8084,161.902,312.44}, // 70 < jet pT < 80 GeV
+   {4.69831,5.62265,8.51227,14.25,26.2998,49.5523,118.293,431.057}, // 80 < jet pT < 90 GeV
+   {5.00999,6.04347,9.64987,18.2766,32.6413,97.0844,286.32,730.111}, // 90 < jet pT < 100 GeV
+   {5.30026,6.43662,10.327,19.4306,41.1585,82.0149,182.868,398.295}, // 100 < jet pT < 110 GeV
+   {5.4632,6.71661,10.7952,18.427,36.5765,83.4401,169.638,492.78}, // 110 < jet pT < 120 GeV
+   {5.8321,7.16483,11.5235,21.6059,43.7546,80.4965,274.01,1245.51}, // 120 < jet pT < 140 GeV
+   {5.98009,7.46035,12.6091,26.729,57.7728,112.302,240.537,618.208}, // 140 < jet pT < 160 GeV
+   {6.25546,7.80494,13.3514,26.1831,60.4526,145.731,431.796,1419.51}, // 160 < jet pT < 180 GeV
+   {6.60095,8.25185,14.3678,30.9036,68.8567,171.137,406.091,859.747}, // 180 < jet pT < 200 GeV
+   {6.50735,7.99483,13.6128,26.2324,50.3326,109.995,297.663,610.752}, // 200 < jet pT < 220 GeV
+   {7.3337,9.40914,16.728,33.6867,96.015,229.464,347.535,469.932}, // 220 < jet pT < 240 GeV
+   {7.34203,9.38437,16.7122,32.7869,73.5484,159.108,367.617,548.867}, // 240 < jet pT < 260 GeV
+   {7.73611,10.0695,17.8309,37.3679,85.5466,162.828,438.605,18977.6}, // 260 < jet pT < 280 GeV
+   {7.64584,9.76279,17.2105,34.3928,72.2878,124.153,346.396,656.995}, // 280 < jet pT < 300 GeV
+   {8.85882,11.69,21.7387,45.6162,92.2504,194.248,474.194,1216.92}, // 300 < jet pT < 500 GeV
+   {9.66177,12.7929,23.486,44.8257,111.433,471.461,1009.59,2309.4}, // 500 < jet pT < 5020 GeV
+   {4.91617,5.86689,9.00285,16.1059,31.0348,67.098,150.282,406.551}, // 60 GeV < jet pT
+   {-1,     -1,     -1,     -1,     -1,     -1,     -1,     -1}, // 200 < jet pT < 300 GeV
+   {-1,     -1,     -1,     -1,     -1,     -1,     -1,     -1}} // 120 GeV < jet pT
+  };
+
+  // Copy the input values to the class array
+  for(int iJetPt = 0; iJetPt < kNJetPtBins; iJetPt++){
+    for(int iTrackPt = 0; iTrackPt < kNTrackPtBins; iTrackPt++){
+      fBackgroundScalePp[iJetPt][iTrackPt] = energyEnergyCorrelatorBackgroundScaleFactorsPp[useGenJets][iJetPt][iTrackPt];
+    } // Track pT loop
+  } // Jet pT loop
+  
+}
+
+/*
+ * Get the background scaling factor for the systematic uncertainty study for pp
+ *
+ *  const std::pair<double,double> jetPtBinBorders = Jet pT bin borders for the scaling factor
+ *  const double trackPtLowBorder = Lower track pT bin border for the scaling factor. All tracks above this are used
+ *
+ *  return: pp scaling factor corresponding to the bin with the given bin borders
+ */
+double EECBackgroundScale::GetEECBackgroundScalePp(const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const{
+  
+  // Small number
+  const double epsilon = 0.0001;
+
+  // Search if the given track pT bin borders are included in the background scale table
+  int trackPtIndex = -1;
+  for(int iTrackPt = 0; iTrackPt < kNTrackPtBins; iTrackPt++){
+    if(TMath::Abs(fTrackPtBinBorderLow[iTrackPt] - trackPtLowBorder) < epsilon){
+      trackPtIndex = iTrackPt;
+      break;
+    }
+  } // Loop over track pT bins included in the scaling table
+
+  // If track pT bin is not found, print an error message and return -1 to show we did not find a proper scaling factor.
+  if(trackPtIndex == -1){
+    std::cout << "EECBackgroundScale::Error! Track pT > " << trackPtLowBorder << " GeV bin was not found from the table." << std::endl;
+    std::cout << "Cannot provide a background scaling factor. Please check your code for errors." << std::endl;
+    return -1;
+  }
+
+  // Search if the given jet pT bin borders are included in the background scale table
+  int jetPtIndex = -1;
+  for(int iJetPt = 0; iJetPt < kNJetPtBins; iJetPt++){
+    if(TMath::Abs(fJetPtBinBorderLow[iJetPt] - jetPtBinBorders.first) < epsilon){
+      if(TMath::Abs(fJetPtBinBorderHigh[iJetPt] - jetPtBinBorders.second) < epsilon){
+        jetPtIndex = iJetPt;
+        break;
+      }
+    }
+  } // Loop over jet pT bins included in the scaling table
+
+  // If jet pT bin is not found, print an error message and return -1 to show we did not find a proper scaling factor.
+  if(jetPtIndex == -1){
+    std::cout << "EECBackgroundScale::Error! Jet pT bin " << jetPtBinBorders.first << "-" << jetPtBinBorders.second << " GeV was not found from the table." << std::endl;
+    std::cout << "Cannot provide a background scaling factor. Please check your code for errors." << std::endl;
+    return -1;
+  }
+
+  // *************************************************************************** //
+  // After the correct bin has been found, return the corresponding scale factor //
+  // *************************************************************************** //
+
+  return fBackgroundScalePp[jetPtIndex][trackPtIndex];
+
 }
 
 /*
@@ -654,10 +781,14 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets, const int iSyst
  *  const std::pair<double,double> centralityBinBorders = Centrality bin borders for the scaling factor
  *  const std::pair<double,double> jetPtBinBorders = Jet pT bin borders for the scaling factor
  *  const double trackPtLowBorder = Lower track pT bin border for the scaling factor. All tracks above this are used
+ *  const bool isPbPbData = True for PbPb, false for pp
  *
  *  return: Scaling factor corresponding to the bin with the given bin borders
  */
-double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const{
+double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData) const{
+
+  // Use different numbers for pp
+  if(!isPbPbData) return GetEECBackgroundScalePp(jetPtBinBorders, trackPtLowBorder);
 
   // ******************************************************************** //
   // First, find the bin indices that correspond to the input bin borders //
@@ -666,7 +797,7 @@ double EECBackgroundScale::GetEECBackgroundScale(const std::pair<double,double> 
   // Small number
   const double epsilon = 0.0001;
 
-  // Search if the given centrality bin borders are included in the background scale table
+  // For PbPb data, search if the given centrality bin borders are included in the background scale table
   int centralityIndex = -1;
   for(int iCentrality = 0; iCentrality < kNCentralityBins; iCentrality++){
     if(TMath::Abs(fCentralityBinBorderLow[iCentrality] - centralityBinBorders.first) < epsilon){

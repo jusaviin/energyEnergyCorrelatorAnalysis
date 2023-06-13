@@ -27,7 +27,7 @@ public:
   ~EECBackgroundScale() = default;                                 // Destructor
 
   // Getter for the background scale
-  double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;
+  double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData) const;
   
 private:
   
@@ -42,9 +42,13 @@ private:
 
   // Arrays that hold the information about linear fits to the particle density distributions
   double fBackgroundScale[kNCentralityBins][kNJetPtBins][kNTrackPtBins];
+  double fBackgroundScalePp[kNJetPtBins][kNTrackPtBins];
   
   // Methods
   void InitializeArrays(const bool useGenJets = false, const int iSystematic = 0);
+
+  // Getter for pp background scale
+  double GetEECBackgroundScalePp(const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;
   
 };
 
