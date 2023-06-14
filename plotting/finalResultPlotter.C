@@ -2,6 +2,7 @@
 #include "EECHistogramManager.h"
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "SplitCanvas.h"
 
 /*
  * Macro for making final result plots comparing energy-energy correlators between pp and PbPb
@@ -76,19 +77,25 @@ void finalResultPlotter(){
   int firstDrawnTrackPtBinEEC = card[kPbPb]->GetFirstUnfoldedTrackPtBin();
   int lastDrawnTrackPtBinEEC = card[kPbPb]->GetLastUnfoldedTrackPtBin();
 
-  firstDrawnTrackPtBinEEC = 3;
+  firstDrawnTrackPtBinEEC = 5;
   lastDrawnTrackPtBinEEC = 5;
+
+  // Choose which plots to draw
+  bool drawIndividualPlotsAllCentralities = true;
+  bool drawBigCanvasDistributions = false;
   
   // Save the final plots
-  const bool saveFigures = false;
+  const bool saveFigures = true;
   TString saveComment = "_preliminary";
 
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
   
   // Marker colors and styles
-  int markerStyle[] = {kFullSquare, kFullCircle, kFullCross, kFullFourTrianglesPlus};
-  int markerColor[] = {kRed, kBlue, kMagenta, kGreen+3};
+  int markerStylePbPb[] = {kFullSquare, kFullCircle, kFullCross, kFullFourTrianglesPlus};
+  int markerStylePp = kFullDiamond;
+  int markerColorPbPb[] = {kRed, kBlue, kMagenta, kGreen+3};
+  int markerColorPp = kBlack;
 
   // =============================================== //
   // Read the histograms from the histogram managers //
@@ -190,7 +197,7 @@ void finalResultPlotter(){
   //   Draw the histograms in separate plots   //
   // ========================================= //
 
-  JDrawer *drawer = new JDrawer();
+  JDrawer* drawer = new JDrawer();
   drawer->SetDefaultAppearanceSplitCanvas();
   drawer->SetRelativeCanvasSize(1.1,1.1);
   drawer->SetLeftMargin(0.14);
@@ -206,346 +213,203 @@ void finalResultPlotter(){
   TString trackPtString;
   TString compactTrackPtString;
 
-  for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
-    jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
-    compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
-    for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
-      trackPtString = Form("%.1f < track p_{T}",card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
-      compactTrackPtString = Form("_T>%.1f",card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+  // Draw individual plots with all centralities mixed together in a single figure
+  if(drawIndividualPlotsAllCentralities){
 
-      // Create a new canvas for the plot
-      drawer->CreateSplitCanvas();
+    for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+      jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+      compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
 
-      // Use logarithmic axis for EEC
-      drawer->SetLogY(true);
+      for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+        trackPtString = Form("%.1f < track p_{T}", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        compactTrackPtString.ReplaceAll(".","v");
 
-      // Setup the legend for plots
-      TLegend *legend = new TLegend(0.23,0.05,0.53,0.6);
-      legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-      legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
-      legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
+        // Create a new canvas for the plot
+        drawer->CreateSplitCanvas();
 
-      // Set the drawing style for pp histogram
-      energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerStyle(kFullDiamond);
-      energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+        // Use logarithmic axis for EEC
+        drawer->SetLogY(true);
 
-      // Set the x-axis drawing range
-      energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+        // Setup the legend for plots
+        TLegend* legend = new TLegend(0.23, 0.05, 0.53, 0.6);
+        legend->SetFillStyle(0);
+        legend->SetBorderSize(0);
+        legend->SetTextSize(0.05);
+        legend->SetTextFont(62);
+        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
-      // Draw the pp correlator to upper canves
-      drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt], "#Deltar", "EEC Signal", " ", "p");
-      legend->AddEntry(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt], "pp", "p");
+        // Set the drawing style for pp histogram
+        energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerStyle(kFullDiamond);
+        energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerColor(kBlack);
 
-      // Draw the different centrality bins to the same plot
-      for(int iCentrality = lastDrawnCentralityBin; iCentrality >= firstDrawnCentralityBin; iCentrality--){
-        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColor[iCentrality - firstDrawnCentralityBin]);
-        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iCentrality - firstDrawnCentralityBin]);
-        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
-        legend->AddEntry(energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
-      }
+        // Set the x-axis drawing range
+        energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
 
-      // Draw the legend to the upper pad
-      legend->Draw();
+        // Draw the pp correlator to upper canves
+        drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt], "#Deltar", "EEC Signal", " ", "p");
+        legend->AddEntry(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt], "pp", "p");
 
-      // Linear scale for the ratio
-      drawer->SetLogY(false);
+        // Draw the different centrality bins to the same plot
+        for(int iCentrality = lastDrawnCentralityBin; iCentrality >= firstDrawnCentralityBin; iCentrality--) {
+          energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+          legend->AddEntry(energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
+        }
 
-      // Set the axis drawing ranges
-      energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-      energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+        // Draw the legend to the upper pad
+        legend->Draw();
 
-      // Set the style for histograms
-      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
-        energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColor[iCentrality - firstDrawnCentralityBin]);
-        energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iCentrality - firstDrawnCentralityBin]);
-      }
+        // Linear scale for the ratio
+        drawer->SetLogY(false);
 
-      drawer->SetGridY(true);
-      drawer->DrawHistogramToLowerPad(energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ");
-      for(int iCentrality = lastDrawnCentralityBin-1; iCentrality >= firstDrawnCentralityBin; iCentrality--) {
-        energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
-      }
-      drawer->SetGridY(false);
-  
-      // If a plot name is given, save the plot in a file
-      if(saveFigures){
-        gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_centralityComparison_%s%s%s.pdf", saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
-      }
+        // Set the axis drawing ranges
+        energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+        energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
+        // Set the style for histograms
+        for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+        }
 
-    } // Track pT loop
-  } // Jet pT loop
+        drawer->SetGridY(true);
+        drawer->DrawHistogramToLowerPad(energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ");
+        for(int iCentrality = lastDrawnCentralityBin - 1; iCentrality >= firstDrawnCentralityBin; iCentrality--) {
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+        }
+        drawer->SetGridY(false);
 
-  // // Open input file for reading and read graphs from it
-  // TFile *inputFile = TFile::Open(directoryName+inputFileName);
-  // for(int iFlow = firstDrawnVn-1; iFlow <= lastDrawnVn-1; iFlow++){
-  //   jetVnGraph[iFlow] = (TGraphErrors*) inputFile->Get(Form("summaryV%d", iFlow+1));
-    
-  //   // If the graph we wanted to load does not exist, inform the user and end program
-  //   if(jetVnGraph[iFlow] == NULL){
-  //     cout << "Hey dude! The file: " << directoryName.Data() << inputFileName.Data() << " does not contain graph: " << Form("summaryV%d", iFlow+1) <<  "." << endl;
-  //     cout << "Cannot do the plotting, mate! Be a good lad and make sure the graph is there next time, ok?" << endl;
-  //     return;
-  //   }
-    
-  //   // Set the style for the jet vn values
-  //   jetVnGraph[iFlow]->SetMarkerStyle(bigCanvasMarker[iFlow]);
-  //   jetVnGraph[iFlow]->SetMarkerColor(bigCanvasColor[iFlow]);
-  //   jetVnGraph[iFlow]->SetMarkerSize(2);
-    
-  // }
+        // If a plot name is given, save the plot in a file
+        if(saveFigures) {
+          gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_centralityComparison%s%s%s.pdf", saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+        }
+
+      } // Track pT loop
+    } // Jet pT loop
+  } // Drawing individual canvases with all centralities in one canvas
+
+  // =============================================
+  // ===== Drawing style with one big canvas =====
+  // =============================================
   
-  // // Read the systematic uncertainty graphs
-  // TFile *uncertaintyFile = TFile::Open(directoryName+uncertaintyFileName);
-  // LongRangeSystematicOrganizer *uncertaintyOrganizer = new LongRangeSystematicOrganizer(uncertaintyFile);
-  // uncertaintyOrganizer->AdjustCentralPoints(jetVnGraph);
-  
-  // for(int iFlow = firstDrawnVn-1; iFlow <= lastDrawnVn-1; iFlow++){
-  //   jetVnUncertainty[iFlow] = uncertaintyOrganizer->GetLongRangeSystematicUncertainty(iFlow);
+  if(drawBigCanvasDistributions){
     
-  //   // If the graph we wanted to load does not exist, inform the user and end program
-  //   if(jetVnUncertainty[iFlow] == NULL){
-  //     cout << "Hey dude! The file: " << directoryName.Data() << uncertaintyFileName.Data() << " does not contain uncertainties for " << Form("v%d", iFlow+1) <<  "." << endl;
-  //     cout << "No uncertainties can be plotted." << endl;
-  //   }
+    // Draw all the distributions to big canvases
+    SplitCanvas* bigCanvas;
+    TLatex* mainTitle;
+    TLegend* legend;
     
-  //   // Set the style for the jet vn uncertainties
-  //   jetVnUncertainty[iFlow]->SetMarkerStyle(bigCanvasMarker[iFlow]);
-  //   jetVnUncertainty[iFlow]->SetLineColor(bigCanvasColor[iFlow]);
-  //   jetVnUncertainty[iFlow]->SetFillColorAlpha(bigCanvasColor[iFlow], 0.3);
-  //   jetVnUncertainty[iFlow]->SetMarkerColor(bigCanvasColor[iFlow]);
-  //   jetVnUncertainty[iFlow]->SetMarkerSize(2);
+    // Draw a big canvas and put all the plots in it
+    bigCanvas = new SplitCanvas("bigCanvas", "", 1800, 1500);
+    bigCanvas->SetMargin(0.08, 0.01, 0.08, 0.11);
+    bigCanvas->DivideNeatly(4,4);
     
-  // }
-  
-  // // Set the bin labels for x-axis
-  // TString binLabels[] = {"0-10%"," ","10-30%"," ","30-50%"," ","50-90%"};
-  // for(int iFlow = firstDrawnVn-1; iFlow <= lastDrawnVn-1; iFlow++){
-  //   for(int iCentrality = 0; iCentrality < jetVnUncertainty[iFlow]->GetN()*2; iCentrality++){
-  //     jetVnUncertainty[iFlow]->GetXaxis()->ChangeLabel(iCentrality+1,-1,-1,-1,-1,-1,binLabels[iCentrality]);
-  //   } // Centrality loop
-  // }
-  
-  // // ===================== //
-  // // Previous measurements //
-  // // ===================== //
-  
-  // // Previous results that can be plotted together with data from this analysis
-  // double summaryXaxis[nCentralityBins];
-  // double summaryXaxisError[nCentralityBins];
-  // double summaryYaxisError[nCentralityBins];
-  // for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-  //   summaryXaxis[iCentrality] = iCentrality+1;
-  //   summaryXaxisError[iCentrality] = 0;
-  //   summaryYaxisError[iCentrality] = 0;
-  // }
-  
-  // // ATLAS results taken from those presented in Hard Probes 2020: ATLAS-CONF-2020-019 (https://cds.cern.ch/record/2720249?ln=en)
-  // const double atlasV2Number[] = {0.018, 0.03, 0.035, 0.03};
-  // TGraphErrors* atlasJetV2graph = new TGraphErrors(nCentralityBins, summaryXaxis, atlasV2Number, summaryXaxisError, summaryXaxisError);
-  // atlasJetV2graph->SetMarkerStyle(kFullDiamond);
-  // atlasJetV2graph->SetMarkerColor(kViolet-2);
-  // atlasJetV2graph->SetMarkerSize(1.8);
-  
-  // // CMS high pT results extracted from analysis arXiv:1702.00630 (PLB 776 (2018) 195)
-  // const double cmsHighPtV2Number[] = {0.0220, 0.0376, 0.0431, 0.04};
-  // const double cmsHighPtV2Error[] = {0.0019, 0.0016, 0.0027, 0.04};
-  // TGraphErrors* cmsHighPtV2 = new TGraphErrors(nCentralityBins, summaryXaxis, cmsHighPtV2Number, summaryXaxisError, cmsHighPtV2Error);
-  // cmsHighPtV2->SetMarkerStyle(kFullStar);
-  // cmsHighPtV2->SetMarkerColor(kAzure+9);
-  // cmsHighPtV2->SetMarkerSize(1.8);
-  
-  // // ============== //
-  // // Draw the plots //
-  // // ============== //
-  
-  // // Setup the drawer for graphs
-  // JDrawer *drawer = new JDrawer();
-  // drawer->SetDefaultAppearanceGraph();
-  // drawer->SetNDivisionsX(510);
-  // drawer->SetNDivisionsY(510);
-  // drawer->SetBottomMargin(0.16);
-  // drawer->SetTitleOffsetX(1.3);
-  // drawer->SetLabelOffsetX(0.02);
-  // drawer->SetTitleOffsetY(1.77);
-  // drawer->SetLabelOffsetY(0.01);
-  
-  // // Draw the graphs for selected flow components
-  // TLegend *legend;
-  // TLegend *anotherLegend;
-  // double errorY;
-  // double cmsYPosition, cmsXPosition;
-  
-  // TLine *zeroLine = new TLine(0.75,0,3.35,0);
-  // zeroLine->SetLineStyle(2);
-  
-  // TLatex *preliminaryText = new TLatex();
-  
-  // // =======================================================================
-  // // == Drawing style, where each histogram is drawn into it's own canvas ==
-  // // =======================================================================
-  
-  // for(int iFlow = firstDrawnVn-1; iFlow <= lastDrawnVn-1; iFlow++){
-  //   legend = new TLegend(0.2,0.7,0.5,0.9);
+    mainTitle = new TLatex();
+
+    int canvasIndex;
+    double bottomRowScale = bigCanvas->GetBottomRowScale();
+    double bottomPadMargin = bigCanvas->GetBottomPadMargin();
+    double leftPadMargin = bigCanvas->GetLeftPadMargin();
+    double thisScale = 1;
+    double leftMarginAdder, bottomMarginAdder;
     
-  //   // Create legends for the plot
-  //   if(iFlow == 1){
-  //     legend = new TLegend(0.2,0.83,0.7,0.92);
-  //   } else {
-  //     legend = new TLegend(0.21,0.82,0.71,0.91);
-  //   }
-  //   anotherLegend = new TLegend(0.2,0.71,0.7,0.83);
+    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+      for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+
+        canvasIndex = (iCentrality - firstDrawnCentralityBin) * (lastDrawnJetPtBinEEC - firstDrawnJetPtBinEEC + 1) + (iJetPt - firstDrawnJetPtBinEEC);
+        bigCanvas->CD(canvasIndex);
+
+        gPad->SetLogy();
+        gPad->SetLogx();
+
+        // The titles in the bottow row need to be scaled, since it has more margin than other rows
+        thisScale = (iCentrality == lastDrawnCentralityBin) ? bottomRowScale : 1;
+ 
+        // Set the axis titles and labels
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetTitleOffset(0.85);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetTitleSize(0.2*thisScale);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetLabelOffset(0.01);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetLabelSize(0.12*thisScale);
+
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetTitleOffset(0.5/thisScale);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetTitleSize(0.2*thisScale);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetLabelOffset(0.01/thisScale);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetLabelSize(0.12*thisScale);
+
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetTitle("EEC");
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->CenterTitle();
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetStats(0);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetNdivisions(505);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->CenterTitle();
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetTitle("#Deltar");
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->CenterTitle();
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetNdivisions(505);
+
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetTitle("");
+
+        // Set the drawing ranges
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetXaxis()->SetRangeUser(0.006, 0.39);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->GetYaxis()->SetRangeUser(0.15, 30);
+
+        // Set the drawing style for histograms
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetMarkerSize(1.2);
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][5]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][5]->SetMarkerSize(1.2);
+
+        systematicUncertaintyForPp[iJetPt][5]->SetMarkerStyle(markerStylePp);
+        systematicUncertaintyForPp[iJetPt][5]->SetMarkerSize(1.2);
+        energyEnergyCorrelatorSignalPp[iJetPt][5]->SetMarkerStyle(markerStylePp);
+        energyEnergyCorrelatorSignalPp[iJetPt][5]->SetMarkerSize(1.2);
     
-  //   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-  //   anotherLegend->SetFillStyle(0);anotherLegend->SetBorderSize(0);anotherLegend->SetTextSize(0.05);anotherLegend->SetTextFont(62);
-    
-  //   if(jetVnUncertainty[iFlow] != NULL){
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][5]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][5]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+
+        systematicUncertaintyForPp[iJetPt][5]->SetFillColorAlpha(markerColorPp, 0.4);
+        systematicUncertaintyForPp[iJetPt][5]->SetLineColor(markerColorPp);
+        energyEnergyCorrelatorSignalPp[iJetPt][5]->SetLineColor(markerColorPp);
+        systematicUncertaintyForPp[iJetPt][5]->SetMarkerColor(markerColorPp);
+        energyEnergyCorrelatorSignalPp[iJetPt][5]->SetMarkerColor(markerColorPp);
       
-  //     // Set the style for uncertainties
-  //     for(int iCentrality; iCentrality < jetVnUncertainty[iFlow]->GetN(); iCentrality++){
-  //       errorY = jetVnUncertainty[iFlow]->GetErrorY(iCentrality);
-  //       jetVnUncertainty[iFlow]->SetPointError(iCentrality, 0.1, errorY);
-  //     }
+        // Draw the histograms
+        systematicUncertaintyForPbPb[iCentrality][iJetPt][5]->Draw("e2");
+        systematicUncertaintyForPp[iJetPt][5]->Draw("same,e2");
+        energyEnergyCorrelatorSignalPp[iJetPt][5]->Draw("same,p");
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][5]->Draw("same,p");
+        
       
-  //     //jetVnUncertainty[iFlow]->GetYaxis()->SetNdivisions(510);
-  //     drawer->DrawGraphCustomAxes(jetVnUncertainty[iFlow], 0, 4, minZoom[iFlow], maxZoom[iFlow], "Centrality", "Dijet v_{n}", " ", "a,e2");
+        // Create a legend for each pad
+        leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC) ? leftPadMargin : 0;
+        bottomMarginAdder = (iCentrality == lastDrawnCentralityBin) ? bottomPadMargin : 0;
+        legend = new TLegend(0.06+leftMarginAdder,0.05+bottomMarginAdder,0.5 / (1 - leftMarginAdder),0.45/thisScale);
+        legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.09*thisScale);legend->SetTextFont(62);
+        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+        legend->AddEntry(systematicUncertaintyForPbPb[iCentrality][iJetPt][5], Form("PbPb %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
+        legend->AddEntry(systematicUncertaintyForPp[iJetPt][5], "pp", "p");
       
-  //     jetVnGraph[iFlow]->Draw("p,same");
+        legend->Draw();
       
-  //     legend->AddEntry(jetVnUncertainty[iFlow], Form("Dijet v_{%d}", iFlow+1), "pf");
-      
-  //   } else {
-  //     drawer->DrawGraphCustomAxes(jetVnGraph[iFlow], 0, 4, minZoom[iFlow], maxZoom[iFlow], "Centrality", "Dijet v_{n}", " ", "ap");
-  //     legend->AddEntry(jetVnGraph[iFlow], Form("Dijet v_{%d}", iFlow+1), "p");
-  //   }
+      } // Jet pT loop
+    } // Centrality loop
     
-  //   zeroLine->Draw();
+    // Draw all necessary CMS text to the plot
+    bigCanvas->cd(0);
     
-  //   if(iFlow == 1 && drawAtlasJetV2){
-  //     atlasJetV2graph->Draw("p,same");
-  //     legend->AddEntry(atlasJetV2graph, "ATLAS v_{2}", "p"); // (#scale[0.8]{HP 2020})
-  //   }
+    mainTitle->SetTextFont(62);
+    mainTitle->SetTextSize(0.065);
+    mainTitle->DrawLatexNDC(0.05, 0.93, "CMS");
     
-  //   if(iFlow == 1 && drawCmsHigtPtV2){
-  //     cmsHighPtV2->Draw("p,same");
-  //     //legend->AddEntry(cmsHighPtV2, "CMS high p_{T} v_{2}", "p"); // (#scale[0.8]{PLB 776 (2018) 195})
-  //     anotherLegend->AddEntry(cmsHighPtV2, "CMS charged hadron v_{2}", "p"); // (#scale[0.8]{PLB 776 (2018) 195})
-  //     anotherLegend->AddEntry((TObject*)0, "p_{T} > 20 GeV, |#eta| < 1", "");
-  //     anotherLegend->Draw();
-  //   }
-    
-  //   legend->Draw();
-    
-  //   preliminaryText->SetTextFont(62);
-  //   preliminaryText->SetTextSize(0.065);
-  //   cmsYPosition = 0.32; cmsXPosition = 0.48;
-  //   if(iFlow > 1){
-  //     cmsYPosition = 0.83; cmsXPosition = 0.67;
-  //   }
-  //   preliminaryText->DrawLatexNDC(cmsXPosition, cmsYPosition, "CMS");
-    
-  //   preliminaryText->SetTextFont(42);
-  //   preliminaryText->SetTextSize(0.055);
-  //   preliminaryText->DrawLatexNDC(cmsXPosition-0.053, cmsYPosition-0.055, "Preliminary");
-    
-    
-  //   // Save the figures to file
-  //   if(saveFigures){
-  //     gPad->GetCanvas()->SaveAs(Form("figures/finalJetV%d%s.pdf", iFlow+1, saveComment.Data()));
-  //   }
-  // }
-  
-  // // =============================================
-  // // ===== Drawing style with one big canvas =====
-  // // =============================================
-  
-  // if(drawBigCanvas){
-    
-  //   // Draw all the distributions to big canvases
-  //   auxi_canvas *bigCanvas;
-  //   TLatex *mainTitle;
-    
-  //   // Draw a big canvas and put all the plots in it
-  //   bigCanvas = new auxi_canvas("bigCanvas", "", 1500, 550);
-  //   bigCanvas->SetMargin(0.07, 0.01, 0.16, 0.01);
-  //   bigCanvas->divide(1,3);
-    
-  //   mainTitle = new TLatex();
-    
-  //   for(int iFlow = firstDrawnVn-1; iFlow <= lastDrawnVn-1; iFlow++){
-  //     bigCanvas->CD(iFlow);
-      
-      
-  //     // Adjust the number of divisions
-  //     jetVnUncertainty[iFlow]->GetYaxis()->SetNdivisions(510);
-  //     jetVnUncertainty[iFlow]->GetYaxis()->SetLabelOffset(0.01);
-  //     jetVnUncertainty[iFlow]->GetYaxis()->SetTitle("Dijet v_{n}");
-  //     jetVnUncertainty[iFlow]->GetYaxis()->SetTitleOffset(1.5);
-  //     jetVnUncertainty[iFlow]->GetYaxis()->SetTitleSize(0.06);
-      
-  //     // Adjust label sizes for all but the leftmost plot
-  //     if(iFlow > firstDrawnVn-1){
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetTitleSize(0.069);
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetTitleOffset(1.09);
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetLabelSize(0.058);
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetLabelOffset(0.0135);
-  //     } else {
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetTitleOffset(1.25);
-  //       jetVnUncertainty[iFlow]->GetXaxis()->SetLabelOffset(0.02);
-  //     }
-      
-  //     // Draw the graphs
-  //     jetVnUncertainty[iFlow]->Draw("a,e2");
-  //     jetVnGraph[iFlow]->Draw("same,p");
-      
-  //     // Create a legend for the plot division
-  //     if(iFlow > 1) {
-  //       legend = new TLegend(0.06,0.89,0.7,0.98);
-  //       anotherLegend = new TLegend(0.23,0.7,0.73,0.85);
-  //     } else {
-  //       legend = new TLegend(0.23,0.89,0.73,0.98);
-  //       anotherLegend = new TLegend(0.23,0.77,0.73,0.89);
-  //     }
-      
-  //     legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.054);legend->SetTextFont(62);
-  //     anotherLegend->SetFillStyle(0);anotherLegend->SetBorderSize(0);anotherLegend->SetTextSize(0.054);anotherLegend->SetTextFont(62);
-      
-  //     if(iFlow > 1) legend->SetTextSize(0.06);  // Need to increase text size for smaller divisions
-      
-  //     legend->AddEntry(jetVnUncertainty[iFlow], Form("Dijet v_{%d}", iFlow+1), "pf");
-      
-  //     if(iFlow == 1 && drawAtlasJetV2){
-  //       atlasJetV2graph->SetMarkerSize(2);
-  //       atlasJetV2graph->Draw("p,same");
-  //       legend->AddEntry(atlasJetV2graph, "ATLAS v_{2}", "p"); // (#scale[0.8]{HP 2020})
-  //     }
-      
-  //     if(iFlow == 1 && drawCmsHigtPtV2){
-  //       cmsHighPtV2->SetMarkerSize(2);
-  //       cmsHighPtV2->Draw("p,same");
-  //       anotherLegend->AddEntry(cmsHighPtV2, "CMS charged hadron v_{2}", "p"); // (#scale[0.8]{PLB 776 (2018) 195})
-  //       anotherLegend->AddEntry((TObject*)0, "p_{T} > 20 GeV, |#eta| < 1", "");
-  //     }
-      
-  //     legend->Draw();
-      
-  //     zeroLine->Draw();
-      
-  //     if(iFlow == 1) anotherLegend->Draw();
-      
-  //   } // Flow component loop
-    
-  //   // Draw all necessary CMS text to the plot
-  //   bigCanvas->cd(0);
-    
-  //   mainTitle->SetTextFont(62);
-  //   mainTitle->SetTextSize(0.065);
-  //   cmsYPosition = 0.89;
-  //   if(drawPreliminaryTag) cmsYPosition = 0.91;
-  //   mainTitle->DrawLatexNDC(0.9, cmsYPosition, "CMS");
-    
-  //   mainTitle->SetTextFont(42);
-  //   mainTitle->SetTextSize(0.055);
+    mainTitle->SetTextFont(42);
+    mainTitle->SetTextSize(0.055);
+    mainTitle->DrawLatexNDC(0.2, 0.93, "Add here luminosity, track p_{T} cut, etc.");
   //   if(drawPreliminaryTag)mainTitle->DrawLatexNDC(0.878, 0.86, "Preliminary");
   //   mainTitle->DrawLatexNDC(0.72, 0.76, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.7 nb^{-1}");
   //   mainTitle->DrawLatexNDC(0.54, 0.92, "anti-k_{T} R = 0.4");
@@ -562,10 +426,10 @@ void finalResultPlotter(){
   //   mainTitle->DrawLatexNDC(0.13, 0.33, "Factorization region:");
   //   mainTitle->DrawLatexNDC(0.13, 0.25, "0.7 < Hadron p_{T} < 3 GeV");
     
-  //   // Save the figures to file
-  //   if(saveFigures){
-  //     gPad->GetCanvas()->SaveAs(Form("figures/finalBigCanvasJetVn%s.pdf", saveComment.Data()));
-  //   }
+    // Save the figures to file
+    if(saveFigures){
+      gPad->GetCanvas()->SaveAs(Form("figures/finalBigCanvas%s.pdf", saveComment.Data()));
+    }
     
   // }
   
@@ -583,5 +447,5 @@ void finalResultPlotter(){
   //     }
       
   //   }
-  // }
+  }
 }

@@ -13,7 +13,8 @@ LDFLAGS  = $(shell root-config --libs)
 
 CXXFLAGS  += $(INCS)
 
-HDRS	+= AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECUnfoldConfiguration.h SystematicUncertaintyOrganizer.h
+HDRSDICT = SplitCanvas.h
+HDRS	+= $(HDRSDICT) AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECUnfoldConfiguration.h SystematicUncertaintyOrganizer.h nanoDict.h
 
 
 SRCS = $(HDRS:.h=.cxx)
@@ -41,3 +42,9 @@ clean:
 		rm -f $(OBJS) $(PROGRAM).o $(PROGRAM).so
 
 cl:  clean $(PROGRAM)
+
+# Dictionary is needed for all classes inheriting TObject from root
+nanoDict.cc: $(HDRSDICT)
+		@echo "Generating dictionary ..."
+		@rm -f nanoDict.cc nanoDict.hh nanoDict.h
+		@rootcling nanoDict.cc -c -D$(version) $(HDRSDICT)

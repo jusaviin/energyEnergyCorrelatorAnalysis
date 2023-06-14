@@ -100,16 +100,16 @@ void estimateSystematicUncertainties(){
   int lastStudiedTrackPtBinEEC = nominalResultCard->GetLastUnfoldedTrackPtBin();
 
   // Only draw example plots from selected subset of bins
-  vector<int> drawnCentralityBins = {0,1,2,3};
+  vector<int> drawnCentralityBins = {0};
   vector<int> drawnJetPtBins = {6,7,8,9};
   vector<int> drawnTrackPtBins = {5};
   
   const bool printUncertainties = false;
   
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
-  std::pair<double, double> ratioZoom = std::make_pair(0.6, 1.4);         // Y-axis zoom for rations
+  std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for rations
   
-  TString outputFileName = "systematicUncertainties/systematicUncertainties_firstLook_2023-06-13.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertainties_ftest_2023-06-13.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -118,8 +118,8 @@ void estimateSystematicUncertainties(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = false;
-  plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] = false;
+  plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] = true;
+  plotExample[SystematicUncertaintyOrganizer::kBackgroundSubtraction] = false;
   
   // ==================================================================
   // ====================== Configuration done ========================

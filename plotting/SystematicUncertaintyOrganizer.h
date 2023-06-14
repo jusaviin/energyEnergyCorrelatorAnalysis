@@ -45,7 +45,7 @@ public:
   
 private:
     
-  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "trackSelection", "trackEfficiency", "trackPairEfficeincy", "backgroundSubtraction", "all"};
+  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "all"};
   TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "track selection", "track eff", "pair eff", "bg sub" ,"all"};
 
   // Systematic uncertainty for energy-energy correlators
