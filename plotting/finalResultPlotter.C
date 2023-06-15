@@ -79,7 +79,8 @@ void finalResultPlotter(){
 
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
-  bool drawBigCanvasDistributions = true;
+  bool drawBigCanvasDistributions = false;
+  bool drawCentralityRatios = true;
   
   // Save the final plots
   const bool saveFigures = true;
@@ -126,6 +127,7 @@ void finalResultPlotter(){
   TH1D* energyEnergyCorrelatorPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyForPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyForPp[nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Initialize histograms to NULL
   for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
@@ -136,6 +138,7 @@ void finalResultPlotter(){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
         systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
+        systematicUncertaintyPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC] = NULL;
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -186,6 +189,9 @@ void finalResultPlotter(){
 
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]);
+
+        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[iJetPt][iTrackPt]);
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -210,6 +216,14 @@ void finalResultPlotter(){
   TString trackPtString;
   TString compactTrackPtString;
 
+  // Common variables for different plots
+  TLegend* legend;
+  TLatex* mainTitle;
+  int canvasIndex;
+  double bottomRowScale, bottomPadMargin, leftPadMargin;
+  double leftMarginAdder, bottomMarginAdder;
+  double thisPadScale;
+
   // Draw individual plots with all centralities mixed together in a single figure
   if(drawIndividualPlotsAllCentralities){
 
@@ -229,7 +243,7 @@ void finalResultPlotter(){
         drawer->SetLogY(true);
 
         // Setup the legend for plots
-        TLegend* legend = new TLegend(0.23, 0.05, 0.53, 0.6);
+        legend = new TLegend(0.23, 0.05, 0.53, 0.6);
         legend->SetFillStyle(0);
         legend->SetBorderSize(0);
         legend->SetTextSize(0.05);
@@ -296,13 +310,7 @@ void finalResultPlotter(){
     
     // Draw all the distributions to big canvases
     SplitCanvas* bigCanvas[nTrackPtBinsEEC];
-    TLatex* mainTitle = new TLatex();
-    TLegend* legend;
-
-    int canvasIndex;
-    double bottomRowScale, bottomPadMargin, leftPadMargin;
-    double leftMarginAdder, bottomMarginAdder;
-    double thisPadScale;
+    mainTitle = new TLatex();
 
     for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
       compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
@@ -430,4 +438,94 @@ void finalResultPlotter(){
 
     }  // Track pT loop
   } // If for drawing big canvases
+
+  if(drawCentralityRatios){
+
+    // Draw all dividable canvas to draw all the histograms
+    SplitCanvas* centralityRatioCanvas[nTrackPtBinsEEC];
+    mainTitle = new TLatex();
+
+    for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+      compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+      compactTrackPtString.ReplaceAll(".", "v");
+
+      // Draw a big canvas and put all the plots in it
+      centralityRatioCanvas[iTrackPt] = new SplitCanvas(Form("centralityRatioCanvas%d", iTrackPt), "", 1300, 400);
+      centralityRatioCanvas[iTrackPt]->SetMargin(0.07, 0.01, 0.2, 0.01);
+      centralityRatioCanvas[iTrackPt]->DivideNeatly(1, 4);
+
+      bottomRowScale = centralityRatioCanvas[iTrackPt]->GetBottomRowScale();
+      bottomPadMargin = centralityRatioCanvas[iTrackPt]->GetBottomPadMargin();
+      leftPadMargin = centralityRatioCanvas[iTrackPt]->GetLeftPadMargin();
+
+      for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+        jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+
+        centralityRatioCanvas[iTrackPt]->CD(iJetPt - firstDrawnJetPtBinEEC);
+
+        gPad->SetLogy(false);
+        gPad->SetLogx();
+
+        thisPadScale = (iJetPt == firstDrawnJetPtBinEEC) ? 0.85 : 1;
+
+        // Set the axis titles and labels
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(1/thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.1*thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01/thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.08*thisPadScale);
+
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.8/thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.1*thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01/thisPadScale);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.08*thisPadScale);
+
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetTitle("#frac{PbPb}{pp}");
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->SetStats(0);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetNdivisions(505);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->CenterTitle();
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetTitle("#Deltar");
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
+
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->SetTitle("");
+
+        // Set the drawing ranges
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.39);
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.4, 1.6);
+
+        // Set the drawing style for histograms
+        for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+
+          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+        }
+
+        // Draw the histograms
+        systematicUncertaintyPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->Draw("e2");
+        systematicUncertaintyPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->Draw("same,e2");
+        energyEnergyCorrelatorPbPbToPpRatio[lastDrawnCentralityBin][iJetPt][iTrackPt]->Draw("same,p");
+        energyEnergyCorrelatorPbPbToPpRatio[firstDrawnCentralityBin][iJetPt][iTrackPt]->Draw("same,p");
+        //for(int iCentrality = firstDrawnCentralityBin + 1; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+        //  systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,e2");
+        //}
+        //for(int iCentrality = lastDrawnCentralityBin; iCentrality >= firstDrawnCentralityBin; iCentrality--) {
+        //  energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+        //}
+
+      }  // Jet pT loop
+
+      // Save the figures to file
+      if(saveFigures) {
+        gPad->GetCanvas()->SaveAs(Form("figures/finalCentralityRatio%s%s.pdf", saveComment.Data(), compactTrackPtString.Data()));
+      }
+    } // Track pT loop
+  } // If for drawing centrality ratios
 }
