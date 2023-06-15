@@ -95,6 +95,7 @@ EECAnalyzer::EECAnalyzer() :
   fSubeventCut(0),
   fTrackEfficiencyVariation(0.024),
   fTrackSelectionVariation(""),
+  fJetPtWeightConfiguration(0),
   fReconstructedJetMinimumPtCut(0),
   fGeneratorJetMinimumPtCut(0),
   fLowerTruthUnfoldingBins(0),
@@ -276,6 +277,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSubeventCut(in.fSubeventCut),
   fTrackEfficiencyVariation(in.fTrackEfficiencyVariation),
   fTrackSelectionVariation(in.fTrackSelectionVariation),
+  fJetPtWeightConfiguration(in.fJetPtWeightConfiguration),
   fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
   fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
   fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
@@ -348,6 +350,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSubeventCut = in.fSubeventCut;
   fTrackEfficiencyVariation = in.fTrackEfficiencyVariation;
   fTrackSelectionVariation = in.fTrackSelectionVariation;
+  fJetPtWeightConfiguration = in.fJetPtWeightConfiguration;
   fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
   fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
   fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
@@ -462,6 +465,9 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fTrackSelectionVariation = "";
   if(TMath::Abs(fMaxTrackPtRelativeError-0.05) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-2) < 0.001 && TMath::Abs(fChi2QualityCut-0.15) < 0.001) fTrackSelectionVariation = "Tight";
   if(TMath::Abs(fMaxTrackPtRelativeError-0.15) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-5) < 0.001) fTrackSelectionVariation = "Loose";
+
+  // Select the jet pT weighting configuration
+  fJetPtWeightConfiguration = fCard->Get("JetPtWeight");
   
 
   //****************************************
@@ -1792,8 +1798,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
   Double_t unfoldingDeltaRGeneratorLevel; // DeltaR transformed into generator level unfulding axis
   Double_t unfoldingDeltaRReconstructed;  // DeltaR transformed into reconstructed unfolding axis
 
-  // For MC: weight according to jet pT
-  Double_t jetPtWeight = GetJetPtWeight(jetPt);
+  // For MC: reweight only true jet pT
+  Double_t jetPtWeightReco = (fJetPtWeightConfiguration == 2) ? 1 : GetJetPtWeight(jetPt);
+  Double_t jetPtWeightGen = GetJetPtWeight(genPt);
 
   // Find the numbers of tracks for the track loops
   nTracks = selectedTrackPt.size();
@@ -1836,7 +1843,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
         fillerResponse[1] = unfoldingDeltaRGeneratorLevel;
         fillerResponse[2] = lowerTrackPt;
         fillerResponse[3] = centrality;
-        fHistograms->fhUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * correlatorWeight * jetPtWeight);
+        fHistograms->fhUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * correlatorWeight * jetPtWeightReco * jetPtWeightGen);
       }
 
       // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
@@ -1844,7 +1851,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
         fillerDistribution[0] = unfoldingDeltaRReconstructed;
         fillerDistribution[1] = lowerTrackPt;
         fillerDistribution[2] = centrality;
-        fHistograms->fhUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeight);
+        fHistograms->fhUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightReco);
       }
 
       // If the generator level jet pT is given, fill the generator level distribution for unfolding
@@ -1852,7 +1859,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
         fillerDistribution[0] = unfoldingDeltaRGeneratorLevel;
         fillerDistribution[1] = lowerTrackPt;
         fillerDistribution[2] = centrality;
-        fHistograms->fhUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeight);
+        fHistograms->fhUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightGen);
       }
 
     }  // Inner track loop
@@ -1912,7 +1919,7 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  *   return: Multiplicative correction factor for the jet pT
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
-  return 1; // Disable jet pT weight for now
+  if(fJetPtWeightConfiguration == 0) return 1.0; // If jet weighting is disabled, apply no weight
   if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
 
   return fPtWeightFunction->Eval(jetPt);

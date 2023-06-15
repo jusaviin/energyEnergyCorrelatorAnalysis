@@ -141,6 +141,7 @@ public:
   // Systematic variations
   Double_t fTrackEfficiencyVariation;   // Relative amount with which the tracking efficiency corrections are varied to estimate systematic uncertainties
   std::string fTrackSelectionVariation; // Automatically determine from track cuts which variation is used, and choose proper efficiency table accordingly
+  Int_t fJetPtWeightConfiguration;      // Jet pT weighting configuration in MC
 
   // Extra jet cuts for jet pT unfolding
   Double_t fReconstructedJetMinimumPtCut;  // Minimum jet pT cut for reconstructed jets for jet pT unfolding

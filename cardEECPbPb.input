@@ -46,6 +46,7 @@ SubeventCut 2               # Cut on subevent index. 0 = 0, 1 = (>0), 2 = no cut
 
 # Systematic variations applied
 TrackEfficiencyVariation 0.024 # For tracking uncertainties, vary the efficiency correction by 2.4%
+JetPtWeight 0 # In MC: 0 = Do not weight jet pT. 1 = Weight jet pT. 2 = Weight only true jet pT for response matrices.
 
 # Flags for residual correction method
 DisableTrackPairEfficiencyCorrection 0 # 0 = Do not disable the correction. 1 = Disable the correction
