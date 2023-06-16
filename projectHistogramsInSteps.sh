@@ -89,12 +89,15 @@ if $CLOSURE; then
   # Project jet pT closure histograms
   root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",2048)'
 
+  # Project jet pT response matrices from closure histograms
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",4096)'
+
 fi
 
 if $RESPONSE; then
 
-  # Project jet pT response matrices
-  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",4096)'
+  # Project jet pT response matrices for unfolding
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8192)'
 
 fi
 
