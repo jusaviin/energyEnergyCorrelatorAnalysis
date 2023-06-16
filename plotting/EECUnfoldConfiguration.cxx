@@ -159,6 +159,29 @@ void EECUnfoldConfiguration::InitializeArrays(){
       fBestNumberOfIterations[2][5] = 3;  // Centrality = 30-50, track pT > 3 GeV
       fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
+    } else if(fSystematicIndex == kJetPtPriorUncertainty){
+      // Configuration for jet pT prior uncertainty evaluation
+      // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
+      // Input: chi2Histograms_PbPb_split1_jetPtWeight_2023-06-16.root
+      //        chi2Histograms_PbPb_split2_jetPtWeight_2023-06-16.root
+
+      fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_jetPtWeight_responseMatrix%s_processed_2023-06-15.root", splitName[fSplitIndex]);
+
+      fBestNumberOfIterations[0][3] = 4;  // Centrality = 0-10, track pT > 2 GeV
+      fBestNumberOfIterations[1][3] = 3;  // Centrality = 10-30, track pT > 2 GeV
+      fBestNumberOfIterations[2][3] = 3;  // Centrality = 30-50, track pT > 2 GeV
+      fBestNumberOfIterations[3][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
+
+      fBestNumberOfIterations[0][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV
+      fBestNumberOfIterations[1][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
+      fBestNumberOfIterations[2][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV
+      fBestNumberOfIterations[3][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
+
+      fBestNumberOfIterations[0][5] = 4;  // Centrality = 0-10, track pT > 3 GeV
+      fBestNumberOfIterations[1][5] = 4;  // Centrality = 10-30, track pT > 3 GeV
+      fBestNumberOfIterations[2][5] = 3;  // Centrality = 30-50, track pT > 3 GeV
+      fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
+
     } else {
       std::cout << "EECUnfoldConfiguration::ERROR! " << fSystematicIndex  << " is undefined index for unfolding parameter set!" << std::endl;
       std::cout << "Yout code will crash soon if you are reading the response matrix file name from EECUnfoldConfiguration." << std::endl;
@@ -199,6 +222,18 @@ void EECUnfoldConfiguration::InitializeArrays(){
       //        chi2Histograms_pp_split2_systematicForJetPtUncertainty_2023-06-05.root
 
       fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix%s_processed_2023-06-02.root", splitName[fSplitIndex]);
+
+      fBestNumberOfIterations[0][3] = 6;  // track pT > 2 GeV
+      fBestNumberOfIterations[0][4] = 6;  // track pT > 2.5 GeV
+      fBestNumberOfIterations[0][5] = 6;  // track pT > 3 GeV
+
+    } else if(fSystematicIndex == kJetPtPriorUncertainty){
+      // Configuration for jet energy scale uncertainty evaluation
+      // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
+      // Input: chi2Histograms_pp_split1_jetPtWeight_2023-06-16.root
+      //        chi2Histograms_pp_split2_jetPtWeight_2023-06-16.root
+
+      fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_responseMatrix%s_processed_2023-06-15.root", splitName[fSplitIndex]);
 
       fBestNumberOfIterations[0][3] = 6;  // track pT > 2 GeV
       fBestNumberOfIterations[0][4] = 6;  // track pT > 2.5 GeV

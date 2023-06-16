@@ -13,6 +13,7 @@ if [ "$#" -lt 1 ]; then
   echo "   0 = Nominal result"
   echo "   1 = Jet energy resolution uncertainty"
   echo "   2 = Jet energy scale uncertainty"
+  echo "   3 = Jet pT prior uncertainty"
   echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. Default: 0."
   echo "   0 = Regular energy-energy correlator"
   echo "   1 = Energy-energy correlator with positive track efficiency variation"

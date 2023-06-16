@@ -12,7 +12,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_split1_2023-06-05.root", "chi2Files/chi2Histograms_pp_split2_2023-06-05.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_jetPtWeight_2023-06-16.root", "chi2Files/chi2Histograms_PbPb_split2_jetPtWeight_2023-06-16.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
@@ -114,17 +114,17 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 3;
   int lastStudiedTrackPtBinEEC = 5;
 
   int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
   const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
-  const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
+  const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
-  const bool drawBestIterationRatioComparison = true; // Draw unfolded to truth ratios for the selected number of iterations
-  const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
+  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -217,7 +217,7 @@ void drawUnfoldingChi2Test(){
     }
   }
 
-  bool saveFigures = true;
+  bool saveFigures = false;
   TString saveComment = "_splitComparisonSingleIteration";
   TString figureFormat = "pdf";
 
