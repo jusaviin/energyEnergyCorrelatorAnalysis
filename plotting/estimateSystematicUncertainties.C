@@ -50,6 +50,12 @@ void estimateSystematicUncertainties(){
   EECHistogramManager* jetEnergyScaleHistogramManager = new EECHistogramManager(jetEnergyScaleFile, jetEnergyScaleCard);
   loadRelevantHistograms(jetEnergyScaleHistogramManager);
 
+  // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
+  TFile* jetPtPriorFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_unfoldingPrior_processed_2023-05-23.root");
+  EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
+  EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
+  loadRelevantHistograms(jetPtPriorHistogramManager);
+
   // Results where background scaling factor is determined from 2% or 6% shifted simulation instead of nominal 4%
   TFile* backgroundSubtractionFile[2];
   backgroundSubtractionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_processed_backgroundScaleUncertainty2pShift_2023-05-23.root");
@@ -100,7 +106,7 @@ void estimateSystematicUncertainties(){
   int lastStudiedTrackPtBinEEC = nominalResultCard->GetLastUnfoldedTrackPtBin();
 
   // Only draw example plots from selected subset of bins
-  vector<int> drawnCentralityBins = {0};
+  vector<int> drawnCentralityBins = {0,1,2,3};
   vector<int> drawnJetPtBins = {6,7,8,9};
   vector<int> drawnTrackPtBins = {5};
   
@@ -108,8 +114,9 @@ void estimateSystematicUncertainties(){
   
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for rations
+  bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
   
-  TString outputFileName = "systematicUncertainties/systematicUncertainties_ftest_2023-06-13.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertainties_firstPrior_2023-06-16.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -118,8 +125,7 @@ void estimateSystematicUncertainties(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] = true;
-  plotExample[SystematicUncertaintyOrganizer::kBackgroundSubtraction] = false;
+  plotExample[SystematicUncertaintyOrganizer::kUnfoldingTruth] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -132,6 +138,7 @@ void estimateSystematicUncertainties(){
   TH1D* nominalEnergyEnergyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* jetEnergyResolutionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* jetEnergyScaleUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* jetPtPriorUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* backgroundSubtractionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* trackSelectionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
@@ -147,6 +154,7 @@ void estimateSystematicUncertainties(){
         nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
         jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
         jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
+        jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = NULL;
         for(int iFile = 0; iFile < 2; iFile++){
           backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           trackSelectionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
@@ -186,6 +194,15 @@ void estimateSystematicUncertainties(){
 
         // Normalize the jet energy resolution histograms to one
         jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        // Read the jet pT prior histograms
+        iCentralityMatched = jetPtPriorCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+        iTrackPtMatched = jetPtPriorCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+        iJetPtMatched = jetPtPriorCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+        jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt] = jetPtPriorHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+        // Normalize the jet energy resolution histograms to one
+        jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
         // Read the jet energy scale histograms
         iCentralityMatched = jetEnergyScaleCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
@@ -268,6 +285,20 @@ void estimateSystematicUncertainties(){
           // Draw example plots on how the uncertainty is obtained
           if(plotExample[SystematicUncertaintyOrganizer::kJetEnergyResolution] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "JER varied response";
+
+            // Set reasonable ratio zoom depending on centrality bin
+            if(setAutomaticRatioZoom){
+              if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(0.0,10.0)){
+                ratioZoom = std::make_pair(0.7,1.3);
+              } else if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(10.0,30.0)){
+                ratioZoom = std::make_pair(0.8,1.2);
+              } else if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(30.0,50.0)){
+                ratioZoom = std::make_pair(0.9,1.1);
+              } if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(50.0,90.0)){
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), analysisDeltaR, ratioZoom);
           }
       
@@ -290,7 +321,41 @@ void estimateSystematicUncertainties(){
           // Draw example plots on how the uncertainty is obtained
           if(plotExample[SystematicUncertaintyOrganizer::kJetEnergyScale] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "JEC varied response";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              ratioZoom = std::make_pair(0.9,1.1);
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), analysisDeltaR, ratioZoom);
+          }
+      
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Jet energy scale uncertainty
+
+  // ==================================================== //
+  //   Uncertainty coming from jet pT prior in unfolding  //
+  // ==================================================== //
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kUnfoldingTruth]){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kUnfoldingTruth] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]);
+
+          // Draw example plots on how the uncertainty is obtained
+          if(plotExample[SystematicUncertaintyOrganizer::kUnfoldingTruth] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+            legendNames[0] = "Weighted prior";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              ratioZoom = std::make_pair(0.9,1.1);
+            }
+
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kUnfoldingTruth), analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
