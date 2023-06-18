@@ -78,12 +78,12 @@ void finalResultPlotter(){
   int lastDrawnTrackPtBinEEC = card[kPbPb]->GetLastUnfoldedTrackPtBin();
 
   // Choose which plots to draw
-  bool drawIndividualPlotsAllCentralities = false;
+  bool drawIndividualPlotsAllCentralities = true;
   bool drawBigCanvasDistributions = false;
-  bool drawCentralityRatios = true;
+  bool drawCentralityRatios = false;
   
   // Save the final plots
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   TString saveComment = "_preliminary";
 
   // Ratio zoom settings
@@ -137,8 +137,8 @@ void finalResultPlotter(){
       for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC] = NULL;
+        systematicUncertaintyForPbPb[iCentrality][][iTrackPt] = NULL;
+        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop

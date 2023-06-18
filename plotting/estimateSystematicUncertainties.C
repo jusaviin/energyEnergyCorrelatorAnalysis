@@ -108,12 +108,12 @@ void estimateSystematicUncertainties(){
   // Only draw example plots from selected subset of bins
   vector<int> drawnCentralityBins = {0,1,2,3};
   vector<int> drawnJetPtBins = {6,7,8,9};
-  vector<int> drawnTrackPtBins = {5};
+  vector<int> drawnTrackPtBins = {3,4,5};
   
   const bool printUncertainties = false;
   
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
-  std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for rations
+  std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
   
   TString outputFileName = "systematicUncertainties/systematicUncertainties_firstPrior_2023-06-16.root";
