@@ -6,7 +6,7 @@
 /*
  * Logarithmic function used to fit the ratio plot
  */
-double logFit(double *x, double *par){
+double logFit(double* x, double* par){
   return par[1] * TMath::Log10(x[0]) + par[0];
 }
 
@@ -85,11 +85,12 @@ void fitPbPbToPpRatio(){
 
   // Choose which plots to draw
   bool drawRatiosWithFits = true;
-  bool drawWiggleGraph = true;
+  bool drawWiggleGraph = false;
+  bool printWiggleTable = false;
   
   // Save the final plots
   const bool saveFigures = true;
-  TString saveComment = "_firstLook";
+  TString saveComment = "_thickLine";
 
   // Ratio zoom settings
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
@@ -376,19 +377,35 @@ void fitPbPbToPpRatio(){
   // Find the deltaR value corresponding to the points where the different fit region overlap
   double firstTurningPoint[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   double secondTurningPoint[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  double firstTurningPointError[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  double secondTurningPointError[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
     for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-        firstTurningPoint[iCentrality][iJetPt][iTrackPt] = 0;
-        secondTurningPoint[iCentrality][iJetPt][iTrackPt] = 0;
+        firstTurningPointError[iCentrality][iJetPt][iTrackPt] = 0;
+        secondTurningPointError[iCentrality][iJetPt][iTrackPt] = 0;
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
 
   double a,b,c,d;
+  double ea, eb, ec, ed;
   for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
     for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+
+        /*if(iCentrality == firstDrawnCentralityBin+1){
+
+          cout << "Jet pT: " << iJetPt << "  track pT: " << iTrackPt << endl;
+
+          cout << "Fit 0 Parameter 0: " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
+          cout << "Fit 0 Parameter 1: " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
+          cout << "Fit 1 Parameter 0: " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
+          cout << "Fit 1 Parameter 1: " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
+          cout << "Fit 2 Parameter 0: " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
+          cout << "Fit 2 Parameter 1: " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
+          cout << endl;
+        }*/
         
         // Calculate the x-value for which the two functions overlap
         // a*log(x)+b = c*log(x)+d => log(x) = (d - b) / (a - c) => x = 10^[(d - b) / (a - c)]
@@ -398,9 +415,30 @@ void fitPbPbToPpRatio(){
         d = fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
         firstTurningPoint[iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
 
+        // Calculate the error using the law of error propagation
+        // Chain rule: d/dx f(g(x)) = f'(g(x)) * g'(x)
+        // d/da (d-b)/(a-c) E(a) = (d-b) d/da (a-c)^{-1} E(a) = (b-d)/(a-c)^2 E(a)
+        // d/db (d-b)/(a-c) E(b) = -1/(a-c) E(b)
+        // d/dc (d-b)/(a-c) E(c) = (d-b)/(a-c)^2 E(c)
+        // d/dd (d-b)/(a-c) E(d) = 1/(a-c) E(d)
+        // d/dx a^x = a^x * ln(a)
+        ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+        eb = -1/(a-c) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+        ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+        ed = 1/(a-c) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+        firstTurningPointError[iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
+
+        // Do the same for the second turning point
         a = fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
         b = fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
         secondTurningPoint[iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
+
+        ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+        eb = -1/(a-c) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+        ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+        ed = 1/(a-c) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+        secondTurningPointError[iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
+
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
@@ -510,6 +548,7 @@ void fitPbPbToPpRatio(){
 
           // Draw the fits
           for(int iFit = 0; iFit < nFitParts; iFit++){
+            fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->SetLineWidth(5);
             fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->Draw("same");
           }
           drawer->SetGridY(false);
@@ -591,4 +630,39 @@ void fitPbPbToPpRatio(){
 
   }
 
+  // Print a table of the location of the wiggle
+  if(printWiggleTable){
+
+    // Find the indices of the bins included in the table
+    int iCentrality0to10 = card[kPbPb]->FindBinIndexCentrality(0.0,10.0);
+    int iCentrality10to30 = card[kPbPb]->FindBinIndexCentrality(10.0,30.0);
+    int trackPtBinFor2GeV = card[kPbPb]->GetBinIndexTrackPtEEC(2.0);
+    int trackPtBinFor3GeV = card[kPbPb]->GetBinIndexTrackPtEEC(3.0);
+    int iJetPt120to140 = card[kPbPb]->FindBinIndexJetPtEEC(120.0,140.0);
+    int iJetPt140to160 = card[kPbPb]->FindBinIndexJetPtEEC(140.0,160.0);
+    int iJetPt160to180 = card[kPbPb]->FindBinIndexJetPtEEC(160.0,180.0);
+    int iJetPt180to200 = card[kPbPb]->FindBinIndexJetPtEEC(180.0,200.0);
+
+    // Write the beginning of the table
+    cout << endl;
+    cout << "\\begin{table}[htbp]" << endl;
+    cout << "  \\centering{" << endl;
+    cout << "    \\topcaption{Location of the wiggle triangulated using three lines.}" << endl;
+    cout << "    \\label{tab:wiggleTable}" << endl;
+    cout << "    \\begin{tabular}{cccc}" << endl;
+    cout << "      \\ptCh (GeV) & Jet \\pt (GeV) & Wiggle location 0--10\\%  & Wiggle location 10--30\\% \\\\" << endl;
+    cout << "      \\hline" << endl;
+    cout << Form("      \\multirow{4}*{$\\ptCh>2$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV]) << endl;
+    cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV]) << endl;
+    cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV]) << endl;
+    cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\[\\cmsTabSkip]", firstTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV]) << endl;
+    cout << Form("      \\multirow{4}*{$\\ptCh>3$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV]) << endl;
+    cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV]) << endl;
+    cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV]) << endl;
+    cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV]) << endl;
+    cout << "    \\end{tabular}" << endl;
+    cout << "  }" << endl;
+    cout << "\\end{table}" << endl;
+
+  } // Print a table with infomation about the wiggle
 }
