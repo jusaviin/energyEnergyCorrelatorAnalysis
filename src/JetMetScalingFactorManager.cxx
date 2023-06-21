@@ -22,9 +22,14 @@ JetMetScalingFactorManager::JetMetScalingFactorManager():
  * Custom constructor
  */
 JetMetScalingFactorManager::JetMetScalingFactorManager(const bool isPbPbData, const int scalingFactorType):
-  fIsPbPbData(isPbPbData),
-  fSystematicIndex(scalingFactorType)
+  fIsPbPbData(isPbPbData)
 {
+
+  if(scalingFactorType < 0){
+    fSystematicIndex = 0;
+  } else {
+    fSystematicIndex = scalingFactorType;
+  }
 
   // Find the scaling factors based on data type
   InitializeArrays();

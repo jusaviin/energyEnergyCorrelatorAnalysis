@@ -184,7 +184,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-05-17.root", false);
 
     // Jet energy resolution smearing scale factor manager
-    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+    if(fJetUncertaintyMode > 0){
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(false, fJetUncertaintyMode-3);
     } else {
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
@@ -218,7 +218,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_PbPb2018_32DeltaRBins_2023-05-17.root", false);
 
     // Jet energy resolution smearing scale factor manager
-    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+    if(fJetUncertaintyMode > 0){
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(true, fJetUncertaintyMode-3);
     } else {
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
@@ -999,15 +999,16 @@ void EECAnalyzer::RunAnalysis(){
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
             jetPt = jetPtCorrected;
             
-            // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
-            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
-            
             // If we are using smearing scenario, modify the jet pT using gaussian smearing
-            if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+            if(fJetUncertaintyMode > 0){
               smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
               jetPt = jetPt * fRng->Gaus(1,smearingFactor);
             }
+
+            // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+            // Notice that we still need to apply the nominal jet pT smearing in MC before varying the scale
+            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
             
           }
           
@@ -1537,7 +1538,7 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   recoPt = fJetCorrector2018->GetCorrectedPT();
   
   // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
-  if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+  if(fJetUncertaintyMode > 0){
     smearingFactor = GetSmearingFactor(recoPt, jetEta, centrality);
     recoPt = recoPt * fRng->Gaus(1,smearingFactor);
   }
@@ -1629,15 +1630,16 @@ void EECAnalyzer::FillUnfoldingResponse(){
 
     jetPt = fJetCorrector2018->GetCorrectedPT();
 
-    // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
-    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
-
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
-    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5) {
+    if(fJetUncertaintyMode > 0) {
       smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
       jetPt = jetPt * fRng->Gaus(1, smearingFactor);
     }
+
+    // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+    // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
     if(jetPt < fReconstructedJetMinimumPtCut) continue;
