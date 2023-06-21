@@ -125,6 +125,9 @@ EECAnalyzer::EECAnalyzer() :
   
   // Create a corrector for track pair efficiency
   fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector();
+
+  // Create a manager for jet energy resolution smearing in MC
+  fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
 }
 
 /*
@@ -179,6 +182,13 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     
     // Track pair efficiency corrector for pp
     fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-05-17.root", false);
+
+    // Jet energy resolution smearing scale factor manager
+    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(false, fJetUncertaintyMode-3);
+    } else {
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
+    }
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -206,6 +216,13 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     
     // Track pair efficiency corrector for PbPb
     fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_PbPb2018_32DeltaRBins_2023-05-17.root", false);
+
+    // Jet energy resolution smearing scale factor manager
+    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(true, fJetUncertaintyMode-3);
+    } else {
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
+    }
     
   } else {
     fVzWeightFunction = NULL;
@@ -213,6 +230,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fCentralityWeightFunctionPeripheral = NULL;
     fMultiplicityWeightFunction = NULL;
     fTrackPairEfficiencyCorrector = NULL;
+    fEnergyResolutionSmearingFinder = NULL;
   }
   
   // Initialize the random number generator with a random seed
@@ -382,6 +400,7 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetUncertainty2018) delete fJetUncertainty2018;
   if(fReflectedConeWeighter) delete fReflectedConeWeighter;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
+  if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
   if(fCentralityWeightFunctionPeripheral) delete fCentralityWeightFunctionPeripheral;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
@@ -563,13 +582,6 @@ void EECAnalyzer::RunAnalysis(){
   
   // Variables for smearing study
   Double_t smearingFactor = 0;       // Larger of the JEC uncertainties
-  Double_t jetPtErrorUp = 0;          // Uncertainty to be added to the jet pT
-  Double_t jetPtErrorDown = 0;           // Uncertainty to be subtracted from the jet pT
-  Double_t smearingEta = 0;
-  Double_t smearingPhi = 0;
-  Double_t smearPhiSigmas[4] = {0.022, 0.017, 0.015, 0.015};
-  Double_t smearEtaSigmas[4] = {0.021, 0.016, 0.013, 0.013};
-  Int_t centralityBin = 0;
   
   // Variables for jet matching and closure
   Int_t unmatchedCounter = 0;       // Number of jets that fail the matching
@@ -858,9 +870,6 @@ void EECAnalyzer::RunAnalysis(){
       // ===== Event quality cuts applied =====
       // ======================================
       
-      // Centrality bin for smearing study
-      centralityBin = GetCentralityBin(centrality);  // Only needed for smearing study
-      
       // The unfolding study is completely separate from regular analysis to make code easier to follow
       if(fFillJetPtUnfoldingResponse) FillUnfoldingResponse();
 
@@ -887,15 +896,6 @@ void EECAnalyzer::RunAnalysis(){
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
           jetFlavor = 0;
-          
-          // Smearing for the angles:
-          if(fJetUncertaintyMode == 4){
-            smearingEta = fRng->Gaus(0,smearEtaSigmas[centralityBin]); // Number based on study of Enea
-            smearingPhi = fRng->Gaus(0,smearPhiSigmas[centralityBin]); // Number based on study of Enea
-            jetEta = jetEta + smearingEta;
-            jetPhi = jetPhi + smearingPhi;
-          }
-          
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
@@ -1004,16 +1004,8 @@ void EECAnalyzer::RunAnalysis(){
             if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
             
             // If we are using smearing scenario, modify the jet pT using gaussian smearing
-            if(fJetUncertaintyMode == 3){
-              smearingFactor = GetSmearingFactor(jetPt, centrality);
-              jetPt = jetPt * fRng->Gaus(1,smearingFactor);
-            }
-            
-            // Second smearing scenario, where we smear the jet energy based on the uncertainties
-            if(fJetUncertaintyMode == 5){
-              jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
-              jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
-              smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
+            if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+              smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
               jetPt = jetPt * fRng->Gaus(1,smearingFactor);
             }
             
@@ -1545,8 +1537,8 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   recoPt = fJetCorrector2018->GetCorrectedPT();
   
   // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
-  if(fJetUncertaintyMode == 3){
-    smearingFactor = GetSmearingFactor(recoPt, centrality);
+  if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5){
+    smearingFactor = GetSmearingFactor(recoPt, jetEta, centrality);
     recoPt = recoPt * fRng->Gaus(1,smearingFactor);
   }
   
@@ -1583,8 +1575,6 @@ void EECAnalyzer::FillUnfoldingResponse(){
   Double_t genPt;             // Matched generator level jet pT
   Int_t nJets;                // Number of jets
   Double_t smearingFactor;    // Smearing factor for systematic uncertainty study
-  Double_t jetPtErrorUp;      // Jet energy scale up error for systematic study
-  Double_t jetPtErrorDown;    // Jet energy scale down error for systematic study
 
   // Variables for tracks
   Double_t trackPt;           // Generator level particle pT
@@ -1644,16 +1634,8 @@ void EECAnalyzer::FillUnfoldingResponse(){
     if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
-    if(fJetUncertaintyMode == 3) {
-      smearingFactor = GetSmearingFactor(jetPt, centrality);
-      jetPt = jetPt * fRng->Gaus(1, smearingFactor);
-    }
-
-    // Second smearing scenario, where we smear the jet energy based on the uncertainties
-    if(fJetUncertaintyMode == 5) {
-      jetPtErrorUp = fJetUncertainty2018->GetUncertainty().second;
-      jetPtErrorDown = fJetUncertainty2018->GetUncertainty().first;
-      smearingFactor = jetPtErrorUp > jetPtErrorDown ? jetPtErrorUp : jetPtErrorDown;
+    if(fJetUncertaintyMode == 3 || fJetUncertaintyMode == 4 || fJetUncertaintyMode == 5) {
+      smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
       jetPt = jetPt * fRng->Gaus(1, smearingFactor);
     }
 
@@ -1936,14 +1918,12 @@ Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
  *
  *  return: Additional smearing factor
  */
-Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centrality) {
+Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, Double_t jetEta, const Double_t centrality) {
   
   // For all the jets above 500 GeV, use the resolution for 500 GeV jet
   if(jetPt > 500) jetPt = 500;
   
   // Find the correct centrality bin
-  // TODO: This is dangerous and only works if there is an empty centrality bin in the beginning in card!!!!
-  // TODO: Needs to be fixed
   Int_t centralityBin = GetCentralityBin(centrality);
   
   // Set the parameters to the smearing function. pp and PbPb have different smearing function parameters
@@ -1952,7 +1932,7 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centralit
     // Determined using the macro constructJetPtClosures.C
     // Input file: ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
     fSmearingFunction->SetParameters(0.165659, -0.000775499, 2.70493e-06, -4.69846e-09, 3.15964e-12);
-    
+
   } else {
     
     // Parameters for the smearing function
@@ -1980,7 +1960,9 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, const Double_t centralit
   // Worsening resolution by 20%: 0.663
   // Worsening resolution by 10%: 0.458
   // Worsening resolution by 30%: 0.831
-  return fSmearingFunction->Eval(jetPt)*0.663;
+
+  // We want to worsen resolution in MC by the amount defined by JetMet group. The scaling factor is given by a JetMet manager
+  return fSmearingFunction->Eval(jetPt)*fEnergyResolutionSmearingFinder->GetScalingFactor(jetEta);
   
 }
 

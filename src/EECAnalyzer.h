@@ -29,6 +29,7 @@
 #include "TrackingEfficiencyInterface.h"
 #include "ReflectedConeWeight.h"
 #include "TrackPairEfficiencyCorrector.h"
+#include "JetMetScalingFactorManager.h"
 
 class EECAnalyzer{
   
@@ -72,7 +73,7 @@ public:
   Double_t GetCentralityWeight(const Int_t hiBin) const; // Get the proper centrality weighting depending on analyzed system
   Double_t GetMultiplicityWeight(const Double_t multiplicity) const; // Get the proper multiplicity weight for MC
   Double_t GetJetPtWeight(const Double_t jetPt) const; // Get the proper jet pT weighting for 2017 and 2018 MC
-  Double_t GetSmearingFactor(Double_t jetPt, const Double_t centrality); // Getter for jet pT smearing factor
+  Double_t GetSmearingFactor(Double_t jetPt, Double_t jetEta, const Double_t centrality); // Getter for jet pT smearing factor
   Int_t GetCentralityBin(const Double_t centrality) const; // Getter for centrality bin
   Double_t GetMultiplicity(); // Get the track multiplicity in the current event
   Double_t GetCentralityFromMultiplicity(const Double_t multiplicity) const; // Get the analysis centrality bin corresponding to the given multiplicity
@@ -100,6 +101,7 @@ public:
   JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
   ReflectedConeWeight* fReflectedConeWeighter;   // Class for weighting the tracks in the reflected cone
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
+  JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
   TRandom3* fRng;                                // Random number generator
   
   // Analyzed data and forest types
