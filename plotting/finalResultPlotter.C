@@ -780,7 +780,7 @@ void finalResultPlotter(){
   if(drawDoubleRatioToSingleCanvas){
 
     // For the double ratios, only draw one example bin
-    doubleRatioJetPtBinIndex = card[kPbPb]->FindBinIndexJetPtEEC(160.0,180.0);
+    doubleRatioJetPtBinIndex = card[kPbPb]->FindBinIndexJetPtEEC(doubleRatioJetPtBin);
 
     // Create a TCanvas for the double ratio
     TCanvas* theGreatCanvasOfDoubleRatio = new SplitCanvas("theGreatCanvasOfDoubleRatio", "", 1200, 800);
