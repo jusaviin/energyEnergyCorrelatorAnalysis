@@ -85,8 +85,8 @@ void finalResultPlotter(){
   bool drawDoubleRatioToSingleCanvas = true;
 
   // Select the bins to be drawn for double ratio plots
-  std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(10,30);
-  std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(30,50);
+  std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
+  std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
   std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
@@ -780,8 +780,6 @@ void finalResultPlotter(){
   if(drawDoubleRatioToSingleCanvas){
 
     // For the double ratios, only draw one example bin
-    doubleRatioCentralityBinIndex1 = card[kPbPb]->FindBinIndexCentrality(0.0,10.0);
-    doubleRatioCentralityBinIndex2 = card[kPbPb]->FindBinIndexCentrality(10.0,30.0);
     doubleRatioJetPtBinIndex = card[kPbPb]->FindBinIndexJetPtEEC(160.0,180.0);
 
     // Create a TCanvas for the double ratio
@@ -796,7 +794,7 @@ void finalResultPlotter(){
     canvasIndex = 0;
 
     // Set the drawing and label styles
-    for(int iCentrality = doubleRatioCentralityBinIndex1; iCentrality <= doubleRatioCentralityBinIndex2; iCentrality += (doubleRatioCentralityBinIndex2-doubleRatioCentralityBinIndex1)){
+    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
 
       // Set the axis titles and labels
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetTitleOffset(1);
@@ -838,17 +836,22 @@ void finalResultPlotter(){
     }
 
     // Draw the histograms
-    systematicUncertaintyDoubleRatio[doubleRatioCentralityBinIndex1][doubleRatioJetPtBinIndex]->Draw("e2");
-    systematicUncertaintyDoubleRatio[doubleRatioCentralityBinIndex2][doubleRatioJetPtBinIndex]->Draw("same,e2");
-    energyEnergyCorrelatorDoubleRatio[doubleRatioCentralityBinIndex2][doubleRatioJetPtBinIndex]->Draw("same,p");
-    energyEnergyCorrelatorDoubleRatio[doubleRatioCentralityBinIndex1][doubleRatioJetPtBinIndex]->Draw("same,p");
+    systematicUncertaintyDoubleRatio[firstDrawnCentralityBin][doubleRatioJetPtBinIndex]->Draw("e2");
+
+    for(int iCentrality = firstDrawnCentralityBin+1; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->Draw("same,e2");
+    }
+    for(int iCentrality = lastDrawnCentralityBin; iCentrality >= firstDrawnCentralityBin; iCentrality--){
+      energyEnergyCorrelatorDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->Draw("same,p");
+    }
 
     // Show the centrality bin in the legend
-    legend = new TLegend(0.28, 0.22, 0.53, 0.47);
+    legend = new TLegend(0.28, 0.22, 0.53, 0.54);
     legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.055); legend->SetTextFont(62);
     legend->AddEntry((TObject*)0, Form("%.f < jet p_{T} < %.0f GeV",  card[kPbPb]->GetLowBinBorderJetPtEEC(doubleRatioJetPtBinIndex), card[kPbPb]->GetHighBinBorderJetPtEEC(doubleRatioJetPtBinIndex)), "");
-    legend->AddEntry(systematicUncertaintyDoubleRatio[doubleRatioCentralityBinIndex1][doubleRatioJetPtBinIndex], Form("Centrality: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(doubleRatioCentralityBinIndex1), card[kPbPb]->GetHighBinBorderCentrality(doubleRatioCentralityBinIndex1)), "p");
-    legend->AddEntry(systematicUncertaintyDoubleRatio[doubleRatioCentralityBinIndex2][doubleRatioJetPtBinIndex], Form("Centrality: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(doubleRatioCentralityBinIndex2), card[kPbPb]->GetHighBinBorderCentrality(doubleRatioCentralityBinIndex2)), "p");
+    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+      legend->AddEntry(systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex], Form("Centrality: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
+    }
 
     legend->Draw();
 
@@ -857,7 +860,7 @@ void finalResultPlotter(){
 
     mainTitle->SetTextFont(62);
     mainTitle->SetTextSize(0.07);
-    mainTitle->DrawLatexNDC(0.342, 0.49, "CMS");
+    mainTitle->DrawLatexNDC(0.542, 0.666, "CMS");
 
     mainTitle->SetTextFont(42);
     mainTitle->SetTextSize(0.055);
@@ -867,7 +870,7 @@ void finalResultPlotter(){
     mainTitle->DrawLatexNDC(0.27, 0.78, "|#eta_{jet}| < 1.6");
 
     // Save the figures to file
-    if(saveFigures) {
+    if(saveFigures){
       gPad->GetCanvas()->SaveAs(Form("figures/finalDoubleRatioSingleCanvas%s.pdf", saveComment.Data()));
     }
 
