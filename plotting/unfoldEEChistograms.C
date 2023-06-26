@@ -43,8 +43,13 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                      2: Use the second half of the Monte Carlo statistics to construct the response matrix
  *   const int iSystematic = Index for unfolding systematic uncertainty study
  *                           0: Default results, no systematic study
- *                           1: Evaluate systematic uncertainties for jet pT resolution
- *                           2: Evaluate systematic uncertainties for jet energy scale
+ *                           1: Evaluate down systematic uncertainties for jet pT resolution
+ *                           2: Evaluate up systematic uncertainties for jet pT resolution
+ *                           3: Evaluate down systematic uncertainties for jet energy scale
+ *                           4: Evaluate up systematic uncertainties for jet energy scale
+ *                           5: Evaluate systematic uncertainties for jet pT prior shape
+ *                           6: Evaluate systemtic uncertainty from 2% centrality shift
+ *                           7: Evaluate systematic uncertainty from 6% centrality shift
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  */
 void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){

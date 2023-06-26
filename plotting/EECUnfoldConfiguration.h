@@ -14,8 +14,8 @@ class EECUnfoldConfiguration {
 public:
  
   // Helper enumeration for different defined Monte Carlo splits and systematic parameter sets
-  enum enumUnfoldingParameterSet{kDefault, kJetPtResolutionUncertainty, kJetEnergyScaleUncertainty, kJetPtPriorUncertainty, kNParameterSets};
-  enum enumMonteCalroSplit{kWholeDataset, kMonteCarloSplit1, kMonteCarloSplit2, kNDatasetSplits};
+  enum enumUnfoldingParameterSet{kNominalSmear, kJetPtResolutionUncertaintyDown, kJetPtResolutionUncertaintyUp, kJetEnergyScaleUncertaintyDown, kJetEnergyScaleUncertaintyUp, kJetPtPriorUncertainty, kCentralityShiftDown, kCentralityShiftUp, kNParameterSets};
+  enum enumMonteCarloSplit{kWholeDataset, kMonteCarloSplit1, kMonteCarloSplit2, kNDatasetSplits};
 
   // Dimensions for the arrays are defined by the files used the obtain the iteration numbers
   static const int kNCentralityBins = 4;      // Number of centrality bins for which background scale is determined
