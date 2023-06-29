@@ -25,7 +25,7 @@ private:
   
 public:
   
-  enum enumUncertaintySources{kJetEnergyResolution, kJetEnergyScale, kUnfoldingTruth, kTrackSelection, kSingleTrackEfficiency, kTrackPairEfficiency, kBackgroundSubtraction, kAll, knUncertaintySources};
+  enum enumUncertaintySources{kJetEnergyResolution, kJetEnergyScale, kUnfoldingTruth, kTrackSelection, kSingleTrackEfficiency, kTrackPairEfficiency, kBackgroundSubtraction, kCentralityShift, kAll, knUncertaintySources};
   
   SystematicUncertaintyOrganizer();                                          // Default constructor
   SystematicUncertaintyOrganizer(TFile* inputFile);                          // Constructor
@@ -45,8 +45,8 @@ public:
   
 private:
     
-  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "all"};
-  TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "track selection", "track eff", "pair eff", "bg sub" ,"all"};
+  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "centralityShift", "all"};
+  TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "track selection", "track eff", "pair eff", "bg sub", "cent shift" ,"all"};
 
   // Systematic uncertainty for energy-energy correlators
   TH1D* fhEnergyEnergyCorrelatorUncertainty[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knUncertaintySources];  

@@ -145,18 +145,18 @@ void EECUnfoldConfiguration::InitializeArrays(){
       fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_uncertaintySmearUp_responseMatrix%s_processed_2023-06-23.root", splitName[fSplitIndex]);
 
       fBestNumberOfIterations[0][3] = 3;  // Centrality = 0-10, track pT > 2 GeV
-      fBestNumberOfIterations[1][3] = 1;  // Centrality = 10-30, track pT > 2 GeV
-      fBestNumberOfIterations[2][3] = 12;  // Centrality = 30-50, track pT > 2 GeV
+      fBestNumberOfIterations[1][3] = 3;  // Centrality = 10-30, track pT > 2 GeV
+      fBestNumberOfIterations[2][3] = 3;  // Centrality = 30-50, track pT > 2 GeV
       fBestNumberOfIterations[3][3] = 4;  // Centrality = 50-90, track pT > 2 GeV
 
       fBestNumberOfIterations[0][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV
-      fBestNumberOfIterations[1][4] = 1;  // Centrality = 10-30, track pT > 2.5 GeV
-      fBestNumberOfIterations[2][4] = 10;  // Centrality = 30-50, track pT > 2.5 GeV
+      fBestNumberOfIterations[1][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV
+      fBestNumberOfIterations[2][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV
       fBestNumberOfIterations[3][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
 
       fBestNumberOfIterations[0][5] = 4;  // Centrality = 0-10, track pT > 3 GeV
-      fBestNumberOfIterations[1][5] = 1;  // Centrality = 10-30, track pT > 3 GeV
-      fBestNumberOfIterations[2][5] = 10;  // Centrality = 30-50, track pT > 3 GeV
+      fBestNumberOfIterations[1][5] = 4;  // Centrality = 10-30, track pT > 3 GeV
+      fBestNumberOfIterations[2][5] = 4;  // Centrality = 30-50, track pT > 3 GeV
       fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
     } else if(fSystematicIndex == kJetEnergyScaleUncertaintyDown){

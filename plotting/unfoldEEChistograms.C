@@ -107,11 +107,11 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       return;
     }
     for(int iCentrality = 0; iCentrality < responseCard->GetNCentralityBins(); iCentrality++){
-      if(TMath::Abs(responseCard->GetLowBinBorderCentrality(iCentrality) - dataCard->GetLowBinBorderCentrality(iCentrality)) > 5){
+      if(TMath::Abs(responseCard->GetLowBinBorderCentrality(iCentrality) - dataCard->GetLowBinBorderCentrality(iCentrality)) > 6){
         cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
         return;
       }
-      if(TMath::Abs(responseCard->GetHighBinBorderCentrality(iCentrality) - dataCard->GetHighBinBorderCentrality(iCentrality)) > 5){
+      if(TMath::Abs(responseCard->GetHighBinBorderCentrality(iCentrality) - dataCard->GetHighBinBorderCentrality(iCentrality)) > 6){
         cout << "Error! Centrality bins do not match between the two files! Cannot execute the code!" << endl;
         return;
       }

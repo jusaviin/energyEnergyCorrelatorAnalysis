@@ -36,38 +36,50 @@ void estimateSystematicUncertaintiesForPp(){
   // ==================================================================
 
   // Nominal results
-  TFile* nominalResultFile = TFile::Open("data/ppData_pfJets_wtaAxis_nominalResults_processed_2023-06-12.root");
+  TFile* nominalResultFile = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithNominalSmear_processed_2023-06-25.root");
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
   loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
-  TFile* jetEnergyResolutionFile = TFile::Open("data/ppData_pfJets_wtaAxis_jetEnergyResolutionSystematics_processed_2023-06-12.root");
-  EECCard* jetEnergyResolutionCard = new EECCard(jetEnergyResolutionFile);
-  EECHistogramManager* jetEnergyResolutionHistogramManager = new EECHistogramManager(jetEnergyResolutionFile, jetEnergyResolutionCard);
-  loadRelevantHistograms(jetEnergyResolutionHistogramManager);
+  TFile* jetEnergyResolutionFile[2];
+  jetEnergyResolutionFile[0] = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithUncertaintySmearDown_processed_2023-06-25.root");
+  jetEnergyResolutionFile[1] = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithUncertaintySmearUp_processed_2023-06-25.root");
+  EECCard* jetEnergyResolutionCard[2];
+  EECHistogramManager* jetEnergyResolutionHistogramManager[2];
+  for(int iJetEnergyResolutionFile = 0; iJetEnergyResolutionFile < 2; iJetEnergyResolutionFile++){
+    jetEnergyResolutionCard[iJetEnergyResolutionFile] = new EECCard(jetEnergyResolutionFile[iJetEnergyResolutionFile]);
+    jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile] = new EECHistogramManager(jetEnergyResolutionFile[iJetEnergyResolutionFile], jetEnergyResolutionCard[iJetEnergyResolutionFile]);
+    loadRelevantHistograms(jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile]);
+  }
   
   // Results unfolded with a response matrix smeared with jet energy scale
-  TFile* jetEnergyScaleFile = TFile::Open("data/ppData_pfJets_wtaAxis_jetEnergyScaleSystematics_processed_2023-06-12.root");
-  EECCard* jetEnergyScaleCard = new EECCard(jetEnergyScaleFile);
-  EECHistogramManager* jetEnergyScaleHistogramManager = new EECHistogramManager(jetEnergyScaleFile, jetEnergyScaleCard);
-  loadRelevantHistograms(jetEnergyScaleHistogramManager);
+  TFile* jetEnergyScaleFile[2];
+  jetEnergyScaleFile[0] = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithMinusJetEnergyScale_processed_2023-06-25.root");
+  jetEnergyScaleFile[1] = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithPlusJetEnergyScale_processed_2023-06-25.root");
+  EECCard* jetEnergyScaleCard[2];
+  EECHistogramManager* jetEnergyScaleHistogramManager[2];
+  for(int iJetEnergyScaleFile = 0; iJetEnergyScaleFile < 2; iJetEnergyScaleFile++){
+    jetEnergyScaleCard[iJetEnergyScaleFile] = new EECCard(jetEnergyScaleFile[iJetEnergyScaleFile]);
+    jetEnergyScaleHistogramManager[iJetEnergyScaleFile] = new EECHistogramManager(jetEnergyScaleFile[iJetEnergyScaleFile], jetEnergyScaleCard[iJetEnergyScaleFile]);
+    loadRelevantHistograms(jetEnergyScaleHistogramManager[iJetEnergyScaleFile]);
+  }
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
-  TFile* jetPtPriorFile = TFile::Open("data/ppData_pfJets_wtaAxis_jetPtUnfoldingPriorUncertainty_processed_2023-06-12.root");
+  TFile* jetPtPriorFile = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithModifiedPrior_processed_2023-06-25.root");
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
   loadRelevantHistograms(jetPtPriorHistogramManager);
 
-  // Results where background scaling factor is determined from 2% or 6% shifted simulation instead of nominal 4%
+  // Results where background scaling factor is determined from peripheral Pythia+Hydjet instead of not subtracting background
   TFile* backgroundSubtractionFile;
-  backgroundSubtractionFile = TFile::Open("data/ppData_pfJets_wtaAxis_backgroundSubtractionSystematics_processed_2023-06-12.root");
+  backgroundSubtractionFile = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2023-06-25.root");
   EECCard* backgroundSubtractionCard = new EECCard(backgroundSubtractionFile);
   EECHistogramManager* backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
   loadRelevantHistograms(backgroundSubtractionHistogramManager);
 
   // Results with varied single and pair track efficiency
-  TFile* trackEfficiencyFile = TFile::Open("data/ppData_pfJets_wtaAxis_trackSystematics_processed_2023-06-12.root");
+  TFile* trackEfficiencyFile = TFile::Open("data/ppData_pfJets_wtaAxis_unfoldingWithNominalSmear_trackSystematics_processed_2023-06-25.root");
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
   loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
@@ -96,7 +108,7 @@ void estimateSystematicUncertaintiesForPp(){
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);         // Y-axis zoom for rations
   
-  TString outputFileName = "systematicUncertainties/systematicUncertaintiesForPp_withPrior_2023-06-16.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertaintiesForPp_updateTest_2023-06-26.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -105,7 +117,7 @@ void estimateSystematicUncertaintiesForPp(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kUnfoldingTruth] = true;
+  plotExample[SystematicUncertaintyOrganizer::kBackgroundSubtraction] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -116,8 +128,8 @@ void estimateSystematicUncertaintiesForPp(){
   
   // Histograms for uncertainty estimation
   TH1D* nominalEnergyEnergyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* jetEnergyResolutionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* jetEnergyScaleUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* jetEnergyResolutionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
+  TH1D* jetEnergyScaleUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* jetPtPriorUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* backgroundSubtractionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
@@ -130,11 +142,11 @@ void estimateSystematicUncertaintiesForPp(){
   for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++) {
     for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++) {
       nominalEnergyEnergyCorrelators[iJetPt][iTrackPt] = NULL;
-      jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt] = NULL;
-      jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt] = NULL;
       jetPtPriorUncertaintyCorrelators[iJetPt][iTrackPt] = NULL;
       backgroundSubtractionUncertaintyCorrelators[iJetPt][iTrackPt] = NULL;
       for(int iFile = 0; iFile < 2; iFile++) {
+        jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
+        jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         singleTrackEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         trackPairEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
       }
@@ -161,21 +173,24 @@ void estimateSystematicUncertaintiesForPp(){
       highAnalysisBin = nominalEnergyEnergyCorrelators[iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
       nominalEnergyEnergyCorrelators[iJetPt][iTrackPt]->Scale(1.0 / nominalEnergyEnergyCorrelators[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
-      // Read the jet energy resolution histograms
-      iTrackPtMatched = jetEnergyResolutionCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
-      iJetPtMatched = jetEnergyResolutionCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
-      jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt] = jetEnergyResolutionHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+      for(int iFile = 0; iFile < 2; iFile++){
 
-      // Normalize the jet energy resolution histograms to one
-      jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt]->Scale(1.0 / jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        // Read the jet energy resolution histograms
+        iTrackPtMatched = jetEnergyResolutionCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+        iJetPtMatched = jetEnergyResolutionCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+        jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = jetEnergyResolutionHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
 
-      // Read the jet energy scale histograms
-      iTrackPtMatched = jetEnergyScaleCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
-      iJetPtMatched = jetEnergyScaleCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
-      jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt] = jetEnergyScaleHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+        // Normalize the jet energy resolution histograms to one
+        jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Scale(1.0 / jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
-      // Normalize the jet energy scale histograms to one
-      jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt]->Scale(1.0 / jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        // Read the jet energy scale histograms
+        iTrackPtMatched = jetEnergyScaleCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+        iJetPtMatched = jetEnergyScaleCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+        jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = jetEnergyScaleHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+        // Normalize the jet energy scale histograms to one
+        jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Scale(1.0 / jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      }
 
       // Read the jet pT prior histograms
       iTrackPtMatched = jetPtPriorCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
@@ -237,12 +252,13 @@ void estimateSystematicUncertaintiesForPp(){
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kJetEnergyResolution]){
     for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kJetEnergyResolution] = findTheDifference(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt]);
+        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kJetEnergyResolution] = findTheDifference(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt], 2);
 
         // Draw example plots on how the uncertainty is obtained
         if(plotExample[SystematicUncertaintyOrganizer::kJetEnergyResolution] && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)) {
-          legendNames[0] = "JER varied response";
-          drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt], iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), analysisDeltaR, ratioZoom);
+          legendNames[0] = "JER varied response down";
+          legendNames[1] = "JER varied response up";
+          drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt], 2, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), analysisDeltaR, ratioZoom);
         }
 
       } // Track pT loop
@@ -257,12 +273,13 @@ void estimateSystematicUncertaintiesForPp(){
     for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kJetEnergyScale] = findTheDifference(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt]);
+        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kJetEnergyScale] = findTheDifference(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt], 2);
 
         // Draw example plots on how the uncertainty is obtained
         if(plotExample[SystematicUncertaintyOrganizer::kJetEnergyScale] && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)) {
-          legendNames[0] = "JEC varied response";
-          drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt], iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), analysisDeltaR, ratioZoom);
+          legendNames[0] = "JEC varied response down";
+          legendNames[1] = "JEC varied response up";
+          drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt], 2, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), analysisDeltaR, ratioZoom);
         }
 
       } // Track pT loop

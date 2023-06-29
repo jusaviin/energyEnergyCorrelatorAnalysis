@@ -763,6 +763,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   
   double normalizationFactor;
   int color[10] = {kBlack, kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure-1, kOrange-1, kGray};
+  int style[10] = {kFullSquare, kFullCircle, kFullDiamond, kFullCross, kOpenFourTrianglesPlus, kOpenCrossX, kOpenStar, kOpenTriangleUp, kOpenTriangleDown, kOpenDoubleDiamond};
   
   // Set logarithmic drawing for deltaR and EEC
   fDrawer->SetLogX(fLogDeltaR);
@@ -841,7 +842,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
         // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
         if(fDrawEnergyEnergyCorrelatorsForConstantJetPt){
           
-          jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+          jetPtString = Form("%.0f < Jet p_{T} < %.0f", fHistograms->GetCard()->GetLowBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC), fHistograms->GetCard()->GetHighBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC));
           
           // Loop over different subevent combinations
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
@@ -866,21 +867,23 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               
               trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
               
-              drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, fHistograms->GetNJetPtBinsEEC(), iTrackPt, iPairingType, iSubevent);
+              drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, fFirstDrawnJetPtBinEEC, iTrackPt, iPairingType, iSubevent);
               drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
-              drawnHistogram->SetLineColor(color[iTrackPt]);
+              drawnHistogram->SetLineColor(color[iTrackPt-fFirstDrawnTrackPtBinEEC]);
+              drawnHistogram->SetMarkerColor(color[iTrackPt-fFirstDrawnTrackPtBinEEC]);
+              drawnHistogram->SetMarkerStyle(style[iTrackPt-fFirstDrawnTrackPtBinEEC]);
               
               // For logarithmic x-axis, cannot go all the way to zero
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
               
               if(iTrackPt == fFirstDrawnTrackPtBinEEC){
                 namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
+                fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ","p");
               } else {
-                drawnHistogram->Draw("same");
+                drawnHistogram->Draw("p,same");
               }
               
-              legend->AddEntry(drawnHistogram, trackPtString.Data(), "l");
+              legend->AddEntry(drawnHistogram, trackPtString.Data(), "p");
               
             } // Track pT loop
             
@@ -929,18 +932,20 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
                 drawnHistogram->SetLineColor(color[iJetPt-fFirstDrawnJetPtBinEEC]);
+                drawnHistogram->SetMarkerColor(color[iJetPt-fFirstDrawnJetPtBinEEC]);
+                drawnHistogram->SetMarkerStyle(style[iJetPt-fFirstDrawnJetPtBinEEC]);
                 
                 // For logarithmic x-axis, cannot go all the way to zero
                 if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
                 
                 if(iJetPt == fFirstDrawnJetPtBinEEC){
                   namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
-                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
+                  fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ","p");
                 } else {
-                  drawnHistogram->Draw("same");
+                  drawnHistogram->Draw("p,same");
                 }
                 
-                legend->AddEntry(drawnHistogram, jetPtString.Data(), "l");
+                legend->AddEntry(drawnHistogram, jetPtString.Data(), "p");
                 
               } // Jet pT loop
               
