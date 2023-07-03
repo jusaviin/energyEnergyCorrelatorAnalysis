@@ -25,6 +25,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadMultiplicityInJetHistograms(false),
   fLoadMaxParticlePtWithinJetConeHistograms(false),
   fLoadJetPtUnfoldingHistograms(false),
+  fLoadTrackParticleMatchingHistograms(false),
   fJetFlavor(0),
   fFirstLoadedCentralityBin(0),
   fLastLoadedCentralityBin(1),
@@ -197,6 +198,19 @@ EECHistogramManager::EECHistogramManager() :
       }
     }
 
+    // Histograms for the track/particle matching study
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
+        for(int iTrackParticleQAHistogram = 0; iTrackParticleQAHistogram < knTrackParticleMatchingQAHistograms; iTrackParticleQAHistogram++){
+          fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = NULL;
+        }
+        for(int iTrackParticleResponseHistogram = 0; iTrackParticleResponseHistogram < knTrackParticleMatchingResponseTypes; iTrackParticleResponseHistogram++){
+          fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = NULL;
+        }
+        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = NULL;
+      } // Track pT loop
+    } // Jet pT loop
+
   } // Centrality loop
 }
 
@@ -325,6 +339,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadMultiplicityInJetHistograms(in.fLoadMultiplicityInJetHistograms),
   fLoadMaxParticlePtWithinJetConeHistograms(in.fLoadMaxParticlePtWithinJetConeHistograms),
   fLoadJetPtUnfoldingHistograms(in.fLoadJetPtUnfoldingHistograms),
+  fLoadTrackParticleMatchingHistograms(in.fLoadTrackParticleMatchingHistograms),
   fJetFlavor(in.fJetFlavor),
   fFirstLoadedCentralityBin(in.fFirstLoadedCentralityBin),
   fLastLoadedCentralityBin(in.fLastLoadedCentralityBin),
@@ -489,6 +504,19 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
         fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = in.fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt];
       }
     }
+
+    // Histograms for the track/particle matching study
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
+        for(int iTrackParticleQAHistogram = 0; iTrackParticleQAHistogram < knTrackParticleMatchingQAHistograms; iTrackParticleQAHistogram++){
+          fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = in.fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt];
+        }
+        for(int iTrackParticleResponseHistogram = 0; iTrackParticleResponseHistogram < knTrackParticleMatchingResponseTypes; iTrackParticleResponseHistogram++){
+          fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = in.fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt];
+        }
+        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = in.fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt];
+      } // Track pT loop
+    } // Jet pT loop
 
   } // Centrality loop
 }
@@ -735,6 +763,9 @@ void EECHistogramManager::LoadHistograms(){
 
   // Load the jet pT unfolding histograms
   LoadJetPtUnfoldingHistograms();
+
+  // Load the track/particle matching histograms
+  LoadTrackParticleMatchingHistograms();
   
 }
 
@@ -1685,6 +1716,194 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
 }
 
 /*
+ * Loader for track/particle matching histograms
+ *
+ * THnSparse for particle number close to tracks and has matching particle flag histograms:
+ *
+ *   Histogram name: particlesCloseToTracks/tracksWithMatchedParticle
+ *
+ *     Axis index                            Content of axis
+ * ----------------------------------------------------------------------------------
+ *       Axis 0        Number of particles close to a track / Matching particle flag
+ *       Axis 1                                  Jet pT
+ *       Axis 2                                 Track pT
+ *       Axis 3                                Centrality
+ *
+ * 
+ *  THnSparse for track/particle pair DeltaR response matrix:
+ *
+ *   Histogram name: particleDeltaRResponseMatrix
+ *
+ *     Axis index                Content of axis
+ * ---------------------------------------------------------------
+ *       Axis 0          DeltaR for reconstructed track pairs
+ *       Axis 1        DeltaR for generator level particle pairs
+ *       Axis 2                       Jet pT
+ *       Axis 3                      Track pT
+ *       Axis 4                     Centrality
+ *
+ *
+ *  THnSparse for track/particle pair pT response matrix:
+ *
+ *   Histogram name: particlePtResponseMatrix
+ *
+ *     Axis index                 Content of axis
+ * ---------------------------------------------------------------
+ *       Axis 0          pT1*pT2 for reconstructed track pairs
+ *       Axis 1        pT1*pT2 for generator level particle pairs
+ *       Axis 2                        Jet pT
+ *       Axis 3                       Track pT
+ *       Axis 4                      Centrality
+ *       Axis 5     reconstructed pT1*pT2 / generator level pT1*pT2
+ */
+void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
+
+  if(!fLoadTrackParticleMatchingHistograms) return; // Do not load the histograms if they are not selected for loading
+  
+  // Define arrays to help find the histograms
+  int axisIndices[3] = {0};
+  int lowLimits[3] = {0};
+  int highLimits[3] = {0};
+  int nRestrictionAxes = 3;
+  
+  // Define helper variables
+  int duplicateRemover = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  THnSparseD* histogramArray;
+
+  // First, load the track/particle matching QA histograms
+  for(int iTrackParticleQAHistogram = 0; iTrackParticleQAHistogram < knTrackParticleMatchingQAHistograms; iTrackParticleQAHistogram++){
+
+    histogramArray = (THnSparseD*) fInputFile->Get(fTrackParticleMatchingQAName[iTrackParticleQAHistogram]);
+    higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins() + 1;
+
+    // Loop over centrality bins
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Select the centrality bin indices
+      lowerCentralityBin = fCentralityBinIndices[iCentrality];
+      higherCentralityBin = fCentralityBinIndices[iCentrality + 1] + duplicateRemover;
+
+      // Setup axes with restrictions, (3 = centrality)
+      axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+
+      // Loop over track pT bins
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+        // Select the track pT bin indices. Notice that we do not change the higher bin index
+        lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+
+        // Add restriction for track pT axis (2 = track pT)
+        axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+
+        // Loop over jet pT bins
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+          // Select the jet pT bin indices
+          lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+          higherJetPtBin = fJetPtIndicesEEC[iJetPt+1] + duplicateRemover;
+
+          // Add restriction for jet pT axis (1 = jet pT)
+          axisIndices[2] = 1; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+
+          // Read the track/particle matching QA histograms
+          fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 0, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // Track/particle QA histogram loop
+
+  // Then, load the track/particle pair DeltaR and pT1*pT2 response matrices
+  for(int iTrackParticleResponseHistogram = 0; iTrackParticleResponseHistogram < knTrackParticleMatchingResponseTypes; iTrackParticleResponseHistogram++){
+
+    histogramArray = (THnSparseD*) fInputFile->Get(fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram]);
+    higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1;
+
+    // Loop over centrality bins
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Select the centrality bin indices
+      lowerCentralityBin = fCentralityBinIndices[iCentrality];
+      higherCentralityBin = fCentralityBinIndices[iCentrality + 1] + duplicateRemover;
+
+      // Setup axes with restrictions, (4 = centrality)
+      axisIndices[0] = 4; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+
+      // Loop over track pT bins
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+        // Select the track pT bin indices. Notice that we do not change the higher bin index
+        lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+
+        // Add restriction for track pT axis (3 = track pT)
+        axisIndices[1] = 3; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+
+        // Loop over jet pT bins
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+          // Select the jet pT bin indices
+          lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+          higherJetPtBin = fJetPtIndicesEEC[iJetPt+1] + duplicateRemover;
+
+          // Add restriction for jet pT axis (2 = jet pT)
+          axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+
+          // Read the track/particle matching QA histograms
+          fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // Track/particle response matrix type loop
+
+  // Finally, load the track/particle pair pT1*pT2 closure histograms
+  histogramArray = (THnSparseD*)fInputFile->Get("particlePtResponseMatrix");
+  higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1;
+
+  // Loop over centrality bins
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+    // Select the centrality bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemover;
+
+    // Setup axes with restrictions, (4 = centrality)
+    axisIndices[0] = 4; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+
+    // Loop over track pT bins
+    for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+      // Select the track pT bin indices. Notice that we do not change the higher bin index
+      lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+
+      // Add restriction for track pT axis (3 = track pT)
+      axisIndices[1] = 3; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+
+      // Loop over jet pT bins
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+        // Select the jet pT bin indices
+        lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+        higherJetPtBin = fJetPtIndicesEEC[iJetPt+1] + duplicateRemover;
+
+        // Add restriction for jet pT axis (2 = jet pT)
+        axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+
+        // Read the track/particle pair pT1*pT2 closure histograms
+        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 5, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+
+      }  // Jet pT loop
+    }    // Track pT loop
+  }      // Centrality loop
+}
+
+/*
  * Extract a 2D histogram from a given centrality bin from THnSparseD
  *
  *  Arguments:
@@ -1884,6 +2103,9 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
 
   // Write the jet pT unfolding histograms to the output file
   WriteJetPtUnfoldingHistograms();
+
+  // Write the track/particle matching histograms to the output file
+  WriteTrackParticleMatchingHistograms();
   
   // Write the card to the output file if it is not already written
   if(!gDirectory->GetDirectory("JCard")) fCard->Write(outputFile);
@@ -2395,6 +2617,102 @@ void EECHistogramManager::WriteJetPtUnfoldingHistograms(){
     // Return back to main directory
     gDirectory->cd("../");
   }
+}
+
+/*
+ * Write the track/particle matching study histograms to the file that is currently open
+ */
+void EECHistogramManager::WriteTrackParticleMatchingHistograms(){
+  
+  // Only write the track/particle matching histograms if they are loaded
+  if(!fLoadTrackParticleMatchingHistograms) return;  
+
+  // Helper variable for histogram naming
+  TString histogramNamer;
+  
+  // First, write the track/particle matching QA histograms
+  for(int iTrackParticleQAHistogram = 0; iTrackParticleQAHistogram < knTrackParticleMatchingQAHistograms; iTrackParticleQAHistogram++){
+
+    // Change to a folder where the track/particle matching QA histograms are saved
+    if(!gDirectory->GetDirectory(fTrackParticleMatchingQAName[iTrackParticleQAHistogram])) gDirectory->mkdir(fTrackParticleMatchingQAName[iTrackParticleQAHistogram]);
+    gDirectory->cd(fTrackParticleMatchingQAName[iTrackParticleQAHistogram]);
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Jet pT loop
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        
+        // Track pT loop
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+          // Only write histograms that are non-NULL
+          if(fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt]){
+            histogramNamer = Form("%s_C%dJ%dT%d", fTrackParticleMatchingQAName[iTrackParticleQAHistogram], iCentrality, iJetPt, iTrackPt);
+            fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          }
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+
+    // Return back to main directory
+    gDirectory->cd("../");
+
+  } // Track/particle matching QA type loop
+
+  // Then, write the track/particle matching response matrices
+  for(int iTrackParticleResponseHistogram = 0; iTrackParticleResponseHistogram < knTrackParticleMatchingResponseTypes; iTrackParticleResponseHistogram++){
+
+    // Change to a folder where the track/particle matching response histograms are saved
+    if(!gDirectory->GetDirectory(fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram])) gDirectory->mkdir(fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram]);
+    gDirectory->cd(fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram]);
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Jet pT loop
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        
+        // Track pT loop
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+          // Only write histograms that are non-NULL
+          if(fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt]){
+            histogramNamer = Form("%s_C%dJ%dT%d", fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram], iCentrality, iJetPt, iTrackPt);
+            fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          }
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+
+    // Return back to main directory
+    gDirectory->cd("../");
+
+  } // Track/particle matching QA type loop
+
+  // Finally, write the track/particle matching pair pT closure histograms
+
+  // Change to a folder where the track/particle matching pT closure histograms are saved
+  if(!gDirectory->GetDirectory(fTrackParticlePtClosureSaveName)) gDirectory->mkdir(fTrackParticlePtClosureSaveName);
+  gDirectory->cd(fTrackParticlePtClosureSaveName);
+  
+  // Centrality loop
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+    // Jet pT loop
+    for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+      // Track pT loop
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+        // Only write histograms that are non-NULL
+        if(fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt]){
+          histogramNamer = Form("%s_C%dJ%dT%d", fTrackParticlePtClosureSaveName, iCentrality, iJetPt, iTrackPt);
+          fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+        }
+      } // Track pT loop
+    } // Jet pT loop
+  } // Centrality loop
+
+  // Return back to main directory
+  gDirectory->cd("../");
 }
 
 
@@ -2998,6 +3316,33 @@ void EECHistogramManager::LoadProcessedHistograms(){
 
 
   } // Loading jet pT unfolding histograms
+
+  // Load the track/particle matching histograms from a processed file
+  if(fLoadTrackParticleMatchingHistograms){
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+          // Load the track/particle pair pT closure histograms
+          histogramNamer = Form("%s/%s_C%dJ%dT%d", fTrackParticlePtClosureSaveName, fTrackParticlePtClosureSaveName, iCentrality, iJetPt, iTrackPt);
+          fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+          // Load the track/particle matching QA histograms
+          for(int iTrackParticleQAHistogram = 0; iTrackParticleQAHistogram < knTrackParticleMatchingQAHistograms; iTrackParticleQAHistogram++){
+            histogramNamer = Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingQAName[iTrackParticleQAHistogram], fTrackParticleMatchingQAName[iTrackParticleQAHistogram], iCentrality, iJetPt, iTrackPt);
+            fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+          }
+
+          // Load the track/particle matching response matrices
+          for(int iTrackParticleResponseHistogram = 0; iTrackParticleResponseHistogram < knTrackParticleMatchingResponseTypes; iTrackParticleResponseHistogram++){
+            histogramNamer = Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram], fTrackParticleMatchingResponseName[iTrackParticleResponseHistogram], iCentrality, iJetPt, iTrackPt);
+            fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = (TH2D*) fInputFile->Get(histogramNamer.Data());
+          }
+
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Load track/particle matching histograms 
 }
 
 /*
@@ -3258,6 +3603,11 @@ void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegul
 // Setter for loading histograms needed in the jet pT unfolding study
 void EECHistogramManager::SetLoadJetPtUnfoldingHistograms(const bool loadOrNot){
   fLoadJetPtUnfoldingHistograms = loadOrNot;
+}
+
+// Setter for loading histograms needed in track/particle matching study
+void EECHistogramManager::SetLoadTrackParticleMatchingHistograms(const bool loadOrNot){
+  fLoadTrackParticleMatchingHistograms = loadOrNot;
 }
 
 // Setter for flavor selection for jets in jet histograms
@@ -3745,6 +4095,31 @@ TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingTruth(const int iCentrality
 // Getter for jet pT unfolding response
 TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const{
   return fhJetPtUnfoldingResponse[iCentrality][iTrackPt];
+}
+
+// Getter for number of particles close to tracks
+TH1D* EECHistogramManager::GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhTrackParticleMatchQA[kNumberOfParticlesCloseToTrack][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for flag if a matching particle is found
+TH1D* EECHistogramManager::GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhTrackParticleMatchQA[kHasMatchingParticle][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for deltaR response matrix between track pairs and matched particle pairs
+TH2D* EECHistogramManager::GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhTrackParticleResponse[kTrackParticleMatchingDeltaRRresponse][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for pT response matrix between pT1*pT2 from track pairs and particle pairs
+TH2D* EECHistogramManager::GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhTrackParticleResponse[kTrackParticleMatchingPtResponse][iCentrality][iJetPt][iTrackPt];
+}
+
+// Getter for track pT1*pT2 / particle pT1*pT2 histograms
+TH1D* EECHistogramManager::GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt];
 }
 
 /*

@@ -40,6 +40,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadJetPtClosure = false;
   bool loadJetPtResponseMatrix = false;
   bool loadJetPtUnfoldingHistograms = false;
+  bool loadTrackParticleMatchingHistograms = false;
   
   /*
    * Loading only selected histograms. Done with bitwise check of an integer
@@ -58,9 +59,10 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 11 = Load jet pT closure histograms (to set: 2048)
    *  Bit 12 = Load jet pT response matrix (to set: 4096)
    *  Bit 13 = Load jet pT unfolding histograms (to set: 8192)
+   *  Bit 14 = Load track/particle matching study histograms (to set: 16384)
    */
   if(histogramSelection > 0){
-    std::bitset<14> bitChecker(histogramSelection);
+    std::bitset<15> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);
@@ -77,6 +79,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadJetPtClosure = bitChecker.test(11);
     loadJetPtResponseMatrix = bitChecker.test(12);
     loadJetPtUnfoldingHistograms = bitChecker.test(13);
+    loadTrackParticleMatchingHistograms = bitChecker.test(14);
   }
   
   // ====================================================
@@ -123,7 +126,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   // ==================================================================
   
   // Open the input file
-  TFile *inputFile = TFile::Open(inputFileName);
+  TFile* inputFile = TFile::Open(inputFileName);
   
   if(inputFile == NULL){
     cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
@@ -133,7 +136,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   }
   
   // Load the card from the file and read the collision system
-  EECCard *card = new EECCard(inputFile);
+  EECCard* card = new EECCard(inputFile);
   TString collisionSystem = card->GetDataType();
   
   // Remove centrality selection from pp data
@@ -187,7 +190,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   // ============================ //
     
   // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager *histograms = new EECHistogramManager(inputFile,card);
+  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
   // Set which histograms to project from the input file
   histograms->SetLoadEventInformation(loadEventInformation);
@@ -209,6 +212,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);
   histograms->SetLoadJetPtUnfoldingHistograms(loadJetPtUnfoldingHistograms);
+  histograms->SetLoadTrackParticleMatchingHistograms(loadTrackParticleMatchingHistograms);
   histograms->SetJetFlavor(jetFlavor);
 
   // Set the binning information

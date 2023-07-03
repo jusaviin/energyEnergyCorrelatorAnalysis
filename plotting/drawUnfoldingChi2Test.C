@@ -12,7 +12,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_nominalSmear_6pCentShift_2023-06-25.root", "chi2Files/chi2Histograms_PbPb_split2_nominalSmear_6pCentShift_2023-06-25.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_uncertaintySmearUp_4pCentShift_2023-06-25.root", "chi2Files/chi2Histograms_PbPb_split2_uncertaintySmearUp_4pCentShift_2023-06-25.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root

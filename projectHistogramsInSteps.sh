@@ -2,13 +2,14 @@
 
 if [ "$#" -lt 2 ]; then
   echo "Usage of the script:"
-  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r]"
+  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r][-m]"
   echo "inputFile = Name of the input file"
   echo "outputFile = Name of the output file"
   echo "-n = Do not project nominal histograms"
   echo "-e = Project energy-energy correlators used for tracking systematics"
   echo "-c = Project jet pT closure histograms"
   echo "-r = Project jet pT response matrices"
+  echo "-m = Project track/particle matching study histograms"
   echo 
   exit
 fi
@@ -18,7 +19,7 @@ OUTPUT=$2   # Name of the output file
 shift 2     # Shift the positional parameters to read the optional ones
 
 # Read the optional arguments. (Semicolon after letter: expects argument)
-while getopts ":necr" opt; do
+while getopts ":necrm" opt; do
 case $opt in
 n) NOMINAL=false
 ;;
@@ -27,6 +28,8 @@ e) ERROR=true
 c) CLOSURE=true
 ;;
 r) RESPONSE=true
+;;
+m) MATCHINGSTUDY=true
 ;;
 \?) echo "Invalid option -$OPTARG" >&2
 exit 1
@@ -39,6 +42,7 @@ NOMINAL=${NOMINAL:-true}
 ERROR=${ERROR:-false}
 CLOSURE=${CLOSURE:-false}
 RESPONSE=${RESPONSE:-false}
+MATCHINGSTUDY=${MATCHINGSTUDY:-false}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -100,6 +104,15 @@ if $RESPONSE; then
   root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",8192)'
 
 fi
+
+if $MATCHINGSTUDY; then
+
+  # Project histograms related to track/particle matching study
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",16384)'
+
+fi
+
+
 
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/projectEEChistograms.C

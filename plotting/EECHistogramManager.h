@@ -43,6 +43,10 @@ public:
 
   // Indices for unfolding distributions
   enum enumUnfoldingDistribution{kUnfoldingMeasured, kUnfoldingTruth, knUnfoldingDistributionTypes};
+
+  // Indices for track/particle matching histograms
+  enum enumTrackParticleMatchingQA{kNumberOfParticlesCloseToTrack, kHasMatchingParticle, knTrackParticleMatchingQAHistograms};
+  enum enumTrackParticleMatchingResponse{kTrackParticleMatchingDeltaRRresponse, kTrackParticleMatchingPtResponse, knTrackParticleMatchingResponseTypes};
   
   // Dimensions for histogram arrays
   static const int kMaxCentralityBins = 5;       // Maximum allowed number of centrality bins
@@ -99,6 +103,11 @@ private:
   // Naming for jet pT unfolding distributions
   const char* fJetPtUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"jetPtUnfoldingMeasured", "jetPtUnfoldingTruth"};
   const char* fJetPtResponseMatrixName = "jetPtUnfoldingResponse";
+
+  // Naming for track/particle matching histograms
+  const char* fTrackParticleMatchingQAName[knTrackParticleMatchingQAHistograms] = {"particlesCloseToTracks","tracksWithMatchedParticle"};
+  const char* fTrackParticleMatchingResponseName[knTrackParticleMatchingResponseTypes] = {"particleDeltaRResponseMatrix","particlePtResponseMatrix"};
+  const char* fTrackParticlePtClosureSaveName = "particlePairPtClosure";
   
 public:
   
@@ -157,6 +166,9 @@ public:
   
   // Setters for jet pT unfolding study
   void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the jet pT unfolding study
+
+  // Setters for track/particle matching study
+  void SetLoadTrackParticleMatchingHistograms(const bool loadOrNot); // Setter for loading histograms needed in track/particle matching study
 
   // Setter for jet flavor
   void SetJetFlavor(const int iFlavor);  // For Monte Carlo, can select if we are looking for quark or gluon initiated jets
@@ -276,6 +288,14 @@ public:
   TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
   TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
 
+  // Getters for track/particle matching histograms
+  TH1D* GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for number of particles close to tracks
+  TH1D* GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for flag if a matching particle is found
+  TH2D* GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for deltaR response matrix between track pairs and matched particle pairs
+  TH2D* GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for pT response matrix between pT1*pT2 from track pairs and particle pairs
+  TH1D* GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for track pT1*pT2 / particle pT1*pT2 histograms
+
+  // Generic getters for one and two dimensional histograms
   TH1D* GetOneDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0, int bin6 = 0, int bin7 = 0) const; // Getter for any one-dimensional histogram based on input string
   TH2D* GetTwoDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0) const; // Getter for any two-dimensional histogram based on input string
   
@@ -329,6 +349,7 @@ private:
   bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
   bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
+  bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   
   // ==============================================
@@ -424,6 +445,11 @@ private:
   TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
   TH2D* fhJetPtUnfoldingResponse[kMaxCentralityBins][kMaxTrackPtBinsEEC];
 
+  // Histograms to study track/particle matching
+  TH1D* fhTrackParticleMatchQA[knTrackParticleMatchingQAHistograms][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
+  TH2D* fhTrackParticleResponse[knTrackParticleMatchingResponseTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
+  TH1D* fhTrackParticlePtClosure[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
+
   // Private methods
   void InitializeFromCard(); // Initialize several member variables from EECCard
   
@@ -451,6 +477,7 @@ private:
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   void LoadJetPtUnfoldingHistograms(); // Loader for jet pT unfolding histograms
+  void LoadTrackParticleMatchingHistograms(); // Loader for track/particle matching histograms
   
   // Generic setter for bin indice and borders
   void SetGenericBins(const bool readBinsFromFile, const char* histogramName, const int iAxis, int nSetBins, double* setBinBorders, int* setBinIndices, const int nBins, const double* binBorders, const char* errorMessage, const int maxBins, const bool setIndices); // Generic bin setter
@@ -469,6 +496,7 @@ private:
   void WriteJetPtResponseMatrix();                  // Write the jet pT response matrices
   void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
   void WriteJetPtUnfoldingHistograms();             // Write the jet pT unfolding histograms to the output file
+  void WriteTrackParticleMatchingHistograms();      // Write the track/particle matching histograms to the output file
   
 };
 
