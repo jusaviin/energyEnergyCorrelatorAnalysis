@@ -35,7 +35,7 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
 TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection) :
   fDisableCorrection(false)
 {
-  fInputFile = TFile::Open(inputFileName, "r");
+  fInputFile = TFile::Open(inputFileName);
   fUseSmoothedCorrection = useSmoothedCorrection;
   ReadCorrectionTables();
 }

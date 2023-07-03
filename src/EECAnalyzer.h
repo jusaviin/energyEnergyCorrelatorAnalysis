@@ -35,10 +35,12 @@ class EECAnalyzer{
   
 private:
   
-  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsSystematics, kFillJetPtClosure, kFillJetPtUnfoldingResponse, knFillTypes}; // Histograms to fill
+  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsSystematics, kFillJetPtClosure, kFillJetPtUnfoldingResponse, kFillTrackParticleMatchingHistograms, knFillTypes}; // Histograms to fill
   enum enumSubeventCuts{kSubeventZero,kSubeventNonZero,kSubeventAny,knSubeventCuts}; // Cuts for subevent index
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
-  enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix 
+  enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix
+  enum enumTupleDecoder{kTrackPt, kTrackEta, kTrackPhi, kTrackEfficiencyCorrection, kTrackCharge, kMatchIndex}; // Components of the n-tuple in track vector
+  enum enumSmallTupleDecoder{kPossibleMatchPtDifference, kPossibleMatchIndex}; // Components of the n-tuple in track vector
   
 public:
   
@@ -61,10 +63,12 @@ public:
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
   void FillJetPtClosureHistograms(const Int_t jetIndex); // Fill jet pT closure histograms
   void FillUnfoldingResponse(); // Fill the histograms needed for unfolding study
+  void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
+  Bool_t PassTrackCuts(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a track passes all the track cuts
   Bool_t PassGenParticleSelection(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
@@ -166,6 +170,7 @@ public:
   Bool_t fFillEnergyEnergyCorrelatorsSystematics; // Fill energy-energy correlator histograms for systematic uncertainty analysis
   Bool_t fFillJetPtClosure;                       // Fill jet pT closure histograms
   Bool_t fFillJetPtUnfoldingResponse;             // Fill the jet pT unfolding response
+  Bool_t fFillTrackParticleMatchingHistograms;    // Fill the matching histograms between particles and tracks
   
   // Weighting mode flag for MC
   Bool_t fMultiplicityMode;       // True: Weight multiplicity to match the data. False: Weight centrality to match the data

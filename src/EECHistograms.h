@@ -73,6 +73,12 @@ public:
   THnSparseF* fhUnfoldingTruth;     // Truth distribution for unfolding
   THnSparseF* fhUnfoldingResponse;  // Unfolding response matrix
 
+  // Testing particle matching
+  THnSparseF* fhParticlesCloseToTracks;     // Histogram counting particles close to tracks
+  THnSparseF* fhTracksWithMatchedParticle;  // Histogram telling the fraction of particles for which a match is found
+  THnSparseF* fhParticleDeltaRResponse;     // Response matrix for particle pair deltaR values
+  THnSparseF* fhParticlePtResponse;         // Response matrix for particle pair pT1*pT2 values
+
 private:
   
   ConfigurationCard* fCard;    // Card for binning info

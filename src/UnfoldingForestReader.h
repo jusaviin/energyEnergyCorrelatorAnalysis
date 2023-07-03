@@ -101,6 +101,7 @@ public:
   Int_t GetNHitsTrack(Int_t iTrack) const;                   // Getter for number of hits for the track
   Float_t GetTrackEnergyEcal(Int_t iTrack) const;            // Getter for track energy in ECal
   Float_t GetTrackEnergyHcal(Int_t iTrack) const;            // Getter for track energy in HCal
+  Int_t GetTrackCharge(Int_t iTrack) const;                  // Getter for track charge
   
   // Getters for leaves in generator level particle tree
   Int_t GetNGenParticles() const;                            // Getter for number of generator level particles
@@ -173,6 +174,7 @@ private:
   TBranch* fnHitsTrackBranch;                  // Branch for number of hits for the track
   TBranch* fTrackEnergyEcalBranch;             // Branch for track energy in ECal
   TBranch* fTrackEnergyHcalBranch;             // Branch for track energy in HCal
+  TBranch* fTrackChargeBranch;                 // Branch for track charge
 
   // Branches for genenerator level particle tree
   TBranch* fGenParticlePtBranch;        // Branch for generator level particle pT:s
@@ -228,6 +230,7 @@ private:
   UChar_t fnHitsTrackArray[fnMaxTrack] = {0};                 // Array for number of hits for the track
   Float_t fTrackEnergyEcalArray[fnMaxTrack] = {0};            // Array for track energy in ECal
   Float_t fTrackEnergyHcalArray[fnMaxTrack] = {0};            // Array for track energy in HCal
+  Int_t fTrackChargeArray[fnMaxTrack] = {0};                  // Array for track charge
 
   // Leaves for the track tree in MiniAOD forests
   vector<float>* fTrackPtVector;                     // Vector for track pT:s
@@ -244,6 +247,7 @@ private:
   vector<char>* fnHitsTrackVector;                   // Vector for number of hits for the track
   vector<float>* fTrackEnergyEcalVector;             // Vector for track energy in ECal
   vector<float>* fTrackEnergyHcalVector;             // Vector for track energy in HCal
+  vector<char>* fTrackChargeVector;                  // Vector for track charges
 
   // Leaves for the generator level particle tree
   Int_t fnGenParticles;                    // Number of generator level particles

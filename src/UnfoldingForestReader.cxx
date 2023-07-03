@@ -52,6 +52,7 @@ UnfoldingForestReader::UnfoldingForestReader() :
   fnHitsTrackBranch(0),
   fTrackEnergyEcalBranch(0),
   fTrackEnergyHcalBranch(0),
+  fTrackChargeBranch(0),
   fGenParticlePtBranch(0),
   fGenParticlePhiBranch(0),
   fGenParticleEtaBranch(0),
@@ -93,6 +94,7 @@ UnfoldingForestReader::UnfoldingForestReader() :
   fnHitsTrackArray(),
   fTrackEnergyEcalArray(),
   fTrackEnergyHcalArray(),
+  fTrackChargeArray(),
   fTrackPtVector(0),
   fTrackPtErrorVector(0),
   fTrackPhiVector(0),
@@ -107,6 +109,7 @@ UnfoldingForestReader::UnfoldingForestReader() :
   fnHitsTrackVector(0),
   fTrackEnergyEcalVector(0),
   fTrackEnergyHcalVector(0),
+  fTrackChargeVector(0),
   fnGenParticles(0),
   fGenParticlePtArray(0),
   fGenParticlePhiArray(0),
@@ -177,6 +180,7 @@ UnfoldingForestReader::UnfoldingForestReader(Int_t dataType, Int_t jetType, Int_
   fnHitsTrackBranch(0),
   fTrackEnergyEcalBranch(0),
   fTrackEnergyHcalBranch(0),
+  fTrackChargeBranch(0),
   fGenParticlePtBranch(0),
   fGenParticlePhiBranch(0),
   fGenParticleEtaBranch(0),
@@ -218,6 +222,7 @@ UnfoldingForestReader::UnfoldingForestReader(Int_t dataType, Int_t jetType, Int_
   fnHitsTrackArray(),
   fTrackEnergyEcalArray(),
   fTrackEnergyHcalArray(),
+  fTrackChargeArray(),
   fTrackPtVector(0),
   fTrackPtErrorVector(0),
   fTrackPhiVector(0),
@@ -232,6 +237,7 @@ UnfoldingForestReader::UnfoldingForestReader(Int_t dataType, Int_t jetType, Int_
   fnHitsTrackVector(0),
   fTrackEnergyEcalVector(0),
   fTrackEnergyHcalVector(0),
+  fTrackChargeVector(0),
   fnGenParticles(0),
   fGenParticlePtArray(0),
   fGenParticlePhiArray(0),
@@ -299,6 +305,7 @@ UnfoldingForestReader::UnfoldingForestReader(const UnfoldingForestReader& in) :
   fnHitsTrackBranch(in.fnHitsTrackBranch),
   fTrackEnergyEcalBranch(in.fTrackEnergyEcalBranch),
   fTrackEnergyHcalBranch(in.fTrackEnergyHcalBranch),
+  fTrackChargeBranch(in.fTrackChargeBranch),
   fGenParticlePtBranch(in.fGenParticlePtBranch),
   fGenParticlePhiBranch(in.fGenParticlePhiBranch),
   fGenParticleEtaBranch(in.fGenParticleEtaBranch),
@@ -324,6 +331,7 @@ UnfoldingForestReader::UnfoldingForestReader(const UnfoldingForestReader& in) :
   fnHitsTrackVector(in.fnHitsTrackVector),
   fTrackEnergyEcalVector(in.fTrackEnergyEcalVector),
   fTrackEnergyHcalVector(in.fTrackEnergyHcalVector),
+  fTrackChargeVector(in.fTrackChargeVector),
   fnGenParticles(in.fnGenParticles),
   fGenParticlePtArray(in.fGenParticlePtArray),
   fGenParticlePhiArray(in.fGenParticlePhiArray),
@@ -368,6 +376,7 @@ UnfoldingForestReader::UnfoldingForestReader(const UnfoldingForestReader& in) :
     fnHitsTrackArray[i] = in.fnHitsTrackArray[i];
     fTrackEnergyEcalArray[i] = in.fTrackEnergyEcalArray[i];
     fTrackEnergyHcalArray[i] = in.fTrackEnergyHcalArray[i];
+    fTrackChargeArray[i] = in.fTrackChargeArray[i];
   }
 }
 
@@ -424,6 +433,7 @@ UnfoldingForestReader& UnfoldingForestReader::operator=(const UnfoldingForestRea
   fnHitsTrackBranch = in.fnHitsTrackBranch;
   fTrackEnergyEcalBranch = in.fTrackEnergyEcalBranch;
   fTrackEnergyHcalBranch = in.fTrackEnergyHcalBranch;
+  fTrackChargeBranch = in.fTrackChargeBranch;
   fGenParticlePtBranch = in.fGenParticlePtBranch;
   fGenParticlePhiBranch = in.fGenParticlePhiBranch;
   fGenParticleEtaBranch = in.fGenParticleEtaBranch;
@@ -472,6 +482,7 @@ UnfoldingForestReader& UnfoldingForestReader::operator=(const UnfoldingForestRea
     fnHitsTrackArray[i] = in.fnHitsTrackArray[i];
     fTrackEnergyEcalArray[i] = in.fTrackEnergyEcalArray[i];
     fTrackEnergyHcalArray[i] = in.fTrackEnergyHcalArray[i];
+    fTrackChargeArray[i] = in.fTrackChargeArray[i];
   }
   
   // Copy the track vectors
@@ -489,6 +500,7 @@ UnfoldingForestReader& UnfoldingForestReader::operator=(const UnfoldingForestRea
   fnHitsTrackVector = in.fnHitsTrackVector;
   fTrackEnergyEcalVector = in.fTrackEnergyEcalVector;
   fTrackEnergyHcalVector = in.fTrackEnergyHcalVector;
+  fTrackChargeVector = in.fTrackChargeVector;
   
   // Copy the generator level particle vectors
   fnGenParticles = in.fnGenParticles;
@@ -619,6 +631,8 @@ void UnfoldingForestReader::Initialize(){
     fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalVector,&fTrackEnergyEcalBranch);
     fTrackTree->SetBranchStatus("pfHcal",1);
     fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalVector,&fTrackEnergyHcalBranch);
+    fTrackTree->SetBranchStatus("trkCharge",1);
+    fTrackTree->SetBranchAddress("trkCharge",&fTrackChargeVector,&fTrackChargeBranch);
     
   } else { // Read the tree from AOD files
     
@@ -654,6 +668,8 @@ void UnfoldingForestReader::Initialize(){
     fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
     fTrackTree->SetBranchStatus("pfHcal",1);
     fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
+    fTrackTree->SetBranchStatus("trkCharge",1);
+    fTrackTree->SetBranchAddress("trkCharge",&fTrackChargeArray,&fTrackChargeBranch);
   }
   
   // Connect the branches to the generator level particle tree
@@ -1130,6 +1146,12 @@ Float_t UnfoldingForestReader::GetTrackEnergyEcal(Int_t iTrack) const{
 Float_t UnfoldingForestReader::GetTrackEnergyHcal(Int_t iTrack) const{
   if(fIsMiniAOD) return fTrackEnergyHcalVector->at(iTrack);
   return fTrackEnergyHcalArray[iTrack];
+}
+
+// Getter for track charge
+Int_t UnfoldingForestReader::GetTrackCharge(Int_t iTrack) const{
+  if(fIsMiniAOD) return fTrackChargeVector->at(iTrack);
+  return fTrackChargeArray[iTrack];
 }
 
 // Getter for number of generator level particles

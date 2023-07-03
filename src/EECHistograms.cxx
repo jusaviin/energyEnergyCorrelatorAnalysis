@@ -44,6 +44,10 @@ EECHistograms::EECHistograms() :
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
+  fhParticlesCloseToTracks(0),
+  fhTracksWithMatchedParticle(0),
+  fhParticleDeltaRResponse(0),
+  fhParticlePtResponse(0),
   fCard(0)
 {
   // Default constructor
@@ -84,6 +88,10 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
+  fhParticlesCloseToTracks(0),
+  fhTracksWithMatchedParticle(0),
+  fhParticleDeltaRResponse(0),
+  fhParticlePtResponse(0),
   fCard(newCard)
 {
   // Custom constructor
@@ -124,6 +132,10 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhUnfoldingMeasured(in.fhUnfoldingMeasured),
   fhUnfoldingTruth(in.fhUnfoldingTruth),
   fhUnfoldingResponse(in.fhUnfoldingResponse),
+  fhParticlesCloseToTracks(in.fhParticlesCloseToTracks),
+  fhTracksWithMatchedParticle(in.fhTracksWithMatchedParticle),
+  fhParticleDeltaRResponse(in.fhParticleDeltaRResponse),
+  fhParticlePtResponse(in.fhParticlePtResponse),
   fCard(in.fCard)
 {
   // Copy constructor
@@ -168,6 +180,10 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhUnfoldingMeasured = in.fhUnfoldingMeasured;
   fhUnfoldingTruth = in.fhUnfoldingTruth;
   fhUnfoldingResponse = in.fhUnfoldingResponse;
+  fhParticlesCloseToTracks = in.fhParticlesCloseToTracks;
+  fhTracksWithMatchedParticle = in.fhTracksWithMatchedParticle;
+  fhParticleDeltaRResponse = in.fhParticleDeltaRResponse;
+  fhParticlePtResponse = in.fhParticlePtResponse;
   fCard = in.fCard;
   
   return *this;
@@ -208,6 +224,10 @@ EECHistograms::~EECHistograms(){
   delete fhUnfoldingMeasured;
   delete fhUnfoldingTruth;
   delete fhUnfoldingResponse;
+  delete fhParticlesCloseToTracks;
+  delete fhTracksWithMatchedParticle;
+  delete fhParticleDeltaRResponse;
+  delete fhParticlePtResponse;
 }
 
 /*
@@ -310,6 +330,17 @@ void EECHistograms::CreateHistograms(){
   const Double_t minMultiplicityInJets = -0.5;
   const Double_t maxMultiplicityInJets = 149.5;
   const Int_t nMultiplicityInJetsBins = 150;
+
+  // Number of particles close to a track
+  const Double_t minNumberOfTracks = -0.5;
+  const Double_t maxNumberOfTracks = 9.5;
+  const Int_t nNumberOftracksBins = 10;
+
+  // Bins for pT1*pT2
+  const Double_t minPt1TimesPt2 = 4;
+  const Double_t maxPt1TimesPt2 = 90000;
+  const Int_t nPt1TimesPt2Bins = 24;
+  const Double_t pt1TimesPt2Bins[nPt1TimesPt2Bins+1] = {4,6,9,12,16,20,25,30,35,40,45,50,60,70,80,90,100,120,140,180,240,400,600,2000,90000};
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
@@ -457,6 +488,21 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
   Double_t lowBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
   Double_t highBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
+
+  const Int_t nAxesParticleMatchingQA = 4;
+  Int_t nBinsParticleMatchingQA[nAxesParticleMatchingQA];
+  Double_t lowBinBorderParticleMatchingQA[nAxesParticleMatchingQA];
+  Double_t highBinBorderParticleMatchingQA[nAxesParticleMatchingQA];
+
+  const Int_t nAxesParticleDeltaRResponseMatrix = 5;
+  Int_t nBinsParticleDeltaRResponseMatrix[nAxesParticleDeltaRResponseMatrix];
+  Double_t lowBinBorderParticleDeltaRResponseMatrix[nAxesParticleDeltaRResponseMatrix];
+  Double_t highBinBorderParticleDeltaRResponseMatrix[nAxesParticleDeltaRResponseMatrix];
+
+  const Int_t nAxesParticlePtResponseMatrix = 6;
+  Int_t nBinsParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
+  Double_t lowBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
+  Double_t highBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   
   
   // ======== Plain TH1 histograms ========
@@ -868,6 +914,119 @@ void EECHistograms::CreateHistograms(){
   fhUnfoldingResponse->SetBinEdges(2, trackPtBinsEEC);
   fhUnfoldingResponse->SetBinEdges(3, wideCentralityBins);
 
+  // ======== Testing on how to do track to particle matching ========
+
+  // Axis 0 of the particle matching QA histograms: number of generator level particles close to track
+  nBinsParticleMatchingQA[0] = nNumberOftracksBins;
+  lowBinBorderParticleMatchingQA[0] = minNumberOfTracks;
+  highBinBorderParticleMatchingQA[0] = maxNumberOfTracks;
+
+  // Axis 1 for the particle matching QA histograms: jet pT
+  nBinsParticleMatchingQA[1] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderParticleMatchingQA[1] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderParticleMatchingQA[1] = maxJetPtEEC;   // high bin border for jet pT
+
+  // Axis 2 for the particle matching QA histograms: track pT
+  nBinsParticleMatchingQA[2] = nTrackPtBinsEEC;        // nBins for track pT
+  lowBinBorderParticleMatchingQA[2] = minTrackPtEEC;   // low bin border for track pT
+  highBinBorderParticleMatchingQA[2] = maxTrackPtEEC;  // high bin border for track pT
+
+  // Axis 2 for the particle matching QA histograms: centrality
+  nBinsParticleMatchingQA[3] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderParticleMatchingQA[3] = minCentrality;    // low bin border for centrality
+  highBinBorderParticleMatchingQA[3] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for jet pT unfolding response
+  fhParticlesCloseToTracks = new THnSparseF("particlesCloseToTracks", "particlesCloseToTracks", nAxesParticleMatchingQA, nBinsParticleMatchingQA, lowBinBorderParticleMatchingQA, highBinBorderParticleMatchingQA); fhParticlesCloseToTracks->Sumw2();
+  fhTracksWithMatchedParticle = new THnSparseF("tracksWithMatchedParticle", "tracksWithMatchedParticle", nAxesParticleMatchingQA, nBinsParticleMatchingQA, lowBinBorderParticleMatchingQA, highBinBorderParticleMatchingQA); fhTracksWithMatchedParticle->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhParticlesCloseToTracks->SetBinEdges(1,jetPtBinsEEC);              // Jet pT bins
+  fhTracksWithMatchedParticle->SetBinEdges(1,jetPtBinsEEC); 
+  fhParticlesCloseToTracks->SetBinEdges(2,trackPtBinsEEC);            // Track pT bins
+  fhTracksWithMatchedParticle->SetBinEdges(2,trackPtBinsEEC); 
+  fhParticlesCloseToTracks->SetBinEdges(3, wideCentralityBins);       // Centrality bins
+  fhTracksWithMatchedParticle->SetBinEdges(3, wideCentralityBins);
+
+  // ======== Response matrix for deltaR between two particles ========
+
+  // Axis 0 of the particle deltaR response matrix histogram: deltaR between two tracks matched to particles
+  nBinsParticleDeltaRResponseMatrix[0] = nDeltaRBinsEEC;        // nBins for deltaR
+  lowBinBorderParticleDeltaRResponseMatrix[0] = minDeltaREEC;   // low bin border for deltaR
+  highBinBorderParticleDeltaRResponseMatrix[0] = maxDeltaREEC;  // high bin border for deltaR
+
+  // Axis 1 of the particle deltaR response matrix histogram: deltaR between two particles matched to tracks
+  nBinsParticleDeltaRResponseMatrix[1] = nDeltaRBinsEEC;        // nBins for deltaR
+  lowBinBorderParticleDeltaRResponseMatrix[1] = minDeltaREEC;   // low bin border for deltaR
+  highBinBorderParticleDeltaRResponseMatrix[1] = maxDeltaREEC;  // high bin border for deltaR
+
+  // Axis 2 for the particle deltaR response matrix histogram: jet pT
+  nBinsParticleDeltaRResponseMatrix[2] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderParticleDeltaRResponseMatrix[2] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderParticleDeltaRResponseMatrix[2] = maxJetPtEEC;   // high bin border for jet pT
+
+  // Axis 3 for the particle deltaR response matrix histogram: lower reconstructed track pT of the pair
+  nBinsParticleDeltaRResponseMatrix[3] = nTrackPtBinsEEC;         // nBins for track pT
+  lowBinBorderParticleDeltaRResponseMatrix[3] = minTrackPtEEC;    // low bin border for track pT
+  highBinBorderParticleDeltaRResponseMatrix[3] = maxTrackPtEEC;   // high bin border for track pT
+
+  // Axis 4 for the particle deltaR response matrix histogram: centrality
+  nBinsParticleDeltaRResponseMatrix[4] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderParticleDeltaRResponseMatrix[4] = minCentrality;    // low bin border for centrality
+  highBinBorderParticleDeltaRResponseMatrix[4] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for the response matrix between two particles
+  fhParticleDeltaRResponse = new THnSparseF("particleDeltaRResponseMatrix", "particleDeltaRResponseMatrix", nAxesParticleDeltaRResponseMatrix, nBinsParticleDeltaRResponseMatrix, lowBinBorderParticleDeltaRResponseMatrix, highBinBorderParticleDeltaRResponseMatrix); fhParticleDeltaRResponse->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhParticleDeltaRResponse->SetBinEdges(0,deltaRBinsEEC);         // DeltaR bins for reconstructed tracks
+  fhParticleDeltaRResponse->SetBinEdges(1,deltaRBinsEEC);         // DeltaR bins for generator level particles
+  fhParticleDeltaRResponse->SetBinEdges(2,jetPtBinsEEC);          // Jet pT bins
+  fhParticleDeltaRResponse->SetBinEdges(3,trackPtBinsEEC);        // Track pT bins
+  fhParticleDeltaRResponse->SetBinEdges(4, wideCentralityBins);   // Centrality bins
+
+  // ======== Response matrix for pT1*pT2 between two particles ========
+
+  // Axis 0 of the particle pT1*pT2 response matrix histogram: pT1*pT2 between two tracks matched to particles
+  nBinsParticlePtResponseMatrix[0] = nPt1TimesPt2Bins;        // nBins for pT1*pT2
+  lowBinBorderParticlePtResponseMatrix[0] = minPt1TimesPt2;   // low bin border for pT1*pT2
+  highBinBorderParticlePtResponseMatrix[0] = maxPt1TimesPt2;  // high bin border for pT1*pT2
+
+  // Axis 1 of the particle pT1*pT2 response matrix histogram: pT1*pT2 between two particles matched to tracks
+  nBinsParticlePtResponseMatrix[1] = nPt1TimesPt2Bins;        // nBins for pT1*pT2
+  lowBinBorderParticlePtResponseMatrix[1] = minPt1TimesPt2;   // low bin border for pT1*pT2
+  highBinBorderParticlePtResponseMatrix[1] = maxPt1TimesPt2;  // high bin border for pT1*pT2
+
+  // Axis 2 for the particle pT1*pT2 response matrix histogram: jet pT
+  nBinsParticlePtResponseMatrix[2] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderParticlePtResponseMatrix[2] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderParticlePtResponseMatrix[2] = maxJetPtEEC;   // high bin border for jet pT
+
+  // Axis 3 for the particle pT1*pT2 response matrix histogram: lower reconstructed track pT of the pair
+  nBinsParticlePtResponseMatrix[3] = nTrackPtBinsEEC;         // nBins for track pT
+  lowBinBorderParticlePtResponseMatrix[3] = minTrackPtEEC;    // low bin border for track pT
+  highBinBorderParticlePtResponseMatrix[3] = maxTrackPtEEC;   // high bin border for track pT
+
+  // Axis 4 for the particle pT1*pT2 response matrix histogram: centrality
+  nBinsParticlePtResponseMatrix[4] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderParticlePtResponseMatrix[4] = minCentrality;    // low bin border for centrality
+  highBinBorderParticlePtResponseMatrix[4] = maxCentrality;   // high bin border for centrality
+
+  // Axis 5 for the particle pT1*pT2 response matrix histogram: reco/gen ratio for closure
+  nBinsParticlePtResponseMatrix[5] = nClosureRatioBins;        // nBins for closure ratio
+  lowBinBorderParticlePtResponseMatrix[5] = minClosureRatio;   // low bin border for closure ratio
+  highBinBorderParticlePtResponseMatrix[5] = maxClosureRatio;  // high bin border for closure ratio
+
+  // Create the histogram for the response matrix between two particles
+  fhParticlePtResponse = new THnSparseF("particlePtResponseMatrix", "particlePtResponseMatrix", nAxesParticlePtResponseMatrix, nBinsParticlePtResponseMatrix, lowBinBorderParticlePtResponseMatrix, highBinBorderParticlePtResponseMatrix); fhParticlePtResponse->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhParticlePtResponse->SetBinEdges(0,pt1TimesPt2Bins);       // pT1*pT2 bins for reconstructed tracks
+  fhParticlePtResponse->SetBinEdges(1,pt1TimesPt2Bins);       // pT1*pT2 bins for generator level particles
+  fhParticlePtResponse->SetBinEdges(2,jetPtBinsEEC);          // Jet pT bins
+  fhParticlePtResponse->SetBinEdges(3,trackPtBinsEEC);        // Track pT bins
+  fhParticlePtResponse->SetBinEdges(4, wideCentralityBins);   // Centrality bins
+
 }
 
 /*
@@ -906,6 +1065,10 @@ void EECHistograms::Write() const{
   fhUnfoldingMeasured->Write();
   fhUnfoldingTruth->Write();
   fhUnfoldingResponse->Write();
+  fhParticlesCloseToTracks->Write();
+  fhTracksWithMatchedParticle->Write();
+  fhParticleDeltaRResponse->Write();
+  fhParticlePtResponse->Write();
 }
 
 /*

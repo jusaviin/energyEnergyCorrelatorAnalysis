@@ -110,6 +110,7 @@ EECAnalyzer::EECAnalyzer() :
   fFillEnergyEnergyCorrelatorsSystematics(false),
   fFillJetPtClosure(false),
   fFillJetPtUnfoldingResponse(false),
+  fFillTrackParticleMatchingHistograms(false),
   fMultiplicityMode(false)
 {
   // Default constructor
@@ -310,6 +311,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fFillEnergyEnergyCorrelatorsSystematics(in.fFillEnergyEnergyCorrelatorsSystematics),
   fFillJetPtClosure(in.fFillJetPtClosure),
   fFillJetPtUnfoldingResponse(in.fFillJetPtUnfoldingResponse),
+  fFillTrackParticleMatchingHistograms(in.fFillTrackParticleMatchingHistograms),
   fMultiplicityMode(in.fMultiplicityMode)
 {
   // Copy constructor
@@ -383,6 +385,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillEnergyEnergyCorrelatorsSystematics = in.fFillEnergyEnergyCorrelatorsSystematics;
   fFillJetPtClosure = in.fFillJetPtClosure;
   fFillJetPtUnfoldingResponse = in.fFillJetPtUnfoldingResponse;
+  fFillTrackParticleMatchingHistograms = in.fFillTrackParticleMatchingHistograms;
   fMultiplicityMode = in.fMultiplicityMode;
   
   return *this;
@@ -536,6 +539,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fFillEnergyEnergyCorrelatorsSystematics = bitChecker.test(kFillEnergyEnergyCorrelatorsSystematics);
   fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
   fFillJetPtUnfoldingResponse = bitChecker.test(kFillJetPtUnfoldingResponse);
+  fFillTrackParticleMatchingHistograms = bitChecker.test(kFillTrackParticleMatchingHistograms);
   
   //************************************************
   //              Debug messages
@@ -690,7 +694,7 @@ void EECAnalyzer::RunAnalysis(){
     fTrackReader = fJetReader;
   }
 
-  if(fFillJetPtUnfoldingResponse){
+  if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms){
     fUnfoldingForestReader = new UnfoldingForestReader(fDataType,fJetType,fJetAxis);
   }
   
@@ -711,7 +715,7 @@ void EECAnalyzer::RunAnalysis(){
     currentFile = fFileNames.at(iFile);
     inputFile = TFile::Open(currentFile);
     if(useDifferentReaderForJetsAndTracks) copyInputFile = TFile::Open(currentFile);
-    if(fFillJetPtUnfoldingResponse) unfoldingInputFile = TFile::Open(currentFile);
+    if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) unfoldingInputFile = TFile::Open(currentFile);
     
     // Check that the file exists
     if(!inputFile){
@@ -743,7 +747,7 @@ void EECAnalyzer::RunAnalysis(){
     // If file is good, read the forest from the file
     fJetReader->ReadForestFromFile(inputFile);  // There might be a memory leak in handling the forest...
     if(useDifferentReaderForJetsAndTracks) fTrackReader->ReadForestFromFile(copyInputFile); // If we mix reco and gen, the reader for jets and tracks is different
-    if(fFillJetPtUnfoldingResponse) fUnfoldingForestReader->ReadForestFromFile(unfoldingInputFile);
+    if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) fUnfoldingForestReader->ReadForestFromFile(unfoldingInputFile);
     nEvents = fJetReader->GetNEvents();
     
 
@@ -765,7 +769,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // If track reader is not the same as jet reader, read the event to memory in trackReader
       if(useDifferentReaderForJetsAndTracks) fTrackReader->GetEvent(iEvent);
-      if(fFillJetPtUnfoldingResponse) fUnfoldingForestReader->GetEvent(iEvent);
+      if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) fUnfoldingForestReader->GetEvent(iEvent);
 
       // Get vz, centrality and pT hat information
       vz = fJetReader->GetVz();
@@ -872,6 +876,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // The unfolding study is completely separate from regular analysis to make code easier to follow
       if(fFillJetPtUnfoldingResponse) FillUnfoldingResponse();
+      if(fFillTrackParticleMatchingHistograms) ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
 
       //****************************************************
       //    Loop over all jets and find tracks within jets
@@ -1308,7 +1313,7 @@ void EECAnalyzer::RunAnalysis(){
     // Close the input files after the event has been read
     inputFile->Close();
     if(useDifferentReaderForJetsAndTracks) copyInputFile->Close();
-    if(fFillJetPtUnfoldingResponse) unfoldingInputFile->Close();
+    if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) unfoldingInputFile->Close();
     
     // Write some debug messages if prompted
     if(fDebugLevel > 1){
@@ -1851,6 +1856,264 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
 }
 
 /*
+ * Construct responses for DeltaR and pT1*pT2
+ *
+ */
+void EECAnalyzer::ConstructParticleResponses(){
+
+  // Variables for jets
+  Double_t jetPt;             // Reconstructed jet pT
+  Double_t jetPhi;            // Reconstructed jet phi
+  Double_t jetEta;            // Reconstructed jet eta
+  Int_t nJets;                // Number of jets
+  Double_t smearingFactor;    // Smearing factor for systematic uncertainty study
+
+  // Variables for tracks
+  Double_t trackPt;                    // Track or generator level particle pT
+  Double_t trackEta;                   // Track or generator level particle eta
+  Double_t trackPhi;                   // Track or generator level particle phi
+  Double_t trackEfficiencyCorrection;  // Track efficiency correction
+  Int_t trackCharge;                   // Charge of the particle
+  Int_t nTracks;                       // Number of generator level particles
+
+  // Event variables
+  Int_t hiBin = fUnfoldingForestReader->GetHiBin();
+  Double_t centrality = fUnfoldingForestReader->GetCentrality();
+  
+  // Variables for tracks that are matched
+  vector<std::tuple<double,double,double,double,int,int>> selectedTrackInformation; 
+  vector<std::tuple<double,double,double,double,int,int>> selectedParticleInformation; 
+  vector<std::tuple<double,int>> possibleMatches;
+  Double_t deltaTrackPt;     // Difference between two track pT:s
+  Double_t deltaRTrackJet;   // DeltaR between reconstructed jet, and generator level particles
+  Double_t deltaRTracks;     // DeltaR between two tracks
+  Double_t deltaRParticles;  // DeltaR between two particles
+  Double_t trackMomentumProduct;    // pT1*pT2 for tracks
+  Double_t particleMomentumProduct; // pT1*pT2 for particles
+
+  // Filler for test
+  double fillerParticleMatching[4];
+  double fillerParticleDeltaRResponseMatrix[5];
+  double fillerParticlePtResponseMatrix[6];
+
+  // Reconstructed jet loop
+  nJets = fUnfoldingForestReader->GetNJets();
+  for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
+
+    jetPt = fUnfoldingForestReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
+    jetPhi = fUnfoldingForestReader->GetJetPhi(jetIndex);
+    jetEta = fUnfoldingForestReader->GetJetEta(jetIndex);
+
+    //  ========================================
+    //  ======== Apply jet quality cuts ========
+    //  ========================================
+
+    if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
+    if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
+
+    if(fMinimumMaxTrackPtFraction >= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
+      continue;  // Cut for jets with only very low pT particles
+    }
+    if(fMaximumMaxTrackPtFraction <= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
+      continue;  // Cut for jets where all the pT is taken by one track
+    }
+    
+
+    //  ========================================
+    //  ======= Jet quality cuts applied =======
+    //  ========================================
+
+    // For 2018 data: do a correction for the jet pT
+    fJetCorrector2018->SetJetPT(jetPt);
+    fJetCorrector2018->SetJetEta(jetEta);
+    fJetCorrector2018->SetJetPhi(jetPhi);
+
+    fJetUncertainty2018->SetJetPT(jetPt);
+    fJetUncertainty2018->SetJetEta(jetEta);
+    fJetUncertainty2018->SetJetPhi(jetPhi);
+
+    jetPt = fJetCorrector2018->GetCorrectedPT();
+
+    // If we are using smearing scenario, modify the jet pT using gaussian smearing
+    if(fJetUncertaintyMode > 0) {
+      smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
+      jetPt = jetPt * fRng->Gaus(1, smearingFactor);
+    }
+
+    // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
+    // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+
+    // After the jet pT can been corrected, apply analysis jet pT cuts
+    if(jetPt < fReconstructedJetMinimumPtCut) continue;
+    if(jetPt > fJetMaximumPtCut) continue;
+
+    //************************************************
+    //   Do energy-energy correlation within jets
+    //************************************************
+
+    // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
+    selectedTrackInformation.clear();
+    selectedParticleInformation.clear();
+
+    // Loop over generator level particles and find all particles close to the jets
+    nTracks = fUnfoldingForestReader->GetNTracks();
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++) {
+
+      // Check that all the track cuts are passed
+      if(!PassTrackCuts(fUnfoldingForestReader, iTrack)) continue;
+
+      // Find the track kinematics
+      trackPt = fUnfoldingForestReader->GetTrackPt(iTrack);
+      trackEta = fUnfoldingForestReader->GetTrackEta(iTrack);
+      trackPhi = fUnfoldingForestReader->GetTrackPhi(iTrack);
+      trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+      trackCharge = fUnfoldingForestReader->GetTrackCharge(iTrack);
+
+      // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+      deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+      if(deltaRTrackJet < fJetRadius && trackPt > 2){
+        selectedTrackInformation.push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, trackEfficiencyCorrection, trackCharge, -1));
+      } // Track close to jet
+    } // Track loop
+
+    // Loop over generator level particles and find all particles close to the jets
+    nTracks = fUnfoldingForestReader->GetNGenParticles();
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++) {
+
+      // Check that all the generator level particle selections are passed
+      if(!PassGenParticleSelection(fUnfoldingForestReader, iTrack)) continue;
+
+      // Find the track kinematics
+      trackPt = fUnfoldingForestReader->GetGenParticlePt(iTrack);
+      trackEta = fUnfoldingForestReader->GetGenParticleEta(iTrack);
+      trackPhi = fUnfoldingForestReader->GetGenParticlePhi(iTrack);
+      trackCharge = fUnfoldingForestReader->GetGenParticleCharge(iTrack);
+
+      // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+      deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+      if(deltaRTrackJet < fJetRadius && trackPt > 1) {
+        selectedParticleInformation.push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, 1, trackCharge, -1));
+      } // Track close to jet
+    } // Track loop
+
+    // For each reconstructed track, calculate the number of generator level particles within Delta R<0.05
+    // Use a 2 GeV pT cut for reconstructed tracks and 1 GeV cut for generator level particles
+    int counter;
+    fillerParticleMatching[1] = jetPt;
+    fillerParticleMatching[3] = centrality;
+    for(Int_t iTrack = 0; iTrack < selectedTrackInformation.size(); iTrack++){
+      counter = 0;
+      for(Int_t iParticle = 0; iParticle < selectedParticleInformation.size(); iParticle++){
+        if(GetDeltaR(std::get<kTrackEta>(selectedTrackInformation.at(iTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(iTrack)), std::get<kTrackEta>(selectedParticleInformation.at(iParticle)), std::get<kTrackPhi>(selectedParticleInformation.at(iParticle))) < 0.05){
+          if(std::get<kTrackCharge>(selectedTrackInformation.at(iTrack)) == std::get<kTrackCharge>(selectedParticleInformation.at(iParticle))){
+            if(TMath::Abs(std::get<kTrackPt>(selectedParticleInformation.at(iParticle))-std::get<kTrackPt>(selectedTrackInformation.at(iTrack))) < 0.5*std::get<kTrackPt>(selectedTrackInformation.at(iTrack))){
+              counter++;
+            }
+          } 
+        } 
+      }
+      fillerParticleMatching[0] = counter;
+      fillerParticleMatching[2] = std::get<kTrackPt>(selectedTrackInformation.at(iTrack));
+      fHistograms->fhParticlesCloseToTracks->Fill(fillerParticleMatching);
+    }
+
+    // Implement potential matching algorithm and see how many matches are found
+    
+
+    // Loop over the reconstructed track starting from the track with highest pT
+    std::sort(selectedTrackInformation.begin(), selectedTrackInformation.end(), std::greater<std::tuple<double,double,double,double,int,int>>());
+    for(Int_t iTrack = 0; iTrack < selectedTrackInformation.size(); iTrack++){
+      possibleMatches.clear();
+      for(Int_t iParticle = 0; iParticle < selectedParticleInformation.size(); iParticle++){
+
+        // First, check that the generator level particle is not already matched to any reconstructed track
+        if(std::get<kMatchIndex>(selectedParticleInformation.at(iParticle)) < 0) {
+
+          // Then check that the generator level particle is within 0.05 from the reconstructed particle
+          if(GetDeltaR(std::get<kTrackEta>(selectedTrackInformation.at(iTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(iTrack)), std::get<kTrackEta>(selectedParticleInformation.at(iParticle)), std::get<kTrackPhi>(selectedParticleInformation.at(iParticle))) < 0.05) {
+
+            // Then, check the charges match between reconstructed and generator level particles
+            if(std::get<kTrackCharge>(selectedTrackInformation.at(iTrack)) == std::get<kTrackCharge>(selectedParticleInformation.at(iParticle))) {
+
+              // Then, require the the generator level particle pT is within 50% of the reconstructed particle pT
+              deltaTrackPt = TMath::Abs(std::get<kTrackPt>(selectedParticleInformation.at(iParticle)) - std::get<kTrackPt>(selectedTrackInformation.at(iTrack)));
+              if(deltaTrackPt < 0.5 * std::get<kTrackPt>(selectedTrackInformation.at(iTrack))) {
+
+                // If all the conditions are fulfilled, we have a potential match
+                possibleMatches.push_back(std::make_tuple(deltaTrackPt, iParticle));
+              }
+            }
+          } 
+        } // Check that generator level particle has not already been matched
+      } // Generator level particle loop
+
+      // If there is more than one match, sort the possible matches based on the difference in pT
+      if(possibleMatches.size() > 1) std::sort(possibleMatches.begin(), possibleMatches.end());
+
+      // If there is at least one match, set the matching indices for the track and the particle
+      if(possibleMatches.size() > 0){
+        std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)) = std::get<kPossibleMatchIndex>(possibleMatches.at(0));
+        std::get<kMatchIndex>(selectedParticleInformation.at(std::get<kPossibleMatchIndex>(possibleMatches.at(0)))) = iTrack;
+      }
+    }
+
+    // For each reconstructed track, fill a histogram telling if a matching generator level particle was found or not
+    fillerParticleMatching[1] = jetPt;
+    fillerParticleMatching[3] = centrality;
+    for(Int_t iTrack = 0; iTrack < selectedTrackInformation.size(); iTrack++){
+      fillerParticleMatching[0] = std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)) < 0 ? 0 : 1;
+      fillerParticleMatching[2] = std::get<kTrackPt>(selectedTrackInformation.at(iTrack));
+      fHistograms->fhTracksWithMatchedParticle->Fill(fillerParticleMatching);
+    }
+
+    // After the matching has been done, we can construct the response matrices
+    for(Int_t iTrack = 0; iTrack < selectedTrackInformation.size(); iTrack++){
+
+      // Only loop over tracks that have matched generator level particle
+      if(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)) < 0) continue;
+
+      // Second track loop to make the track pairs
+      for(Int_t jTrack = iTrack+1; jTrack < selectedTrackInformation.size(); jTrack++){
+
+        // Only loop over tracks that have matched generator level particle
+        if(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)) < 0) continue;
+
+        // Calculate the deltaR from tracks and from the matched particles
+        deltaRTracks = GetDeltaR(std::get<kTrackEta>(selectedTrackInformation.at(iTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(iTrack)), std::get<kTrackEta>(selectedTrackInformation.at(jTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(jTrack)));
+        deltaRParticles = GetDeltaR(std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))));
+
+        // Fill the matched deltaR values to the response matrix
+        fillerParticleDeltaRResponseMatrix[0] = deltaRTracks;
+        fillerParticleDeltaRResponseMatrix[1] = deltaRParticles;
+        fillerParticleDeltaRResponseMatrix[2] = jetPt;
+        fillerParticleDeltaRResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
+        fillerParticleDeltaRResponseMatrix[4] = centrality;
+        fHistograms->fhParticleDeltaRResponse->Fill(fillerParticleDeltaRResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)));
+
+        // Fill the matched pT1*pT2 values to the response matrix
+        trackMomentumProduct = std::get<kTrackPt>(selectedTrackInformation.at(iTrack)) * std::get<kTrackPt>(selectedTrackInformation.at(jTrack));
+        particleMomentumProduct = std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))) * std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack))));
+
+        fillerParticlePtResponseMatrix[0] = trackMomentumProduct;
+        fillerParticlePtResponseMatrix[1] = particleMomentumProduct;
+        fillerParticlePtResponseMatrix[2] = jetPt;
+        fillerParticlePtResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
+        fillerParticlePtResponseMatrix[4] = centrality;
+        fillerParticlePtResponseMatrix[5] = trackMomentumProduct / particleMomentumProduct;
+        fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)));
+
+
+      } // Inner track loop
+    } // Outer track loop
+
+
+  }  // Reconstructed jet loop
+
+}
+
+/*
  * Get the proper vz weighting depending on analyzed system
  *
  *  Arguments:
@@ -2089,6 +2352,51 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(trackReader->GetTrackNormalizedChi2(iTrack) / (1.0*trackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
   if(trackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
+  
+  // If passed all checks, return true
+  return true;
+}
+
+/*
+ * Check if a track passes all the track cuts
+ *
+ *  Arguments:
+ *   UnfoldingForestReader* trackReader = UnfoldingForestReader from which the tracks are read
+ *   const Int_t iTrack = Index of the checked track in reader
+ *
+ *   return: True if all track cuts are passed, false otherwise
+ */
+Bool_t EECAnalyzer::PassTrackCuts(UnfoldingForestReader* trackReader, const Int_t iTrack){
+  
+  Double_t trackPt = trackReader->GetTrackPt(iTrack);
+  Double_t trackEta = trackReader->GetTrackEta(iTrack);
+  Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
+  
+  //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
+  
+  // Cut for track pT
+  if(trackPt <= fTrackMinPtCut) return false;                   // Minimum pT cut
+  if(trackPt >= fTrackMaxPtCut) return false;                   // Maximum pT cut
+  
+  // Cut for track eta
+  if(TMath::Abs(trackEta) >= fTrackEtaCut) return false;          // Eta cut
+  
+  // Cut for high purity
+  if(!trackReader->GetTrackHighPurity(iTrack)) return false;     // High purity cut
+  
+  // Cut for relative error for track pT
+  if(trackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
+  
+  // Cut for track distance from primary vertex
+  if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
+  if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
+  
+  // Cut for energy deposition in calorimeters for high pT tracks
+  if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
+  
+  // Cuts for track reconstruction quality
+  if(trackReader->GetTrackNormalizedChi2(iTrack) / (1.0*trackReader->GetNHitsTrackerLayer(iTrack)) >= fChi2QualityCut) return false; // Track reconstruction quality cut
+  if(trackReader->GetNHitsTrack(iTrack) < fMinimumTrackHits) return false; // Cut for minimum number of hits per track
   
   // If passed all checks, return true
   return true;
