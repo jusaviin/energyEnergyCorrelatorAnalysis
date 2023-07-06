@@ -1449,13 +1449,14 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         
         // Find the deltaR between the tracks
         trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+        //trackDeltaR = SimpleSmearDeltaR(trackDeltaR); // Simple smearing for track deltaR
         
         // Find the lower of the two track pT:s
         lowerTrackPt = trackPt1;
         if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
         
         // Calculate the weights given to the energy-energy correlators
-        correlatorWeight = trackPt1*trackPt2;
+        correlatorWeight = trackPt1*trackPt2; // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp
         
         // Find the pair efficiency correction for the track pair
         std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
@@ -2680,4 +2681,211 @@ Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Doub
 
   // We should never reach this point. If we are here, just return error code -1
   return -1;
+}
+
+/*
+ * Simple smearing for deltaR to see if it affects the final distributions
+ *
+ *  Arguments:
+ *   const Double_t deltaR = Original DeltaR
+ *
+ *  return: Smeared deltaR value
+ *
+ */
+Double_t EECAnalyzer::SimpleSmearDeltaR(const Double_t deltaR){
+
+  double randomNumber = fRng->Rndm();
+
+  // Go through the deltaR histogram bin by bin and perform smearing of the deltaR value
+  if(deltaR < 0.00147203) return deltaR;
+
+  // Low underflow bin
+  if(deltaR < 0.00316074){
+    if(randomNumber > 0.99) return 0.006;
+    return deltaR;
+  }
+
+  // First underflow bin
+  if(deltaR < 0.00509804){
+    if(randomNumber > 0.91) return 0.006;
+    return deltaR;
+  }
+
+  // Analysis bin 1
+  if(deltaR < 0.00732051){
+    if(randomNumber < 0.12) return 0.005;
+    if(randomNumber > 0.88) return 0.008;
+    return deltaR;
+  }
+
+  // Analysis bin 2
+  if(deltaR < 0.00987013){
+    if(randomNumber < 0.09) return 0.007;
+    if(randomNumber > 0.89) return 0.01;
+    return deltaR;
+  }
+
+  // Analysis bin 3
+  if(deltaR < 0.0127951){
+    if(randomNumber < 0.08) return 0.008;
+    if(randomNumber > 0.91) return 0.013;
+    return deltaR;
+  }
+
+  // Analysis bin 4
+  if(deltaR < 0.0161506){
+    if(randomNumber < 0.065) return 0.011;
+    if(randomNumber > 0.925) return 0.017;
+    return deltaR;
+  }
+
+  // Analysis bin 5
+  if(deltaR < 0.02){
+    if(randomNumber < 0.05) return 0.013;
+    if(randomNumber > 0.93) return 0.021;
+    return deltaR;
+  }
+
+  // Analysis bin 6
+  if(deltaR < 0.0244161){
+    if(randomNumber < 0.05) return 0.019;
+    if(randomNumber > 0.94) return 0.025;
+    return deltaR;
+  }
+
+  // Analysis bin 7
+  if(deltaR < 0.0294822){
+    if(randomNumber < 0.05) return 0.023;
+    if(randomNumber > 0.95) return 0.03;
+    return deltaR;
+  }
+
+  // Analysis bin 8
+  if(deltaR < 0.0352941){
+    if(randomNumber < 0.04) return 0.028;
+    if(randomNumber > 0.95) return 0.036;
+    return deltaR;
+  }
+
+  // Analysis bin 9
+  if(deltaR < 0.0419615){
+    if(randomNumber < 0.04) return 0.034;
+    if(randomNumber > 0.96) return 0.042;
+    return deltaR;
+  }
+
+  // Analysis bin 10
+  if(deltaR < 0.0496104){
+    if(randomNumber < 0.03) return 0.04;
+    if(randomNumber > 0.96) return 0.05;
+    return deltaR;
+  }
+
+  // Analysis bin 11
+  if(deltaR < 0.0583852){
+    if(randomNumber < 0.03) return 0.048;
+    if(randomNumber > 0.96) return 0.06;
+    return deltaR;
+  }
+
+  // Analysis bin 12
+  if(deltaR < 0.0684517){
+    if(randomNumber < 0.03) return 0.057;
+    if(randomNumber > 0.97) return 0.07;
+    return deltaR;
+  }
+
+  // Analysis bin 13
+  if(deltaR < 0.08){
+    if(randomNumber < 0.02) return 0.0666;
+    if(randomNumber > 0.97) return 0.085;
+    return deltaR;
+  }
+
+  // Analysis bin 14
+  if(deltaR < 0.0932482){
+    if(randomNumber < 0.02) return 0.07;
+    if(randomNumber > 0.97) return 0.094;
+    return deltaR;
+  }
+
+  // Analysis bin 15
+  if(deltaR < 0.108447){
+    if(randomNumber < 0.02) return 0.09;
+    if(randomNumber > 0.98) return 0.11;
+    return deltaR;
+  }
+
+  // Analysis bin 16
+  if(deltaR < 0.125882){
+    if(randomNumber < 0.02) return 0.1;
+    if(randomNumber > 0.98) return 0.13;
+    return deltaR;
+  }
+
+  // Analysis bin 17
+  if(deltaR < 0.145885){
+    if(randomNumber < 0.02) return 0.12;
+    if(randomNumber > 0.98) return 0.15;
+    return deltaR;
+  }
+
+  // Analysis bin 18
+  if(deltaR < 0.168831){
+    if(randomNumber < 0.01) return 0.14;
+    if(randomNumber > 0.98) return 0.17;
+    return deltaR;
+  }
+
+  // Analysis bin 19
+  if(deltaR < 0.195156){
+    if(randomNumber < 0.01) return 0.16;
+    if(randomNumber > 0.98) return 0.2;
+    return deltaR;
+  }
+
+  // Analysis bin 20
+  if(deltaR < 0.225355){
+    if(randomNumber < 0.01) return 0.19;
+    if(randomNumber > 0.98) return 0.23;
+    return deltaR;
+  }
+
+  // Analysis bin 21
+  if(deltaR < 0.26){
+    if(randomNumber < 0.01) return 0.22;
+    if(randomNumber > 0.99) return 0.27;
+    return deltaR;
+  }
+
+  // Analysis bin 22
+  if(deltaR < 0.299745){
+    if(randomNumber < 0.01) return 0.25;
+    if(randomNumber > 0.99) return 0.3;
+    return deltaR;
+  }
+
+  // Analysis bin 23
+  if(deltaR < 0.34534){
+    if(randomNumber < 0.01) return 0.29;
+    if(randomNumber > 0.99) return 0.35;
+    return deltaR;
+  }
+
+  // Analysis bin 24
+  if(deltaR < 0.397647){
+    if(randomNumber < 0.005) return 0.34;
+    if(randomNumber > 0.995) return 0.4;
+    return deltaR;
+  }
+
+  // Analysis bin 25
+  if(deltaR < 0.457654){
+    if(randomNumber < 0.005) return 0.39;
+    if(randomNumber > 0.995) return 0.46;
+    return deltaR;
+  }
+
+  return deltaR;
+
 }
