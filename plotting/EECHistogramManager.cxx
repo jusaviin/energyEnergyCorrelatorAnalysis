@@ -1812,7 +1812,7 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
           axisIndices[2] = 1; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
 
           // Read the track/particle matching QA histograms
-          fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 0, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+          fhTrackParticleMatchQA[iTrackParticleQAHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 0, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
 
         } // Jet pT loop
       } // Track pT loop
@@ -1854,8 +1854,8 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
           // Add restriction for jet pT axis (2 = jet pT)
           axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
 
-          // Read the track/particle matching QA histograms
-          fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+          // Read the track/particle response matrices
+          fhTrackParticleResponse[iTrackParticleResponseHistogram][iCentrality][iJetPt][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
 
         } // Jet pT loop
       } // Track pT loop
@@ -1896,7 +1896,7 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
         axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
 
         // Read the track/particle pair pT1*pT2 closure histograms
-        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 5, nRestrictionAxes, axisIndices, lowLimits, highLimits);
+        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 5, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
 
       }  // Jet pT loop
     }    // Track pT loop
