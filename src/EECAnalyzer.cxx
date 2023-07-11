@@ -182,7 +182,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     
     // Track pair efficiency corrector for pp
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-05-17.root", false);
+    fTrackPairEfficiencyCorrector = NULL; //new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_combineHighestTrackPtBins_2023-07-07.root", false);
 
     // Jet energy resolution smearing scale factor manager
     if(fJetUncertaintyMode > 0){
@@ -216,7 +216,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
     
     // Track pair efficiency corrector for PbPb
-    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_PbPb2018_32DeltaRBins_2023-05-17.root", false);
+    fTrackPairEfficiencyCorrector = NULL; //new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_PbPb2018_32DeltaRBins_combineHighestTrackPtBins_2023-07-07.root", true);
 
     // Jet energy resolution smearing scale factor manager
     if(fJetUncertaintyMode > 0){
@@ -244,7 +244,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
 
   bool disableTrackPairEfficiencyCorrection = (fCard->Get("DisableTrackPairEfficiencyCorrection") == 1);
   if((fMcCorrelationType == kGenGen) || (fMcCorrelationType == kRecoGen)) disableTrackPairEfficiencyCorrection = true; // Disable the track pair efficiency correction for generator level particles
-  fTrackPairEfficiencyCorrector->SetDisableCorrection(disableTrackPairEfficiencyCorrection);
+  //fTrackPairEfficiencyCorrector->SetDisableCorrection(disableTrackPairEfficiencyCorrection);
 
 }
 
@@ -1459,7 +1459,10 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         correlatorWeight = trackPt1*trackPt2; // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp
         
         // Find the pair efficiency correction for the track pair
-        std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+        //std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+        trackPairEfficiencyCorrection = 1;
+        trackPairEfficiencyError = 0;
+
 
         // Fill the energy-energy correlator histograms
         fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
