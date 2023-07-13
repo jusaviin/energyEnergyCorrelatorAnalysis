@@ -23,7 +23,7 @@ public:
   static const int kMaxJetPtBins = 20;          // Maximum allowed number of jet pT bins
   
   TrackPairEfficiencyCorrector();                   // Contructor
-  TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection);   // Custom constructor
+  TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection, bool isPbPbData);   // Custom constructor
   ~TrackPairEfficiencyCorrector() = default;        // Destructor
   
   std::pair<double,double> GetTrackPairEfficiencyCorrection(const double deltaR, const double centrality, const double triggerPt, const double associatedPt, const double jetPt = -1) const;
@@ -51,6 +51,7 @@ private:
   // Flags for selecting correct corrections
   bool fDisableCorrection;      // Disable the correction and just return 1
   bool fUseSmoothedCorrection;  // True: Use smoothed correction. False: Use raw correction
+  bool fIsPbPbData;             // PbPb and pp have different fluctuation reduction settings. Thus we need a flag for data type
   
   // Histograms from which the corrections are read
   TH1D* fCorrectionTable[kMaxCentralityBins][kMaxTrackPtBins][kMaxTrackPtBins];

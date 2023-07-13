@@ -15,7 +15,8 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
   fnTrackPtBins(0),
   fnJetPtBins(0),
   fDisableCorrection(false),
-  fUseSmoothedCorrection(false)
+  fUseSmoothedCorrection(false),
+  fIsPbPbData(false)
 {
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins; iCentrality++){
     for(int iTriggerPt = 0; iTriggerPt < kMaxTrackPtBins; iTriggerPt++){
@@ -32,11 +33,12 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector() :
 /*
  * Custom constructor
  */
-TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection) :
+TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName, bool useSmoothedCorrection, bool isPbPbData) :
   fDisableCorrection(false)
 {
   fInputFile = TFile::Open(inputFileName);
   fUseSmoothedCorrection = useSmoothedCorrection;
+  fIsPbPbData = isPbPbData;
   ReadCorrectionTables();
 }
 
@@ -164,7 +166,7 @@ std::pair<double,double> TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCor
   if(jetPt > 0) {
 
     // For pp, in some of the highest bins there is not enough statistics close to the jets. Use the correction without jets in these cases
-    if(!fUseSmoothedCorrection){
+    if(!fIsPbPbData){
       if(higherPt > 50 && lowerPt > 20){
         skipJetCorrection = true;
       } else if (higherPt > 100){
@@ -173,7 +175,7 @@ std::pair<double,double> TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCor
     }
 
     // For PbPb, in some of the highest bins there is not enough statistics close to the jets. Use the correction without jets in these cases
-    if(fUseSmoothedCorrection){
+    if(fIsPbPbData){
       if(higherPt > 50 && lowerPt > 12){
         skipJetCorrection = true;
       } else if (higherPt > 20 && lowerPt > 20){
@@ -204,14 +206,14 @@ std::pair<double,double> TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCor
   } // If for correction with jet pT bins
 
   // For pp, in some of the highest bins we skip the correction since we only see fluctuations there
-  if(!fUseSmoothedCorrection){
+  if(!fIsPbPbData){
     if(higherPt > 100 && lowerPt > 50){
       if(deltaR > 0.02) return std::make_pair(1,0);
     }
   }
 
   // Also for PbPb, we do not apply the correction in the highest bins due to not having enough statistics
-  if(fUseSmoothedCorrection){
+  if(fIsPbPbData){
     if(higherPt > 50){
       if(lowerPt > 50 && deltaR > 0.028) return std::make_pair(1,0);
       if(lowerPt > 20 && deltaR > 0.05) return std::make_pair(1,0);
