@@ -33,15 +33,15 @@ void estimateSystematicUncertainties(){
   // ==================================================================
 
   // Nominal results
-  TFile* nominalResultFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_processed_2023-06-25.root");
+  TFile* nominalResultFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root");
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
   loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
   TFile* jetEnergyResolutionFile[2];
-  jetEnergyResolutionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithUncertaintySmearDown_processed_2023-06-25.root");
-  jetEnergyResolutionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithUncertaintySmearUp_optimizedIterations_processed_2023-06-25.root");
+  jetEnergyResolutionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithUncertaintySmearDown_processed_2023-07-13.root");
+  jetEnergyResolutionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithUncertaintySmearUp_processed_2023-07-13.root");
   EECCard* jetEnergyResolutionCard[2];
   EECHistogramManager* jetEnergyResolutionHistogramManager[2];
   for(int iJetEnergyResolutionFile = 0; iJetEnergyResolutionFile < 2; iJetEnergyResolutionFile++){
@@ -52,8 +52,8 @@ void estimateSystematicUncertainties(){
   
   // Results unfolded with a response matrix smeared with jet energy scale
   TFile* jetEnergyScaleFile[2];
-  jetEnergyScaleFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithMinusJetEnergyScale_processed_2023-06-25.root");
-  jetEnergyScaleFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithPlusJetEnergyScale_processed_2023-06-25.root");
+  jetEnergyScaleFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithMinusJetEnergyScale_processed_2023-07-13.root");
+  jetEnergyScaleFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithPlusJetEnergyScale_processed_2023-07-13.root");
   EECCard* jetEnergyScaleCard[2];
   EECHistogramManager* jetEnergyScaleHistogramManager[2];
   for(int iJetEnergyScaleFile = 0; iJetEnergyScaleFile < 2; iJetEnergyScaleFile++){
@@ -63,15 +63,15 @@ void estimateSystematicUncertainties(){
   }
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
-  TFile* jetPtPriorFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithModifiedPrior_processed_2023-06-25.root");
+  TFile* jetPtPriorFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithModifiedPrior_processed_2023-07-13.root");
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
   loadRelevantHistograms(jetPtPriorHistogramManager);
 
   // Results where background scaling factor is determined from 2% or 6% shifted simulation instead of nominal 4%
   TFile* backgroundSubtractionFile[2];
-  backgroundSubtractionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift_processed_2023-06-25.root");
-  backgroundSubtractionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_backgroundScaleUncertainty6pShift_processed_2023-06-25.root");
+  backgroundSubtractionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift_processed_2023-07-13.root");
+  backgroundSubtractionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_backgroundScaleUncertainty6pShift_processed_2023-07-13.root");
   EECCard* backgroundSubtractionCard[2];
   EECHistogramManager* backgroundSubtractionHistogramManager[2];
   for(int iBackgroundSubtractionFile = 0; iBackgroundSubtractionFile < 2; iBackgroundSubtractionFile++){
@@ -82,8 +82,8 @@ void estimateSystematicUncertainties(){
 
   // Result with different track selections
   TFile* trackSelectionFile[2];
-  trackSelectionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_looseTrackCut_processed_2023-06-25.root");
-  trackSelectionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_tightTrackCut_processed_2023-06-25.root");
+  trackSelectionFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_looseTrackSelection_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root");
+  trackSelectionFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_tightTrackSelection_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root");
   EECCard* trackSelectionCard[2];
   EECHistogramManager* trackSelectionHistogramManager[2];
   for(int iTrackSelectionFile = 0; iTrackSelectionFile < 2; iTrackSelectionFile++){
@@ -93,15 +93,15 @@ void estimateSystematicUncertainties(){
   }
 
   // Results with varied single and pair track efficiency
-  TFile* trackEfficiencyFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_trackSystematics_processed_2023-06-25.root");
+  TFile* trackEfficiencyFile = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_trackSystematics_processed_2023-07-13.root");
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
   loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
 
   // Results where the jet pT response matrix is determined from 2% or 6% shifted simulation instead of nominal 4%
   TFile* centralityShiftFile[2];
-  centralityShiftFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWith2pCentShift_processed_2023-06-25.root");
-  centralityShiftFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWith6pCentShift_processed_2023-06-25.root");
+  centralityShiftFile[0] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWith2pCentShift_processed_2023-07-13.root");
+  centralityShiftFile[1] = TFile::Open("data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWith6pCentShift_processed_2023-07-13.root");
   EECCard* centralityShiftCard[2];
   EECHistogramManager* centralityShiftHistogramManager[2];
   for(int iCentralityShiftFile = 0; iCentralityShiftFile < 2; iCentralityShiftFile++){
@@ -138,9 +138,9 @@ void estimateSystematicUncertainties(){
   
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
-  bool setAutomaticRatioZoom = false;                                      // If true, use predefined ratio zooms for systematic uncertainties
+  bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
   
-  TString outputFileName = "systematicUncertainties/systematicUncertainties_testUpdate_2023-06-26.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertainties_testUpdate_2023-07-14.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -149,7 +149,7 @@ void estimateSystematicUncertainties(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kJetEnergyResolution] = true;
+  plotExample[SystematicUncertaintyOrganizer::kCentralityShift] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -324,15 +324,7 @@ void estimateSystematicUncertainties(){
 
             // Set reasonable ratio zoom depending on centrality bin
             if(setAutomaticRatioZoom){
-              if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(0.0,10.0)){
-                ratioZoom = std::make_pair(0.7,1.3);
-              } else if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(10.0,30.0)){
-                ratioZoom = std::make_pair(0.8,1.2);
-              } else if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(30.0,50.0)){
-                ratioZoom = std::make_pair(0.9,1.1);
-              } if(nominalResultCard->GetBinBordersCentrality(iCentrality) == std::make_pair(50.0,90.0)){
-                ratioZoom = std::make_pair(0.9,1.1);
-              }
+              ratioZoom = std::make_pair(0.9,1.1);
             }
 
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), analysisDeltaR, ratioZoom);
@@ -361,7 +353,14 @@ void estimateSystematicUncertainties(){
 
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
-              ratioZoom = std::make_pair(0.9,1.1);
+              if(iCentrality == 0){
+                ratioZoom = std::make_pair(0.7,1.3);
+              } else if (iCentrality == 1){
+                ratioZoom = std::make_pair(0.8,1.2);
+              } else {
+                ratioZoom = std::make_pair(0.85,1.15);
+              }
+              
             }
 
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), analysisDeltaR, ratioZoom);
@@ -415,6 +414,16 @@ void estimateSystematicUncertainties(){
           if(plotExample[SystematicUncertaintyOrganizer::kBackgroundSubtraction] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "Bg scale from 2% shift";
             legendNames[1] = "Bg scale from 6% shift";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              if(iCentrality == 0){
+                ratioZoom = std::make_pair(0.85,1.15);
+              } else {
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kBackgroundSubtraction), analysisDeltaR, ratioZoom);
           }
       
@@ -438,6 +447,12 @@ void estimateSystematicUncertainties(){
           if(plotExample[SystematicUncertaintyOrganizer::kTrackSelection] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "Loose track selection";
             legendNames[1] = "Tight track selection";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              ratioZoom = std::make_pair(0.8,1.2);
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackSelectionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackSelection), analysisDeltaR, ratioZoom);
           }
       
@@ -461,6 +476,12 @@ void estimateSystematicUncertainties(){
           if(plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "Efficiency - 5%";
             legendNames[1] = "Efficiency + 5%";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              ratioZoom = std::make_pair(0.999999,1.000001);
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSingleTrackEfficiency), analysisDeltaR, ratioZoom);
           }
       
@@ -484,6 +505,12 @@ void estimateSystematicUncertainties(){
           if(plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "Pair efficiency - 10%";
             legendNames[1] = "Pair efficiency + 10%";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              ratioZoom = std::make_pair(0.8,1.2);
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackPairEfficiency), analysisDeltaR, ratioZoom);
           }
       
@@ -507,6 +534,16 @@ void estimateSystematicUncertainties(){
           if(plotExample[SystematicUncertaintyOrganizer::kCentralityShift] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
             legendNames[0] = "Unfolding with 2% shift";
             legendNames[1] = "Unfolding with 6% shift";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              if(iCentrality == 0){
+                ratioZoom = std::make_pair(0.85,1.15);
+              } else {
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kCentralityShift), analysisDeltaR, ratioZoom);
           }
       
