@@ -12,7 +12,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_uncertaintySmearUp_4pCentShift_2023-06-25.root", "chi2Files/chi2Histograms_PbPb_split2_uncertaintySmearUp_4pCentShift_2023-06-25.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_nominalSmear_4pCentShift_2023-07-12.root", "chi2Files/chi2Histograms_PbPb_split2_nominalSmear_4pCentShift_2023-07-12.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
@@ -120,11 +120,11 @@ void drawUnfoldingChi2Test(){
   int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
-  const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
+  const bool drawChi2map = true;                      // Draw the chi2 values for individual jet pT bins
   const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
-  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
-  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
+  const bool drawBestIterationRatioComparison = true; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -137,53 +137,53 @@ void drawUnfoldingChi2Test(){
 
   // Set manually the best number of iteration determined totally objectively
   if(isPbPbData){
-    bestNumberOfIterations[0][0][3] = 5;  // Centrality = 0-10, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][0][3] = 7;  // Centrality = 0-10, track pT > 2 GeV, 120 < jet pT < 140
     bestNumberOfIterations[0][1][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 140 < jet pT < 160
-    bestNumberOfIterations[0][2][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[0][3][3] = 3;  // Centrality = 0-10, track pT > 2 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[1][0][3] = 5;  // Centrality = 10-30, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][2][3] = 2;  // Centrality = 0-10, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[0][3][3] = 2;  // Centrality = 0-10, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[1][0][3] = 6;  // Centrality = 10-30, track pT > 2 GeV, 120 < jet pT < 140
     bestNumberOfIterations[1][1][3] = 3;  // Centrality = 10-30, track pT > 2 GeV, 140 < jet pT < 160
     bestNumberOfIterations[1][2][3] = 3;  // Centrality = 10-30, track pT > 2 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[1][3][3] = 5;  // Centrality = 10-30, track pT > 2 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[2][0][3] = 4;  // Centrality = 30-50, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[1][3][3] = 3;  // Centrality = 10-30, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[2][0][3] = 3;  // Centrality = 30-50, track pT > 2 GeV, 120 < jet pT < 140
     bestNumberOfIterations[2][1][3] = 3;  // Centrality = 30-50, track pT > 2 GeV, 140 < jet pT < 160
-    bestNumberOfIterations[2][2][3] = 5;  // Centrality = 30-50, track pT > 2 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[2][3][3] = 4;  // Centrality = 30-50, track pT > 2 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[3][0][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][2][3] = 3;  // Centrality = 30-50, track pT > 2 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][3][3] = 5;  // Centrality = 30-50, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][0][3] = 4;  // Centrality = 50-90, track pT > 2 GeV, 120 < jet pT < 140
     bestNumberOfIterations[3][1][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 140 < jet pT < 160
     bestNumberOfIterations[3][2][3] = 3;  // Centrality = 50-90, track pT > 2 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[3][3][3] = 8;  // Centrality = 50-90, track pT > 2 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][3][3] = 4;  // Centrality = 50-90, track pT > 2 GeV, 180 < jet pT < 200
 
-    bestNumberOfIterations[0][0][4] = 6;  // Centrality = 0-10, track pT > 2.5 GeV, 120 < jet pT < 140
-    bestNumberOfIterations[0][1][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[0][0][4] = 8;  // Centrality = 0-10, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[0][1][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV, 140 < jet pT < 160
     bestNumberOfIterations[0][2][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 160 < jet pT < 180
     bestNumberOfIterations[0][3][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[1][0][4] = 5;  // Centrality = 10-30, track pT > 2.5 GeV, 120 < jet pT < 140
-    bestNumberOfIterations[1][1][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 140 < jet pT < 160
+    bestNumberOfIterations[1][0][4] = 7;  // Centrality = 10-30, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[1][1][4] = 5;  // Centrality = 10-30, track pT > 2.5 GeV, 140 < jet pT < 160
     bestNumberOfIterations[1][2][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 160 < jet pT < 180
     bestNumberOfIterations[1][3][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[2][0][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][0][4] = 5;  // Centrality = 30-50, track pT > 2.5 GeV, 120 < jet pT < 140
     bestNumberOfIterations[2][1][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV, 140 < jet pT < 160
-    bestNumberOfIterations[2][2][4] = 5;  // Centrality = 30-50, track pT > 2.5 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[2][3][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[3][0][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[2][2][4] = 3;  // Centrality = 30-50, track pT > 2.5 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][3][4] = 5;  // Centrality = 30-50, track pT > 2.5 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][0][4] = 4;  // Centrality = 50-90, track pT > 2.5 GeV, 120 < jet pT < 140
     bestNumberOfIterations[3][1][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 140 < jet pT < 160
     bestNumberOfIterations[3][2][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[3][3][4] = 8;  // Centrality = 50-90, track pT > 2.5 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[3][3][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV, 180 < jet pT < 200
 
     bestNumberOfIterations[0][0][5] = 10;  // Centrality = 0-10, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[0][1][5] = 5;  // Centrality = 0-10, track pT > 3 GeV, 140 < jet pT < 160
     bestNumberOfIterations[0][2][5] = 3;  // Centrality = 0-10, track pT > 3 GeV, 160 < jet pT < 180
-    bestNumberOfIterations[0][3][5] = 2;  // Centrality = 0-10, track pT > 3 GeV, 180 < jet pT < 200
+    bestNumberOfIterations[0][3][5] = 3;  // Centrality = 0-10, track pT > 3 GeV, 180 < jet pT < 200
     bestNumberOfIterations[1][0][5] = 7;  // Centrality = 10-30, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[1][1][5] = 4;  // Centrality = 10-30, track pT > 3 GeV, 140 < jet pT < 160
     bestNumberOfIterations[1][2][5] = 3;  // Centrality = 10-30, track pT > 3 GeV, 160 < jet pT < 180
     bestNumberOfIterations[1][3][5] = 3;  // Centrality = 10-30, track pT > 3 GeV, 180 < jet pT < 200
     bestNumberOfIterations[2][0][5] = 5;  // Centrality = 30-50, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[2][1][5] = 3;  // Centrality = 30-50, track pT > 3 GeV, 140 < jet pT < 160
-    bestNumberOfIterations[2][2][5] = 8;  // Centrality = 30-50, track pT > 3 GeV, 160 < jet pT < 180
+    bestNumberOfIterations[2][2][5] = 3;  // Centrality = 30-50, track pT > 3 GeV, 160 < jet pT < 180
     bestNumberOfIterations[2][3][5] = 5;  // Centrality = 30-50, track pT > 3 GeV, 180 < jet pT < 200
-    bestNumberOfIterations[3][0][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 120 < jet pT < 140
+    bestNumberOfIterations[3][0][5] = 4;  // Centrality = 50-90, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[3][1][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 140 < jet pT < 160
     bestNumberOfIterations[3][2][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 160 < jet pT < 180
     bestNumberOfIterations[3][3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 180 < jet pT < 200
@@ -192,11 +192,11 @@ void drawUnfoldingChi2Test(){
     if(oneIterationPerMatrix) {
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][3] = 3;  // Centrality = 0-10, track pT > 2 GeV
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][3] = 3;  // Centrality = 10-30, track pT > 2 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][3] = 3;  // Centrality = 30-50, track pT > 2 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][3] = 4;  // Centrality = 30-50, track pT > 2 GeV
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
 
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV
+      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
 
@@ -219,8 +219,8 @@ void drawUnfoldingChi2Test(){
     }
   }
 
-  bool saveFigures = false;
-  TString saveComment = "_splitComparisonNominalSmearIndividualPt";
+  bool saveFigures = true;
+  TString saveComment = "_splitComparisonNominalSmear";
   TString figureFormat = "pdf";
 
   // Histograms for chi2 and error2 map
