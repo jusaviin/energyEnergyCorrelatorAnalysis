@@ -18,6 +18,50 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
+
+  // Setup the flags for systematics grouping
+  fSystematicsGroupFlag[kJetEnergyResolution] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kJetEnergyScale] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kUnfoldingTruth] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kTrackSelection] = kUncorrelatedInDeltaR;
+  fSystematicsGroupFlag[kSingleTrackEfficiency] = kSkipped;
+  fSystematicsGroupFlag[kTrackPairEfficiency] = kUncorrelatedInDeltaR;
+  fSystematicsGroupFlag[kBackgroundSubtraction] = kUncorrelatedInDeltaR;
+  fSystematicsGroupFlag[kCentralityShift] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kAll] = kGroupForAll;
+
+  // Setup the standardized color scheme for different uncertainty sources
+  fUncertaintyColor[kJetEnergyResolution] = kBlue;
+  fUncertaintyColor[kJetEnergyScale] = kRed;
+  fUncertaintyColor[kUnfoldingTruth] = kGreen+3;
+  fUncertaintyColor[kTrackSelection] = kMagenta;
+  fUncertaintyColor[kSingleTrackEfficiency] = kWhite;
+  fUncertaintyColor[kTrackPairEfficiency] = kCyan;
+  fUncertaintyColor[kBackgroundSubtraction] = kViolet-6;
+  fUncertaintyColor[kCentralityShift] = kOrange+7;
+  fUncertaintyColor[kAll] = kBlack;
+
+  // Define which sources are relevant for pp
+  fIsRelevant[0][kJetEnergyResolution] = true;
+  fIsRelevant[0][kJetEnergyScale] = true;
+  fIsRelevant[0][kUnfoldingTruth] = true;
+  fIsRelevant[0][kTrackSelection] = false;
+  fIsRelevant[0][kSingleTrackEfficiency] = false;
+  fIsRelevant[0][kTrackPairEfficiency] = true;
+  fIsRelevant[0][kBackgroundSubtraction] = true;
+  fIsRelevant[0][kCentralityShift] = false;
+  fIsRelevant[0][kAll] = true;
+
+  // Define which sources are relevant for PbPb
+  fIsRelevant[1][kJetEnergyResolution] = true;
+  fIsRelevant[1][kJetEnergyScale] = true;
+  fIsRelevant[1][kUnfoldingTruth] = true;
+  fIsRelevant[1][kTrackSelection] = true;
+  fIsRelevant[1][kSingleTrackEfficiency] = false;
+  fIsRelevant[1][kTrackPairEfficiency] = true;
+  fIsRelevant[1][kBackgroundSubtraction] = true;
+  fIsRelevant[1][kCentralityShift] = true;
+  fIsRelevant[1][kAll] = true;
 }
 
 /*
@@ -122,10 +166,45 @@ TH1D* SystematicUncertaintyOrganizer::GetSystematicUncertainty(const int iCentra
   return fhEnergyEnergyCorrelatorUncertainty[iCentrality][iJetPt][iTrackPt][iUncertainty];
 }
 
+// Combine a predefined group of systematic uncertainty sources
+TH1D* SystematicUncertaintyOrganizer::CombineUncertaintySources(const int iCentrality, const int iJetPt, const int iTrackPt, const int iGroup, const char* newName) const{
+  TH1D* uncertaintyHistogram = (TH1D*) fhEnergyEnergyCorrelatorUncertainty[iCentrality][iJetPt][iTrackPt][kAll]->Clone(Form("%s%d%d%d", newName, iCentrality, iJetPt, iTrackPt));
+
+  // Calculate a sum of squared from all evaluated uncertainties
+  double sumOfSquares = 0;
+  for(int iBin = 1; iBin <= uncertaintyHistogram->GetNbinsX(); iBin++){
+    sumOfSquares = 0;
+    for(int iUncertainty = 0; iUncertainty < kAll; iUncertainty++){
+      if(fSystematicsGroupFlag[iUncertainty] == iGroup){
+        sumOfSquares = sumOfSquares + TMath::Power(fhEnergyEnergyCorrelatorUncertainty[iCentrality][iJetPt][iTrackPt][iUncertainty]->GetBinError(iBin), 2);
+      }
+    }  // Uncertainty type loop
+    uncertaintyHistogram->SetBinError(iBin, TMath::Sqrt(sumOfSquares));
+  }  // Bin loop
+
+  return uncertaintyHistogram;
+}
+
+// Getter for the absolute systematic uncertainty from all sources correlated in DeltaR
+TH1D* SystematicUncertaintyOrganizer::GetCorrelatedSystematicUncertainty(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return CombineUncertaintySources(iCentrality, iJetPt, iTrackPt, kCorrelatedInDeltaR, "correlatedUncertainties");
+}
+
+// Getter for the absolute systematic uncertainty from all sources not correlated in DeltaR
+TH1D* SystematicUncertaintyOrganizer::GetUncorrelatedSystematicUncertainty(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+  return CombineUncertaintySources(iCentrality, iJetPt, iTrackPt, kUncorrelatedInDeltaR, "uncorrelatedUncertainties");
+}
+
 // Getter for a name for the source of systematic uncertainty
 TString SystematicUncertaintyOrganizer::GetSystematicUncertaintyName(const int iUncertainty) const{
   return fSystematicUncertaintyName[iUncertainty];
 }
+
+// Getter for a name suitable for a legend for the source of systematic uncertainty
+TString SystematicUncertaintyOrganizer::GetSystematicUncertaintyLegendName(const int iUncertainty) const{
+  return fSystematicUncertaintyLegendName[iUncertainty];
+}
+
 
 // Getter for an axis name for the source of systematic uncertainty
 TString SystematicUncertaintyOrganizer::GetUncertaintyAxisName(const int iUncertainty) const{
@@ -135,4 +214,24 @@ TString SystematicUncertaintyOrganizer::GetUncertaintyAxisName(const int iUncert
 // Getter for an axis name for the source of systematic uncertainty
 int SystematicUncertaintyOrganizer::GetNUncertaintySources() const{
   return knUncertaintySources;
+}
+
+// Getter for standardized color for each systematic uncertainty source
+int SystematicUncertaintyOrganizer::GetUncertaintyColor(const int iUncertainty) const{
+  return fUncertaintyColor[iUncertainty];
+}
+
+// Getter for information if a systematic uncertainty is relevant for pp
+bool SystematicUncertaintyOrganizer::GetSystematicUncertaintyRelevancyForPp(const int iUncertainty) const{
+  return GetSystematicUncertaintyRelevancy(iUncertainty, false);
+}
+
+// Getter for information if a systematic uncertainty is relevant for PbPb
+bool SystematicUncertaintyOrganizer::GetSystematicUncertaintyRelevancyForPbPb(const int iUncertainty) const{
+  return GetSystematicUncertaintyRelevancy(iUncertainty, true);
+}
+
+// Getter for information if a systematic uncertainty is relevant for a system (pp or PbPb)
+bool SystematicUncertaintyOrganizer::GetSystematicUncertaintyRelevancy(const int iUncertainty, const bool isPbPb) const{
+  return fIsRelevant[isPbPb][iUncertainty];
 }

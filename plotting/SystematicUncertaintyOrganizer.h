@@ -26,6 +26,7 @@ private:
 public:
   
   enum enumUncertaintySources{kJetEnergyResolution, kJetEnergyScale, kUnfoldingTruth, kTrackSelection, kSingleTrackEfficiency, kTrackPairEfficiency, kBackgroundSubtraction, kCentralityShift, kAll, knUncertaintySources};
+  enum enumGroupFlagExplanation{kCorrelatedInDeltaR, kUncorrelatedInDeltaR, kSkipped, kGroupForAll, knUncertaintyGroups};
   
   SystematicUncertaintyOrganizer();                                          // Default constructor
   SystematicUncertaintyOrganizer(TFile* inputFile);                          // Constructor
@@ -37,19 +38,35 @@ public:
   
   // Getters for the long range systematic uncertainties
   TString GetSystematicUncertaintyName(const int iUncertainty) const;
+  TString GetSystematicUncertaintyLegendName(const int iUncertainty) const;
   TString GetUncertaintyAxisName(const int iUncertainty) const;
   TH1D* GetSystematicUncertainty(const int iCentrality, const int iJetPt, const int iTrackPt, const int iUncertainty = kAll) const;
+  TH1D* GetCorrelatedSystematicUncertainty(const int iCentrality, const int iJetPt, const int iTrackPt) const;
+  TH1D* GetUncorrelatedSystematicUncertainty(const int iCentrality, const int iJetPt, const int iTrackPt) const;
   
   int GetNUncertaintySources() const;
+  int GetUncertaintyColor(const int iUncertainty) const;
+  bool GetSystematicUncertaintyRelevancy(const int iUncertainty, const bool isPbPb) const;
+  bool GetSystematicUncertaintyRelevancyForPp(const int iUncertainty) const;
+  bool GetSystematicUncertaintyRelevancyForPbPb(const int iUncertainty) const;
   
   
 private:
     
   TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "centralityShift", "all"};
+  TString fSystematicUncertaintyLegendName[knUncertaintySources] = {"Jet energy resolution", "Jet energy scale", "Unfolding prior shape", "Track selection", "Single track efficiency", "Track pair efficiency", "Background subtraction", "Centrality shift", "all"};
   TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "track selection", "track eff", "pair eff", "bg sub", "cent shift" ,"all"};
 
   // Systematic uncertainty for energy-energy correlators
-  TH1D* fhEnergyEnergyCorrelatorUncertainty[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knUncertaintySources];  
+  TH1D* fhEnergyEnergyCorrelatorUncertainty[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knUncertaintySources];
+
+  // Combine a predefined group of systematic uncertainty sources
+  TH1D* CombineUncertaintySources(const int iCentrality, const int iJetPt, const int iTrackPt, const int iGroup, const char* newName) const;
+
+  // Systematic uncertainty group flag
+  int fSystematicsGroupFlag[knUncertaintySources];
+  int fUncertaintyColor[knUncertaintySources];      // Standardized color scheme for different uncertainty sources
+  bool fIsRelevant[2][knUncertaintySources];        // Define if this uncertainty is included in total uncertainty estimate (0 = pp, 1 = PbPb)
 };
 
 #endif

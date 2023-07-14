@@ -140,7 +140,7 @@ void estimateSystematicUncertainties(){
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
   
-  TString outputFileName = "systematicUncertainties/systematicUncertainties_testUpdate_2023-07-14.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -149,7 +149,7 @@ void estimateSystematicUncertainties(){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kCentralityShift] = true;
+  //plotExample[SystematicUncertaintyOrganizer::kCentralityShift] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
