@@ -145,7 +145,7 @@ void fullAnalysisClosure(){
   // Helper histograms
   TH1D *helperHistogram;
   double normalizationFactor;
-  std::pair<double,double> drawingRange = std::make_pair(0.006, 0.39);
+  std::pair<double,double> drawingRange = std::make_pair(0.008, 0.39);
   double epsilon = 0.0001;
   int lowSignalBin, highSignalBin;
   int iCentralityTruth, iJetPtTruth, iTrackPtTruth;
