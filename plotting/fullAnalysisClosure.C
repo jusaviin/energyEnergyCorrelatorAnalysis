@@ -9,18 +9,22 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  const int nSplits = 2;
+  const int nSplits = 3;
 
   // Open the input files
   TString fileName[kNDistributionTypes][nSplits];
-  fileName[kMeasured][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_part2_processed_closureTest_2023-06-01.root";
-  fileName[kMeasured][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_part1_processed_closureTest_2023-06-01.root";
+  fileName[kMeasured][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part2_processed_2023-07-15.root";
+  fileName[kMeasured][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part1_processed_2023-07-15.root";
+  fileName[kMeasured][2] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_processed_2023-07-15.root";
   // data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_part1_processed_closureTest_2023-06-01.root
-  fileName[kTruth][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root";
-  fileName[kTruth][1] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part1_processed_2023-05-20.root";
+  // data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part1_processed_2023-07-15.root
+  fileName[kTruth][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part2_processed_2023-06-21.root";
+  fileName[kTruth][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part1_processed_2023-06-21.root";
+  fileName[kTruth][2] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_32deltaRBins_firstTest_processed_2023-07-10.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
+  // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part1_processed_2023-06-21.root
 
   TFile* inputFile[kNDistributionTypes][nSplits];
   EECCard* card[kNDistributionTypes][nSplits];
@@ -40,6 +44,10 @@ void fullAnalysisClosure(){
       card[iFile][iSplit] = new EECCard(inputFile[iFile][iSplit]);
     }
   }
+
+  // Determine if we are dealing with pp or PbPb data
+  TString collisionSystem = card[kMeasured][0]->GetDataType();
+  bool isPbPbData = collisionSystem.Contains("PbPb");
 
   // It is assumed that the different splits have the same binning. It might be worth implementing a check here to avoid bugs producing scary closures.
   
@@ -81,24 +89,28 @@ void fullAnalysisClosure(){
   
   // Axis zooming
   std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
+
+  // Legend text referring to splits
+  TString splitLegendText[nSplits] = {"Pythia8, split 1", "Pythia8, split 2", "Herwig unfolded with Pythia"};
+
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_noSystematicUncertainties";   // Comment given for this specific file
+  const char* saveComment = "_PythiaAndHerwig";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
-  EECHistogramManager *histograms[kNDistributionTypes][nSplits];
+  EECHistogramManager* histograms[kNDistributionTypes][nSplits];
   for(int iFile = 0; iFile < kNDistributionTypes; iFile++){
     for(int iSplit = 0; iSplit < nSplits; iSplit++){
       histograms[iFile][iSplit] = new EECHistogramManager(inputFile[iFile][iSplit], card[iFile][iSplit]);
 
       // Choose the energy-energy correlator types to load
       histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
-      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
+      histograms[iFile][iSplit]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus]);
 
       // Choose the bin ranges
       histograms[iFile][iSplit]->SetCentralityBinRange(0, card[iFile][iSplit]->GetNCentralityBins() - 1);
@@ -137,6 +149,7 @@ void fullAnalysisClosure(){
   double epsilon = 0.0001;
   int lowSignalBin, highSignalBin;
   int iCentralityTruth, iJetPtTruth, iTrackPtTruth;
+  int truthIndex = isPbPbData ? EECHistograms::kPythiaPythia : EECHistograms::knSubeventCombinations;
   
   // Get the histograms from the histogram manager and normalize the signal histograms to one
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -157,7 +170,7 @@ void fullAnalysisClosure(){
             hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit] = histograms[kMeasured][iSplit]->GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
 
             // Read the signal from MC truth
-            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit] = histograms[kTruth][iSplit]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentralityTruth, iJetPtTruth, iTrackPtTruth, EECHistograms::kSameJetPair, EECHistograms::kPythiaPythia);
+            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit] = histograms[kTruth][iSplit]->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentralityTruth, iJetPtTruth, iTrackPtTruth, EECHistograms::kSameJetPair, truthIndex);
 
             // Normalize the signal distributions to one in the drawingRange
             lowSignalBin = hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit]->GetXaxis()->FindBin(drawingRange.first + epsilon);
@@ -195,6 +208,9 @@ void fullAnalysisClosure(){
   TString centralityString, trackPtString, jetPtString;
   TString compactCentralityString, compactTrackPtString, compactJetPtString;
   TString legendString;
+
+  int recoSplitColor[] = {kRed, kBlue, kGreen+3};
+  int truthSplitColor[] = {kMagenta, kCyan, kBlack};
   
   // Loop over all selected histograms
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -206,8 +222,13 @@ void fullAnalysisClosure(){
     for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
       
       // Set the centrality information for legends and figure saving
-      centralityString = Form("Cent: %.0f-%.0f%%", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
-      compactCentralityString = Form("_C=%.0f-%.0f", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
+      if(isPbPbData){
+        centralityString = Form("Cent: %.0f-%.0f%%", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
+        compactCentralityString = Form("_C=%.0f-%.0f", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
+      } else {
+        centralityString = "";
+        compactCentralityString = "";
+      }
       
       // Loop over jet pT bins
       for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
@@ -232,7 +253,7 @@ void fullAnalysisClosure(){
           legend = new TLegend(0.18,0.04,0.45,0.48);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
           legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card[kMeasured][0]->GetAlternativeDataType().Data()), "");
-          legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+          if(isPbPbData) legend->AddEntry((TObject*) 0, centralityString.Data(),"");
           legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
           legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
           
@@ -246,22 +267,22 @@ void fullAnalysisClosure(){
           hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][0]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
           
           // Draw the histograms to the upper canvas
-          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][0]->SetLineColor(kBlack);
+          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][0]->SetLineColor(truthSplitColor[0]);
           drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][0], "#Deltar", "EEC Signal", " ");
           
-          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][0]->SetLineColor(kRed);
+          hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][0]->SetLineColor(recoSplitColor[0]);
           hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][0]->Draw("same");
 
           for(int iSplit = 1; iSplit < nSplits; iSplit++){
-            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit]->SetLineColor(kGreen+3);
+            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit]->SetLineColor(truthSplitColor[iSplit]);
             hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit]->Draw("same");
-            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit]->SetLineColor(kBlue);
+            hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit]->SetLineColor(recoSplitColor[iSplit]);
             hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit]->Draw("same");
           }
 
           for(int iSplit = 0; iSplit < nSplits; iSplit++){
-            legend->AddEntry(hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit], Form("True signal, split %d", iSplit+1), "l");
-            legend->AddEntry(hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit], Form("Unfolded signal, split %d", iSplit+1), "l");
+            legend->AddEntry(hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kTruth][iSplit], Form("True signal, %s", splitLegendText[iSplit].Data()), "l");
+            legend->AddEntry(hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][kMeasured][iSplit], Form("Unfolded signal, %s", splitLegendText[iSplit].Data()), "l");
           }
           
           // Draw the legends to the upper pad
@@ -273,12 +294,12 @@ void fullAnalysisClosure(){
           // Set the x-axis drawing range
           hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
           
-          hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->SetLineColor(kRed);
+          hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->SetLineColor(recoSplitColor[0]);
           hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
           drawer->SetGridY(true);
           drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0], "#Deltar", "#frac{Unfolded}{True}", " ");
           for(int iSplit = 1; iSplit < nSplits; iSplit++){
-            hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSplit]->SetLineColor(kBlue);
+            hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSplit]->SetLineColor(recoSplitColor[iSplit]);
             hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSplit]->Draw("same");
           }
           drawer->SetGridY(false);
