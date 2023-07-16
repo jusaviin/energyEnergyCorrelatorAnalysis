@@ -1,6 +1,8 @@
 #include "EECHistogramManager.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "AlgorithmLibrary.h"
+#include "SystematicUncertaintyOrganizer.h"
 
 /*
  * Macro for making closure plots for the analysis. It compares fully unfolded results to signal from MC truth.
@@ -26,8 +28,14 @@ void fullAnalysisClosure(){
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part1_processed_2023-06-21.root
 
+  TString uncertaintyFileName = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_2023-07-14.root";
+  // systematicUncertaintiesForPp_jetMetUpdate_2023-07-14.root
+  // systematicUncertainties_jetMetUpdate_2023-07-14.root
+
   TFile* inputFile[kNDistributionTypes][nSplits];
+  TFile* uncertaintyFile;
   EECCard* card[kNDistributionTypes][nSplits];
+  EECCard* uncertaintyCard;
 
   for(int iFile = 0; iFile < kNDistributionTypes; iFile++){
     for(int iSplit = 0; iSplit < nSplits; iSplit++){
@@ -48,6 +56,17 @@ void fullAnalysisClosure(){
   // Determine if we are dealing with pp or PbPb data
   TString collisionSystem = card[kMeasured][0]->GetDataType();
   bool isPbPbData = collisionSystem.Contains("PbPb");
+
+  // File for systematic uncertainties. This is for drawing a band to ratio showing the relevant uncertainties for this comparison
+  uncertaintyFile = TFile::Open(uncertaintyFileName);
+  if(uncertaintyFile == NULL){
+    cout << "Error! The file " << uncertaintyFileName.Data() << " does not exist!" << endl;
+    cout << "Maybe you forgot the systematicUncertainties/ folder path?" << endl;
+    cout << "Will not execute the code" << endl;
+    return;
+  }
+  uncertaintyCard = new EECCard(uncertaintyFile);
+  
 
   // It is assumed that the different splits have the same binning. It might be worth implementing a check here to avoid bugs producing scary closures.
   
@@ -95,7 +114,7 @@ void fullAnalysisClosure(){
 
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_PythiaAndHerwig";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
@@ -122,15 +141,20 @@ void fullAnalysisClosure(){
     }
   }
 
+  // Create systematic uncertainty organizer to illustrate the uncertainties on closures
+  SystematicUncertaintyOrganizer* uncertaintyOrganizer = new SystematicUncertaintyOrganizer(uncertaintyFile);
+
   // Energy-energy correlator histograms
   TH1D* hEnergyEnergyCorrelatorSignal[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][kNDistributionTypes][nSplits]; // Last bin, true signal/extracted signal
   TH1D* hEnergyEnergyCorrelatorSignalRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][nSplits]; // Ratio between true and extracted signal
+  TH1D* hEnergyEnergyCorrelatorRelativeUncertainty[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC]; // Relative uncertainties for energy-energy correlators
   
   // Initialize the energy-energy correlator histogram arrays to NULL
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
     for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
         for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = NULL;
           for(int iSplit = 0; iSplit < nSplits; iSplit++){
             for(int iSignalType = 0; iSignalType < kNDistributionTypes; iSignalType++){
               hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSignalType][iSplit] = NULL;
@@ -188,6 +212,51 @@ void fullAnalysisClosure(){
         } // Track pT loop
       } // Centrality loop
     } // Split loop
+  } // Energy-energy correlator type loop
+
+  cout << "Ready to calculate uncertainties" << endl;
+
+  TH1D* backgroundHelper;
+  TH1D* trackPairHelper;
+  TH1D* trackSelectionHelper;
+  double sumOfSquares;
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
+
+  // Read the uncertainties, add relevant sources in quadrature, and transform them into relative uncertainties
+  for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
+    
+    // Only load the selected energy-energy correlator types
+    if(!studyEnergyEnergyCorrelator[iEnergyEnergyCorrelator]) continue;
+
+    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+      iCentralityTruth = uncertaintyCard->FindBinIndexCentrality(card[kMeasured][0]->GetBinBordersCentrality(iCentrality));
+      for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+        iTrackPtTruth = uncertaintyCard->FindBinIndexTrackPtEEC(card[kMeasured][0]->GetBinBordersTrackPtEEC(iTrackPt));
+        for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+          iJetPtTruth = uncertaintyCard->FindBinIndexJetPtEEC(card[kMeasured][0]->GetBinBordersJetPtEEC(iJetPt));
+
+          backgroundHelper = uncertaintyOrganizer->GetSystematicUncertainty(iCentralityTruth, iJetPtTruth, iTrackPtTruth, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
+          trackPairHelper = uncertaintyOrganizer->GetSystematicUncertainty(iCentralityTruth, iJetPtTruth, iTrackPtTruth, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
+          trackSelectionHelper = uncertaintyOrganizer->GetSystematicUncertainty(iCentralityTruth, iJetPtTruth, iTrackPtTruth, SystematicUncertaintyOrganizer::kTrackSelection);
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt] = uncertaintyOrganizer->GetSystematicUncertainty(iCentralityTruth, iJetPtTruth, iTrackPtTruth, SystematicUncertaintyOrganizer::kJetEnergyScale);
+
+          // Add all the relevant uncertainties in quadrature
+          for(int iBin = 1; iBin <= hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetNbinsX(); iBin++){
+            sumOfSquares = 0;
+            sumOfSquares += TMath::Power(hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetBinError(iBin),2);
+            sumOfSquares += TMath::Power(backgroundHelper->GetBinError(iBin),2);
+            sumOfSquares += TMath::Power(trackPairHelper->GetBinError(iBin),2);
+            sumOfSquares += TMath::Power(trackSelectionHelper->GetBinError(iBin),2);
+            hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(sumOfSquares));
+          }
+
+          // Transform the uncertainty histogram into relative uncertainties
+          optimusPrimeTheTransformer->TransformToRelativeUncertainty(hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt], true);
+
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+
   } // Energy-energy correlator type loop
 
   // ==========================================================================
@@ -291,14 +360,17 @@ void fullAnalysisClosure(){
           // Linear scale for the ratio
           drawer->SetLogY(false);
           
-          // Set the x-axis drawing range
-          hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
-          
-          hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->SetLineColor(recoSplitColor[0]);
-          hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+          // For the ratio, first draw the systematic uncertainty band
           drawer->SetGridY(true);
-          drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0], "#Deltar", "#frac{Unfolded}{True}", " ");
-          for(int iSplit = 1; iSplit < nSplits; iSplit++){
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kRed, 0.2);
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRelativeUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{Unfolded}{True}", " ","e2");
+
+          // Then draw all the ratios to the same canvas
+          for(int iSplit = 0; iSplit < nSplits; iSplit++){
             hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSplit]->SetLineColor(recoSplitColor[iSplit]);
             hEnergyEnergyCorrelatorSignalRatio[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][iSplit]->Draw("same");
           }
