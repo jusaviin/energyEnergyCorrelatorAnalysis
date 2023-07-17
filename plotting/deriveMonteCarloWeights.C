@@ -65,8 +65,9 @@ void deriveMonteCarloWeights(){
   cout << "Adjusted parameter value: " << centralityFitPeripheral->GetParameter(0) << endl;
   
   // Draw the fitted ratios
-  drawer->DrawHistogram(hVzRatio,"v_{z} (cm)","Ratio fit");
-  drawer->DrawHistogram(hCentralityRatioCentral,"centrality","Ratio fit");
+  drawer->DrawHistogram(hVzRatio,"v_{z} (cm)","Data/MC ratio");
+  drawer->DrawHistogram(hCentralityRatioCentral,"centrality","Data/MC ratio");
+  drawer->DrawHistogram(hCentralityRatioPeripheral,"centrality","Data/MC ratio");
   
   // Check with a small simulation that we regain data v_z and centrality
   double randomNumberVz, weigthVz;
