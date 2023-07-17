@@ -236,7 +236,7 @@ void estimateSystematicUncertainties(){
         iTrackPtMatched = monteCarloNonClosureCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
         iJetPtMatched = monteCarloNonClosureCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
 
-        energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure] = (TH1D*) monteCarloNonClosureFile->Get(Form("relativeUncertaintyMonteCarloClosure_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
+        energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = (TH1D*) monteCarloNonClosureFile->Get(Form("relativeUncertaintyMonteCarloClosure_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
 
         // Setup the histogram manager for tracking efficiencies
         iCentralityMatched = trackEfficiencyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
@@ -573,13 +573,13 @@ void estimateSystematicUncertainties(){
   //   Uncertainty coming from non-closure in Monte Carlo  //
   // ===================================================== //
 
-  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloClosure]){
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure]){
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          optimusPrimeTheTransformer->SuppressSingleBinFluctuations(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure], analysisDeltaR.first, analysisDeltaR.second, 3, 0.5);
-          optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], false);
+          optimusPrimeTheTransformer->SuppressSingleBinFluctuations(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloNonClosure], analysisDeltaR.first, analysisDeltaR.second, 3, 0.5);
+          optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloNonClosure], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], false);
 
           // Note: Illustrating plots for this uncertainty can be plotter with fullAnalysisClosure.C macro
       

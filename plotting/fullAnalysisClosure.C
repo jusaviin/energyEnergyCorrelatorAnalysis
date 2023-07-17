@@ -11,7 +11,7 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = false;
+  bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
 
   // Open the input files
@@ -121,12 +121,12 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_PythiaAndHerwig";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_PythiaHydjet";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = true;
+  const bool saveMonteCarloNonClosureFile = false;
   const char* outputFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_pp_2023-07-16.root", "systematicUncertainties/monteCarloNonClosureRelative_PbPb_2023-07-16.root"};
   
   // Create and setup a new histogram managers to project and handle the histograms
