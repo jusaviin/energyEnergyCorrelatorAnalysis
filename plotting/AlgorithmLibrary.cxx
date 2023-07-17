@@ -398,3 +398,95 @@ TH2D* AlgorithmLibrary::RotateHistogram(TH2D *originalHistogram){
   return rotatedHistogram;
   
 }
+
+/*
+ * Transform histogram to another one that shows the relative uncertainty of the original histogram in each bin
+ *
+ *  TH1D* transformedHistogram = Histogram in need of transformation
+ *  const bool centerAtOne = True: Put the central value at one and relative systematic uncertainty around it.
+ *                           False: Show relative systematic uncertainty as the histogram value. Disable errors.
+ */
+void AlgorithmLibrary::TransformToRelativeUncertainty(TH1D* transformedHistogram, const bool centerAtOne){
+  
+  double binContent;
+  double binError;
+  double relativeError;
+
+  for(int iBin = 1; iBin <= transformedHistogram->GetNbinsX(); iBin++){
+    binContent = transformedHistogram->GetBinContent(iBin);
+    binError = transformedHistogram->GetBinError(iBin);
+    relativeError = binError / binContent;
+
+    if(centerAtOne){
+      transformedHistogram->SetBinContent(iBin, 1);
+      transformedHistogram->SetBinError(iBin, relativeError);
+    } else {
+      transformedHistogram->SetBinContent(iBin, relativeError);
+      transformedHistogram->SetBinError(iBin, 0);
+    }
+  }
+
+}
+
+/*
+ * Transform histogram describing relative uncertainties to one describing absolute uncertainties
+ *
+ *  TH1D* transformedHistogram = Histogram in need of transformation
+ *  TH1D* absoluteScaleHistogram = Histogram giving the absolute scale for transformation
+ *  const bool centerAtOne = True: The central value  in the relative uncertainty histogram is at one and relative systematic uncertainty around it.
+ *                           False: The relative uncertainty is desribed in the histogram value in the relative uncertainty histogram
+ */
+void AlgorithmLibrary::TransformToAbsoluteUncertainty(TH1D* transformedHistogram, TH1D* absoluteScaleHistogram, const bool centerAtOne){
+
+  double binContent;
+  double binError;
+  double relativeError;
+
+  for(int iBin = 1; iBin <= transformedHistogram->GetNbinsX(); iBin++){
+
+    if(centerAtOne){
+      relativeError = transformedHistogram->GetBinError(iBin);
+    } else {
+      relativeError = transformedHistogram->GetBinContent(iBin);
+    }
+
+    binContent = absoluteScaleHistogram->GetBinContent(iBin);
+    binError = binContent*relativeError;
+
+    transformedHistogram->SetBinContent(iBin, binContent);
+    transformedHistogram->SetBinError(iBin, binError);
+  }
+
+}
+
+/*
+ * Suppress single bin fluctuations in the fluctuating histogram
+ *
+ *  TH1D* fluctuatingHistogram = Histogram suffering from fluctuations
+ *  const double lowRange = Lowest value in x-axis taken into account in fluctuation suppression
+ *  const double highRange = Highest value on x-axis taken into account in fluctuation suppression
+ *  const double threshold = Definition of a fluctuation that is too big for a single bin
+ *  const double suppressionLevel = Definition how much fluctuating bins are suppressed
+ */
+void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel){
+
+  double epsilon = 0.00001;
+  int firstBin = fluctuatingHistogram->GetXaxis()->FindBin(lowRange+epsilon);
+  int lastBin = fluctuatingHistogram->GetXaxis()->FindBin(highRange-epsilon);
+
+  // Fluctuations are not suppressed in the first and last bin of the range, but they are in all the bins in between
+  double previousValue, currentValue, nextValue, biggestNeighbor;
+  for(int iBin = firstBin+1; iBin < lastBin; iBin++){
+    previousValue = fluctuatingHistogram->GetBinContent(iBin-1);
+    currentValue = fluctuatingHistogram->GetBinContent(iBin);
+    nextValue = fluctuatingHistogram->GetBinContent(iBin+1);
+
+    if(currentValue > threshold*previousValue && currentValue > threshold*nextValue){
+      biggestNeighbor = previousValue;
+      if(nextValue > previousValue) biggestNeighbor = nextValue;
+      fluctuatingHistogram->SetBinContent(iBin, biggestNeighbor+biggestNeighbor*suppressionLevel);
+    }
+  }
+
+  
+}

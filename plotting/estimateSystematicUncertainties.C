@@ -2,6 +2,7 @@
 #include "EECCard.h"
 #include "EECHistogramManager.h"
 #include "JDrawer.h"
+#include "AlgorithmLibrary.h"
 
 #include <algorithm>
 
@@ -109,6 +110,10 @@ void estimateSystematicUncertainties(){
     centralityShiftHistogramManager[iCentralityShiftFile] = new EECHistogramManager(centralityShiftFile[iCentralityShiftFile], centralityShiftCard[iCentralityShiftFile]);
     loadRelevantHistograms(centralityShiftHistogramManager[iCentralityShiftFile]);
   }
+
+  // File containing relative uncertainties resulting from Monte Carlo non-closure
+  TFile* monteCarloNonClosureFile = TFile::Open("systematicUncertainties/monteCarloNonClosureRelative_PbPb_2023-07-16.root");
+  EECCard* monteCarloNonClosureCard = new EECCard(monteCarloNonClosureFile);
   
   // ==================================================================
   // ========================= Configuration ==========================
@@ -140,7 +145,7 @@ void estimateSystematicUncertainties(){
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
   
-  TString outputFileName = "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root";
+  TString outputFileName = "systematicUncertainties/systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -157,6 +162,9 @@ void estimateSystematicUncertainties(){
   
   // Systematic uncertainty organizer can easily provide names for all your naming purposes
   SystematicUncertaintyOrganizer* nameGiver = new SystematicUncertaintyOrganizer();
+
+  // Transformer used for Monte Carlo non-closure uncertainty
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
   
   // Histograms for uncertainty estimation
   TH1D* nominalEnergyEnergyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -200,6 +208,7 @@ void estimateSystematicUncertainties(){
   int iJetPtMatched;
   double epsilon = 0.0001;
   int lowAnalysisBin, highAnalysisBin;
+  std::pair<double,double> shiftedCentralityBin;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
@@ -220,6 +229,14 @@ void estimateSystematicUncertainties(){
 
         // Normalize the jet pT prior histograms to one
         jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        // Read the relative Monte Carlo non-closure histograms
+        shiftedCentralityBin = nominalResultCard->GetBinBordersCentrality(iCentrality);
+        iCentralityMatched = monteCarloNonClosureCard->FindBinIndexCentrality(shiftedCentralityBin.first+4, shiftedCentralityBin.second+4);
+        iTrackPtMatched = monteCarloNonClosureCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+        iJetPtMatched = monteCarloNonClosureCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+
+        energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure] = (TH1D*) monteCarloNonClosureFile->Get(Form("relativeUncertaintyMonteCarloClosure_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
 
         // Setup the histogram manager for tracking efficiencies
         iCentralityMatched = trackEfficiencyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
@@ -551,6 +568,25 @@ void estimateSystematicUncertainties(){
       } // Jet pT loop
     } // Centrality loop
   } // Background subtraction uncertainty
+
+  // ===================================================== //
+  //   Uncertainty coming from non-closure in Monte Carlo  //
+  // ===================================================== //
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloClosure]){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          optimusPrimeTheTransformer->SuppressSingleBinFluctuations(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure], analysisDeltaR.first, analysisDeltaR.second, 3, 0.5);
+          optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloClosure], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], false);
+
+          // Note: Illustrating plots for this uncertainty can be plotter with fullAnalysisClosure.C macro
+      
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Jet energy scale uncertainty
   
   // ============================================= //
   //   Add all uncertainty sources in quadrature   //
