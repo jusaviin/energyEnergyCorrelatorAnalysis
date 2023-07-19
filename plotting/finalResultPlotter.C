@@ -5,11 +5,36 @@
 #include "SplitCanvas.h"
 
 /*
+ * Determine up and down uncertainty bands for shape correlated uncertainties
+ */
+void calculateCorrelatedBands(TH1D* correlatedHistogram, TH1D* correlatedBandUpHistogram, TH1D* correlatedBandDownHistogram){
+  double binContent, binError;
+  int criticalBin = correlatedHistogram->GetXaxis()->FindBin(0.055);
+  for(int iBin = 1; iBin <= criticalBin; iBin++){
+    binContent = correlatedHistogram->GetBinContent(iBin);
+    binError = correlatedHistogram->GetBinError(iBin);
+    correlatedBandUpHistogram->SetBinContent(iBin, binContent+binError/2.0);
+    correlatedBandUpHistogram->SetBinError(iBin, binError/2.0);
+    correlatedBandDownHistogram->SetBinContent(iBin, binContent-binError/2.0);
+    correlatedBandDownHistogram->SetBinError(iBin, binError/2.0);
+  }
+  for(int iBin = criticalBin+1; iBin <= correlatedHistogram->GetNbinsX(); iBin++){
+    binContent = correlatedHistogram->GetBinContent(iBin);
+    binError = correlatedHistogram->GetBinError(iBin);
+    correlatedBandUpHistogram->SetBinContent(iBin, binContent-binError/2.0);
+    correlatedBandUpHistogram->SetBinError(iBin, binError/2.0);
+    correlatedBandDownHistogram->SetBinContent(iBin, binContent+binError/2.0);
+    correlatedBandDownHistogram->SetBinError(iBin, binError/2.0);
+  }
+}
+
+/*
  * Macro for making final result plots comparing energy-energy correlators between pp and PbPb
  */
 void finalResultPlotter(){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
+  enum enumSystematicUncertaintyType{kUncorrelatedUncertainty, kCorrelatedUncertainty, kCorrelatedUncertaintyShapeUp, kCorrelatedUncertaintyShapeDown, knSystematicUncertaintyTypes};
 
   // ============= //
   // Configuration //
@@ -17,11 +42,11 @@ void finalResultPlotter(){
   
   // Input files
   TString inputFileName[kNDataTypes];
-  inputFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_processed_nominalResult_2023-05-23.root";
-  inputFileName[kPp] = "data/ppData_pfJets_wtaAxis_nominalResults_processed_2023-06-12.root";
+  inputFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
+  inputFileName[kPp] = "data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root";
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_firstLook_2023-06-13.root";
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertaintiesForPp_firstLook_2023-06-13.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
   
   TFile* inputFile[kNDataTypes];
   TFile* uncertaintyFile[kNDataTypes];
@@ -94,16 +119,19 @@ void finalResultPlotter(){
   
   // Save the final plots
   const bool saveFigures = true;
-  TString saveComment = "_preliminary";
+  TString saveComment = "_uncertaintyUpdate";
 
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
+  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   
   // Marker colors and styles
   int markerStylePbPb[] = {kFullSquare, kFullCircle, kFullCross, kFullFourTrianglesPlus};
   int markerStylePp = kFullDiamond;
   int markerColorPbPb[] = {kRed, kBlue, kMagenta, kGreen+3};
   int markerColorPp = kBlack;
+  int bandColorUpPbPb[] = {kOrange+7, kViolet-3, kPink-3, kOrange-3};
+  int bandColorDownPbPb[] = {kPink+9, kAzure+8, kViolet+6, kSpring};
 
   // =============================================== //
   // Read the histograms from the histogram managers //
@@ -136,9 +164,9 @@ void finalResultPlotter(){
   TH1D* energyEnergyCorrelatorSignalPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalPp[nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyForPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyForPp[nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyForPbPb[knSystematicUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyForPp[knSystematicUncertaintyTypes][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyPbPbToPpRatio[knSystematicUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Double ratios from energy-energy correlator histograms
   TH1D* energyEnergyCorrelatorForDoubleRatioFromPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -156,19 +184,25 @@ void finalResultPlotter(){
     }
     for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt] = NULL;
-      systematicUncertaintyForPp[iJetPt][iTrackPt] = NULL;
 
       energyEnergyCorrelatorForDoubleRatioFromPp[iJetPt][iTrackPt] = NULL;
       systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt] = NULL;
 
+      for(int iUncertainty = 0; iUncertainty < knSystematicUncertaintyTypes; iUncertainty++){
+        systematicUncertaintyForPp[iUncertainty][iJetPt][iTrackPt] = NULL;
+      } // Uncertainty type loop
+
       for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
 
         energyEnergyCorrelatorForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
         systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
+
+        for(int iUncertainty = 0; iUncertainty < knSystematicUncertaintyTypes; iUncertainty++){
+          systematicUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
+          systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
+        }
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -182,6 +216,7 @@ void finalResultPlotter(){
   TH1D* uncertaintyTrackSelection;
   TH1D* uncertaintyBackgroundSubtraction;
   TH1D* uncertaintyTrackPairEfficiency;
+  TH1D* uncertaintyMCnonclosure;
   double trackCorrelation = 0.2;  // TODO: Check what is the actual number of overlapping tracks
 
   for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
@@ -195,15 +230,17 @@ void finalResultPlotter(){
 
       // Read the pp histograms that do not have centrality binning
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt] = histograms[kPp]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedPp, iTrackPtMatchedPp, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-      systematicUncertaintyForPp[iJetPt][iTrackPt] = uncertainties[kPp]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp]->GetUncorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp]->GetCorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
 
       // Read the relevant systematic uncertainties for double ratio from pp
       uncertaintyBackgroundSubtraction = uncertainties[kPp]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
       uncertaintyTrackPairEfficiency = uncertainties[kPp]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
+      uncertaintyMCnonclosure = uncertainties[kPp]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
 
       systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPp%d%d", iJetPt, iTrackPt));
       for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-        systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2)));
+        systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
       }
 
       for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
@@ -211,17 +248,19 @@ void finalResultPlotter(){
 
         // Read the PbPb histograms
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = histograms[kPbPb]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
+        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetUncorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
+        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetCorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
 
         // Read the relevant systematic uncertainties for double ratio from PbPb
-      uncertaintyBackgroundSubtraction = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
-      uncertaintyTrackPairEfficiency = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
-      uncertaintyTrackSelection = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
+        uncertaintyBackgroundSubtraction = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
+        uncertaintyTrackPairEfficiency = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
+        uncertaintyTrackSelection = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
+        uncertaintyMCnonclosure = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
 
-      systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPbPb%d%d%d", iCentrality, iJetPt, iTrackPt));
-      for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-        systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2)));
-      }
+        systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPbPb%d%d%d", iCentrality, iJetPt, iTrackPt));
+        for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
+          systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
+        }
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -230,25 +269,29 @@ void finalResultPlotter(){
   //   Normalize the histograms and calculate ratios  //
   // ================================================ //
 
-  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   double epsilon = 0.0001;
   int lowAnalysisBin = energyEnergyCorrelatorSignalPbPb[firstDrawnCentralityBin][firstDrawnJetPtBinEEC][firstDrawnTrackPtBinEEC]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
   int highAnalysisBin = energyEnergyCorrelatorSignalPbPb[firstDrawnCentralityBin][firstDrawnJetPtBinEEC][firstDrawnTrackPtBinEEC]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
   for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
     for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-      systematicUncertaintyForPp[iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
       systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
       for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
         systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]);
 
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[iJetPt][iTrackPt]);
+        systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyRatioUncorrelated%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]);
+
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyRatioCorrelated%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]);
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -290,6 +333,28 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[iCentrality][iJetPt]->Divide(systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][trackPtBinFor2GeV]);
     }
   }
+
+  // For illustration purposes, create up and down shifted uncertainty bands
+  for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+    for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+
+      systematicUncertaintyForPp[kCorrelatedUncertaintyShapeUp][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Clone(Form("correlatedUpBandPp%d%d", iJetPt, iTrackPt));
+      systematicUncertaintyForPp[kCorrelatedUncertaintyShapeDown][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Clone(Form("correlatedDownBandPp%d%d", iJetPt, iTrackPt));
+      calculateCorrelatedBands(systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt], systematicUncertaintyForPp[kCorrelatedUncertaintyShapeUp][iJetPt][iTrackPt], systematicUncertaintyForPp[kCorrelatedUncertaintyShapeDown][iJetPt][iTrackPt]);
+
+      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+
+        systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatedUpBand%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatedDownBand%d%d%d", iCentrality, iJetPt, iTrackPt));
+        calculateCorrelatedBands(systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt], systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]);
+
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatedUpBandForRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatedDownBandForRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        calculateCorrelatedBands(systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt], systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]);
+
+      } // Centrality loop
+    } // Track pT loop
+  } // Jet pT loop
 
   // After all the ratios are calculated, calculate the double ratios 
 
@@ -345,10 +410,7 @@ void finalResultPlotter(){
 
         // Setup the legend for plots
         legend = new TLegend(0.23, 0.05, 0.53, 0.6);
-        legend->SetFillStyle(0);
-        legend->SetBorderSize(0);
-        legend->SetTextSize(0.05);
-        legend->SetTextFont(62);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, jetPtString.Data(), "");
         legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
@@ -440,71 +502,83 @@ void finalResultPlotter(){
           thisPadScale = (iCentrality == lastDrawnCentralityBin) ? bottomRowScale : 1;
 
           // Set the axis titles and labels
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
 
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
 
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("EEC");
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetStats(0);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetNdivisions(505);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->CenterTitle();
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitle("#Deltar");
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("EEC");
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetStats(0);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetNdivisions(505);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->CenterTitle();
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitle("#Deltar");
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
 
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetTitle("");
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
 
           // Set the drawing ranges
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.39);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.15, 30);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.008, 0.39);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.15, 30);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
+          systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
 
           // Set the drawing style for histograms
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
 
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->SetMarkerStyle(markerStylePp);
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->SetMarkerSize(1.2);
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePp);
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetMarkerSize(1.2);
           energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerStyle(markerStylePp);
           energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerSize(1.2);
 
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
 
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPp, 0.4);
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->SetLineColor(markerColorPp);
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPp, 0.4);
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetLineColor(markerColorPp);
           energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetLineColor(markerColorPp);
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->SetMarkerColor(markerColorPp);
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetMarkerColor(markerColorPp);
           energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->SetMarkerColor(markerColorPp);
 
+          // Different drawing styles for correlated uncertainties
+          systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPp, 0.4);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorUpPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorDownPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+
           // Draw the histograms
-          systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Draw("e2");
-          systematicUncertaintyForPp[iJetPt][iTrackPt]->Draw("same,e2");
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("e2");
+          systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Draw("same,e2");
+          systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Draw("same,p");
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
 
           // Create a legend for each pad
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin) ? bottomPadMargin : 0;
-          legend = new TLegend(0.06 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.45 / thisPadScale);
-          legend->SetFillStyle(0);
-          legend->SetBorderSize(0);
-          legend->SetTextSize(0.09 * thisPadScale);
-          legend->SetTextFont(62);
+          legend = new TLegend(0.03 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.45 / thisPadScale);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry(systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
-          legend->AddEntry(systematicUncertaintyForPp[iJetPt][iTrackPt], "pp", "p");
+          legend->AddEntry(systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
+          legend->AddEntry(systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp", "p");
 
           legend->Draw();
 
@@ -577,57 +651,66 @@ void finalResultPlotter(){
           thisPadScale = (iCentrality == lastDrawnCentralityBin) ? bottomRowScale : 1;
 
           // Set the axis titles and labels
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
 
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
 
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("#frac{PbPb}{pp}");
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetStats(0);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetNdivisions(505);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->CenterTitle();
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitle("#Deltar");
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("#frac{PbPb}{pp}");
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetStats(0);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetNdivisions(505);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->CenterTitle();
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitle("#Deltar");
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
 
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetTitle("");
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
 
           // Set the drawing ranges
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.39);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.2, 1.8);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.008, 0.39);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.2, 1.8);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
 
           // Set the drawing style for histograms
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
 
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
           energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
 
+          // Different drawing styles for correlated uncertainties
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorUpPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorDownPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+
           // Draw the histograms
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("e2");
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("e2");
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
 
           // Create a legend for each pad
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin) ? bottomPadMargin : 0;
-          legend = new TLegend(0.06 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.33 / (thisPadScale*0.81));
-          legend->SetFillStyle(0);
-          legend->SetBorderSize(0);
-          legend->SetTextSize(0.09 * thisPadScale);
-          legend->SetTextFont(62);
+          legend = new TLegend(0.05 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.33 / (thisPadScale*0.81));
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%% / pp", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
+          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%% / pp", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
 
           legend->Draw();
 
@@ -718,7 +801,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->SetTitle("");
 
       // Set the drawing ranges
-      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.006, 0.39);
+      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.008, 0.39);
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(0.8, 1.2);
 
       // Set the drawing style for histograms
@@ -819,7 +902,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->SetTitle("");
 
       // Set the drawing ranges
-      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.006, 0.39);
+      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.008, 0.39);
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(0.8, 1.2);
 
       // Set the drawing styles 
