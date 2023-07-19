@@ -21,12 +21,12 @@ void bottomLineTestForUnfolding(){
   
   // Input files
   TString dataFileName[kNDataTypes];
-  dataFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_unfoldingWithNominalSmear_processed_2023-06-25.root";
-  dataFileName[kPp] = "data/ppData_pfJets_wtaAxis_unfoldingWithNominalSmear_processed_2023-06-25.root";
+  dataFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
+  dataFileName[kPp] = "data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root";
 
   TString simulationFileName[kNMCTypes][kNDataTypes];
-  simulationFileName[kReconstructed][kPbPb] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_processed_2023-06-23.root";
-  simulationFileName[kTruth][kPbPb] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_processed_2023-06-23.root";
+  simulationFileName[kReconstructed][kPbPb] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_processed_2023-07-11.root";
+  simulationFileName[kTruth][kPbPb] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_processed_2023-07-11.root";
   simulationFileName[kReconstructed][kPp] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_reconstructedReference_processed_2023-06-21.root";
   simulationFileName[kTruth][kPp] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_processed_2023-06-21.root";
 
@@ -90,11 +90,11 @@ void bottomLineTestForUnfolding(){
   int lastDrawnTrackPtBinEEC = dataCard[kPbPb]->GetLastUnfoldedTrackPtBin();
   
   // Save the final plots
-  const bool saveFigures = false;
+  const bool saveFigures = true;
   TString saveComment = "_firstLook";
 
   // Ratio zoom settings
-  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
+  std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
 
   // =============================================== //
