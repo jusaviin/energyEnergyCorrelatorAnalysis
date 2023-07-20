@@ -105,25 +105,26 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = false;
+  bool drawBigCanvasRatios = true;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
 
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
   
   // Save the final plots
   const bool saveFigures = true;
-  TString saveComment = "_uncertaintyUpdate";
+  TString saveComment = "_includeVerticalLines";
+  TString figureFormat = "pdf";
 
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
-  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
+  std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
   
   // Marker colors and styles
   int markerStylePbPb[] = {kFullSquare, kFullCircle, kFullCross, kFullFourTrianglesPlus};
@@ -132,6 +133,10 @@ void finalResultPlotter(){
   int markerColorPp = kBlack;
   int bandColorUpPbPb[] = {kOrange+7, kViolet-3, kPink-3, kOrange-3};
   int bandColorDownPbPb[] = {kPink+9, kAzure+8, kViolet+6, kSpring};
+
+  TLine* lineDrawer = new TLine();
+  lineDrawer->SetLineStyle(2);
+  lineDrawer->SetLineColor(kBlack);
 
   // =============================================== //
   // Read the histograms from the histogram managers //
@@ -458,7 +463,7 @@ void finalResultPlotter(){
 
         // If a plot name is given, save the plot in a file
         if(saveFigures) {
-          gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_centralityComparison%s%s%s.pdf", saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+          gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_centralityComparison%s%s%s.%s", saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
         }
 
       } // Track pT loop
@@ -524,7 +529,7 @@ void finalResultPlotter(){
           systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
 
           // Set the drawing ranges
-          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.008, 0.39);
+          systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.15, 30);
           systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
           systematicUncertaintyForPbPb[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
@@ -608,7 +613,7 @@ void finalResultPlotter(){
 
       // Save the figures to file
       if(saveFigures) {
-        gPad->GetCanvas()->SaveAs(Form("figures/finalBigCanvas%s%s.pdf", saveComment.Data(), compactTrackPtString.Data()));
+        gPad->GetCanvas()->SaveAs(Form("figures/finalBigCanvas%s%s.%s", saveComment.Data(), compactTrackPtString.Data(), figureFormat.Data()));
       }
 
     }  // Track pT loop
@@ -673,7 +678,7 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
 
           // Set the drawing ranges
-          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.008, 0.39);
+          systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.2, 1.8);
           systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
           systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
@@ -717,6 +722,10 @@ void finalResultPlotter(){
           // Draw a line to one
           oneLine->Draw();
 
+          // Draw lines to 0.08 and 0.2 to
+          lineDrawer->DrawLine(0.08, 0.8, 0.08, 1.2);
+          lineDrawer->DrawLine(0.2, 0.8, 0.2, 1.2);
+
         }  // Jet pT loop
       }    // Centrality loop
 
@@ -743,7 +752,7 @@ void finalResultPlotter(){
 
       // Save the figures to file
       if(saveFigures) {
-        gPad->GetCanvas()->SaveAs(Form("figures/finalBigRatioCanvas%s%s.pdf", saveComment.Data(), compactTrackPtString.Data()));
+        gPad->GetCanvas()->SaveAs(Form("figures/finalBigRatioCanvas%s%s.%s", saveComment.Data(), compactTrackPtString.Data(), figureFormat.Data()));
       }
 
     }  // Track pT loop
@@ -801,7 +810,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->SetTitle("");
 
       // Set the drawing ranges
-      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.008, 0.39);
+      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(0.8, 1.2);
 
       // Set the drawing style for histograms
@@ -855,7 +864,7 @@ void finalResultPlotter(){
 
     // Save the figures to file
     if(saveFigures) {
-      gPad->GetCanvas()->SaveAs(Form("figures/finalDoubleRatio%s.pdf", saveComment.Data()));
+      gPad->GetCanvas()->SaveAs(Form("figures/finalDoubleRatio%s.%s", saveComment.Data(), figureFormat.Data()));
     }
 
   } // If for drawing double ratios
@@ -902,7 +911,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->SetTitle("");
 
       // Set the drawing ranges
-      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(0.008, 0.39);
+      systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
       systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(0.8, 1.2);
 
       // Set the drawing styles 
@@ -954,7 +963,7 @@ void finalResultPlotter(){
 
     // Save the figures to file
     if(saveFigures){
-      gPad->GetCanvas()->SaveAs(Form("figures/finalDoubleRatioSingleCanvas%s.pdf", saveComment.Data()));
+      gPad->GetCanvas()->SaveAs(Form("figures/finalDoubleRatioSingleCanvas%s.%s", saveComment.Data(), figureFormat.Data()));
     }
 
   } // If for drawing double ratios
