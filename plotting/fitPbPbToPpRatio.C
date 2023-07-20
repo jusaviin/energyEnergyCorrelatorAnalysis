@@ -11,11 +11,53 @@ double logFit(double* x, double* par){
 }
 
 /*
+ * Logarithmic third order polynomial
+ */
+double logPol3(double* x, double* par){
+  return par[0] + par[1] * TMath::Log10(x[0]) + par[2] * TMath::Power(TMath::Log10(x[0]),2) + par[3] * TMath::Power(TMath::Log10(x[0]),3);
+}
+
+
+/*
+ * Shift the distributions up and down based on the third distribution uncertainties
+ */
+void shiftByErrors(TH1D* upShiftedHistogram, TH1D* downShiftedHistogram, TH1D* shiftHistogram){
+  double binContent, binError;
+  int criticalBin = shiftHistogram->GetXaxis()->FindBin(0.055);
+  for(int iBin = 1; iBin <= criticalBin; iBin++){
+    binError = shiftHistogram->GetBinError(iBin);
+    binContent = upShiftedHistogram->GetBinContent(iBin);
+    upShiftedHistogram->SetBinContent(iBin,binContent+binError);
+    downShiftedHistogram->SetBinContent(iBin,binContent-binError);
+  }
+  for(int iBin = criticalBin+1; iBin <= shiftHistogram->GetNbinsX(); iBin++){
+    binError = shiftHistogram->GetBinError(iBin);
+    binContent = upShiftedHistogram->GetBinContent(iBin);
+    upShiftedHistogram->SetBinContent(iBin,binContent-binError);
+    downShiftedHistogram->SetBinContent(iBin,binContent+binError);
+  }
+}
+
+/*
+ * Find the bigger difference of the two numbers compared to the first one
+ */
+double getBiggerDifference(double nominal, double shiftUp, double shiftDown){
+  double differenceUp = TMath::Abs(nominal - shiftUp);
+  double differenceDown = TMath::Abs(nominal - shiftDown);
+  if(differenceUp > differenceDown) return differenceUp;
+  return differenceDown;
+}
+
+/*
  * Macro for making final result plots comparing energy-energy correlators between pp and PbPb
  */
 void fitPbPbToPpRatio(){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
+  enum enumUncertaintyType{kCorrelatedUncertainty, kUncorrelatedUncertainty, kShiftedUp, kShiftedDown, kNUncertaintyTypes};
+
+  TString uncertaintyString[kNUncertaintyTypes] = {"Correlated", "Regular", "Upshifted", "Downshifted"};
+  TString compactUncertaintyString[kNUncertaintyTypes] = {"_correlatedUncertainty", "_uncorrelatedUncertainty", "_upshiftedDistribution", "_downshiftedDistribution"};
 
   // ============= //
   // Configuration //
@@ -23,11 +65,11 @@ void fitPbPbToPpRatio(){
   
   // Input files
   TString inputFileName[kNDataTypes];
-  inputFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_binningForUnfolding_processed_nominalResult_2023-05-23.root";
-  inputFileName[kPp] = "data/ppData_pfJets_wtaAxis_nominalResults_processed_2023-06-12.root";
+  inputFileName[kPbPb] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
+  inputFileName[kPp] = "data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root";
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_firstLook_2023-06-13.root";
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertaintiesForPp_firstLook_2023-06-13.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
   
   TFile* inputFile[kNDataTypes];
   TFile* uncertaintyFile[kNDataTypes];
@@ -75,7 +117,7 @@ void fitPbPbToPpRatio(){
   
   // The final results are available for all the bins that are unfolded
   int firstDrawnCentralityBin = card[kPbPb]->GetFirstUnfoldedCentralityBin();
-  int lastDrawnCentralityBin = card[kPbPb]->GetLastUnfoldedCentralityBin();
+  int lastDrawnCentralityBin = 0;
   
   int firstDrawnJetPtBinEEC = card[kPbPb]->GetFirstUnfoldedJetPtBin();
   int lastDrawnJetPtBinEEC = card[kPbPb]->GetLastUnfoldedJetPtBin();
@@ -85,12 +127,17 @@ void fitPbPbToPpRatio(){
 
   // Choose which plots to draw
   bool drawRatiosWithFits = true;
+  bool drawRatiosWithAlternativeFits = false;
   bool drawWiggleGraph = false;
   bool printWiggleTable = false;
+  bool drawRatioOfFitsAndRatios = false;
   
   // Save the final plots
-  const bool saveFigures = true;
-  TString saveComment = "_thickLine";
+  const bool saveFigures = false;
+  TString saveComment = "_errorIllustration";
+
+  // Illustrate error
+  const bool drawErrorIllustration = true;
 
   // Ratio zoom settings
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
@@ -101,6 +148,7 @@ void fitPbPbToPpRatio(){
   int markerStylePp = kFullDiamond;
   int markerColorPbPb[] = {kRed, kBlue, kMagenta, kGreen+3};
   int markerColorPp = kBlack;
+  int correlatedColorPbPb[] = {kMagenta, kCyan, kMagenta, kCyan};
 
   // =============================================== //
   // Read the histograms from the histogram managers //
@@ -129,15 +177,17 @@ void fitPbPbToPpRatio(){
 
   }
  
+  const int nFitParts = 3;
   TH1D* energyEnergyCorrelatorSignalPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalPp[nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyForPbPb[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyForPp[nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* systematicUncertaintyPbPbToPpRatio[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyForPbPb[kNUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyForPp[kNUncertaintyTypes][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* systematicUncertaintyPbPbToPpRatio[kNUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* distributionRatioToFitRatio[kNUncertaintyTypes][nFitParts][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
-  const int nFitParts = 3;
-  TF1* fitToRatio[nFitParts][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TF1* fitToRatio[kNUncertaintyTypes][nFitParts][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TF1* alternativeFitToRatio[kNUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Ranges for fits, should be optimized bin by bin
   int fitColor[4][nFitParts] = {{kBlack, kBlue, kBlack},  // 0-10% centrality
@@ -149,37 +199,37 @@ void fitPbPbToPpRatio(){
   // Centrality 0-10 %
   {
     // Track pT > 2 GeV
-    {{{0.02,0.1,0.21},    // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}},    // 180 < jet pT < 200 GeV
+    {{{0.04,0.1,0.24},    // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.04,0.085,0.24}},    // 180 < jet pT < 200 GeV
     // Track pT > 2.5 GeV
-    {{0.02,0.1,0.21},    // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}},    // 180 < jet pT < 200 GeV
+    {{0.04,0.1,0.24},    // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.04,0.085,0.24}},    // 180 < jet pT < 200 GeV
     // Track pT > 3 GeV
-    {{0.02,0.1,0.21},     // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}}},   // 180 < jet pT < 200 GeV
+    {{0.04,0.1,0.24},     // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.04,0.085,0.24}}},   // 180 < jet pT < 200 GeV
 
   // Centrality 10-30 %
    // Track pT > 2 GeV
-    {{{0.02,0.1,0.21},    // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}},    // 180 < jet pT < 200 GeV
+    {{{0.04,0.12,0.24},    // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.04,0.085,0.24}},    // 180 < jet pT < 200 GeV
     // Track pT > 2.5 GeV
-    {{0.02,0.1,0.21},    // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}},    // 180 < jet pT < 200 GeV
+    {{0.04,0.12,0.24},    // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.02,0.085,0.24}},    // 180 < jet pT < 200 GeV
     // Track pT > 3 GeV
-    {{0.02,0.1,0.21},     // 120 < jet pT < 140 GeV
-     {0.02,0.1,0.21},     // 140 < jet pT < 160 GeV
-     {0.02,0.085,0.21},     // 160 < jet pT < 180 GeV
-     {0.02,0.085,0.21}}},   // 180 < jet pT < 200 GeV
+    {{0.04,0.12,0.24},     // 120 < jet pT < 140 GeV
+     {0.04,0.1,0.24},     // 140 < jet pT < 160 GeV
+     {0.04,0.085,0.24},     // 160 < jet pT < 180 GeV
+     {0.04,0.085,0.24}}},   // 180 < jet pT < 200 GeV
 
    // Centrality 30-50 %
    // Track pT > 2 GeV
@@ -221,37 +271,37 @@ void fitPbPbToPpRatio(){
   // Centrality 0-10 %
   {
     // Track pT > 2 GeV
-    {{{0.075,0.19,0.39},    // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{{0.06,0.19,0.39},    // 120 < jet pT < 140 GeV
+     {0.06,0.16,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
      {0.06,0.16,0.39}},    // 180 < jet pT < 200 GeV
     // Track pT > 2.5 GeV
-    {{0.075,0.19,0.39},    // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{0.06,0.19,0.39},    // 120 < jet pT < 140 GeV
+     {0.06,0.16,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
      {0.06,0.16,0.39}},    // 180 < jet pT < 200 GeV
     // Track pT > 3 GeV
-    {{0.075,0.19,0.39},     // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{0.06,0.19,0.39},     // 120 < jet pT < 140 GeV
+     {0.06,0.16,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
      {0.06,0.16,0.39}}},   // 180 < jet pT < 200 GeV
 
   // Centrality 10-30 %
    // Track pT > 2 GeV
-    {{{0.075,0.19,0.39},    // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{{0.06,0.19,0.39},    // 120 < jet pT < 140 GeV
+     {0.06,0.19,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
-     {0.06,0.16,0.39}},    // 180 < jet pT < 200 GeV
+     {0.06,0.14,0.32}},    // 180 < jet pT < 200 GeV
     // Track pT > 2.5 GeV
-    {{0.075,0.19,0.39},    // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{0.06,0.19,0.39},    // 120 < jet pT < 140 GeV
+     {0.06,0.19,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
-     {0.06,0.16,0.39}},    // 180 < jet pT < 200 GeV
+     {0.06,0.14,0.32}},    // 180 < jet pT < 200 GeV
     // Track pT > 3 GeV
-    {{0.075,0.19,0.39},     // 120 < jet pT < 140 GeV
-     {0.075,0.19,0.39},     // 140 < jet pT < 160 GeV
+    {{0.06,0.19,0.39},     // 120 < jet pT < 140 GeV
+     {0.06,0.19,0.39},     // 140 < jet pT < 160 GeV
      {0.06,0.16,0.39},     // 160 < jet pT < 180 GeV
-     {0.06,0.16,0.39}}},   // 180 < jet pT < 200 GeV
+     {0.06,0.14,0.32}}},   // 180 < jet pT < 200 GeV
 
    // Centrality 30-50 %
    // Track pT > 2 GeV
@@ -292,17 +342,26 @@ void fitPbPbToPpRatio(){
   for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
     for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt] = NULL;
-      systematicUncertaintyForPp[iJetPt][iTrackPt] = NULL;
+
+      for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+        systematicUncertaintyForPp[iUncertainty][iJetPt][iTrackPt] = NULL;
+      }
       for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = NULL;
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = NULL;
 
-        // Initialize the fit functions to NULL
-        for(int iFit = 0; iFit < nFitParts; iFit++){
-          fitToRatio[iFit][iCentrality][iJetPt][iTrackPt] = NULL;
-        }
+        for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+          systematicUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
+          systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
+
+          // Initialize the fit functions to NULL
+          for(int iFit = 0; iFit < nFitParts; iFit++){
+            fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt] = NULL;
+            distributionRatioToFitRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt] = NULL;
+          }
+          alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
+
+        } // Uncertainty loop
       } // Centrality loop
     } // Track pT loop
   } // Jet pT loop
@@ -323,20 +382,31 @@ void fitPbPbToPpRatio(){
 
       // Read the pp histograms that do not have centrality binning
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt] = histograms[kPp]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedPp, iTrackPtMatchedPp, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-      systematicUncertaintyForPp[iJetPt][iTrackPt] = uncertainties[kPp]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp]->GetCorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp]->GetUncorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
 
       for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
         iCentralityMatched = uncertaintyCard[kPbPb]->FindBinIndexCentrality(card[kPbPb]->GetBinBordersCentrality(iCentrality));
 
         // Read the PbPb histograms
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt] = histograms[kPbPb]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
+        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetCorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
+        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetUncorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
 
         // Initialize the fit functions with the defined function
         for(int iFit = 0; iFit < nFitParts; iFit++){
-          fitToRatio[iFit][iCentrality][iJetPt][iTrackPt] = new TF1(Form("fit%d%d%d%d", iCentrality, iJetPt, iTrackPt, iFit), logFit, fitLowRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], fitHighRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], 2);
-          fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->SetParameters(-1, 1);
-          fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->SetLineColor(fitColor[iCentrality][iFit]);
+          for(int iUncertainty = 0; iUncertainty <kNUncertaintyTypes; iUncertainty++){
+            fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt] = new TF1(Form("fit%d%d%d%d%d", iUncertainty, iCentrality, iJetPt, iTrackPt, iFit), logFit, fitLowRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], fitHighRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], 2);
+            fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->SetParameters(-1, 1);
+            fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->SetLineColor(fitColor[iCentrality][iFit]);
+          }
+        }
+
+        // Initialize the alternative fit functions
+        for(int iUncertainty = 0; iUncertainty <kNUncertaintyTypes; iUncertainty++){
+          alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt] = new TF1(Form("alternativeFit%d%d%d%d", iUncertainty, iCentrality, iJetPt, iTrackPt), logPol3, 0.02, 0.39, 4);
+          alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetParameters(0.3, -1.5, -1.5, -0.5);
+          alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(fitColor[iCentrality][0]);
         }
       } // Centrality loop
     } // Track pT loop
@@ -352,22 +422,44 @@ void fitPbPbToPpRatio(){
   for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
     for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
       energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-      systematicUncertaintyForPp[iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+      // Shift the points in the uncorrelated ratio by the correlated uncertainties
+      systematicUncertaintyForPp[kShiftedUp][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Clone(Form("ppShiftedUp%d%d", iJetPt, iTrackPt));
+      systematicUncertaintyForPp[kShiftedDown][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Clone(Form("ppShiftedDown%d%d", iJetPt, iTrackPt));
+      shiftByErrors(systematicUncertaintyForPp[kShiftedUp][iJetPt][iTrackPt], systematicUncertaintyForPp[kShiftedDown][iJetPt][iTrackPt], systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]);
+
       for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
         energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-        systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        // Shift the points in the uncorrelated ratio by the correlated uncertainties
+        systematicUncertaintyForPbPb[kShiftedUp][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("PbPbShiftedUp%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyForPbPb[kShiftedDown][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("PbPbShiftedDown%d%d%d", iCentrality, iJetPt, iTrackPt));
+        shiftByErrors(systematicUncertaintyForPbPb[kShiftedUp][iCentrality][iJetPt][iTrackPt], systematicUncertaintyForPbPb[kShiftedDown][iCentrality][iJetPt][iTrackPt], systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]);
 
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]);
 
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
-        systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[iJetPt][iTrackPt]);
+        systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyUncorrelatedRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]);
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("systematicUncertaintyUncorrelatedRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]);
 
-        // TODO: For fitting, combine the systematic and statistical uncertainties
+        // Shift the points in the uncorrelated ratio by the correlated uncertainties
+        systematicUncertaintyPbPbToPpRatio[kShiftedUp][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("ratioShiftedUp%d%d%d", iCentrality, iJetPt, iTrackPt));
+        systematicUncertaintyPbPbToPpRatio[kShiftedDown][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyPbPbToPpRatio[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("ratioShiftedDown%d%d%d", iCentrality, iJetPt, iTrackPt));
+        shiftByErrors(systematicUncertaintyPbPbToPpRatio[kShiftedUp][iCentrality][iJetPt][iTrackPt], systematicUncertaintyPbPbToPpRatio[kShiftedDown][iCentrality][iJetPt][iTrackPt], systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]);
 
         // Fit the thingy
-        for(int iFit = 0; iFit < nFitParts; iFit++){
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Fit(fitToRatio[iFit][iCentrality][iJetPt][iTrackPt], "NQ", "", fitLowRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], fitHighRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit]);
+        for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+          for(int iFit = 0; iFit < nFitParts; iFit++){
+            systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->Fit(fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt], "NQ", "", fitLowRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit], fitHighRange[iCentrality - firstDrawnCentralityBin][iTrackPt - firstDrawnTrackPtBinEEC][iJetPt - firstDrawnJetPtBinEEC][iFit]);
+          }
+
+          systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->Fit(alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt], "NQ", "", 0.02, 0.39);
         }
 
       } // Centrality loop
@@ -375,73 +467,95 @@ void fitPbPbToPpRatio(){
   } // Jet pT loop
 
   // Find the deltaR value corresponding to the points where the different fit region overlap
-  double firstTurningPoint[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  double secondTurningPoint[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  double firstTurningPointError[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  double secondTurningPointError[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-    for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
-      for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-        firstTurningPointError[iCentrality][iJetPt][iTrackPt] = 0;
-        secondTurningPointError[iCentrality][iJetPt][iTrackPt] = 0;
-      } // Track pT loop
-    } // Jet pT loop
-  } // Centrality loop
+  double firstTurningPoint[kNUncertaintyTypes+1][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  double secondTurningPoint[kNUncertaintyTypes+1][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  double firstTurningPointError[kNUncertaintyTypes+1][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  double secondTurningPointError[kNUncertaintyTypes+1][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes+1; iUncertainty++){
+    for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+        for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+          firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] = 0;
+          secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] = 0;
+          firstTurningPointError[iUncertainty][iCentrality][iJetPt][iTrackPt] = 0;
+          secondTurningPointError[iUncertainty][iCentrality][iJetPt][iTrackPt] = 0;
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Uncertainty loop
 
   double a,b,c,d;
   double ea, eb, ec, ed;
+  for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+      for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+        
+          // Calculate the x-value for which the two functions overlap
+          // a*log(x)+b = c*log(x)+d => log(x) = (d - b) / (a - c) => x = 10^[(d - b) / (a - c)]
+          a = fitToRatio[iUncertainty][0][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
+          b = fitToRatio[iUncertainty][0][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
+          c = fitToRatio[iUncertainty][1][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
+          d = fitToRatio[iUncertainty][1][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
+          firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
+
+          // Calculate the error using the law of error propagation
+          // Chain rule: d/dx f(g(x)) = f'(g(x)) * g'(x)
+          // d/da (d-b)/(a-c) E(a) = (d-b) d/da (a-c)^{-1} E(a) = (b-d)/(a-c)^2 E(a)
+          // d/db (d-b)/(a-c) E(b) = -1/(a-c) E(b)
+          // d/dc (d-b)/(a-c) E(c) = (d-b)/(a-c)^2 E(c)
+          // d/dd (d-b)/(a-c) E(d) = 1/(a-c) E(d)
+          // d/dx a^x = a^x * ln(a)
+          ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[iUncertainty][0][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+          eb = -1/(a-c) * fitToRatio[iUncertainty][0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+          ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[iUncertainty][1][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+          ed = 1/(a-c) * fitToRatio[iUncertainty][1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+          firstTurningPointError[iUncertainty][iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
+
+          // Do the same for the second turning point
+          a = fitToRatio[iUncertainty][2][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
+          b = fitToRatio[iUncertainty][2][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
+          secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
+
+          ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[iUncertainty][2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+          eb = -1/(a-c) * fitToRatio[iUncertainty][0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+          ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[iUncertainty][2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
+          ed = 1/(a-c) * fitToRatio[iUncertainty][1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
+          secondTurningPointError[iUncertainty][iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
+
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Uncertainty loop
+
+  // Calculate the uncertainty manually using the difference in values between nominal and shifted results
   for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
     for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
 
-        /*if(iCentrality == firstDrawnCentralityBin+1){
-
-          cout << "Jet pT: " << iJetPt << "  track pT: " << iTrackPt << endl;
-
-          cout << "Fit 0 Parameter 0: " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
-          cout << "Fit 0 Parameter 1: " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
-          cout << "Fit 1 Parameter 0: " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
-          cout << "Fit 1 Parameter 1: " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
-          cout << "Fit 2 Parameter 0: " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(0) << " +- " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(0) << endl;
-          cout << "Fit 2 Parameter 1: " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(1) << " +- " << fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1) << endl;
-          cout << endl;
-        }*/
-        
-        // Calculate the x-value for which the two functions overlap
-        // a*log(x)+b = c*log(x)+d => log(x) = (d - b) / (a - c) => x = 10^[(d - b) / (a - c)]
-        a = fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
-        b = fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
-        c = fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
-        d = fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
-        firstTurningPoint[iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
-
-        // Calculate the error using the law of error propagation
-        // Chain rule: d/dx f(g(x)) = f'(g(x)) * g'(x)
-        // d/da (d-b)/(a-c) E(a) = (d-b) d/da (a-c)^{-1} E(a) = (b-d)/(a-c)^2 E(a)
-        // d/db (d-b)/(a-c) E(b) = -1/(a-c) E(b)
-        // d/dc (d-b)/(a-c) E(c) = (d-b)/(a-c)^2 E(c)
-        // d/dd (d-b)/(a-c) E(d) = 1/(a-c) E(d)
-        // d/dx a^x = a^x * ln(a)
-        ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(1);
-        eb = -1/(a-c) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
-        ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(1);
-        ed = 1/(a-c) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
-        firstTurningPointError[iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(firstTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
-
-        // Do the same for the second turning point
-        a = fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(1);
-        b = fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParameter(0);
-        secondTurningPoint[iCentrality][iJetPt][iTrackPt] = TMath::Power(10.0,((d-b)/(a-c)));
-
-        ea = (b-d)/(TMath::Power(a-c,2)) * fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
-        eb = -1/(a-c) * fitToRatio[0][iCentrality][iJetPt][iTrackPt]->GetParError(0);
-        ec = (d-b)/(TMath::Power(a-c,2)) * fitToRatio[2][iCentrality][iJetPt][iTrackPt]->GetParError(1);
-        ed = 1/(a-c) * fitToRatio[1][iCentrality][iJetPt][iTrackPt]->GetParError(0);
-        secondTurningPointError[iCentrality][iJetPt][iTrackPt] = TMath::Sqrt(TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ea,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * eb,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ec,2) + TMath::Power(secondTurningPoint[iCentrality][iJetPt][iTrackPt] * TMath::Log(10) * ed,2));
+        firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt] = firstTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt];
+        secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt] = secondTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt];
+        firstTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt] = getBiggerDifference(firstTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], firstTurningPoint[kShiftedUp][iCentrality][iJetPt][iTrackPt], firstTurningPoint[kShiftedDown][iCentrality][iJetPt][iTrackPt]);
+        secondTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt] = getBiggerDifference(secondTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], secondTurningPoint[kShiftedUp][iCentrality][iJetPt][iTrackPt], secondTurningPoint[kShiftedDown][iCentrality][iJetPt][iTrackPt]);
 
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
+
+  // Make ratio between the linear fits and the distribution to which those fits are made
+  for(int iUncertainty = 0; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+    for(int iFit = 0; iFit < nFitParts; iFit++){
+      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+        for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+          for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+            distributionRatioToFitRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("ratioBetweenRatioAndTheFitToTheSaidRatio%d%d%d%d%d",iUncertainty,iFit,iCentrality,iJetPt,iTrackPt));
+            distributionRatioToFitRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->Divide(fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]);
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop 
+    }  // Fit part loop
+  } // Uncertainty type loop
+
 
   // Create graphs with the locations of first and second wiggling angles
   TGraph *wiggleGraph[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -464,8 +578,8 @@ void fitPbPbToPpRatio(){
       for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
         yPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][0] = 0.2 + 0.2 * (iJetPt - firstDrawnJetPtBinEEC);
         yPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][1] = 0.2 + 0.2 * (iJetPt - firstDrawnJetPtBinEEC);
-        xPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][0] = firstTurningPoint[iCentrality][iJetPt][iTrackPt];
-        xPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][1] = secondTurningPoint[iCentrality][iJetPt][iTrackPt];
+        xPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][0] = firstTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt];
+        xPointsWiggleGraph[iCentrality][iJetPt][iTrackPt][1] = secondTurningPoint[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt];
         wiggleGraph[iCentrality][iJetPt][iTrackPt] = new TGraph(2, xPointsWiggleGraph[iCentrality][iJetPt][iTrackPt], yPointsWiggleGraph[iCentrality][iJetPt][iTrackPt]);
       } // Track pT loop
     } // Jet pT loop
@@ -494,76 +608,225 @@ void fitPbPbToPpRatio(){
   // Common variables for different plots
   TLegend* legend;
   TLatex* mainTitle;
+  TLine* errorDrawer = new TLine(0,1,1,1); errorDrawer->SetLineStyle(2);
 
   // Draw individual plots with all centralities mixed together in a single figure
   if(drawRatiosWithFits){
 
-    for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
-      centralityString = Form("Cent: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
-      compactCentralityString = Form("_C=%.0f-%.0f", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+    for(int iUncertainty = kUncorrelatedUncertainty; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+        centralityString = Form("Cent: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C=%.0f-%.0f", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
 
-      for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
-        jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
-        compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+        for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++) {
+          jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+          compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
 
-        for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
-          trackPtString = Form("%.1f < track p_{T}", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
-          compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
-          compactTrackPtString.ReplaceAll(".", "v");
+          for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++) {
+            trackPtString = Form("%.1f < track p_{T}", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".", "v");
 
-          // Setup the legend for plots
-          legend = new TLegend(0.53, 0.6, 0.83, 0.85);
-          legend->SetFillStyle(0);
-          legend->SetBorderSize(0);
-          legend->SetTextSize(0.05);
-          legend->SetTextFont(62);
-          legend->AddEntry((TObject*)0, centralityString.Data(), "");
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+            // Setup the legend for plots
+            legend = new TLegend(0.53, 0.6, 0.83, 0.85);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+            legend->AddEntry((TObject*)0, uncertaintyString[iUncertainty].Data(), "");
+            legend->AddEntry((TObject*)0, centralityString.Data(), "");
+            legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+            legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
-          // Linear scale for the ratio
-          drawer->SetLogY(false);
+            // Linear scale for the ratio
+            drawer->SetLogY(false);
 
-          // Set the axis drawing ranges
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-          systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+            // Set the axis drawing ranges
+            systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+            systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
-          // Set the style for histograms
-          for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
-            systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
-            systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
-            energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
-            energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+            // Set the style for histograms
+            for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+              systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(correlatedColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+              systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+              systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
 
-            systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
-            systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-            energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-            systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-            energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
-          }
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
 
-          drawer->SetGridY(true);
-          drawer->DrawHistogram(systematicUncertaintyPbPbToPpRatio[iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "e2");
-          energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+            }
 
-          // Draw the fits
-          for(int iFit = 0; iFit < nFitParts; iFit++){
-            fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->SetLineWidth(5);
-            fitToRatio[iFit][iCentrality][iJetPt][iTrackPt]->Draw("same");
-          }
-          drawer->SetGridY(false);
+            drawer->SetGridY(true);
+            drawer->DrawHistogram(systematicUncertaintyPbPbToPpRatio[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "e3");
+            systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("same,p,e2");
 
-          // Draw the legend
-          legend->Draw();
+            // Draw the fits
+            for(int iFit = 0; iFit < nFitParts; iFit++) {
+              fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->SetLineWidth(5);
+              fitToRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            }
+            drawer->SetGridY(false);
 
-          // If a plot name is given, save the plot in a file
-          if(saveFigures) {
-            gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_ratioFit%s%s%s%s.pdf", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
-          }
+            // Draw the legend
+            legend->Draw();
 
-        }  // Track pT loop
-      }    // Jet pT loop
-    }      // Centrality loop
+            // Illustrate the error estimate in the plot
+            if(drawErrorIllustration){
+
+              if(iUncertainty == kUncorrelatedUncertainty){
+                errorDrawer->SetLineColor(kMagenta);
+                errorDrawer->DrawLine(firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->SetLineColor(kRed);
+                errorDrawer->DrawLine(firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]-firstTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]-firstTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->DrawLine(firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]+firstTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, firstTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]+firstTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->SetLineColor(kCyan);
+                errorDrawer->DrawLine(secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->SetLineColor(kBlue);
+                errorDrawer->DrawLine(secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]-secondTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]-secondTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->DrawLine(secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]+secondTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 0.7, secondTurningPoint[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt]+secondTurningPointError[kNUncertaintyTypes][iCentrality][iJetPt][iTrackPt], 1.1);
+              } else {
+                errorDrawer->SetLineColor(kMagenta);
+                errorDrawer->DrawLine(firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt], 0.7, firstTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt], 1.1);
+                errorDrawer->SetLineColor(kCyan);
+                errorDrawer->DrawLine(secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt], 0.7, secondTurningPoint[iUncertainty][iCentrality][iJetPt][iTrackPt], 1.1);
+              }
+            }
+
+
+            // If a plot name is given, save the plot in a file
+            if(saveFigures) {
+              gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_ratioFit%s%s%s%s%s.pdf", saveComment.Data(), compactUncertaintyString[iUncertainty].Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+            }
+
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Uncertainty loop
+  } // Drawing individual canvases with all centralities in one canvas
+
+  // Draw individual plots with all centralities mixed together in a single figure
+  if(drawRatiosWithAlternativeFits){
+
+    for(int iUncertainty = kUncorrelatedUncertainty; iUncertainty < kNUncertaintyTypes; iUncertainty++){
+      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+        centralityString = Form("Cent: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C=%.0f-%.0f", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+
+        for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++) {
+          jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+          compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+
+          for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++) {
+            trackPtString = Form("%.1f < track p_{T}", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".", "v");
+
+            // Setup the legend for plots
+            legend = new TLegend(0.53, 0.6, 0.83, 0.85);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+            legend->AddEntry((TObject*)0, uncertaintyString[iUncertainty].Data(), "");
+            legend->AddEntry((TObject*)0, centralityString.Data(), "");
+            legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+            legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+            // Linear scale for the ratio
+            drawer->SetLogY(false);
+
+            // Set the axis drawing ranges
+            systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+            systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+
+            // Set the style for histograms
+            for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin]);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin], 0.4);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+              systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin]);
+            }
+
+            drawer->SetGridY(true);
+            drawer->DrawHistogram(systematicUncertaintyPbPbToPpRatio[iUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "p,e2");
+
+            // Draw the alternative fit
+            alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineWidth(5);
+            alternativeFitToRatio[iUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            drawer->SetGridY(false);
+
+            // Draw the legend
+            legend->Draw();
+
+            // If a plot name is given, save the plot in a file
+            if(saveFigures) {
+              gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_ratioAlternativeFit%s%s%s%s%s.pdf", saveComment.Data(), compactUncertaintyString[iUncertainty].Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+            }
+
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Uncertainty loop
+  } // Drawing individual canvases with all centralities in one canvas
+
+  // Draw ratios of ratios and fits to ratios
+  if(drawRatioOfFitsAndRatios){
+
+    for(int iFit = 0; iFit < nFitParts; iFit++){
+      for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+        centralityString = Form("Cent: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+        compactCentralityString = Form("_C=%.0f-%.0f", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality));
+
+        for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++) {
+          jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+          compactJetPtString = Form("_J=%.0f-%.0f", card[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
+
+          for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++) {
+            trackPtString = Form("%.1f < track p_{T}", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString = Form("_T>%.1f", card[kPbPb]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".", "v");
+
+            // Setup the legend for plots
+            legend = new TLegend(0.53, 0.6, 0.83, 0.85);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+            legend->AddEntry((TObject*)0, Form("Fit region %d", iFit), "");
+            legend->AddEntry((TObject*)0, centralityString.Data(), "");
+            legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+            legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+            // Linear scale for the ratio
+            drawer->SetLogY(false);
+
+            // Set the axis drawing ranges
+            distributionRatioToFitRatio[kUncorrelatedUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+            distributionRatioToFitRatio[kUncorrelatedUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+            distributionRatioToFitRatio[kUncorrelatedUncertainty][iFit][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+
+            drawer->SetGridY(true);
+            drawer->DrawHistogram(distributionRatioToFitRatio[kUncorrelatedUncertainty][iFit][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{Ratio}{Fit}", " ");
+
+            // Draw the alternative fit
+            distributionRatioToFitRatio[kShiftedUp][iFit][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlue);
+            distributionRatioToFitRatio[kShiftedUp][iFit][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            distributionRatioToFitRatio[kShiftedDown][iFit][iCentrality][iJetPt][iTrackPt]->SetLineColor(kRed);
+            distributionRatioToFitRatio[kShiftedDown][iFit][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            drawer->SetGridY(false);
+
+            for(int iUncertainty = kUncorrelatedUncertainty; iUncertainty <= kShiftedDown; iUncertainty++){
+              legend->AddEntry(distributionRatioToFitRatio[iUncertainty][iFit][iCentrality][iJetPt][iTrackPt], uncertaintyString[iUncertainty].Data(), "l");
+            }
+
+            // Draw the legend
+            legend->Draw();
+
+            // If a plot name is given, save the plot in a file
+            if(saveFigures) {
+              gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_ratioOfFitAndRatio%s_fit%d%s%s%s.pdf", saveComment.Data(), iFit, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+            }
+
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Uncertainty loop
   } // Drawing individual canvases with all centralities in one canvas
 
   // Draw graphs illustrating wiggly behavior
@@ -643,26 +906,32 @@ void fitPbPbToPpRatio(){
     int iJetPt160to180 = card[kPbPb]->FindBinIndexJetPtEEC(160.0,180.0);
     int iJetPt180to200 = card[kPbPb]->FindBinIndexJetPtEEC(180.0,200.0);
 
-    // Write the beginning of the table
-    cout << endl;
-    cout << "\\begin{table}[htbp]" << endl;
-    cout << "  \\centering{" << endl;
-    cout << "    \\topcaption{Location of the wiggle triangulated using three lines.}" << endl;
-    cout << "    \\label{tab:wiggleTable}" << endl;
-    cout << "    \\begin{tabular}{cccc}" << endl;
-    cout << "      \\ptCh (GeV) & Jet \\pt (GeV) & Wiggle location 0--10\\%  & Wiggle location 10--30\\% \\\\" << endl;
-    cout << "      \\hline" << endl;
-    cout << Form("      \\multirow{4}*{$\\ptCh>2$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV]) << endl;
-    cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV]) << endl;
-    cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV]) << endl;
-    cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\[\\cmsTabSkip]", firstTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV]) << endl;
-    cout << Form("      \\multirow{4}*{$\\ptCh>3$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV]) << endl;
-    cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV]) << endl;
-    cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV]) << endl;
-    cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV]) << endl;
-    cout << "    \\end{tabular}" << endl;
-    cout << "  }" << endl;
-    cout << "\\end{table}" << endl;
+    for(int iUncertainty = kUncorrelatedUncertainty; iUncertainty <= kNUncertaintyTypes; iUncertainty++){
+
+      // Write the beginning of the table
+      cout << endl;
+      cout << "Wiggle type: " << iUncertainty << endl;
+      cout << endl;
+      cout << "\\begin{table}[htbp]" << endl;
+      cout << "  \\centering{" << endl;
+      cout << "    \\topcaption{Location of the wiggle triangulated using three lines.}" << endl;
+      cout << "    \\label{tab:wiggleTable}" << endl;
+      cout << "    \\begin{tabular}{cccc}" << endl;
+      cout << "      \\ptCh (GeV) & Jet \\pt (GeV) & Wiggle location 0--10\\%  & Wiggle location 10--30\\% \\\\" << endl;
+      cout << "      \\hline" << endl;
+      cout << Form("      \\multirow{4}*{$\\ptCh>2$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor2GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor2GeV]) << endl;
+      cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor2GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor2GeV]) << endl;
+      cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor2GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor2GeV]) << endl;
+      cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\[\\cmsTabSkip]", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor2GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor2GeV]) << endl;
+      cout << Form("      \\multirow{4}*{$\\ptCh>3$} & $120<\\pt<140$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt120to140][trackPtBinFor3GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt120to140][trackPtBinFor3GeV]) << endl;
+      cout << Form("                               & $140<\\pt<160$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt140to160][trackPtBinFor3GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt140to160][trackPtBinFor3GeV]) << endl;
+      cout << Form("                               & $160<\\pt<180$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt160to180][trackPtBinFor3GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt160to180][trackPtBinFor3GeV]) << endl;
+      cout << Form("                               & $180<\\pt<200$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ & $%.3f \\pm %.3f < \\Delta r < %.3f \\pm %.3f$ \\\\", firstTurningPoint[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality0to10][iJetPt180to200][trackPtBinFor3GeV], firstTurningPoint[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], firstTurningPointError[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPoint[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV], secondTurningPointError[iUncertainty][iCentrality10to30][iJetPt180to200][trackPtBinFor3GeV]) << endl;
+      cout << "    \\end{tabular}" << endl;
+      cout << "  }" << endl;
+      cout << "\\end{table}" << endl;
+
+    } // Uncertainty loop
 
   } // Print a table with infomation about the wiggle
 }
