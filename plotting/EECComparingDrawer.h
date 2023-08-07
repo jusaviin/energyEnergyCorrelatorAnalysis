@@ -85,6 +85,9 @@ public:
   void SetDrawEnergyEnergyCorrelatorNormalized(const bool drawOrNot);  // Setter for drawing normalized energy-energy correlators
   void SetDrawEnergyEnergyCorrelatorBackground(const bool drawOrNot);  // Setter for drawing the normalized background estimate for energy-energy correlators
   void SetDrawEnergyEnergyCorrelatorSignal(const bool drawOrNor);      // Setter for drawing the background subtracted energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorUnfolded(const bool drawOrNot);           // Setter for drawing unfolded energy-energy correlators
+  void SetDrawEnergyEnergyCorrelatorUnfoldedBackground(const bool drawOrNot); // Setter for drawing background estimate for energy-energy correlators after unfolding
+  void SetDrawEnergyEnergyCorrelatorUnfoldedSignal(const bool drawOrNot);     // Setter for drawing the background subtracted energy-energy correlators after unfolding
   
   // Setters for drawing different subevent types
   void SetDrawAllSubevents(const bool drawOrNot); // Setter for drawing histograms without subevent selection

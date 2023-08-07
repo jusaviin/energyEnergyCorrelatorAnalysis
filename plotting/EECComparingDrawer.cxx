@@ -854,9 +854,9 @@ void EECComparingDrawer::DrawProcessedEnergyEnergyCorrelators(){
   
   // Legend helper variable
   TLegend *legend;
-  double legendX1 = 0.37; // Default x1 location for the legend
+  double legendX1 = 0.27; // Default x1 location for the legend
   double legendY1 = 0.1;  // Default y1 location for the legend
-  double legendX2 = 0.57; // Default x2 location for the legend
+  double legendX2 = 0.47; // Default x2 location for the legend
   double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
   
   // If we are not doing log-log drawing, move the legend to top right corner
@@ -1484,6 +1484,21 @@ void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorBackground(const bool draw
 // Setter for drawing the background subtracted energy-energy correlators
 void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorSignal(const bool drawOrNot){
   fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorSignal] = drawOrNot;
+}
+
+ // Setter for drawing unfolded energy-energy correlators
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorUnfolded(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorUnfolded] = drawOrNot;
+}
+
+// Setter for drawing background estimate for energy-energy correlators after unfolding
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorUnfoldedBackground(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = drawOrNot;
+}
+
+// Setter for drawing the background subtracted energy-energy correlators after unfolding
+void EECComparingDrawer::SetDrawEnergyEnergyCorrelatorUnfoldedSignal(const bool drawOrNot){
+  fDrawProcessingLevel[EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal] = drawOrNot;
 }
 
 // Setter for saving the figures to a file
