@@ -850,6 +850,13 @@ void EECAnalyzer::RunAnalysis(){
         fTotalEventWeight = fTotalEventWeight * 35.143313;
       }
       
+      // If combining triggers, need to include event weight for events that only fire the lower trigger
+      // The weight used here is the inverse of the average effective prescale in the whole sample
+      // The effective prescale number is calculated directly from the entries of the trigger histogram
+      // The input file used is ppData_pfJets_wtaAxis_triggerCountsForCaloJet60Prescale_2023-08-07.root
+      if(fTriggerSelection == 7 && caloJet60Trigger && !caloJet80Trigger){
+        fTotalEventWeight = fTotalEventWeight * 6.3567036;
+      }
       
       // Fill the event information histograms for the events that pass the event cuts
       if(fFillEventInformation){
