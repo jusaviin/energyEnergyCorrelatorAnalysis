@@ -830,6 +830,7 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 4 && !caloJet60Trigger) continue;   // Select events with CaloJet60 trigger
       if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
       if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
+      if(fTriggerSelection == 7 && (!caloJet60Trigger && !caloJet80Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 triggers
       
       // If combining triggers, need to include event weight for events that only fire the lower trigger
       // The weight used here is the inverse of the average effective prescale in the whole sample
@@ -1812,7 +1813,14 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       trackEta2 = relativeTrackEta.at(iSecondTrack);
 
       // Find the deltaR between the tracks
-      trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+      trackDeltaR = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2); // The actual thingy
+
+      /*trackDeltaR = trackDeltaR * fRng->Gaus(1, 0.2);
+      if(trackDeltaR < 0 || trackDeltaR > 0.8){
+        trackDeltaR = fRng->Rndm()*0.8; // Random number between 0 and 0.8.
+      }*/
+
+      //trackDeltaR = fRng->Rndm()*0.8; // Random number between 0 and 0.8.
 
       // Find the lower of the two track pT:s
       lowerTrackPt = trackPt1;
