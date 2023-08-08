@@ -105,21 +105,21 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = true;
+  bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
 
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
   
   // Save the final plots
   const bool saveFigures = true;
-  TString saveComment = "_includeVerticalLines";
+  TString saveComment = "_newLegendArrangement";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings
@@ -876,7 +876,7 @@ void finalResultPlotter(){
 
     // Create a TCanvas for the double ratio
     TCanvas* theGreatCanvasOfDoubleRatio = new SplitCanvas("theGreatCanvasOfDoubleRatio", "", 1200, 800);
-    theGreatCanvasOfDoubleRatio->SetMargin(0.24, 0.01, 0.2, 0.05);
+    theGreatCanvasOfDoubleRatio->SetMargin(0.24, 0.01, 0.2, 0.15);
     theGreatCanvasOfDoubleRatio->cd();
 
     gPad->SetLogy(false);
@@ -938,9 +938,8 @@ void finalResultPlotter(){
     }
 
     // Show the centrality bin in the legend
-    legend = new TLegend(0.28, 0.22, 0.53, 0.54);
+    legend = new TLegend(0.28, 0.22, 0.53, 0.5);
     legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.055); legend->SetTextFont(62);
-    legend->AddEntry((TObject*)0, Form("%.f < jet p_{T} < %.0f GeV",  card[kPbPb]->GetLowBinBorderJetPtEEC(doubleRatioJetPtBinIndex), card[kPbPb]->GetHighBinBorderJetPtEEC(doubleRatioJetPtBinIndex)), "");
     for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
       legend->AddEntry(systematicUncertaintyDoubleRatio[iCentrality][doubleRatioJetPtBinIndex], Form("Centrality: %.0f-%.0f%%", card[kPbPb]->GetLowBinBorderCentrality(iCentrality), card[kPbPb]->GetHighBinBorderCentrality(iCentrality)), "p");
     }
@@ -951,15 +950,15 @@ void finalResultPlotter(){
     oneLine->Draw();
 
     mainTitle->SetTextFont(62);
-    mainTitle->SetTextSize(0.07);
-    mainTitle->DrawLatexNDC(0.542, 0.666, "CMS");
+    mainTitle->SetTextSize(0.08);
+    mainTitle->DrawLatexNDC(0.3, 0.9, "CMS");
 
     mainTitle->SetTextFont(42);
     mainTitle->SetTextSize(0.055);
-    mainTitle->DrawLatexNDC(0.5, 0.87, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-    mainTitle->DrawLatexNDC(0.5, 0.78, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-    mainTitle->DrawLatexNDC(0.27, 0.87, "anti-k_{T} R = 0.4");
-    mainTitle->DrawLatexNDC(0.27, 0.78, "|#eta_{jet}| < 1.6");
+    mainTitle->DrawLatexNDC(0.47, 0.945, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
+    mainTitle->DrawLatexNDC(0.47, 0.87, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+    mainTitle->DrawLatexNDC(0.3, 0.68, "anti-k_{T} R = 0.4");
+    mainTitle->DrawLatexNDC(0.3, 0.77, Form("%.f < p_{T,jet} < %.0f GeV, |#eta_{jet}| < 1.6",  card[kPbPb]->GetLowBinBorderJetPtEEC(doubleRatioJetPtBinIndex), card[kPbPb]->GetHighBinBorderJetPtEEC(doubleRatioJetPtBinIndex)));
 
     // Save the figures to file
     if(saveFigures){
