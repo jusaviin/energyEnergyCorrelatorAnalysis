@@ -2,15 +2,15 @@
 
 if [ "$#" -lt 2 ]; then
   echo "Usage of the script:"
-  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r][-m]"
+  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m]"
   echo "inputFile = Name of the input file"
   echo "outputFile = Name of the output file"
   echo "-n = Do not project nominal histograms"
   echo "-e = Project energy-energy correlators used for tracking systematics"
   echo "-c = Project jet pT closure histograms"
   echo "-r = Project jet pT response matrices"
+  echo "-o = Only project the jet histograms from nominal set of histograms"
   echo "-m = Project track/particle matching study histograms"
-  echo 
   exit
 fi
 
@@ -19,7 +19,7 @@ OUTPUT=$2   # Name of the output file
 shift 2     # Shift the positional parameters to read the optional ones
 
 # Read the optional arguments. (Semicolon after letter: expects argument)
-while getopts ":necrm" opt; do
+while getopts ":necrom" opt; do
 case $opt in
 n) NOMINAL=false
 ;;
@@ -28,6 +28,8 @@ e) ERROR=true
 c) CLOSURE=true
 ;;
 r) RESPONSE=true
+;;
+o) ONLYJETS=true
 ;;
 m) MATCHINGSTUDY=true
 ;;
@@ -43,6 +45,7 @@ ERROR=${ERROR:-false}
 CLOSURE=${CLOSURE:-false}
 RESPONSE=${RESPONSE:-false}
 MATCHINGSTUDY=${MATCHINGSTUDY:-false}
+ONLYJETS=${ONLYJETS:-false}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -50,7 +53,12 @@ GITHASH=`git rev-parse HEAD`
 # Replace the placeholder string in the projection code by git hash
 sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
 
-if $NOMINAL; then
+if $ONLYJETS; then
+
+  # Project event information and jet histograms
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",3)'
+
+elif $NOMINAL; then
 
   # Project event information and jet histograms
   root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",3)'

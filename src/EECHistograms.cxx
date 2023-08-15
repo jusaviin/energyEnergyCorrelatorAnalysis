@@ -474,7 +474,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   
-  const Int_t nAxesJetClosure = 6;
+  const Int_t nAxesJetClosure = 7;
   Int_t nBinsJetClosure[nAxesJetClosure];
   Double_t lowBinBorderJetClosure[nAxesJetClosure];
   Double_t highBinBorderJetClosure[nAxesJetClosure];
@@ -836,6 +836,11 @@ void EECHistograms::CreateHistograms(){
   nBinsJetClosure[5] = nClosureRatioBins;        // nBins for closure ratio
   lowBinBorderJetClosure[5] = minClosureRatio;   // low bin border for closure ratio
   highBinBorderJetClosure[5] = maxClosureRatio;  // high bin border for closure ratio
+
+  // Axis 6 for the jet pT closure histogram: generator level jet eta
+  nBinsJetClosure[6] = nPhiBins;             // nBins for jet eta
+  lowBinBorderJetClosure[6] = minPhi;        // low bin border for jet eta
+  highBinBorderJetClosure[6] = maxPhi;       // high bin border for jet eta
   
   // Create histograms for jet pT closure
   fhJetPtClosure = new THnSparseF("jetPtClosure", "jetPtClosure", nAxesJetClosure, nBinsJetClosure, lowBinBorderJetClosure, highBinBorderJetClosure); fhJetPtClosure->Sumw2();

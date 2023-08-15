@@ -181,9 +181,11 @@ EECHistogramManager::EECHistogramManager() :
     // Jet pT closure histograms
     for(int iGenJetPt = 0; iGenJetPt <= knGenJetPtBins; iGenJetPt++){
       for(int iJetEta = 0; iJetEta <= knJetEtaBins; iJetEta++){
-        for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
-          fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle] = NULL;
-        } // Closure particle loop
+        for(int iJetPhi = 0; iJetPhi <= knJetPhiBins; iJetPhi++){
+          for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
+            fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle] = NULL;
+          } // Closure particle loop
+        } // Jet phi bin loop 
       } // Jet eta bin loop
     } // Gen jet pT loop
 
@@ -488,9 +490,11 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     // Jet pT closure histograms
     for(int iGenJetPt = 0; iGenJetPt <= knGenJetPtBins; iGenJetPt++){
       for(int iJetEta = 0; iJetEta <= knJetEtaBins; iJetEta++){
-        for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
-          fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle] = in.fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle];
-        } // Closure particle loop
+        for(int iJetPhi = 0; iJetPhi <= knJetPhiBins; iJetPhi++){
+          for(int iClosureParticle = 0; iClosureParticle < EECHistograms::knClosureParticleTypes+1; iClosureParticle++){
+            fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle] = in.fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle];
+          } // Closure particle loop
+        } // Jet phi bin loop
       } // Jet eta bin loop
     } // Gen jet pT loop
     
@@ -1527,6 +1531,7 @@ void EECHistogramManager::LoadJetPtResponseMatrix(){
  *       Axis 3                       Centrality
  *       Axis 4                      Quark / gluon
  *       Axis 5             Matched reco to gen jet pT ratio
+ *       Axis 6                         Jet phi
  */
 void EECHistogramManager::LoadJetPtClosureHistograms(){
   
@@ -1571,7 +1576,7 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
           nRestrictionAxes--;
         }
         
-        fhJetPtClosure[iGenJetPt][knJetEtaBins][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+        fhJetPtClosure[iGenJetPt][knJetEtaBins][knJetPhiBins][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
 
         // Reset the range for the generator level jet pT axis
         histogramArray->GetAxis(0)->SetRange(0,0);
@@ -1588,7 +1593,7 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
            axisIndices[3] = 2; lowLimits[3] = iJetEta+1; highLimits[3] = iJetEta+1; // Jet eta
            }
            
-           fhJetPtClosure[iClosureType][iGenJetPt][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);*/
+           fhJetPtClosure[iClosureType][iGenJetPt][iJetEta][knJetPhiBins][iCentralityBin][iClosureParticle] = FindHistogram(fInputFile,"jetPtClosure",5,nRestrictionAxes,axisIndices,lowLimits,highLimits);*/
           
           // Fill the pT integrated eta slices only once
           if(iGenJetPt == 0){
@@ -1606,7 +1611,34 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
               nRestrictionAxes--;
             }
             
-            fhJetPtClosure[knGenJetPtBins][iJetEta][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+            fhJetPtClosure[knGenJetPtBins][iJetEta][knJetPhiBins][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
+          }
+          
+        } // Jet eta bin loop
+
+        // Reset the range for the jet eta axis
+        histogramArray->GetAxis(2)->SetRange(0,0);
+
+        // Phi binning for the closure histogram
+        for(int iJetPhi = 0; iJetPhi < knJetPhiBins; iJetPhi++){
+          
+          // Fill the pT integrated phi slices only once
+          if(iGenJetPt == 0){
+            
+            // Setup the axes with restrictions
+            nRestrictionAxes = 3;
+            axisIndices[0] = 6; lowLimits[0] = iJetPhi+1;    highLimits[0] = iJetPhi+1;                 // Jet phi
+            axisIndices[1] = 3; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin; // Centrality
+            axisIndices[2] = 4; lowLimits[2] = iClosureParticle+1; highLimits[2] = iClosureParticle+1;  // Quark/gluon
+            
+            // For the last closure particle bin no restrictions for quark/gluon jets
+            if(iClosureParticle == EECHistograms::knClosureParticleTypes){
+              
+              // Remove the last set array bin
+              nRestrictionAxes--;
+            }
+            
+            fhJetPtClosure[knGenJetPtBins][knJetEtaBins][iJetPhi][iCentralityBin][iClosureParticle] = FindHistogram(histogramArray,5,nRestrictionAxes,axisIndices,lowLimits,highLimits);
           }
           
         } // Jet eta bin loop
@@ -2542,15 +2574,22 @@ void EECHistogramManager::WriteClosureHistograms(){
         // Loop over generator level jet pT bins
         for(int iGenJetPt = 0; iGenJetPt <= knGenJetPtBins; iGenJetPt++){
           
-          // Loop ovet jet eta bins
+          // Loop over jet eta bins
           for(int iJetEta = 0; iJetEta <= knJetEtaBins; iJetEta++){
+
+            // Loop over jet phi bins
+            for(int iJetPhi = 0; iJetPhi <= knJetPhiBins; iJetPhi++){
             
-            // Only write histogram that are non-NULL
-            if(fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle]){
-              histogramNamer = Form("jetPtClosure_%s%s_C%dT%dE%d", fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality, iGenJetPt, iJetEta);
-              fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle]->Write(histogramNamer.Data(), TObject::kOverwrite);
-            }
+              // Only write histogram that are non-NULL
+              if(fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle]){
+                histogramNamer = Form("jetPtClosure_%s%s_C%d", fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality);
+                if(iGenJetPt < knGenJetPtBins) histogramNamer.Append(Form("T%d",iGenJetPt));
+                if(iJetEta < knJetEtaBins) histogramNamer.Append(Form("E%d",iJetEta));
+                if(iJetPhi < knJetPhiBins) histogramNamer.Append(Form("P%d",iJetPhi));
+                fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle]->Write(histogramNamer.Data(), TObject::kOverwrite);
+              }
             
+            } // JEt phi bin loop
           } // Jet eta bin loop
         } // Generator level jet pT loop
       } // Closure particle type (quark/gluon) loop
@@ -3286,10 +3325,24 @@ void EECHistogramManager::LoadProcessedHistograms(){
           
           // Loop over jet eta bins
           for(int iJetEta = 0; iJetEta <= knJetEtaBins; iJetEta++){
+
+            // Loop over jet phi bins
+            for(int iJetPhi = 0; iJetPhi <= knJetPhiBins; iJetPhi++){
             
-            histogramNamer = Form("jetPtClosure_%s/jetPtClosure_%s%s_C%dT%dE%d", fJetHistogramName, fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality, iGenJetPt, iJetEta);
-            fhJetPtClosure[iGenJetPt][iJetEta][iCentrality][iClosureParticle] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+              // Legacy naming convention
+              histogramNamer = Form("jetPtClosure_%s/jetPtClosure_%s%s_C%dT%dE%d", fJetHistogramName, fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality, iGenJetPt, iJetEta);
+              fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+              // If we do not find a histogram, try the updated naming convention
+              if(fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle] == NULL){
+                histogramNamer = Form("jetPtClosure_%s/jetPtClosure_%s%s_C%d", fJetHistogramName, fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality);
+                if(iGenJetPt < knGenJetPtBins) histogramNamer.Append(Form("T%d",iGenJetPt));
+                if(iJetEta < knJetEtaBins) histogramNamer.Append(Form("E%d",iJetEta));
+                if(iJetPhi < knJetPhiBins) histogramNamer.Append(Form("P%d",iJetPhi));
+                fhJetPtClosure[iGenJetPt][iJetEta][iJetPhi][iCentrality][iClosureParticle] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+              }
             
+            } // Jet phi bin loop
           } // Jet eta bin loop
         } // Generator level jet pT loop
       } // Closure particle type (quark/gluon) loop
@@ -4078,8 +4131,8 @@ TH2D* EECHistogramManager::GetHistogramJetPtResponseMatrix(const int iCentrality
 }
 
 // Getter for jet pT closure histograms
-TH1D* EECHistogramManager::GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const{
-  return fhJetPtClosure[iGenPtBin][iEtaBin][iCentrality][iClosureParticle];
+TH1D* EECHistogramManager::GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle) const{
+  return fhJetPtClosure[iGenPtBin][iEtaBin][iPhiBin][iCentrality][iClosureParticle];
 }
 
 // Getter for measured jet pT unfolding distribution

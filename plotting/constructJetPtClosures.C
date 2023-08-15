@@ -155,22 +155,25 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/PbPbMC2018_RecoGen_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_newRatioBins_processed_2023-04-21.root";
+  TString closureFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_fixCentrality_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAODnewR_4pC_wtaAxis_noTrigger_jetPtClosure_processed_2023-01-30.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_jetPtClosureIncludingPhi_projected_2023-08-15.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
+  // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root
   
   bool drawPtClosure = true;
-  bool drawEtaClosure = false;
+  bool drawEtaClosure = true;
+  bool drawPhiClosure = true;
   
   bool includeQuarkGluon = false; // Include only quark and only gluon jet curves
   bool drawGaussFitsPt = false;
     
-  bool fitResolution = true;  // Fit the jet pT resolution histograms
+  bool fitResolution = false;  // Fit the jet pT resolution histograms
   
-  bool saveFigures = false;  // Save the figures to file
+  bool saveFigures = true;  // Save the figures to file
   
   // ==================================================================
   // =================== Configuration ready ==========================
@@ -197,10 +200,13 @@ void constructJetPtClosures(){
   // Initialize reco/gen ratio and closure histograms
   TH1D *hRecoGenRatio[EECHistogramManager::knGenJetPtBins][nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   TH1D *hRecoGenRatioEta[EECHistogramManager::knJetEtaBins][nCentralityBins][EECHistograms::knClosureParticleTypes+1];
+  TH1D *hRecoGenRatioPhi[EECHistogramManager::knJetPhiBins][nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   TH1D *hJetPtClosure[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   TH1D *hJetPtClosureSigma[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   TH1D *hJetPtClosureEta[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   TH1D *hJetPtClosureSigmaEta[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
+  TH1D *hJetPtClosurePhi[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
+  TH1D *hJetPtClosureSigmaPhi[nCentralityBins][EECHistograms::knClosureParticleTypes+1];
   const char* histogramNamer;
   
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -211,6 +217,9 @@ void constructJetPtClosures(){
       for(int iJetEta = 0; iJetEta < EECHistogramManager::knJetEtaBins; iJetEta++){
         hRecoGenRatioEta[iJetEta][iCentrality][iClosureParticle] = NULL;
       }
+      for(int iJetPhi = 0; iJetPhi < EECHistogramManager::knJetPhiBins; iJetPhi++){
+        hRecoGenRatioPhi[iJetPhi][iCentrality][iClosureParticle] = NULL;
+      }
       histogramNamer = Form("jetPtClosure_Cent%d_Part%d", iCentrality, iClosureParticle);
       hJetPtClosure[iCentrality][iClosureParticle] = new TH1D(histogramNamer,histogramNamer,45,50,500);
       histogramNamer = Form("jetPtClosureSigma_Cent%d_Part%d", iCentrality, iClosureParticle);
@@ -219,6 +228,10 @@ void constructJetPtClosures(){
       hJetPtClosureEta[iCentrality][iClosureParticle] = new TH1D(histogramNamer,histogramNamer,50,-2.5,2.5);
       histogramNamer = Form("jetPtClosureSigmaEta_Cent%d_Part%d", iCentrality, iClosureParticle);
       hJetPtClosureSigmaEta[iCentrality][iClosureParticle] = new TH1D(histogramNamer,histogramNamer,50,-2.5,2.5);
+      histogramNamer = Form("jetPtClosurePhi_Cent%d_Part%d", iCentrality, iClosureParticle);
+      hJetPtClosurePhi[iCentrality][iClosureParticle] = new TH1D(histogramNamer,histogramNamer,64,-TMath::Pi(),TMath::Pi());
+      histogramNamer = Form("jetPtClosureSigmaPhi_Cent%d_Part%d", iCentrality, iClosureParticle);
+      hJetPtClosureSigmaPhi[iCentrality][iClosureParticle] = new TH1D(histogramNamer,histogramNamer,64,-TMath::Pi(),TMath::Pi());
     } // Closure particle loop (quark/gluon/no selection)
   } // Centrality loop
   
@@ -243,7 +256,7 @@ void constructJetPtClosures(){
         for(int iGenJetPt = minGenPt; iGenJetPt < EECHistogramManager::knGenJetPtBins; iGenJetPt++){
 
           // Read the reco/gen histogram from the file
-          hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(iGenJetPt, EECHistogramManager::knJetEtaBins, iCentrality, iClosureParticle);
+          hRecoGenRatio[iGenJetPt][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(iGenJetPt, EECHistogramManager::knJetEtaBins, EECHistogramManager::knJetPhiBins, iCentrality, iClosureParticle);
           
           // Fit a gauss to the histogram
           if(drawGaussFitsPt){
@@ -270,7 +283,7 @@ void constructJetPtClosures(){
         for(int iJetEta = 9; iJetEta < EECHistogramManager::knJetEtaBins-9; iJetEta++){
           
           // Read the reco/gen histogram from the file
-          hRecoGenRatioEta[iJetEta][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(EECHistogramManager::knGenJetPtBins, iJetEta, iCentrality, iClosureParticle);
+          hRecoGenRatioEta[iJetEta][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(EECHistogramManager::knGenJetPtBins, iJetEta, EECHistogramManager::knJetPhiBins, iCentrality, iClosureParticle);
           
           // Fit a gauss to the histogram
           std::tie(gaussMean,gaussSigma,gaussMeanError,gaussSigmaError) = fitGauss(hRecoGenRatioEta[iJetEta][iCentrality][iClosureParticle]);
@@ -280,6 +293,29 @@ void constructJetPtClosures(){
           hJetPtClosureEta[iCentrality][iClosureParticle]->SetBinError(iJetEta+1,gaussMeanError);
           hJetPtClosureSigmaEta[iCentrality][iClosureParticle]->SetBinContent(iJetEta+1,gaussSigma);
           hJetPtClosureSigmaEta[iCentrality][iClosureParticle]->SetBinError(iJetEta+1,gaussSigmaError);
+          
+        } // Jet eta loop
+      } // eta closure if
+
+      if(drawPhiClosure){
+
+        // Loop over all jet phi bins
+        for(int iJetPhi = 0; iJetPhi < EECHistogramManager::knJetPhiBins; iJetPhi++){
+
+          // In PbPb, due to detector inefficiencies, we cut the region -0.1 < phi < 1.2
+          if(!ppData && (iJetPhi > 30) && (iJetPhi <46)) continue;
+          
+          // Read the reco/gen histogram from the file
+          hRecoGenRatioPhi[iJetPhi][iCentrality][iClosureParticle] = closureHistograms->GetHistogramJetPtClosure(EECHistogramManager::knGenJetPtBins, EECHistogramManager::knJetEtaBins, iJetPhi, iCentrality, iClosureParticle);
+          
+          // Fit a gauss to the histogram
+          std::tie(gaussMean,gaussSigma,gaussMeanError,gaussSigmaError) = fitGauss(hRecoGenRatioPhi[iJetPhi][iCentrality][iClosureParticle]);
+          
+          // Fill the histogram with the fit parameters
+          hJetPtClosurePhi[iCentrality][iClosureParticle]->SetBinContent(iJetPhi+1,gaussMean);
+          hJetPtClosurePhi[iCentrality][iClosureParticle]->SetBinError(iJetPhi+1,gaussMeanError);
+          hJetPtClosureSigmaPhi[iCentrality][iClosureParticle]->SetBinContent(iJetPhi+1,gaussSigma);
+          hJetPtClosureSigmaPhi[iCentrality][iClosureParticle]->SetBinError(iJetPhi+1,gaussSigmaError);
           
         } // Jet eta loop
       } // eta closure if
@@ -321,6 +357,12 @@ void constructJetPtClosures(){
       
       drawClosureHistogram(hJetPtClosureSigmaEta[iCentrality], "#eta", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "EtaResolution", saveFigures);
       
+    }
+
+    if(drawPhiClosure){
+      drawClosureHistogram(hJetPtClosurePhi[iCentrality], "#varphi", "#mu(reco p_{T} / gen p_{T})", ppData, iCentrality, 0, includeQuarkGluon, "PhiClosure", saveFigures);
+      
+      drawClosureHistogram(hJetPtClosureSigmaPhi[iCentrality], "#varphi", "#sigma(reco p_{T} / gen p_{T})", ppData, iCentrality, 1, includeQuarkGluon, "PhiResolution", saveFigures);
     }
     
   } // Centrality loop

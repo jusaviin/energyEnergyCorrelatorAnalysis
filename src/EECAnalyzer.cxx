@@ -1514,7 +1514,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   
   // Define a filler for the closure histogram
-  const Int_t nAxesClosure = 6;
+  const Int_t nAxesClosure = 7;
   Double_t fillerClosure[nAxesClosure];
   
   // Find the pT of the matched gen jet and flavor of reference parton
@@ -1570,6 +1570,7 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   fillerClosure[3] = centrality;           // Axis 3: Centrality of the event
   fillerClosure[4] = referencePartonIndex; // Axis 4: Reference parton type (quark/gluon)
   fillerClosure[5] = recoPt/matchedGenPt;  // Axis 5: Reconstructed level jet to generator level jet pT ratio
+  fillerClosure[6] = jetPhi;               // Axis 6: phi of the jet under consideration
   
   // Fill the closure histogram
   fHistograms->fhJetPtClosure->Fill(fillerClosure,fTotalEventWeight);

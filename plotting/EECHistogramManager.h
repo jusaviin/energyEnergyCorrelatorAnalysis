@@ -53,6 +53,7 @@ public:
   static const int kMaxTrackPtBins = 10;         // Maximum allowed number of track pT bins
   static const int knGenJetPtBins = 45;          // Number of generator level jet pT bins for jet pT closures
   static const int knJetEtaBins = 50;            // Number of jet eta bins for jet pT closures
+  static const int knJetPhiBins = 64;            // Number of jet phi bins for jet pT closures
   static const int kMaxJetPtBinsEEC = 20;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
@@ -281,7 +282,7 @@ public:
   TH2D* GetHistogramJetPtResponseMatrix(const int iCentrality) const;
 
   // Getter for jet pT closure histograms
-  TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
+  TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
   
   // Getters for jet pT unfolding histograms
   TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const; // Getter for measured jet pT unfolding distribution
@@ -439,7 +440,7 @@ private:
   TH2D* fhJetPtResponseMatrix[kMaxCentralityBins];
 
   // Histograms for jet pT closure
-  TH1D* fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1];  // Jet pT closure
+  TH1D* fhJetPtClosure[knGenJetPtBins+1][knJetEtaBins+1][knJetPhiBins+1][kMaxCentralityBins][EECHistograms::knClosureParticleTypes+1];  // Jet pT closure
 
   // Histograms for jet pT unfolding study
   TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
