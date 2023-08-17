@@ -41,6 +41,8 @@ EECHistograms::EECHistograms() :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(0), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(0),
   fhJetPtClosure(0),
+  fhJetNumberInReflectedCone(0),
+  fhJetPtInReflectedCone(0),
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
@@ -85,6 +87,8 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(0), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(0),  
   fhJetPtClosure(0),
+  fhJetNumberInReflectedCone(0),
+  fhJetPtInReflectedCone(0),
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
@@ -129,6 +133,8 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(in.fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(in.fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus),
   fhJetPtClosure(in.fhJetPtClosure),
+  fhJetNumberInReflectedCone(in.fhJetNumberInReflectedCone),
+  fhJetPtInReflectedCone(in.fhJetPtInReflectedCone),
   fhUnfoldingMeasured(in.fhUnfoldingMeasured),
   fhUnfoldingTruth(in.fhUnfoldingTruth),
   fhUnfoldingResponse(in.fhUnfoldingResponse),
@@ -177,6 +183,8 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus = in.fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus = in.fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus;
   fhJetPtClosure = in.fhJetPtClosure;
+  fhJetNumberInReflectedCone = in.fhJetNumberInReflectedCone;
+  fhJetPtInReflectedCone = in.fhJetPtInReflectedCone;
   fhUnfoldingMeasured = in.fhUnfoldingMeasured;
   fhUnfoldingTruth = in.fhUnfoldingTruth;
   fhUnfoldingResponse = in.fhUnfoldingResponse;
@@ -221,6 +229,8 @@ EECHistograms::~EECHistograms(){
   delete fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;
   delete fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus;
   delete fhJetPtClosure;
+  delete fhJetNumberInReflectedCone;
+  delete fhJetPtInReflectedCone;
   delete fhUnfoldingMeasured;
   delete fhUnfoldingTruth;
   delete fhUnfoldingResponse;
@@ -341,6 +351,16 @@ void EECHistograms::CreateHistograms(){
   const Double_t maxPt1TimesPt2 = 90000;
   const Int_t nPt1TimesPt2Bins = 24;
   const Double_t pt1TimesPt2Bins[nPt1TimesPt2Bins+1] = {4,6,9,12,16,20,25,30,35,40,45,50,60,70,80,90,100,120,140,180,240,400,600,2000,90000};
+
+  // Bins for jet pT within the reflected cone
+  const Double_t minJetPtReflectedCone = 25;
+  const Double_t maxJetPtReflectedCone = 5020;
+  const Int_t nJetPtInReflectedConeBins = 5;
+  const Double_t jetPtReflectedConeBins[nJetPtInReflectedConeBins+1] = {25, 40, 60, 80, 100, 5020};
+
+  const Double_t minNumberOfJetsReflectedCone = -0.5;
+  const Double_t maxNumberOfJetsReflectedCone = 4.5;
+  const Int_t nNumberOfJetsReflectedConeBins = 5;
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
@@ -503,6 +523,11 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t lowBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t highBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
+
+  const Int_t nAxesReflectedConeQA = 2;
+  Int_t nBinsReflectedConeQA[nAxesReflectedConeQA];
+  Double_t lowBinBorderReflectedConeQA[nAxesReflectedConeQA];
+  Double_t highBinBorderReflectedConeQA[nAxesReflectedConeQA];
   
   
   // ======== Plain TH1 histograms ========
@@ -1030,7 +1055,42 @@ void EECHistograms::CreateHistograms(){
   fhParticlePtResponse->SetBinEdges(1,pt1TimesPt2Bins);       // pT1*pT2 bins for generator level particles
   fhParticlePtResponse->SetBinEdges(2,jetPtBinsEEC);          // Jet pT bins
   fhParticlePtResponse->SetBinEdges(3,trackPtBinsEEC);        // Track pT bins
-  fhParticlePtResponse->SetBinEdges(4, wideCentralityBins);   // Centrality bins
+  fhParticlePtResponse->SetBinEdges(4,wideCentralityBins);   // Centrality bins
+
+  // ======== Jet pT histograms within the reflected cone ========
+
+  // Axis 0 for the number of jets in reflected cone histograms: number of jets
+  nBinsReflectedConeQA[0] = nNumberOfJetsReflectedConeBins;         // nBins for number of jets within the reflected cone
+  lowBinBorderReflectedConeQA[0] = minNumberOfJetsReflectedCone;    // low bin border for centrality
+  highBinBorderReflectedConeQA[0] = maxNumberOfJetsReflectedCone;   // high bin border for centrality
+
+  // Axis 1 for the number of jets in reflected cone histograms: centrality
+  nBinsReflectedConeQA[1] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderReflectedConeQA[1] = minCentrality;    // low bin border for centrality
+  highBinBorderReflectedConeQA[1] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for the number of jets within the reflected cone
+  fhJetNumberInReflectedCone = new THnSparseF("jetNumberInReflectedCone", "jetNumberInReflectedCone", nAxesReflectedConeQA, nBinsReflectedConeQA, lowBinBorderReflectedConeQA, highBinBorderReflectedConeQA); fhJetNumberInReflectedCone->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhJetNumberInReflectedCone->SetBinEdges(1,wideCentralityBins);  // Centrality bins 
+
+  // Axis 0 for the jet pT in reflected cone histograms: jet pT
+  nBinsReflectedConeQA[0] = nJetPtInReflectedConeBins;       // nBins for jet pT within the reflected cone
+  lowBinBorderReflectedConeQA[0] = minJetPtReflectedCone;    // low bin border for jet pT within the reflected cone
+  highBinBorderReflectedConeQA[0] = maxJetPtReflectedCone;   // high bin border for jet pT within the reflected cone
+
+  // Axis 1 for the number of jets in reflected cone histograms: centrality
+  nBinsReflectedConeQA[1] = nWideCentralityBins;     // nBins for centrality
+  lowBinBorderReflectedConeQA[1] = minCentrality;    // low bin border for centrality
+  highBinBorderReflectedConeQA[1] = maxCentrality;   // high bin border for centrality
+
+  // Create the histogram for the jet pT within the reflected cone
+  fhJetPtInReflectedCone = new THnSparseF("jetPtInReflectedCone", "jetPtInReflectedCone", nAxesReflectedConeQA, nBinsReflectedConeQA, lowBinBorderReflectedConeQA, highBinBorderReflectedConeQA); fhJetPtInReflectedCone->Sumw2();
+
+  // Set custom bin axes for the histograms
+  fhJetPtInReflectedCone->SetBinEdges(0,jetPtReflectedConeBins);  // Jet pT bins 
+  fhJetPtInReflectedCone->SetBinEdges(1,wideCentralityBins);      // Centrality bins 
 
 }
 
@@ -1067,6 +1127,8 @@ void EECHistograms::Write() const{
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Write();
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Write();
   fhJetPtClosure->Write();
+  fhJetNumberInReflectedCone->Write();
+  fhJetPtInReflectedCone->Write();
   fhUnfoldingMeasured->Write();
   fhUnfoldingTruth->Write();
   fhUnfoldingResponse->Write();

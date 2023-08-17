@@ -102,6 +102,7 @@ EECAnalyzer::EECAnalyzer() :
   fMcCorrelationType(0),
   fJetRadius(0.4),
   fDoReflectedCone(false),
+  fDoReflectedConeQA(false),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -303,6 +304,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
   fDoReflectedCone(in.fDoReflectedCone),
+  fDoReflectedConeQA(in.fDoReflectedConeQA),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -377,6 +379,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
   fDoReflectedCone = in.fDoReflectedCone;
+  fDoReflectedConeQA = in.fDoReflectedConeQA;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -524,6 +527,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
+  fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
   fReflectedConeWeighter->SetDisableWeights((fCard->Get("ApplyReflectedConeWeight") == 0));
   
   //************************************************
@@ -583,6 +587,12 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetEta = 0;              // eta of the i:th jet in the event
   Int_t jetFlavor = 0;              // Flavor of the jet. 0 = Quark jet. 1 = Gluon jet.
   Double_t jetPtWeight = 1;         // Weighting for jet pT
+
+  // Variables for reflected cone QA study
+  Double_t reflectedConeJetPt = 0;   // pT of a jet that might be in the reflected cone
+  Double_t reflectedConeJetPhi = 0;  // phi of a jet that might be in the reflected cone
+  Double_t reflectedConeJetEta = 0;  // eta of a jet that might be in the reflected cone
+  Int_t nJetsInReflectedCone = 0;    // number of jets found inside the reflected cone
   
   // Variables for smearing study
   Double_t smearingFactor = 0;       // Larger of the JEC uncertainties
@@ -643,11 +653,13 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillMultiplicityInJetCone = 5;
   const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
+  const Int_t nFillReflectedConeQA = 2;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
   Double_t fillerParticleDensityInJetCone[nFillParticleDensityInJetCone];
   Double_t fillerMaxParticlePtInJetCone[nFillMaxParticlePtInJetCone];
+  Double_t fillerReflectedConeQA[nFillReflectedConeQA];
   
   // For 2018 PbPb and 2017 pp data, we need to correct jet pT
   std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
@@ -894,7 +906,7 @@ void EECAnalyzer::RunAnalysis(){
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
       
       // Jet loop
-      for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++) {
+      for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
         
         // Only do actual jet stuff with actual jets
         if(circleJet){
@@ -1220,6 +1232,58 @@ void EECAnalyzer::RunAnalysis(){
             } // Search for track from reflected cone
             
           } // Track loop
+
+          // Fill the quality assuranve histograms for reflected cone
+          if(fDoReflectedConeQA){
+
+            // Loop over the jets again
+            nJetsInReflectedCone = 0;
+            for(Int_t reflectedConeJetIndex = 0; reflectedConeJetIndex < nJets; reflectedConeJetIndex++){
+
+              reflectedConeJetPt = fJetReader->GetJetRawPt(reflectedConeJetIndex);  // Get the raw pT and do manual correction later
+              reflectedConeJetPhi = fJetReader->GetJetPhi(reflectedConeJetIndex);
+              reflectedConeJetEta = fJetReader->GetJetEta(reflectedConeJetIndex);
+
+              // First check if the jet is close to the reflected cone
+              if(GetDeltaR(jetReflectedEta, jetPhi, reflectedConeJetEta, reflectedConeJetPhi) > fJetRadius) continue;
+
+              // Jet quality cuts
+              if(TMath::Abs(reflectedConeJetEta) >= fJetEtaCut) continue; // Cut for jet eta
+              if(fCutBadPhiRegion && (reflectedConeJetPhi > -0.1 && reflectedConeJetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
+
+              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
+                continue; // Cut for jets with only very low pT particles
+              }
+              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
+                continue; // Cut for jets where all the pT is taken by one track
+              }
+
+              // For 2018 data: do a correction for the jet pT
+              fJetCorrector2018->SetJetPT(reflectedConeJetPt);
+              fJetCorrector2018->SetJetEta(reflectedConeJetEta);
+              fJetCorrector2018->SetJetPhi(reflectedConeJetPhi);
+
+              reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
+
+              // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
+              if(jetPt < 25) continue;
+              if(jetPt > fJetMaximumPtCut) continue;
+
+              // If all the cuts are passed, we have found a jet within the reflected cone
+              nJetsInReflectedCone++;
+
+              // Fill the histograms containing all the jet pT:s found within the reflected cone
+              fillerReflectedConeQA[0] = reflectedConeJetPt;
+              fillerReflectedConeQA[1] = centrality;
+              fHistograms->fhJetPtInReflectedCone->Fill(fillerReflectedConeQA, fTotalEventWeight);
+            }
+
+            // Fill the histograms for the total number of jets found in reflected cone
+            fillerReflectedConeQA[0] = nJetsInReflectedCone;
+            fillerReflectedConeQA[1] = centrality;
+            fHistograms->fhJetNumberInReflectedCone->Fill(fillerReflectedConeQA, fTotalEventWeight);
+
+          }
           
           // Fill the multiplicity histograms within the jet and maximum track pT within the jet cone histograms
           if(fFillJetConeHistograms){

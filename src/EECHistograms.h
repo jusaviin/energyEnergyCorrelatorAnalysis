@@ -67,13 +67,17 @@ public:
   THnSparseF* fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;  // Histogram for energy-energy correlator with track pair efficiency correction increased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus; // Histogram for energy-energy correlator with track pair efficiency correction decreased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhJetPtClosure; // Jet pT closure histograms. Also information for response matrix. [gen pT][reco pT][centrality][q/g][reco/gen]
+
+  // Quality assurance histograms for the reflected cone
+  THnSparseF* fhJetNumberInReflectedCone;  // Number of jets above 25 GeV found in reflected cone
+  THnSparseF* fhJetPtInReflectedCone;      // pT of the jets found in reflected cone
   
   // Extra histogram for unfolding study
   THnSparseF* fhUnfoldingMeasured;  // Measured disribution for unfolding
   THnSparseF* fhUnfoldingTruth;     // Truth distribution for unfolding
   THnSparseF* fhUnfoldingResponse;  // Unfolding response matrix
 
-  // Testing particle matching
+  // Reconstructed to generator level particle matching
   THnSparseF* fhParticlesCloseToTracks;     // Histogram counting particles close to tracks
   THnSparseF* fhTracksWithMatchedParticle;  // Histogram telling the fraction of particles for which a match is found
   THnSparseF* fhParticleDeltaRResponse;     // Response matrix for particle pair deltaR values

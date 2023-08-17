@@ -161,6 +161,7 @@ public:
   // Configuration for energy-energy correlators
   Double_t fJetRadius;       // Jet radius parameter
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
+  Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms
