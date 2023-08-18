@@ -41,6 +41,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadJetPtResponseMatrix = false;
   bool loadJetPtUnfoldingHistograms = false;
   bool loadTrackParticleMatchingHistograms = false;
+  bool loadReflectedConeQAHistograms = false;
   
   /*
    * Loading only selected histograms. Done with bitwise check of an integer
@@ -145,6 +146,11 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     centralityBinBorders[0] = -0.5;
   }
 
+  // If we are loading energy-energy correlator histograms and reflected cone QA histograms are included, load them
+  if(loadEnergyEnergyCorrelators){
+    if(card->GetDoReflectedConeQA()) loadReflectedConeQAHistograms = true;
+  }
+
   // If we manually define bin borders, check that they match with the ones on the file or give a warning
   bool binFound;
   if(!readCentralityBinsFromFile){
@@ -213,6 +219,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);
   histograms->SetLoadJetPtUnfoldingHistograms(loadJetPtUnfoldingHistograms);
   histograms->SetLoadTrackParticleMatchingHistograms(loadTrackParticleMatchingHistograms);
+  histograms->SetLoadReflectedConeQAHistograms(loadReflectedConeQAHistograms);
   histograms->SetJetFlavor(jetFlavor);
 
   // Set the binning information

@@ -81,6 +81,11 @@ private:
   const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationMinus"};
   const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC efficiency variation +", "EEC efficiency variation -", "EEC pair eff variation +", "EEC pair edd variation -"};
   const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded", "BackgroundAfterUnfolding", "UnfoldedSignal"};
+
+  // Naming for reflected cone QA histograms
+  const char* fReflectedConeQAFolderName = "reflectedConeQA";
+  const char* fNumberOfJetsWithinReflectedConeName = "jetNumberInReflectedCone"; 
+  const char* fJetPtWithinReflectedConeName = "jetPtInReflectedCone"; 
   
   // Naming for closure particle
   const char* fClosureParticleName[EECHistograms::knClosureParticleTypes+1] = {"_quark","_gluon",""};
@@ -165,6 +170,9 @@ public:
   void SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(const bool loadOrNot); // Setter for loading energy-energy correlators with negative track pair efficiency variation 
   void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus); // Setter for loading all energy-energy correlators
   
+  // Setters for reflected cone QA
+  void SetLoadReflectedConeQAHistograms(const bool loadOrNot);
+
   // Setters for jet pT unfolding study
   void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the jet pT unfolding study
 
@@ -277,6 +285,10 @@ public:
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
+
+  // Getters for reflected cone QA histograms
+  TH1D* GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality);
+  TH1D* GetHistogramJetPtWithinReflectedCone(const int iCentrality);
   
   // Getter for jet pT response matrix
   TH2D* GetHistogramJetPtResponseMatrix(const int iCentrality) const;
@@ -349,6 +361,7 @@ private:
   bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
   bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
+  bool fLoadReflectedConeQAHistograms;                     // Load the reflected cone QA histograms
   bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
   bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
@@ -436,6 +449,10 @@ private:
   TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
   TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
 
+  // Quality assurance histograms for reflected cone
+  TH1D* fhNumberOfJetsWithinReflectedCone[kMaxCentralityBins];
+  TH1D* fhJetPtWithinReflectedCone[kMaxCentralityBins];
+
   // Jet pT response matrix
   TH2D* fhJetPtResponseMatrix[kMaxCentralityBins];
 
@@ -475,6 +492,7 @@ private:
   void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
   void LoadMaxParticlePtInJetConeHistograms(); // Loader for maximum particle pT in jet cone histograms
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
+  void LoadReflectedConeQAHistograms();        // Loader for reflected cone QA histograms
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   void LoadJetPtUnfoldingHistograms(); // Loader for jet pT unfolding histograms
@@ -494,6 +512,7 @@ private:
   void WriteParticleDensityAroundJetsHistograms();  // Write the particle density histograms around the jet axes
   void WriteMaxParticlePtWithinJetConeHistograms(); // Write the maximum particle pT within the jet cone histograms
   void WriteEnergyEnergyCorrelatorHistograms();     // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteReflectedConeQAHistograms();            // Write the reflected cone QA histograms to the file that is currently open
   void WriteJetPtResponseMatrix();                  // Write the jet pT response matrices
   void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
   void WriteJetPtUnfoldingHistograms();             // Write the jet pT unfolding histograms to the output file

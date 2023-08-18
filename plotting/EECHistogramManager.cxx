@@ -24,6 +24,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadJetPtResponseMatrix(false),
   fLoadMultiplicityInJetHistograms(false),
   fLoadMaxParticlePtWithinJetConeHistograms(false),
+  fLoadReflectedConeQAHistograms(false),
   fLoadJetPtUnfoldingHistograms(false),
   fLoadTrackParticleMatchingHistograms(false),
   fJetFlavor(0),
@@ -177,6 +178,10 @@ EECHistogramManager::EECHistogramManager() :
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
     } // Energy-energy correlator type loop
+
+    // QA histograms for energy-energy correlators
+    fhNumberOfJetsWithinReflectedCone[iCentrality] = NULL;
+    fhJetPtWithinReflectedCone[iCentrality] = NULL;
     
     // Jet pT closure histograms
     for(int iGenJetPt = 0; iGenJetPt <= knGenJetPtBins; iGenJetPt++){
@@ -340,6 +345,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadJetPtResponseMatrix(in.fLoadJetPtResponseMatrix),
   fLoadMultiplicityInJetHistograms(in.fLoadMultiplicityInJetHistograms),
   fLoadMaxParticlePtWithinJetConeHistograms(in.fLoadMaxParticlePtWithinJetConeHistograms),
+  fLoadReflectedConeQAHistograms(in.fLoadReflectedConeQAHistograms),
   fLoadJetPtUnfoldingHistograms(in.fLoadJetPtUnfoldingHistograms),
   fLoadTrackParticleMatchingHistograms(in.fLoadTrackParticleMatchingHistograms),
   fJetFlavor(in.fJetFlavor),
@@ -486,6 +492,10 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
     } // Energy-energy correlator type loop
+
+    // QA histograms for energy-energy correlators
+    fhNumberOfJetsWithinReflectedCone[iCentrality] = in.fhNumberOfJetsWithinReflectedCone[iCentrality];
+    fhJetPtWithinReflectedCone[iCentrality] = in.fhJetPtWithinReflectedCone[iCentrality];
     
     // Jet pT closure histograms
     for(int iGenJetPt = 0; iGenJetPt <= knGenJetPtBins; iGenJetPt++){
@@ -758,6 +768,9 @@ void EECHistogramManager::LoadHistograms(){
   
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
+
+  // Load reflected cone QA histograms
+  LoadReflectedConeQAHistograms();
   
   // Load jet pT response matrices
   LoadJetPtResponseMatrix();
@@ -1461,6 +1474,63 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
 }
 
 /*
+ * Loader for reflected cone QA histograms
+ *
+ * THnSparse for jets above 25 GeV within the reflected cone:
+ *
+ *   Histogram name: jetNumberInReflectedCone
+ *
+ *     Axis index               Content of axis
+ * -----------------------------------------------------------
+ *       Axis 0        Number of jets within reflected cone
+ *       Axis 1                   Centrality
+ *
+ * 
+ *  THnSparse for jet pT within reflected cone:
+ *
+ *   Histogram name: jetPtInReflectedCone
+ *
+ *     Axis index               Content of axis
+ * -----------------------------------------------------------
+ *       Axis 0         pT of jets within reflected cone
+ *       Axis 1                   Centrality
+ */
+void EECHistogramManager::LoadReflectedConeQAHistograms(){
+  
+  if(!fLoadReflectedConeQAHistograms) return; // Do not load the histograms if they are not selected for loading
+  
+  // Define helper variables
+  int duplicateRemoverCentrality = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  THnSparseD* histogramArray;
+
+  // Load the number of jets within reflected cone histograms
+  histogramArray = (THnSparseD*)fInputFile->Get(fNumberOfJetsWithinReflectedConeName);
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+    // Select the centrality bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
+
+    fhNumberOfJetsWithinReflectedCone[iCentrality] = FindHistogram(histogramArray,0,1,lowerCentralityBin,higherCentralityBin,0,0,0,false);
+
+  } // Centrality loop
+
+  // Load the jets pT within reflected cone histograms
+  histogramArray = (THnSparseD*)fInputFile->Get(fJetPtWithinReflectedConeName);
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+    // Select the centrality bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
+
+    fhJetPtWithinReflectedCone[iCentrality] = FindHistogram(histogramArray,0,1,lowerCentralityBin,higherCentralityBin,0,0,0,false);
+
+  } // Centrality loop
+}
+
+/*
  * Loader for jet pT response matrix
  *
  * THnSparse for closure histograms is used for this:
@@ -2126,6 +2196,9 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   
   // Write the energy-energy correlator histograms to the output file
   WriteEnergyEnergyCorrelatorHistograms();
+
+  // Write the reflected cone QA histogram to the output file
+  WriteReflectedConeQAHistograms();
   
   // Write the jet pT response matrices
   WriteJetPtResponseMatrix(); 
@@ -2546,6 +2619,38 @@ void EECHistogramManager::WriteJetPtResponseMatrix(){
     gDirectory->cd("../");
     
   } // Writing jet pT response matrices
+  
+}
+
+/*
+ * Write the reflected cone QA histograms to the file that is currently open
+ */
+void EECHistogramManager::WriteReflectedConeQAHistograms(){
+  
+  // Helper variable for histogram naming
+  TString histogramNamer;
+  
+  // Write the jet histograms to the output file
+  if(!fLoadReflectedConeQAHistograms) return;  // Only write the reflected cone QA histograms if they are loaded
+  
+  // Create a directory for the histograms if it does not already exist
+  if(!gDirectory->GetDirectory(fReflectedConeQAFolderName)) gDirectory->mkdir(fReflectedConeQAFolderName);
+  gDirectory->cd(fReflectedConeQAFolderName);
+  
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+    
+    // Number of jets within the reflected cone
+    histogramNamer = Form("%s_C%d",fNumberOfJetsWithinReflectedConeName,iCentrality);
+    if(fhNumberOfJetsWithinReflectedCone[iCentrality]) fhNumberOfJetsWithinReflectedCone[iCentrality]->Write(histogramNamer.Data(), TObject::kOverwrite);
+    
+    // Jet pT within the reflected cone
+    histogramNamer = Form("%s_C%d",fJetPtWithinReflectedConeName,iCentrality);
+    if(fhJetPtWithinReflectedCone[iCentrality]) fhJetPtWithinReflectedCone[iCentrality]->Write(histogramNamer.Data(), TObject::kOverwrite);
+    
+  } // Loop over centrality bins
+  
+  // Return back to main directory
+  gDirectory->cd("../");
   
 }
 
@@ -3298,6 +3403,21 @@ void EECHistogramManager::LoadProcessedHistograms(){
     } // Loop over centrality bins
     
   } // Energy-energy correlator type loop
+
+  // Load the reflected cone QA histograms
+  if(fLoadReflectedConeQAHistograms){
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      histogramNamer = Form("%s/%s_C%d", fReflectedConeQAFolderName, fNumberOfJetsWithinReflectedConeName, iCentrality);
+      fhNumberOfJetsWithinReflectedCone[iCentrality] = (TH1D*)fInputFile->Get(histogramNamer.Data());
+
+      histogramNamer = Form("%s/%s_C%d", fReflectedConeQAFolderName, fJetPtWithinReflectedConeName, iCentrality);
+      fhJetPtWithinReflectedCone[iCentrality] = (TH1D*)fInputFile->Get(histogramNamer.Data());
+
+    }  // Centrality loop
+  }
   
   // Load the jet pT response matrices from a processed file
   if(fLoadJetPtResponseMatrix){
@@ -3651,6 +3771,11 @@ void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegul
   SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEfficiencyVariationMinus);
   SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadPairEfficiencyVariationPlus);
   SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadPairEfficiencyVariationMinus);
+}
+
+// Setter for loading reflected cone QA histograms
+void EECHistogramManager::SetLoadReflectedConeQAHistograms(const bool loadOrNot){
+  fLoadReflectedConeQAHistograms = loadOrNot;
 }
 
 // Setter for loading histograms needed in the jet pT unfolding study
@@ -4123,6 +4248,16 @@ TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyE
 // Getter for processed energy-energy correlator histograms
 TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const{
   return fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
+}
+
+// Getter for histograms showing number of jets above 25 GeV within the reflected cone
+TH1D* EECHistogramManager::GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality){
+  return fhNumberOfJetsWithinReflectedCone[iCentrality];
+}
+
+// Getter for pT of the jets that are found from the reflected cone
+TH1D* EECHistogramManager::GetHistogramJetPtWithinReflectedCone(const int iCentrality){
+  return fhJetPtWithinReflectedCone[iCentrality];
 }
 
 // Getter for jet pT response matrix

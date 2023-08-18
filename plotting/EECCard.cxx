@@ -173,6 +173,12 @@ bool EECCard::GetDoReflectedCone() const{
   return !((*fCardEntries[kDoReflectedCone])[1] == 0);
 }
 
+// Getter for the information if reflected cone QA histograms are filled
+bool EECCard::GetDoReflectedConeQA() const{
+  return ((*fCardEntries[kDoReflectedCone])[1] >= 2);
+}
+
+
 /*
  * Get the number of bins for internal index
  * If no vector is found in the index, return 0.

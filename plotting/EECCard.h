@@ -61,7 +61,7 @@ public:
     kCentralityBinEdges,          // Centrality bin edges
     kTrackPtBinEdges,             // Track pT bin edges
     kPtHatBinEdges,               // pT hat bin edges
-    kDoReflectedCone,             // 0 = No background estimation, 1 = Estimate background using reflected cone
+    kDoReflectedCone,             // 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Include reflected cone QA histograms
     kApplyReflectedConeWeight,    // 0 = Do not weight the reflected cone particles, 1 = Weight the reflected cone particles
     kFirstUnfoldedCentralityBin,  // Index of the first centrality bin that has been unfolded
     kLastUnfoldedCentralityBin,   // Index of the last centrality bin that has been unfolded
@@ -173,6 +173,7 @@ public:
   int GetJetType() const;          // Get the jet type index
   double GetJetPtCut() const;      // Get the minimum jet pT cut
   bool GetDoReflectedCone() const; // Get the information if reflected cone histograms are filled
+  bool GetDoReflectedConeQA() const; // Get the information if reflected cone QA hsitograms are filled
   
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double* contents); // Add a vector to the card
