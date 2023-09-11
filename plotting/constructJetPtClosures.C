@@ -155,12 +155,12 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root";
+  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_jetPtClosureIncludingPhi_processed_2023-08-15.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_fixCentrality_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAODnewR_4pC_wtaAxis_noTrigger_jetPtClosure_processed_2023-01-30.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_jetPtClosureIncludingPhi_projected_2023-08-15.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_jetPtClosureIncludingPhi_processed_2023-08-15.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root
   
