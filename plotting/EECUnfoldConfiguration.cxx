@@ -96,6 +96,8 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // Input: chi2Histograms_PbPb_split1_nominalSmear_4pCentShift_2023-07-12.root
       //        chi2Histograms_PbPb_split2_nominalSmear_4pCentShift_2023-07-12.root 
 
+      //fResponseMatrixFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalSmear_responseMatrixRandomDeltaR_processed_2023-08-04.root";
+      //fResponseMatrixFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalSmear_responseMatrixWith20pSmear_processed_2023-07-18.root";
       fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrix%s_processed_2023-07-11.root", splitName[fSplitIndex]);
 
       fBestNumberOfIterations[0][3] = 3;  // Centrality = 0-10, track pT > 2 GeV
