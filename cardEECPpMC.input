@@ -4,11 +4,11 @@
 DataType 2  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 
 # Select correlation type for Monte Carlo runs (Jet-Track)
-McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
+McCorrelationType 1 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Anti-match jets
 
 # Select if you want to use the jet trigger
-TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
+TriggerSelection 4   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
@@ -31,7 +31,7 @@ MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysi
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
 MinMaxTrackPtFraction 0.00 # Minimum fraction of jet pT taken by the highest pT track in jet
 MaxMaxTrackPtFraction 1.00 # Maximum fraction of jet pT taken by the highest pT track in jet
-JetUncertainty 3           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Uncertainty smear down, 5 = Uncertainty smear up
+JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Uncertainty smear down, 5 = Uncertainty smear up
 
 # Cuts for tracks
 TrackEtaCut 2.4             # Region in eta around midrapidity from which tracks are accepted
@@ -50,7 +50,7 @@ TrackEfficiencyVariation 0.022 # For tracking uncertainties, vary the efficiency
 JetPtWeight 0 # In MC: 0 = Do not weight jet pT. 1 = Weight jet pT. 2 = Weight only true jet pT for response matrices.
 
 # Flags for residual correction method
-DisableTrackPairEfficiencyCorrection 0 # 0 = Do not disable the correction. 1 = Disable the correction
+DisableTrackPairEfficiencyCorrection 1 # 0 = Do not disable the correction. 1 = Disable the correction
 
 # Cuts for event selection
 ZVertexCut 15       # Maximum vz value for accepted tracks

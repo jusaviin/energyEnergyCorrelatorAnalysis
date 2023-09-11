@@ -8,7 +8,7 @@ McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 
 # Select if you want to use the jet trigger
-TriggerSelection 1   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
+TriggerSelection 1   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
@@ -26,7 +26,7 @@ FilledHistograms 63 # Bit 0 = Event information histograms                  (to 
 JetType 1                  # 0 = Calo jets, 1 = PF jets
 JetAxis 1                  # 0 = E-scheme axis, 1 = WTA axis
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
-MinJetPtCut 120            # Minimum pT of a leading jet accepted in the analysis
+MinJetPtCut 80            # Minimum pT of a leading jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
@@ -50,7 +50,7 @@ TrackEfficiencyVariation 0.022 # For tracking uncertainties, vary the efficiency
 JetPtWeight 0 # In MC: 0 = Do not weight jet pT. 1 = Weight jet pT. 2 = Weight only true jet pT for response matrices.
 
 # Flags for residual correction method
-DisableTrackPairEfficiencyCorrection 1 # 0 = Do not disable the correction. 1 = Disable the correction
+DisableTrackPairEfficiencyCorrection 0 # 0 = Do not disable the correction. 1 = Disable the correction
 
 # Cuts for event selection
 ZVertexCut 15       # Maximum vz value for accepted tracks
