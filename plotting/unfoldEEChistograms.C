@@ -275,12 +275,18 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   //                     The actual unfolding
   // ********************************************************
 
+  // Error treatment options for unfolding
+  // RooUnfolding::kNoErrors;
+  // RooUnfolding::kErrors;
+  // RooUnfolding::kCovariance;
+  // RooUnfolding::kCovToys;
+
   // Unfolding using Bayesian unfolding
   RooUnfoldBayes* bayesUnfold[nCentralityBins][nTrackPtBins];
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       bayesUnfold[iCentrality][iTrackPt] = new RooUnfoldBayes(rooResponse[iCentrality][iTrackPt], energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt], unfoldConfigurationProvider->GetNumberOfIterations(dataCard->GetBinBordersCentrality(iCentrality), dataCard->GetLowBinBorderTrackPtEEC(iTrackPt)));
-      hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold();
+      hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kErrors);
     } // Track pT loop
   }  // Centrality loop
 
