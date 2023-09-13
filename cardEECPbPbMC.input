@@ -26,7 +26,7 @@ FilledHistograms 31 # Bit 0 = Event information histograms                  (to 
 JetType 3                  # 0 = Calo jets, 1 = csPF jets, 2 = puPF jets, 3 = flowPuCsPF jets 
 JetAxis 1                  # 0 = E-scheme axis, 1 = WTA axis
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
-MinJetPtCut 80             # Minimum pT of a leading jet accepted in the analysis
+MinJetPtCut 50             # Minimum pT of a leading jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
