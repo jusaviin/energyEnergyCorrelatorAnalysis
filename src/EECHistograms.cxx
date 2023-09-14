@@ -46,6 +46,9 @@ EECHistograms::EECHistograms() :
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
+  fhJetPtUnfoldingMeasured(0),
+  fhJetPtUnfoldingTruth(0),
+  fhJetPtUnfoldingResponse(0),
   fhParticlesCloseToTracks(0),
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
@@ -92,6 +95,9 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhUnfoldingMeasured(0),
   fhUnfoldingTruth(0),
   fhUnfoldingResponse(0),
+  fhJetPtUnfoldingMeasured(0),
+  fhJetPtUnfoldingTruth(0),
+  fhJetPtUnfoldingResponse(0),
   fhParticlesCloseToTracks(0),
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
@@ -138,6 +144,9 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhUnfoldingMeasured(in.fhUnfoldingMeasured),
   fhUnfoldingTruth(in.fhUnfoldingTruth),
   fhUnfoldingResponse(in.fhUnfoldingResponse),
+  fhJetPtUnfoldingMeasured(in.fhJetPtUnfoldingMeasured),
+  fhJetPtUnfoldingTruth(in.fhJetPtUnfoldingTruth),
+  fhJetPtUnfoldingResponse(in.fhJetPtUnfoldingResponse),
   fhParticlesCloseToTracks(in.fhParticlesCloseToTracks),
   fhTracksWithMatchedParticle(in.fhTracksWithMatchedParticle),
   fhParticleDeltaRResponse(in.fhParticleDeltaRResponse),
@@ -188,6 +197,9 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhUnfoldingMeasured = in.fhUnfoldingMeasured;
   fhUnfoldingTruth = in.fhUnfoldingTruth;
   fhUnfoldingResponse = in.fhUnfoldingResponse;
+  fhJetPtUnfoldingMeasured = in.fhJetPtUnfoldingMeasured;
+  fhJetPtUnfoldingTruth = in.fhJetPtUnfoldingTruth;
+  fhJetPtUnfoldingResponse = in.fhJetPtUnfoldingResponse;
   fhParticlesCloseToTracks = in.fhParticlesCloseToTracks;
   fhTracksWithMatchedParticle = in.fhTracksWithMatchedParticle;
   fhParticleDeltaRResponse = in.fhParticleDeltaRResponse;
@@ -234,6 +246,9 @@ EECHistograms::~EECHistograms(){
   delete fhUnfoldingMeasured;
   delete fhUnfoldingTruth;
   delete fhUnfoldingResponse;
+  delete fhJetPtUnfoldingMeasured;
+  delete fhJetPtUnfoldingTruth;
+  delete fhJetPtUnfoldingResponse;
   delete fhParticlesCloseToTracks;
   delete fhTracksWithMatchedParticle;
   delete fhParticleDeltaRResponse;
@@ -528,7 +543,16 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsReflectedConeQA[nAxesReflectedConeQA];
   Double_t lowBinBorderReflectedConeQA[nAxesReflectedConeQA];
   Double_t highBinBorderReflectedConeQA[nAxesReflectedConeQA];
-  
+
+  const Int_t nAxesOneDimensionalJetPtUnfoldDistribution = 2;
+  Int_t nBinsOneDimensionalJetPtUnfoldDistribution[nAxesOneDimensionalJetPtUnfoldDistribution];
+  Double_t lowBinBorderOneDimensionalJetPtUnfoldDistribution[nAxesOneDimensionalJetPtUnfoldDistribution];
+  Double_t highBinBorderOneDimensionalJetPtUnfoldDistribution[nAxesOneDimensionalJetPtUnfoldDistribution];
+
+  const Int_t nAxesOneDimensionalJetPtUnfoldResponse = 3;
+  Int_t nBinsOneDimensionalJetPtUnfoldResponse[nAxesOneDimensionalJetPtUnfoldResponse];
+  Double_t lowBinBorderOneDimensionalJetPtUnfoldResponse[nAxesOneDimensionalJetPtUnfoldResponse];
+  Double_t highBinBorderOneDimensionalJetPtUnfoldResponse[nAxesOneDimensionalJetPtUnfoldResponse];
   
   // ======== Plain TH1 histograms ========
   
@@ -944,6 +968,53 @@ void EECHistograms::CreateHistograms(){
   fhUnfoldingResponse->SetBinEdges(2, trackPtBinsEEC);
   fhUnfoldingResponse->SetBinEdges(3, wideCentralityBins);
 
+  // ======== RooUnfold compatible jet pT distributions for 1-dimensional unfolding ========
+
+  // Axis 0 for the 1-dimensional jet pT unfolding histogram: jet pT
+  nBinsOneDimensionalJetPtUnfoldDistribution[0] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderOneDimensionalJetPtUnfoldDistribution[0] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderOneDimensionalJetPtUnfoldDistribution[0] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 1 for the 1-dimensional jet pT unfolding histogram: centrality
+  nBinsOneDimensionalJetPtUnfoldDistribution[1] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderOneDimensionalJetPtUnfoldDistribution[1] = minCentrality;  // low bin border for centrality
+  highBinBorderOneDimensionalJetPtUnfoldDistribution[1] = maxCentrality; // high bin border for centrality
+  
+  // Create the histogram for all jets using the above binning information
+  fhJetPtUnfoldingMeasured = new THnSparseF("oneDimensionalJetPtUnfoldingMeasured", "oneDimensionalJetPtUnfoldingMeasured", nAxesOneDimensionalJetPtUnfoldDistribution, nBinsOneDimensionalJetPtUnfoldDistribution, lowBinBorderOneDimensionalJetPtUnfoldDistribution, highBinBorderOneDimensionalJetPtUnfoldDistribution); fhJetPtUnfoldingMeasured->Sumw2();
+  fhJetPtUnfoldingTruth = new THnSparseF("oneDimensionalJetPtUnfoldingTruth", "oneDimensionalJetPtUnfoldingTruth", nAxesOneDimensionalJetPtUnfoldDistribution, nBinsOneDimensionalJetPtUnfoldDistribution, lowBinBorderOneDimensionalJetPtUnfoldDistribution, highBinBorderOneDimensionalJetPtUnfoldDistribution); fhJetPtUnfoldingTruth->Sumw2();
+
+  // Set custom bin boundaries for the histograms
+  fhJetPtUnfoldingMeasured->SetBinEdges(0,jetPtBinsEEC);        // Custom jet pT bins
+  fhJetPtUnfoldingTruth->SetBinEdges(0,jetPtBinsEEC);           // Custom jet pT bins
+  fhJetPtUnfoldingMeasured->SetBinEdges(1,wideCentralityBins);  // Custom centrality bins
+  fhJetPtUnfoldingTruth->SetBinEdges(1,wideCentralityBins);     // Custom centrality bins
+
+  // ======== RooUnfold compatible jet pT response matrix for 1-dimensional unfolding ========
+
+  // Axis 0 for the 1-dimensional jet pT unfolding response matrix: measured jet pT
+  nBinsOneDimensionalJetPtUnfoldResponse[0] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderOneDimensionalJetPtUnfoldResponse[0] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderOneDimensionalJetPtUnfoldResponse[0] = maxJetPtEEC;   // high bin border for jet pT
+
+  // Axis 1 for the 1-dimensional jet pT unfolding response matrix: truth jet pT
+  nBinsOneDimensionalJetPtUnfoldResponse[1] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderOneDimensionalJetPtUnfoldResponse[1] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderOneDimensionalJetPtUnfoldResponse[1] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 2 for the 1-dimensional jet pT unfolding response matrix: centrality
+  nBinsOneDimensionalJetPtUnfoldResponse[2] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderOneDimensionalJetPtUnfoldResponse[2] = minCentrality;  // low bin border for centrality
+  highBinBorderOneDimensionalJetPtUnfoldResponse[2] = maxCentrality; // high bin border for centrality
+  
+  // Create the histogram for all jets using the above binning information
+  fhJetPtUnfoldingResponse = new THnSparseF("oneDimensionalJetPtUnfoldingResponse", "oneDimensionalJetPtUnfoldingResponse", nAxesOneDimensionalJetPtUnfoldResponse, nBinsOneDimensionalJetPtUnfoldResponse, lowBinBorderOneDimensionalJetPtUnfoldResponse, highBinBorderOneDimensionalJetPtUnfoldResponse); fhJetPtUnfoldingResponse->Sumw2();
+
+  // Set custom bin boundaries for the histograms
+  fhJetPtUnfoldingResponse->SetBinEdges(0,jetPtBinsEEC);        // Custom measured jet pT bins
+  fhJetPtUnfoldingResponse->SetBinEdges(1,jetPtBinsEEC);        // Custom truth jet pT bins
+  fhJetPtUnfoldingResponse->SetBinEdges(2,wideCentralityBins);  // Custom centrality bins
+
   // ======== Testing on how to do track to particle matching ========
 
   // Axis 0 of the particle matching QA histograms: number of generator level particles close to track
@@ -1132,6 +1203,9 @@ void EECHistograms::Write() const{
   fhUnfoldingMeasured->Write();
   fhUnfoldingTruth->Write();
   fhUnfoldingResponse->Write();
+  fhJetPtUnfoldingMeasured->Write();
+  fhJetPtUnfoldingTruth->Write();
+  fhJetPtUnfoldingResponse->Write();
   fhParticlesCloseToTracks->Write();
   fhTracksWithMatchedParticle->Write();
   fhParticleDeltaRResponse->Write();

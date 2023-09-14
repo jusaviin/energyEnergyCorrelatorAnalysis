@@ -1765,6 +1765,9 @@ void EECAnalyzer::FillUnfoldingResponse(){
     // Calculate the energy-energy correlator within this jet
     CalculateEnergyEnergyCorrelatorForUnfolding(selectedTrackPt, relativeTrackEta, relativeTrackPhi, jetPt, genPt);
 
+    // Fill also histograms to do jet pT unfolding in one dimension
+    FillOneDimensionalJetPtUnfoldingHistograms(jetPt, genPt);
+
   }  // Reconstructed jet loop
 
   // Generator level jet loop
@@ -1821,6 +1824,9 @@ void EECAnalyzer::FillUnfoldingResponse(){
 
     // Calculate the energy-energy correlator within this jet
     CalculateEnergyEnergyCorrelatorForUnfolding(selectedTrackPt, relativeTrackEta, relativeTrackPhi, -1, genPt);
+
+    // Fill also histograms to do jet pT unfolding in one dimension
+    FillOneDimensionalJetPtUnfoldingHistograms(-1, genPt);
 
   } // Generator level jet loop
 
@@ -1934,6 +1940,49 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
 
     }  // Inner track loop
   }    // Outer track loop
+}
+
+/*
+ * Method for filling histograms for one dimensional jet pT unfolding
+ *
+ *  const double jetPt = pT of the reconstructed jet 
+ *  const double genPt = pT of the generator level jet
+ */
+void EECAnalyzer::FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt){
+
+  // Define fillers for THnSparses
+  Double_t fillerDistribution[2]; // Axes: deltaR as a function of reco/gen jet pT, centrality
+  Double_t fillerResponse[3]; // Axes: reco jet pT, gen jet pT, centrality
+  
+  // Event information
+  Double_t centrality = fUnfoldingForestReader->GetCentrality();
+  if(fMultiplicityMode) centrality = GetCentralityFromMultiplicity(GetMultiplicity());
+
+  // For MC: reweight only true jet pT
+  Double_t jetPtWeightReco = (fJetPtWeightConfiguration == 2) ? 1 : GetJetPtWeight(jetPt);
+  Double_t jetPtWeightGen = GetJetPtWeight(genPt);
+
+  // If both reconstructed and generator level jet pT are given, fill the response matrix
+  if(jetPt >= fReconstructedJetMinimumPtCut && genPt >= fGeneratorJetMinimumPtCut){
+    fillerResponse[0] = jetPt;
+    fillerResponse[1] = genPt;
+    fillerResponse[2] = centrality;
+    fHistograms->fhJetPtUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * jetPtWeightReco * jetPtWeightGen);
+  }
+
+  // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
+  if(jetPt >= fReconstructedJetMinimumPtCut){
+    fillerDistribution[0] = jetPt;
+    fillerDistribution[1] = centrality;
+    fHistograms->fhJetPtUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * jetPtWeightReco);
+  }
+
+  // If the generator level jet pT is given, fill the generator level distribution for unfolding
+  if(genPt >= fGeneratorJetMinimumPtCut){
+    fillerDistribution[0] = genPt;
+    fillerDistribution[1] = centrality;
+    fHistograms->fhJetPtUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * jetPtWeightGen);
+  }
 }
 
 /*

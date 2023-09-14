@@ -77,6 +77,11 @@ public:
   THnSparseF* fhUnfoldingTruth;     // Truth distribution for unfolding
   THnSparseF* fhUnfoldingResponse;  // Unfolding response matrix
 
+  // Histograms for 1-dimensional jet pT unfolding
+  THnSparseF* fhJetPtUnfoldingMeasured; // Measured jet pT distribution for unfolding test
+  THnSparseF* fhJetPtUnfoldingTruth;    // Truth jet pT distribution for unfolding test
+  THnSparseF* fhJetPtUnfoldingResponse; // Jet pT unfolding response matrix
+
   // Reconstructed to generator level particle matching
   THnSparseF* fhParticlesCloseToTracks;     // Histogram counting particles close to tracks
   THnSparseF* fhTracksWithMatchedParticle;  // Histogram telling the fraction of particles for which a match is found
