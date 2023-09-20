@@ -1266,8 +1266,8 @@ void EECAnalyzer::RunAnalysis(){
               reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
 
               // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
-              if(jetPt < 25) continue;
-              if(jetPt > fJetMaximumPtCut) continue;
+              if(reflectedConeJetPt < 25) continue;
+              if(reflectedConeJetPt > fJetMaximumPtCut) continue;
 
               // If all the cuts are passed, we have found a jet within the reflected cone
               nJetsInReflectedCone++;
@@ -1284,6 +1284,8 @@ void EECAnalyzer::RunAnalysis(){
             fHistograms->fhJetNumberInReflectedCone->Fill(fillerReflectedConeQA, fTotalEventWeight);
 
           }
+
+          if(nJetsInReflectedCone > 0) continue; // Do not allow jets in the reflected cone
           
           // Fill the multiplicity histograms within the jet and maximum track pT within the jet cone histograms
           if(fFillJetConeHistograms){
