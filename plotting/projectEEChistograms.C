@@ -42,6 +42,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadJetPtUnfoldingHistograms = false;
   bool loadTrackParticleMatchingHistograms = false;
   bool loadReflectedConeQAHistograms = false;
+  bool loadJetPtOneDimensionalUnfoldingHistograms = false;
   
   /*
    * Loading only selected histograms. Done with bitwise check of an integer
@@ -61,9 +62,10 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 12 = Load jet pT response matrix (to set: 4096)
    *  Bit 13 = Load jet pT unfolding histograms (to set: 8192)
    *  Bit 14 = Load track/particle matching study histograms (to set: 16384)
+   *  Bit 15 = Load jet pT one dimensional unfolding histograms (to set: 32768)
    */
   if(histogramSelection > 0){
-    std::bitset<15> bitChecker(histogramSelection);
+    std::bitset<16> bitChecker(histogramSelection);
     loadEventInformation = bitChecker.test(0);
     loadJets = bitChecker.test(1);
     loadTracks = bitChecker.test(2);
@@ -81,6 +83,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadJetPtResponseMatrix = bitChecker.test(12);
     loadJetPtUnfoldingHistograms = bitChecker.test(13);
     loadTrackParticleMatchingHistograms = bitChecker.test(14);
+    loadJetPtOneDimensionalUnfoldingHistograms = bitChecker.test(15);
   }
   
   // ====================================================
@@ -220,6 +223,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadJetPtUnfoldingHistograms(loadJetPtUnfoldingHistograms);
   histograms->SetLoadTrackParticleMatchingHistograms(loadTrackParticleMatchingHistograms);
   histograms->SetLoadReflectedConeQAHistograms(loadReflectedConeQAHistograms);
+  histograms->SetLoadJetPtOneDimensionalUnfoldingHistograms(loadJetPtOneDimensionalUnfoldingHistograms);
   histograms->SetJetFlavor(jetFlavor);
 
   // Set the binning information

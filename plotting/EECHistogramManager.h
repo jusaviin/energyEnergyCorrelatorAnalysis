@@ -109,6 +109,8 @@ private:
   // Naming for jet pT unfolding distributions
   const char* fJetPtUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"jetPtUnfoldingMeasured", "jetPtUnfoldingTruth"};
   const char* fJetPtResponseMatrixName = "jetPtUnfoldingResponse";
+  const char* fJetPtOneDimensionalUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"oneDimensionalJetPtUnfoldingMeasured", "oneDimensionalJetPtUnfoldingTruth"};
+  const char* fJetPtOneDimensionalResponseMatrixName = "oneDimensionalJetPtUnfoldingResponse";
 
   // Naming for track/particle matching histograms
   const char* fTrackParticleMatchingQAName[knTrackParticleMatchingQAHistograms] = {"particlesCloseToTracks","tracksWithMatchedParticle"};
@@ -174,7 +176,8 @@ public:
   void SetLoadReflectedConeQAHistograms(const bool loadOrNot);
 
   // Setters for jet pT unfolding study
-  void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the jet pT unfolding study
+  void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot);               // Setter for loading histograms needed in the jet pT unfolding study
+  void SetLoadJetPtOneDimensionalUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the one dimensional jet pT unfolding study
 
   // Setters for track/particle matching study
   void SetLoadTrackParticleMatchingHistograms(const bool loadOrNot); // Setter for loading histograms needed in track/particle matching study
@@ -301,6 +304,10 @@ public:
   TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
   TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
 
+  TH1D* GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality) const; // Getter for measured jet pT one dimensional unfolding distribution
+  TH1D* GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality) const;    // Getter for truth jet pT one dimensional unfolding distribution
+  TH2D* GetHistogramJetPtOneDimensionalUnfoldingResponse(const int iCentrality) const; // Getter for one dimensional jet pT unfolding response
+
   // Getters for track/particle matching histograms
   TH1D* GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for number of particles close to tracks
   TH1D* GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for flag if a matching particle is found
@@ -363,6 +370,7 @@ private:
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
   bool fLoadReflectedConeQAHistograms;                     // Load the reflected cone QA histograms
   bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
+  bool fLoadJetPtOneDimensionalUnfoldingHistograms;        // Load the histograms needed in the one-dimensional jet pT unfolding study
   bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   
@@ -463,6 +471,10 @@ private:
   TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
   TH2D* fhJetPtUnfoldingResponse[kMaxCentralityBins][kMaxTrackPtBinsEEC];
 
+  // Histograms for one-dimensional jet pT unfolding study
+  TH1D* fhOneDimensionalJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins];
+  TH2D* fhOneDimensionalJetPtUnfoldingResponse[kMaxCentralityBins];
+
   // Histograms to study track/particle matching
   TH1D* fhTrackParticleMatchQA[knTrackParticleMatchingQAHistograms][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
   TH2D* fhTrackParticleResponse[knTrackParticleMatchingResponseTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC];
@@ -496,6 +508,7 @@ private:
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   void LoadJetPtUnfoldingHistograms(); // Loader for jet pT unfolding histograms
+  void LoadJetPtOneDimensionalUnfoldingHistograms(); // Loader for one dimensional jet pT unfolding histograms
   void LoadTrackParticleMatchingHistograms(); // Loader for track/particle matching histograms
   
   // Generic setter for bin indice and borders
@@ -506,17 +519,18 @@ private:
   int BinIndexCheck(const int nBins, const int binIndex) const; // Check that given index is in defined range
   
   // Methods for histogram writing
-  void WriteJetHistograms();                        // Write the jet histograms to the file that is currently open
-  void WriteTrackHistograms();                      // Write the track histograms to the file that is currently open
-  void WriteMultiplicityInJetConeHistograms();      // Write the multiplicity histograms within the jet cone
-  void WriteParticleDensityAroundJetsHistograms();  // Write the particle density histograms around the jet axes
-  void WriteMaxParticlePtWithinJetConeHistograms(); // Write the maximum particle pT within the jet cone histograms
-  void WriteEnergyEnergyCorrelatorHistograms();     // Write the energy-energy correlator histograms to the file that is currently open
-  void WriteReflectedConeQAHistograms();            // Write the reflected cone QA histograms to the file that is currently open
-  void WriteJetPtResponseMatrix();                  // Write the jet pT response matrices
-  void WriteClosureHistograms();                    // Write the closure histograms to the file that is currently open
-  void WriteJetPtUnfoldingHistograms();             // Write the jet pT unfolding histograms to the output file
-  void WriteTrackParticleMatchingHistograms();      // Write the track/particle matching histograms to the output file
+  void WriteJetHistograms();                          // Write the jet histograms to the file that is currently open
+  void WriteTrackHistograms();                        // Write the track histograms to the file that is currently open
+  void WriteMultiplicityInJetConeHistograms();        // Write the multiplicity histograms within the jet cone
+  void WriteParticleDensityAroundJetsHistograms();    // Write the particle density histograms around the jet axes
+  void WriteMaxParticlePtWithinJetConeHistograms();   // Write the maximum particle pT within the jet cone histograms
+  void WriteEnergyEnergyCorrelatorHistograms();       // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteReflectedConeQAHistograms();              // Write the reflected cone QA histograms to the file that is currently open
+  void WriteJetPtResponseMatrix();                    // Write the jet pT response matrices
+  void WriteClosureHistograms();                      // Write the closure histograms to the file that is currently open
+  void WriteJetPtUnfoldingHistograms();               // Write the jet pT unfolding histograms to the output file
+  void WriteJetPtOneDimensionalUnfoldingHistograms(); // Write the jet pT one-dimensional unfolding histograms to the output file
+  void WriteTrackParticleMatchingHistograms();        // Write the track/particle matching histograms to the output file
   
 };
 

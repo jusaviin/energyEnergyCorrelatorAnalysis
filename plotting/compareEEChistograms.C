@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 3;
-  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root", "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_smearedResponseMatrixTest_processed_2023-08-04.root", "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithRandomDeltaR_processed_2023-08-07.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
+  TString inputFileName[] = {"data/ppData_pfJets_wtaAxis_jet60or80triggers_processed_2023-08-07.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_reconstructedReference_processed_2023-06-21.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_jetPtWeight_reconstructedReference_processed_2023-06-21.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Nominal response matrix", "Smear #Deltar 20%", "Random #Deltar", "New without smoothing", "0.8 < jet #eta < 1.6"};
+  TString legendComment[] = {"pp Data", "Raw Pythia8", "Weighted Pythia8", "New without smoothing", "0.8 < jet #eta < 1.6"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];
@@ -41,7 +41,7 @@ void compareEEChistograms(){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = false;
+  bool drawJets = true;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -73,7 +73,7 @@ void compareEEChistograms(){
   const bool drawEnergyEnergyCorrelatorNormalized = false;    // Draw normalized energy-energy correlators
   const bool drawEnergyEnergyCorrelatorBackground = false;   // Draw normalized energy-energy correlator background estimate
   const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
-  const bool drawEnergyEnergyCorrelatorUnfolded = true;            // Draw unfolded energy-energy correlators
+  const bool drawEnergyEnergyCorrelatorUnfolded = false;            // Draw unfolded energy-energy correlators
   const bool drawEnergyEnergyCorrelatorUnfoldedBackground = false;  // Draw energy-energy correlator background estimate after unfolding
   const bool drawEnergyEnergyCorrelatorUnfoldedSignal = false;      // Draw background subtracted energy-energy correlators after unfolding
   
@@ -88,9 +88,9 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = false;
+  bool saveFigures = true;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_firstLookHerwigReco";
+  const char* figureComment = "_dataToMCComparisonDownTo80GeV";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -109,8 +109,8 @@ void compareEEChistograms(){
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0.7;
-  double maxZoom = 1.3;
-  TString ratioLabel = "#frac{Variation}{Nominal}";
+  double maxZoom = 1.7;
+  TString ratioLabel = "#frac{Pythia8}{Data}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -146,7 +146,7 @@ void compareEEChistograms(){
   int firstDrawnJetPtBinEEC = 6;
   int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
 
-  int firstDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 3;
   int lastDrawnTrackPtBinEEC = 5;
   
   // ==================================================================

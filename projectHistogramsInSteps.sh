@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 2 ]; then
   echo "Usage of the script:"
-  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m]"
+  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m][-a]"
   echo "inputFile = Name of the input file"
   echo "outputFile = Name of the output file"
   echo "-n = Do not project nominal histograms"
@@ -11,6 +11,7 @@ if [ "$#" -lt 2 ]; then
   echo "-r = Project jet pT response matrices"
   echo "-o = Only project the jet histograms from nominal set of histograms"
   echo "-m = Project track/particle matching study histograms"
+  echo "-a = Project histograms for one-dimensional jet-pT unfolding"
   exit
 fi
 
@@ -19,7 +20,7 @@ OUTPUT=$2   # Name of the output file
 shift 2     # Shift the positional parameters to read the optional ones
 
 # Read the optional arguments. (Semicolon after letter: expects argument)
-while getopts ":necrom" opt; do
+while getopts ":necroma" opt; do
 case $opt in
 n) NOMINAL=false
 ;;
@@ -32,6 +33,8 @@ r) RESPONSE=true
 o) ONLYJETS=true
 ;;
 m) MATCHINGSTUDY=true
+;;
+a) ONEDIMENSIONALUNFOLD=true
 ;;
 \?) echo "Invalid option -$OPTARG" >&2
 exit 1
@@ -46,6 +49,7 @@ CLOSURE=${CLOSURE:-false}
 RESPONSE=${RESPONSE:-false}
 MATCHINGSTUDY=${MATCHINGSTUDY:-false}
 ONLYJETS=${ONLYJETS:-false}
+ONEDIMENSIONALUNFOLD=${ONEDIMENSIONALUNFOLD:-false}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -120,6 +124,12 @@ if $MATCHINGSTUDY; then
 
 fi
 
+if $ONEDIMENSIONALUNFOLD; then
+
+  # Project histograms related to one dimensional jet pT undolfing study
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",32768)'
+
+fi
 
 
 # Put the placeholder string back to the histogram projection file

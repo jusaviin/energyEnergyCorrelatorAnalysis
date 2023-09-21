@@ -104,10 +104,15 @@ void finalResultPlotter(){
 
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
-  bool drawBigCanvasDistributions = false;
+  bool drawBigCanvasDistributions = true;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
+
+  // Normalize all distributions to 2 GeV integral
+  bool normalizeTo2GeV = false;
+  int trackPtBinFor2GeV = card[kPbPb]->GetBinIndexTrackPtEEC(2.0);
+  int trackPtBinFor3GeV = card[kPbPb]->GetBinIndexTrackPtEEC(3.0);
 
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
@@ -275,19 +280,22 @@ void finalResultPlotter(){
   // ================================================ //
 
   double epsilon = 0.0001;
+  int referenceTrackPtBin = trackPtBinFor2GeV;
   int lowAnalysisBin = energyEnergyCorrelatorSignalPbPb[firstDrawnCentralityBin][firstDrawnJetPtBinEEC][firstDrawnTrackPtBinEEC]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
   int highAnalysisBin = energyEnergyCorrelatorSignalPbPb[firstDrawnCentralityBin][firstDrawnJetPtBinEEC][firstDrawnTrackPtBinEEC]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
   for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
-    for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
-      energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-      systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+    for(int iTrackPt = lastDrawnTrackPtBinEEC; iTrackPt >= firstDrawnTrackPtBinEEC; iTrackPt--){
+      if(!normalizeTo2GeV) referenceTrackPtBin = iTrackPt;
+      energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPp[iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+      systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
+      systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[kCorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
+      systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPp[iJetPt][iTrackPt]->GetBinContent(10));
       for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
-        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-        systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPbPb[kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
+        systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPbPb[kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
+        systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPbPb[iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
+        cout << "Integral after scaling for C " << iCentrality << " T " << iTrackPt <<  " J " << iJetPt << " is " << energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width") << endl;
 
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorRatio%d%d%d", iCentrality, iJetPt, iTrackPt));
         energyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iJetPt][iTrackPt]);
@@ -322,8 +330,6 @@ void finalResultPlotter(){
   } // Jet pT loop
 
   // After regular ratios have been calculated, proceed to calculating double ratio. Here we need to use different histograms as above to properly take into account systematic uncertainty cancellation due to correlated datasets.
-  int trackPtBinFor2GeV = card[kPbPb]->GetBinIndexTrackPtEEC(2.0);
-  int trackPtBinFor3GeV = card[kPbPb]->GetBinIndexTrackPtEEC(3.0);
   for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
     for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
       for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){

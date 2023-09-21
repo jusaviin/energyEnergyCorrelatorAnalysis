@@ -24,10 +24,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = false;
+  bool drawJets = true;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
