@@ -9,7 +9,7 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_matchJets_noJetPtWeight_processed_backgroundTest_2023-05-26.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_nominalSmear_noJetsInReflectedCone_processed_2023-09-22.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
@@ -44,9 +44,9 @@ void validateBackgroundSubtraction(){
   int lastDrawnCentralityBin = 0;
   
   int firstDrawnJetPtBinEEC = 6;
-  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 6; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 1;
   int lastDrawnTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -84,10 +84,10 @@ void validateBackgroundSubtraction(){
     
   // Choose the energy-energy correlator types to load
   histograms->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(integrateEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
+  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus]);
     
   // Choose the bin ranges
   histograms->SetCentralityBinRange(0,nCentralityBins-1);

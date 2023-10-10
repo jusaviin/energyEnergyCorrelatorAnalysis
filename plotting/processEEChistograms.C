@@ -15,7 +15,7 @@
  *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
  *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
  */
-void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = "", const int iSystematic){
+void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = "", const int iSystematic = 0){
 
   // Print the file name to console
   cout << "Processing histograms from " << fileName.Data() << endl;
