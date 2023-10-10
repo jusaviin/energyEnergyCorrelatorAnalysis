@@ -33,7 +33,8 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
 {
   
   // Read card from inputfile and collision system from card
-  TString collisionSystem = fHistograms->GetSystem();
+  //TString collisionSystem = fHistograms->GetSystem();
+  TString collisionSystem = fHistograms->GetCard()->GetAlternativeDataType(false);
   
   // Make a string for collision system based on information on the card
   fSystemAndEnergy = Form("%s 5.02 TeV",collisionSystem.Data());
@@ -984,7 +985,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               // Only one legend for the plot
               legend = new TLegend(0.62,0.55,0.82,0.9);
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-              legend->AddEntry((TObject*) 0, fHistograms->GetCard()->GetAlternativeDataType().Data(), "");
+              legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", fHistograms->GetCard()->GetAlternativeDataType(false).Data()), "");
               legend->AddEntry((TObject*) 0, centralityString.Data(),"");
               legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
@@ -997,7 +998,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->AddEntry(drawnHistogram, "All combinations", "l");
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.39);
               
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");

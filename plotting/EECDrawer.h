@@ -17,6 +17,7 @@
 // Own includes
 #include "JDrawer.h"
 #include "EECHistogramManager.h"
+#include "EECCard.h"
 
 /*
  * Class for drawing the histograms produced in the energy-energy correlator analysis
