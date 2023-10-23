@@ -1530,8 +1530,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
         
         // Calculate the weights given to the energy-energy correlators
-        correlatorWeight = trackPt1*trackPt2; // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp
-        
+        //correlatorWeight = trackPt1*trackPt2; // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp
+        correlatorWeight = trackPt1*trackPt1*trackPt2*trackPt2; // For testing purposes, take the weight squared TODO DEBUG TEST REMOVE
+
         // Find the pair efficiency correction for the track pair
         std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
 
