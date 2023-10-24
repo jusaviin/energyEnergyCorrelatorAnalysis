@@ -54,6 +54,7 @@ public:
     kHighPtHatCut,                // Maximum accepted pT hat
     kMultiplicityMode,            // Select between multiplicity weighting and centrality weighting
     kJetRadius,                   // Radius around the jet axis which is used to select the tracks for energy-energy correlation analysis
+    kWeightExponent,              // Exponent given to the energy-energy correlator weight
     kJetPtBinEdgesEEC,            // Jet pT binning for energy-energy correlation analysis
     kTrackPtBinEdgesEEC,          // Track pT binning for energy-energy correlation analysis
     kJetPtBinEdgesUnfoldingReco,  // Jet pT binning for reconstructed level unfolding response matrix
@@ -77,9 +78,9 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
-  const char *fFileNameType[knFileNames] = {"input", "response matrix"};
-  const char *fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
+  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","ApplyReflectedConeWeight","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
+  const char* fFileNameType[knFileNames] = {"input", "response matrix"};
+  const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
   TFile* fInputFile;         // Input file from which all the data is read
   TString fCardDirectory;    // Path to the ConfigurationCard directory

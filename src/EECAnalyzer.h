@@ -161,6 +161,7 @@ public:
   
   // Configuration for energy-energy correlators
   Double_t fJetRadius;       // Jet radius parameter
+  Int_t fWeightExponent;     // Exponent for the energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
   

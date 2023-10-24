@@ -101,6 +101,7 @@ EECAnalyzer::EECAnalyzer() :
   fLowerTruthUnfoldingBins(0),
   fMcCorrelationType(0),
   fJetRadius(0.4),
+  fWeightExponent(2),
   fDoReflectedCone(false),
   fDoReflectedConeQA(false),
   fFillEventInformation(false),
@@ -303,6 +304,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
+  fWeightExponent(in.fWeightExponent),
   fDoReflectedCone(in.fDoReflectedCone),
   fDoReflectedConeQA(in.fDoReflectedConeQA),
   fFillEventInformation(in.fFillEventInformation),
@@ -378,6 +380,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
+  fWeightExponent = in.fWeightExponent;
   fDoReflectedCone = in.fDoReflectedCone;
   fDoReflectedConeQA = in.fDoReflectedConeQA;
   fFillEventInformation = in.fFillEventInformation;
@@ -526,6 +529,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //   Configuration for energy-energy correlators
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
+  fWeightExponent = fCard->Get("WeightExponent");
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
   fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
   fReflectedConeWeighter->SetDisableWeights((fCard->Get("ApplyReflectedConeWeight") == 0));
@@ -1530,8 +1534,8 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
         
         // Calculate the weights given to the energy-energy correlators
-        //correlatorWeight = trackPt1*trackPt2; // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp
-        correlatorWeight = trackPt1*trackPt1*trackPt2*trackPt2; // For testing purposes, take the weight squared TODO DEBUG TEST REMOVE
+        // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp (weight = 1)
+        correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
 
         // Find the pair efficiency correction for the track pair
         std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
@@ -1908,7 +1912,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
 
       // Calculate the weights given to the energy-energy correlators
-      correlatorWeight = trackPt1 * trackPt2;
+      correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
 
       // Transform deltaR into deltaR as a function of reconstructed jet pT
       unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt, kUnfoldingReconstructed);
