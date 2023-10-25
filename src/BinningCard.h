@@ -1,5 +1,5 @@
-#ifndef TRACKPAIREFFICIENCYCARD_H
-#define TRACKPAIREFFICIENCYCARD_H
+#ifndef BINNINGCARD_H
+#define BINNINGCARD_H
 
 // C++ includes
 #include <iostream>
@@ -12,12 +12,12 @@
 #include <TVectorT.h>
 
 /*
- * TrackPairEfficiencyCard class
+ * BinningCard class
  *
  * This class reads the ConfigurationCard from the input root file and decodes the
  * necessary information for the analysis.
  */
-class TrackPairEfficiencyCard {
+class BinningCard {
   
 public:
  
@@ -91,8 +91,8 @@ private:
    
 public:
   
-  TrackPairEfficiencyCard(TFile *inFile); // Contructor with input file
-  ~TrackPairEfficiencyCard();             // Destructor
+  BinningCard(TFile *inFile); // Contructor with input file
+  ~BinningCard();             // Destructor
   
   TString GetDataType() const;             // Getter for data type string
   TString GetAlternativeDataType() const;  // Getter for alternative data type string

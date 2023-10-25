@@ -48,7 +48,7 @@ TrackPairEfficiencyCorrector::TrackPairEfficiencyCorrector(TString inputFileName
 void TrackPairEfficiencyCorrector::ReadCorrectionTables(){
   
   // Read card from inputfile
-  fCard = new TrackPairEfficiencyCard(fInputFile);
+  fCard = new BinningCard(fInputFile);
   
   // Read the dimensions of the arrays from the card
   fnCentralityBins = fCard->GetNCentralityBins();

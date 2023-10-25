@@ -6,7 +6,7 @@
 #include <TFile.h>
 
 // Own Includes
-#include "TrackPairEfficiencyCard.h"
+#include "BinningCard.h"
 
 /*
  * TrackPairEfficiencyCorrector class
@@ -35,7 +35,7 @@ public:
 private:
   
   // Card with binning information
-  TrackPairEfficiencyCard* fCard;
+  BinningCard* fCard;
   
   // File from which the histograms are read
   TFile* fInputFile;

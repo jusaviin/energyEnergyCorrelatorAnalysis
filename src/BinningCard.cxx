@@ -1,16 +1,16 @@
 /*
- * Implementation of the TrackPairEfficiencyCard class
+ * Implementation of the BinningCard class
  */
 
 // Own includes
-#include "TrackPairEfficiencyCard.h"
+#include "BinningCard.h"
 
 /*
  * Contructor with input file
  *
  *  TFile *inFile = Input file
  */
-TrackPairEfficiencyCard::TrackPairEfficiencyCard(TFile *inFile):
+BinningCard::BinningCard(TFile *inFile):
   fInputFile(inFile),
   fCardDirectory("JCard"),
   fDataType(-1),
@@ -32,14 +32,14 @@ TrackPairEfficiencyCard::TrackPairEfficiencyCard(TFile *inFile):
 /*
  * Destructor
  */
-TrackPairEfficiencyCard::~TrackPairEfficiencyCard(){
+BinningCard::~BinningCard(){
 
 }
 
 /*
  * Reader for all the vectors from the input file
  */
-void TrackPairEfficiencyCard::ReadVectors(){
+void BinningCard::ReadVectors(){
   
   // Read the git hash
   fGitHash = (TObjString*) gDirectory->Get("GitHash");
@@ -60,7 +60,7 @@ void TrackPairEfficiencyCard::ReadVectors(){
 /*
  * Construct a data type string based on information on the card
  */
-void TrackPairEfficiencyCard::FindDataTypeString(){
+void BinningCard::FindDataTypeString(){
   
   // Define the different data types corresponding to certain indices
   TString dataTypes[5] = {"pp","PbPb","pp MC","PbPb MC","localTest"};
@@ -79,26 +79,26 @@ void TrackPairEfficiencyCard::FindDataTypeString(){
 /*
  *  Getter for data type string
  */
-TString TrackPairEfficiencyCard::GetDataType() const{
+TString BinningCard::GetDataType() const{
   return fDataTypeString;
 }
 
 /*
  *  Getter for alternative data type string
  */
-TString TrackPairEfficiencyCard::GetAlternativeDataType() const{
+TString BinningCard::GetAlternativeDataType() const{
   return fAlternativeDataTypeString;
 }
 
 /*
  *  Getter for jet type
  */
-int TrackPairEfficiencyCard::GetJetType() const{
+int BinningCard::GetJetType() const{
   return (*fCardEntries[kJetType])[1];
 }
 
 // Getter for the minimum jet pT cut
-double TrackPairEfficiencyCard::GetJetPtCut() const{
+double BinningCard::GetJetPtCut() const{
   return (*fCardEntries[kMinPtCut])[1];
 }
 
@@ -106,33 +106,33 @@ double TrackPairEfficiencyCard::GetJetPtCut() const{
  * Get the number of bins for internal index
  * If no vector is found in the index, return 0.
  */
-int TrackPairEfficiencyCard::GetNBins(const int index) const{
+int BinningCard::GetNBins(const int index) const{
   if(fCardEntries[index]) return fCardEntries[index]->GetNoElements()-1;
   return 0;
 }
 
 // Get the number of centrality bins
-int TrackPairEfficiencyCard::GetNCentralityBins() const{
+int BinningCard::GetNCentralityBins() const{
   return GetNBins(kCentralityBinEdges);
 }
 
 // Get the number of track pT bins
-int TrackPairEfficiencyCard::GetNTrackPtBins() const{
+int BinningCard::GetNTrackPtBins() const{
   return GetNBins(kTrackPtBinEdges);
 }
 
 // Get the number of track pT bins in track pair histograms
-int TrackPairEfficiencyCard::GetNTrackPairPtBins() const{
+int BinningCard::GetNTrackPairPtBins() const{
   return GetNBins(kTrackPairPtBinEdges);
 }
 
 // Get the number of jet pT bins
-int TrackPairEfficiencyCard::GetNJetPtBins() const{
+int BinningCard::GetNJetPtBins() const{
   return GetNBins(kJetPtBinEdgesEEC);
 }
 
 // Get the number of average eta bins
-int TrackPairEfficiencyCard::GetNAverageEtaBins() const{
+int BinningCard::GetNAverageEtaBins() const{
   return GetNBins(kAverageEtaBinEdges);
 }
 
@@ -140,7 +140,7 @@ int TrackPairEfficiencyCard::GetNAverageEtaBins() const{
  * Get a bin index based on a given value.
  * If value is out of bound, return -1
  */
-int TrackPairEfficiencyCard::GetBinIndex(const int index, const double value) const{
+int BinningCard::GetBinIndex(const int index, const double value) const{
   
   // Find the number of bins in the array
   int nBins = GetNBins(index);
@@ -158,32 +158,32 @@ int TrackPairEfficiencyCard::GetBinIndex(const int index, const double value) co
 }
 
 // Get the bin index for a given centrality value
-int TrackPairEfficiencyCard::GetBinIndexCentrality(const double value) const{
+int BinningCard::GetBinIndexCentrality(const double value) const{
   return GetBinIndex(kCentralityBinEdges,value);
 }
 
 // Get the bin index for a given track pT value
-int TrackPairEfficiencyCard::GetBinIndexTrackPt(const double value) const{
+int BinningCard::GetBinIndexTrackPt(const double value) const{
   return GetBinIndex(kTrackPtBinEdges,value);
 }
 
 // Get the bin index for a given track pT value in track pair histograms
-int TrackPairEfficiencyCard::GetBinIndexTrackPairPt(const double value) const{
+int BinningCard::GetBinIndexTrackPairPt(const double value) const{
   return GetBinIndex(kTrackPairPtBinEdges,value);
 }
 
 // Get the bin index for a given jet pT value
-int TrackPairEfficiencyCard::GetBinIndexJetPt(const double value) const{
+int BinningCard::GetBinIndexJetPt(const double value) const{
   return GetBinIndex(kJetPtBinEdgesEEC,value);
 }
 
 // Get the bin index for a given average eta value
-int TrackPairEfficiencyCard::GetBinIndexAverageEta(const double value) const{
+int BinningCard::GetBinIndexAverageEta(const double value) const{
   return GetBinIndex(kAverageEtaBinEdges,value);
 }
 
 // Get the low border of i:th bin from internal index
-double TrackPairEfficiencyCard::GetLowBinBorder(const int index, const int iBin) const{
+double BinningCard::GetLowBinBorder(const int index, const int iBin) const{
   
   // Sanity check for the input
   if(iBin < 0) return -1;
@@ -195,32 +195,32 @@ double TrackPairEfficiencyCard::GetLowBinBorder(const int index, const int iBin)
 }
 
 // Get the low border of i:th centrality bin
-double TrackPairEfficiencyCard::GetLowBinBorderCentrality(const int iBin) const{
+double BinningCard::GetLowBinBorderCentrality(const int iBin) const{
   return GetLowBinBorder(kCentralityBinEdges,iBin);
 }
 
 // Get the low border of i:th track pT bin
-double TrackPairEfficiencyCard::GetLowBinBorderTrackPt(const int iBin) const{
+double BinningCard::GetLowBinBorderTrackPt(const int iBin) const{
   return GetLowBinBorder(kTrackPtBinEdges,iBin);
 }
 
 // Get the low border of i:th track pT bin in track pair histograms
-double TrackPairEfficiencyCard::GetLowBinBorderTrackPairPt(const int iBin) const{
+double BinningCard::GetLowBinBorderTrackPairPt(const int iBin) const{
   return GetLowBinBorder(kTrackPairPtBinEdges,iBin);
 }
 
 // Get the low border of i:th jet pT bin
-double TrackPairEfficiencyCard::GetLowBinBorderJetPt(const int iBin) const{
+double BinningCard::GetLowBinBorderJetPt(const int iBin) const{
   return GetLowBinBorder(kJetPtBinEdgesEEC,iBin);
 }
 
 // Get the low border of i:th average eta bin
-double TrackPairEfficiencyCard::GetLowBinBorderAverageEta(const int iBin) const{
+double BinningCard::GetLowBinBorderAverageEta(const int iBin) const{
   return GetLowBinBorder(kAverageEtaBinEdges,iBin);
 }
 
 // Get the high border of i:th bin from internal index
-double TrackPairEfficiencyCard::GetHighBinBorder(const int index, const int iBin) const{
+double BinningCard::GetHighBinBorder(const int index, const int iBin) const{
   
   // Sanity check for the input
   if(iBin < 0) return -1;
@@ -232,27 +232,27 @@ double TrackPairEfficiencyCard::GetHighBinBorder(const int index, const int iBin
 }
 
 // Get the high border of i:th centrality bin
-double TrackPairEfficiencyCard::GetHighBinBorderCentrality(const int iBin) const{
+double BinningCard::GetHighBinBorderCentrality(const int iBin) const{
   return GetHighBinBorder(kCentralityBinEdges,iBin);
 }
 
 // Get the high border of i:th track pT bin
-double TrackPairEfficiencyCard::GetHighBinBorderTrackPt(const int iBin) const{
+double BinningCard::GetHighBinBorderTrackPt(const int iBin) const{
   return GetHighBinBorder(kTrackPtBinEdges,iBin);
 }
 
 // Get the high border of i:th track pT bin in track pair histograms
-double TrackPairEfficiencyCard::GetHighBinBorderTrackPairPt(const int iBin) const{
+double BinningCard::GetHighBinBorderTrackPairPt(const int iBin) const{
   return GetHighBinBorder(kTrackPairPtBinEdges,iBin);
 }
 
 // Get the high border of i:th jet pT bin
-double TrackPairEfficiencyCard::GetHighBinBorderJetPt(const int iBin) const{
+double BinningCard::GetHighBinBorderJetPt(const int iBin) const{
   return GetHighBinBorder(kJetPtBinEdgesEEC,iBin);
 }
 
 // Get the high border of i:th average eta bin
-double TrackPairEfficiencyCard::GetHighBinBorderAverageEta(const int iBin) const{
+double BinningCard::GetHighBinBorderAverageEta(const int iBin) const{
   return GetHighBinBorder(kAverageEtaBinEdges,iBin);
 }
 
@@ -263,7 +263,7 @@ double TrackPairEfficiencyCard::GetHighBinBorderAverageEta(const int iBin) const
  *  int entryIndex = Internal index for the added vector in entry array
  *  float entryContent = Content to be put into the vector
  */
-void TrackPairEfficiencyCard::AddOneDimensionalVector(int entryIndex, float entryContent){
+void BinningCard::AddOneDimensionalVector(int entryIndex, float entryContent){
   
   // Only allow addition to postprocessing vectors
   if(entryIndex <= kPtHatBinEdges) return;
@@ -282,7 +282,7 @@ void TrackPairEfficiencyCard::AddOneDimensionalVector(int entryIndex, float entr
  *  int dimension = Number of entries in the given array
  *  float *contents = Content to be put into the vector
  */
-void TrackPairEfficiencyCard::AddVector(int entryIndex, int dimension, double *contents){
+void BinningCard::AddVector(int entryIndex, int dimension, double *contents){
   
   // Convert double pointer to float pointer
   float* convertedContents = new float[dimension];
@@ -305,7 +305,7 @@ void TrackPairEfficiencyCard::AddVector(int entryIndex, int dimension, double *c
  *  int entryIndex = Internal index for the added file name in file name array
  *  TString fileName = Added file name
  */
-void TrackPairEfficiencyCard::AddFileName(int entryIndex, TString fileName){
+void BinningCard::AddFileName(int entryIndex, TString fileName){
   
   // Make convert the string to TObjString and add it to the file name array
   fFileNames[entryIndex] = new TObjString(fileName.Data());
@@ -318,7 +318,7 @@ void TrackPairEfficiencyCard::AddFileName(int entryIndex, TString fileName){
  * Arguments:
  *  const char* gitHash = Git hash to be added for projection
  */
-void TrackPairEfficiencyCard::AddProjectionGitHash(const char* gitHash){
+void BinningCard::AddProjectionGitHash(const char* gitHash){
   
   // Convert the const char* to TObjString and add it to the file name array
   fProjectionGitHash = new TObjString(gitHash);
@@ -328,12 +328,12 @@ void TrackPairEfficiencyCard::AddProjectionGitHash(const char* gitHash){
 /*
  * Print the contents of the card to the console
  */
-void TrackPairEfficiencyCard::Print() const{
+void BinningCard::Print() const{
 
   const char* gitHash = "Unknown";
   if(fGitHash != NULL) gitHash = fGitHash->String().Data();
   
-  std::cout<<std::endl<<"========================= TrackPairEfficiencyCard =========================="<<std::endl;
+  std::cout<<std::endl<<"========================= BinningCard =========================="<<std::endl;
   std::cout << Form("%25s","GitHash"); //print keyword
   std::cout << ": " << gitHash << std::endl;
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
@@ -358,9 +358,9 @@ void TrackPairEfficiencyCard::Print() const{
 }
 
 /*
- * Write the contents of the TrackPairEfficiencyCard to a file
+ * Write the contents of the BinningCard to a file
  */
-void TrackPairEfficiencyCard::Write(TDirectory *file){
+void BinningCard::Write(TDirectory *file){
   
   // Create a directory to store the card parameters
   if(!file->GetDirectory("JCard")) file->mkdir("JCard");
