@@ -56,11 +56,13 @@ DisableTrackPairEfficiencyCorrection 0 # 0 = Do not disable the correction. 1 = 
 ZVertexCut 15       # Maximum vz value for accepted tracks
 LowPtHatCut -1      # Minimum accepted pT hat
 HighPtHatCut 1      # Maximum accepted pT hat
-MultiplicityMode 0 # 0 = Weight MC centrality to match data. 1 = Weight multiplicity to match
+MultiplicityMode 0  # 0 = Weight MC centrality to match data. 1 = Weight multiplicity to match
 
 # Configuration for energy-energy correlators
-JetRadius 0.4      # Radius around jets used to calculate the correlations
-WeightExponent 2   # Exponent given for the energy weight in EECs
+JetRadius 0.4       # Radius around jets used to calculate the correlations
+WeightExponent 2    # Exponent given for the energy weight in EECs
+SmearDeltaR 0       # Flag for smearing DeltaR values in EECs
+SmearEnergyWeight 0 # Flag for smearing energy weights in EECs
 JetPtBinEdgesEEC 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for EEC
 TrackPtBinEdgesEEC 0.7 1 1.5 2 2.5 3 3.5 4 300 # Track pT bin edges for EEC
 

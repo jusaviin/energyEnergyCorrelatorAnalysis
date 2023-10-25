@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Read the optional arguments
+while getopts ":s" opt; do
+case $opt in
+s) SMEARING=true
+;;
+\?) echo "Invalid option -$OPTARG" >&2
+exit 1
+;;
+esac
+done
+
+# Set the default value if optional argument is not given
+SMEARING=${SMEARING:-false}
+
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
 
@@ -18,7 +32,11 @@ sed -i '' 's/GITHASHHERE/'${GITHASH}'/' eecAnalysis.cxx
 make clean
 
 # Create the new tar ball
-tar -cvzf $OUTPUTTAR Makefile eecAnalysis.cxx jetEnergyCorrections src trackCorrectionTables
+if $SMEARING; then
+  tar -cvzf $OUTPUTTAR Makefile eecAnalysis.cxx jetEnergyCorrections src trackCorrectionTables smearingFiles
+else
+  tar -cvzf $OUTPUTTAR Makefile eecAnalysis.cxx jetEnergyCorrections src trackCorrectionTables 
+fi
 
 # Put placeholder string back to the main analysis file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' eecAnalysis.cxx

@@ -30,6 +30,7 @@
 #include "ReflectedConeWeight.h"
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
+#include "SmearingProvider.h"
 
 class EECAnalyzer{
   
@@ -108,6 +109,8 @@ public:
   ReflectedConeWeight* fReflectedConeWeighter;   // Class for weighting the tracks in the reflected cone
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
+  SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
+  SmearingProvider* fEnergyWeightSmearer;        // Realistic smearing for energy weights from reco/gen ratios
   TRandom3* fRng;                                // Random number generator
   
   // Analyzed data and forest types
@@ -162,6 +165,8 @@ public:
   // Configuration for energy-energy correlators
   Double_t fJetRadius;       // Jet radius parameter
   Int_t fWeightExponent;     // Exponent for the energy weight in energy-energy correlators
+  Bool_t fSmearDeltaR;       // Flag for smearing DeltaR in energy-energy correlators
+  Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
   

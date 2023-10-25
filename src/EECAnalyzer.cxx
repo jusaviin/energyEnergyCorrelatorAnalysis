@@ -102,6 +102,8 @@ EECAnalyzer::EECAnalyzer() :
   fMcCorrelationType(0),
   fJetRadius(0.4),
   fWeightExponent(2),
+  fSmearDeltaR(false),
+  fSmearEnergyWeight(false),
   fDoReflectedCone(false),
   fDoReflectedConeQA(false),
   fFillEventInformation(false),
@@ -131,6 +133,10 @@ EECAnalyzer::EECAnalyzer() :
 
   // Create a manager for jet energy resolution smearing in MC
   fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
+
+  // Create smearing providers for DeltaR and energy weights
+  fDeltaRSmearer = new SmearingProvider();
+  fEnergyWeightSmearer = new SmearingProvider();
 }
 
 /*
@@ -192,6 +198,10 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     } else {
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
     }
+
+    // Smearing configuration for DeltaR and energy weight in energy-energy correlators
+    fSmearDeltaR ? fDeltaRSmearer = new SmearingProvider("smearingFiles/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_onlyTrackParticleMatching_processed_2023-07-03.root", "particleDeltaRResponseMatrix", false, false) : fDeltaRSmearer = NULL;
+    fSmearEnergyWeight ? fEnergyWeightSmearer = new SmearingProvider("smearingFiles/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_onlyTrackParticleMatching_processed_2023-07-03.root", "particlePairPtClosure", true, false) : fEnergyWeightSmearer = NULL;
     
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
@@ -226,6 +236,19 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     } else {
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
     }
+
+    // Smearing configuration for DeltaR and energy weight in energy-energy correlators
+    if(fSmearDeltaR){
+      fDeltaRSmearer = new SmearingProvider("smearingFiles/PbPbMC2018_RecoGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalSmear_onlyTrackParticleMatching_processed_2023-07-03.root", "particleDeltaRResponseMatrix", false, true);
+    } else {
+      fDeltaRSmearer = NULL;
+    }
+
+    if(fSmearEnergyWeight){
+      fEnergyWeightSmearer = new SmearingProvider("smearingFiles/PbPbMC2018_RecoGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalSmear_onlyTrackParticleMatching_processed_2023-07-03.root", "particlePairPtClosure", true, true); 
+    } else {
+      fEnergyWeightSmearer = NULL;
+    }
     
   } else {
     fVzWeightFunction = NULL;
@@ -234,6 +257,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     fTrackPairEfficiencyCorrector = NULL;
     fEnergyResolutionSmearingFinder = NULL;
+    fDeltaRSmearer = NULL;
+    fEnergyWeightSmearer = NULL;
   }
   
   // Initialize the random number generator with a random seed
@@ -305,6 +330,8 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
   fWeightExponent(in.fWeightExponent),
+  fSmearDeltaR(in.fSmearDeltaR),
+  fSmearEnergyWeight(in.fSmearEnergyWeight),
   fDoReflectedCone(in.fDoReflectedCone),
   fDoReflectedConeQA(in.fDoReflectedConeQA),
   fFillEventInformation(in.fFillEventInformation),
@@ -381,6 +408,8 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
   fWeightExponent = in.fWeightExponent;
+  fSmearDeltaR = in.fSmearDeltaR;
+  fSmearEnergyWeight = in.fSmearEnergyWeight;
   fDoReflectedCone = in.fDoReflectedCone;
   fDoReflectedConeQA = in.fDoReflectedConeQA;
   fFillEventInformation = in.fFillEventInformation;
@@ -530,6 +559,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
   fWeightExponent = fCard->Get("WeightExponent");
+  fSmearDeltaR = (fCard->Get("SmearDeltaR") == 1);
+  fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
   fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
   fReflectedConeWeighter->SetDisableWeights((fCard->Get("ApplyReflectedConeWeight") == 0));
@@ -771,7 +802,7 @@ void EECAnalyzer::RunAnalysis(){
     //         Main event loop for each file
     //************************************************
     
-    for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
+    for(Int_t iEvent = 0; iEvent < 10; iEvent++){ // nEvents
       
       //************************************************
       //         Read basic event information
@@ -1532,10 +1563,20 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         // Find the lower of the two track pT:s
         lowerTrackPt = trackPt1;
         if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+
+        // Realistic smearing for track DeltaR if selected
+        if(fSmearDeltaR){
+          trackDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
+        }
         
         // Calculate the weights given to the energy-energy correlators
         // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp (weight = 1)
         correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
+
+        // Realistic smearing for energy weight if selected
+        if(fSmearEnergyWeight){
+          correlatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+        }
 
         // Find the pair efficiency correction for the track pair
         std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
@@ -1911,8 +1952,18 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       lowerTrackPt = trackPt1;
       if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
 
+      // Realistic smearing for DeltaR between two particles if selected
+      if(fSmearEnergyWeight){
+        trackDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
+      }
+
       // Calculate the weights given to the energy-energy correlators
       correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
+
+      // Realistic smearing for energy weight is selected
+      if(fSmearEnergyWeight){
+        correlatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+      }
 
       // Transform deltaR into deltaR as a function of reconstructed jet pT
       unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt, kUnfoldingReconstructed);
