@@ -2044,7 +2044,7 @@ void EECAnalyzer::FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt,
 }
 
 /*
- * Construct responses for DeltaR and pT1*pT2
+ * Construct responses for DeltaR and (pT1*pT2)^n
  *
  */
 void EECAnalyzer::ConstructParticleResponses(){
@@ -2283,6 +2283,10 @@ void EECAnalyzer::ConstructParticleResponses(){
         // Fill the matched pT1*pT2 values to the response matrix
         trackMomentumProduct = std::get<kTrackPt>(selectedTrackInformation.at(iTrack)) * std::get<kTrackPt>(selectedTrackInformation.at(jTrack));
         particleMomentumProduct = std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))) * std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack))));
+
+        // Use the selected weight exponent for the track momentum product
+        trackMomentumProduct = TMath::Power(trackMomentumProduct, fWeightExponent);
+        particleMomentumProduct = TMath::Power(particleMomentumProduct, fWeightExponent);
 
         fillerParticlePtResponseMatrix[0] = trackMomentumProduct;
         fillerParticlePtResponseMatrix[1] = particleMomentumProduct;
