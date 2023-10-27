@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 2 ]; then
   echo "Usage of the script:"
-  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m][-a]"
+  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m] [-a]"
   echo "inputFile = Name of the input file"
   echo "outputFile = Name of the output file"
   echo "-n = Do not project nominal histograms"
