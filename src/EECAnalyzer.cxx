@@ -2161,7 +2161,7 @@ void EECAnalyzer::ConstructParticleResponses(){
 
       // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
       deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
-      if(deltaRTrackJet < fJetRadius && trackPt > 2){
+      if(deltaRTrackJet < fJetRadius && trackPt > fTrackMinPtCut){
         selectedTrackInformation.push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, trackEfficiencyCorrection, trackCharge, -1));
       } // Track close to jet
     } // Track loop
@@ -2181,7 +2181,7 @@ void EECAnalyzer::ConstructParticleResponses(){
 
       // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
       deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
-      if(deltaRTrackJet < fJetRadius && trackPt > 1) {
+      if(deltaRTrackJet < fJetRadius && trackPt > fTrackMinPtCut) {
         selectedParticleInformation.push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, 1, trackCharge, -1));
       } // Track close to jet
     } // Track loop
