@@ -30,6 +30,7 @@ public:
 
   void ReadCorrectionTables(); // Initialize the correction tables from file
   
+  bool GetDisableCorrection(); // Getter for flag to disable the track pair efficiency correction
   void SetDisableCorrection(const bool disable); // Setter for disabling the correction
   
 private:

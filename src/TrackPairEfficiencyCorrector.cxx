@@ -228,6 +228,11 @@ std::pair<double,double> TrackPairEfficiencyCorrector::GetTrackPairEfficiencyCor
   return std::make_pair(correction, error);
 }
 
+// Getter for flag to disable the track pair efficiency correction
+bool TrackPairEfficiencyCorrector::GetDisableCorrection(){
+  return fDisableCorrection;
+}
+
 // Setter for disabling the correction
 void TrackPairEfficiencyCorrector::SetDisableCorrection(const bool disable){
   fDisableCorrection = disable;

@@ -1466,7 +1466,9 @@ void EECAnalyzer::RunAnalysis(){
 void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt){
   
   // Define a filler for THnSparse
-  Double_t fillerEnergyEnergyCorrelator[6]; // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerEnergyEnergyCorrelator[6];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
+  Double_t fillerParticlePtResponseMatrix[6];     // Filler for validating particle pT smearing
   
   // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
   Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone};
@@ -1485,11 +1487,13 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Double_t trackEta2;      // Track eta for the second track
   Double_t trackPhi2;      // Track phi for the second track
   Double_t trackDeltaR;    // DeltaR between the two tracks
+  Double_t smearedDeltaR;  // Smeared DeltaR between two tracks
   Double_t lowerTrackPt;   // Lower of the two track pT:s
   Double_t trackEfficiencyCorrection1;    // Efficiency correction for the first track
   Double_t trackEfficiencyCorrection2;    // Efficiency correction for the first track
   Double_t trackPairEfficiencyCorrection; // Efficiency correction for track pair efficiency
   Double_t correlatorWeight;            // Weight given to the energy-energy correlator pT1*pT2
+  Double_t smearedCorrelatorWeight;     // Smeared correlator weight
   Int_t subeventTrack1;    // Subevent index for the first track (0 = pythia, > 0 = hydjet)
   Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
   Int_t subeventCombination;      // Subevent combination type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet)
@@ -1583,7 +1587,14 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 
         // Realistic smearing for track DeltaR if selected
         if(fSmearDeltaR){
-          trackDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
+          smearedDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
+          fillerParticleDeltaRResponseMatrix[0] = smearedDeltaR;    // Axis 0: Smeared DeltaR between the two tracks
+          fillerParticleDeltaRResponseMatrix[1] = trackDeltaR;      // Axis 1: DeltaR between the two tracks
+          fillerParticleDeltaRResponseMatrix[2] = jetPt;            // Axis 2: pT of the jet the tracks are near of
+          fillerParticleDeltaRResponseMatrix[3] = lowerTrackPt;     // Axis 3: Lower of the two track pT:s
+          fillerParticleDeltaRResponseMatrix[4] = centrality;       // Axis 4: Event centrality
+          fHistograms->fhParticleDeltaRResponse->Fill(fillerParticleDeltaRResponseMatrix, fTotalEventWeight);
+          trackDeltaR = smearedDeltaR;
         }
         
         // Calculate the weights given to the energy-energy correlators
@@ -1592,7 +1603,15 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 
         // Realistic smearing for energy weight if selected
         if(fSmearEnergyWeight){
-          correlatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+          smearedCorrelatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+          fillerParticlePtResponseMatrix[0] = smearedCorrelatorWeight;
+          fillerParticlePtResponseMatrix[1] = correlatorWeight;
+          fillerParticlePtResponseMatrix[2] = jetPt;
+          fillerParticlePtResponseMatrix[3] = lowerTrackPt;
+          fillerParticlePtResponseMatrix[4] = centrality;
+          fillerParticlePtResponseMatrix[5] = smearedCorrelatorWeight / correlatorWeight;
+          fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight);
+          correlatorWeight = smearedCorrelatorWeight;
         }
 
         // Find the pair efficiency correction for the track pair
@@ -2074,12 +2093,15 @@ void EECAnalyzer::ConstructParticleResponses(){
   Double_t smearingFactor;    // Smearing factor for systematic uncertainty study
 
   // Variables for tracks
-  Double_t trackPt;                    // Track or generator level particle pT
-  Double_t trackEta;                   // Track or generator level particle eta
-  Double_t trackPhi;                   // Track or generator level particle phi
-  Double_t trackEfficiencyCorrection;  // Track efficiency correction
-  Int_t trackCharge;                   // Charge of the particle
-  Int_t nTracks;                       // Number of generator level particles
+  Double_t trackPt;                       // Track or generator level particle pT
+  Double_t trackEta;                      // Track or generator level particle eta
+  Double_t trackPhi;                      // Track or generator level particle phi
+  Double_t trackEfficiencyCorrection;     // Track efficiency correction
+  Double_t trackPairEfficiencyCorrection; // Track pair efficiency correction
+  Double_t trackPairEfficiencyError;      // Track pair efficiency error
+  Int_t trackCharge;                      // Charge of the particle
+  Int_t nTracks;                          // Number of generator level particles
+  Bool_t trackPairCorrectionFlag;         // Flag about enabling track pair efficiency correction
 
   // Event variables
   Int_t hiBin = fUnfoldingForestReader->GetHiBin();
@@ -2289,13 +2311,19 @@ void EECAnalyzer::ConstructParticleResponses(){
         deltaRTracks = GetDeltaR(std::get<kTrackEta>(selectedTrackInformation.at(iTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(iTrack)), std::get<kTrackEta>(selectedTrackInformation.at(jTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(jTrack)));
         deltaRParticles = GetDeltaR(std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))));
 
+        // Find the pair acceptance correction for the track pair regardless if it is disabled in the main code or not
+        trackPairCorrectionFlag = fTrackPairEfficiencyCorrector->GetDisableCorrection();
+        fTrackPairEfficiencyCorrector->SetDisableCorrection(false);
+        std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(deltaRTracks, centrality, std::get<kTrackPt>(selectedTrackInformation.at(iTrack)), std::get<kTrackPt>(selectedTrackInformation.at(jTrack)), jetPt);
+        fTrackPairEfficiencyCorrector->SetDisableCorrection(trackPairCorrectionFlag);
+
         // Fill the matched deltaR values to the response matrix
         fillerParticleDeltaRResponseMatrix[0] = deltaRTracks;
         fillerParticleDeltaRResponseMatrix[1] = deltaRParticles;
         fillerParticleDeltaRResponseMatrix[2] = jetPt;
         fillerParticleDeltaRResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
         fillerParticleDeltaRResponseMatrix[4] = centrality;
-        fHistograms->fhParticleDeltaRResponse->Fill(fillerParticleDeltaRResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)));
+        fHistograms->fhParticleDeltaRResponse->Fill(fillerParticleDeltaRResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)) * trackPairEfficiencyCorrection);
 
         // Fill the matched pT1*pT2 values to the response matrix
         trackMomentumProduct = std::get<kTrackPt>(selectedTrackInformation.at(iTrack)) * std::get<kTrackPt>(selectedTrackInformation.at(jTrack));
@@ -2311,7 +2339,7 @@ void EECAnalyzer::ConstructParticleResponses(){
         fillerParticlePtResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
         fillerParticlePtResponseMatrix[4] = centrality;
         fillerParticlePtResponseMatrix[5] = trackMomentumProduct / particleMomentumProduct;
-        fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)));
+        fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)) * trackPairEfficiencyCorrection);
 
 
       } // Inner track loop
