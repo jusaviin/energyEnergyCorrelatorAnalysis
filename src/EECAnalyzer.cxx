@@ -201,7 +201,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
 
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
     if(fSmearDeltaR){
-      const char* deltaRFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrix_lowMinimumPt_processed_2023-10-26.root";
+      const char* deltaRFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
       fDeltaRSmearer = new SmearingProvider(Form("smearingFiles/%s", deltaRFileName), "particleDeltaRResponseMatrix", false, false);
       cout << "Smearing DeltaR in energy-energy correlators using the file " << deltaRFileName << endl;
     } else {
@@ -209,7 +209,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     }
 
     if(fSmearEnergyWeight){
-      const char* energyWeightFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrix_lowMinimumPt_processed_2023-10-26.root";
+      const char* energyWeightFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
       fEnergyWeightSmearer = new SmearingProvider(Form("smearingFiles/%s", energyWeightFileName), "particlePairPtClosure", true, false);
       cout << "Smearing energy weights for energy-energy correlators using the file " << energyWeightFileName << endl;
     } else {
@@ -252,7 +252,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
 
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
     if(fSmearDeltaR){
-      const char* deltaRFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrix_lowMinimumPt_processed_2023-10-26.root";
+      const char* deltaRFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
       fDeltaRSmearer = new SmearingProvider(Form("smearingFiles/%s", deltaRFileName), "particleDeltaRResponseMatrix", false, true);
       cout << "Smearing DeltaR in energy-energy correlators using the file " << deltaRFileName << endl;
     } else {
@@ -260,7 +260,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     }
 
     if(fSmearEnergyWeight){
-      const char* energyWeightFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrix_lowMinimumPt_processed_2023-10-26.root";
+      const char* energyWeightFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
       fEnergyWeightSmearer = new SmearingProvider(Form("smearingFiles/%s", energyWeightFileName), "particlePairPtClosure", true, true);
       cout << "Smearing energy weights for energy-energy correlators using the file " << energyWeightFileName << endl;
     } else {
