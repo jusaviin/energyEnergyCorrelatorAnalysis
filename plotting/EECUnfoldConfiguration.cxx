@@ -609,17 +609,19 @@ void EECUnfoldConfiguration::InitializeArrays(){
       } else {
 
         if(fSystematicIndex == kNominalSmear){
-          // TODO: NUMBERS NEED TO BE UPDATED!
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
-          // Input: chi2Histograms_pp_split1_nominalSmear_2023-06-23.root
-          //        chi2Histograms_pp_split2_nominalSmear_2023-06-23.root
+          // Input: chi2Histograms_pp_energyWeightSquared_split1_nominalSmear_2023-10-31.root
+          //        chi2Histograms_pp_energyWeightSquared_split2_nominalSmear_2023-10-31.root
+          // To determine these numbers, the 120 < jet pT < 140 GeV bin is ignored, because the results differ a lot from all other bins
 
-          fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_responseMatrix%s_processed_2023-06-21.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_processed_2023-10-30.root", splitName[fSplitIndex]);
 
-          fBestNumberOfIterations[0][3] = 9;  // track pT > 2 GeV
-          fBestNumberOfIterations[0][4] = 9;  // track pT > 2.5 GeV
-          fBestNumberOfIterations[0][5] = 9;  // track pT > 3 GeV
+          fBestNumberOfIterations[0][1] = 3;  // track pT > 1 GeV
+          fBestNumberOfIterations[0][2] = 3;  // track pT > 1.5 GeV
+          fBestNumberOfIterations[0][3] = 3;  // track pT > 2 GeV
+          fBestNumberOfIterations[0][4] = 3;  // track pT > 2.5 GeV
+          fBestNumberOfIterations[0][5] = 3;  // track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetPtResolutionUncertaintyDown){
           // TODO: NUMBERS NEED TO BE UPDATED!

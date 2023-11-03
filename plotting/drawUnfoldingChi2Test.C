@@ -12,11 +12,11 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_split1_nominalSmear_4pCentShift_2023-08-11.root", "chi2Files/chi2Histograms_PbPb_split2_nominalSmear_4pCentShift_2023-08-11.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_energyWeightSquared_split1_nominalSmear_2023-10-31.root", "chi2Files/chi2Histograms_pp_energyWeightSquared_split2_nominalSmear_2023-10-31.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
-  // chi2Histograms_PbPb_regular_threeTrackPtBins_2023-06-02.root
-  // chi2Histograms_PbPb_swapped_threeTrackPtBins_2023-06-02.root
+  // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
+  // chi2Histograms_pp_energyWeightSquared_split1_nominalSmear_2023-10-31.root
 
   // Open the input files and read the card containing binning information
   TFile* inputFile[nInputFiles];
@@ -114,16 +114,16 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 1;
   int lastStudiedTrackPtBinEEC = 5;
 
-  int firstStudiedJetPtBin = 0;
+  int firstStudiedJetPtBin = 1;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
   const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
   const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawChi2mapForwardFolded = false;          // Draw the chi2 values for individual jet pT bins from forward folded distributions
-  const bool drawChi2combinedForwardFolded = true;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
+  const bool drawChi2combinedForwardFolded = false;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
   const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
   const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
@@ -263,7 +263,7 @@ void drawUnfoldingChi2Test(){
   // Add all the files together for a combined result
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
         hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2map[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2map%d%d%d", iCentrality, iTrackPt, iJetPt));
         hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2mapForwardFolded%d%d%d", iCentrality, iTrackPt, iJetPt));
         for(int iFile = 1; iFile < nInputFiles; iFile++){
@@ -282,9 +282,9 @@ void drawUnfoldingChi2Test(){
   for(int iFile = 0; iFile < nInputFiles+1; iFile++){
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-        hChi2combined[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2map[iCentrality][0][iTrackPt][iFile]->Clone(Form("combinedChi2%d%d%d", iCentrality, iTrackPt, iFile));
-        hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2mapForwardFolded[iCentrality][0][iTrackPt][iFile]->Clone(Form("combinedChi2ForwardFolded%d%d%d", iCentrality, iTrackPt, iFile));
-        for(int iJetPt = 1; iJetPt < nJetPtBins; iJetPt++){
+        hChi2combined[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2map[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2%d%d%d", iCentrality, iTrackPt, iFile));
+        hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2mapForwardFolded[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2ForwardFolded%d%d%d", iCentrality, iTrackPt, iFile));
+        for(int iJetPt = firstStudiedJetPtBin+1; iJetPt <= lastStudiedJetPtBin; iJetPt++){
           hChi2combined[iCentrality][iTrackPt][iFile]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
           hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile]->Add(hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][iFile]);
         }
@@ -323,7 +323,7 @@ void drawUnfoldingChi2Test(){
   for(int iFile = 0; iFile < nInputFiles; iFile++) {
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++) {
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++) {
-        for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) {
+        for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++) {
           hMeasured[iCentrality][iJetPt][iTrackPt][iFile] = (TH1D*) inputFile[iFile]->Get(Form("measured/hMeasured%d%d%d", iCentrality, iTrackPt, iJetPt));
           hTruth[iCentrality][iJetPt][iTrackPt][iFile] = (TH1D*) inputFile[iFile]->Get(Form("truth/hTruth%d%d%d", iCentrality, iTrackPt, iJetPt));
           hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt][iFile] = (TH1D*) inputFile[iFile]->Get(Form("measuredToTruthRatio/measuredToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
@@ -381,7 +381,7 @@ void drawUnfoldingChi2Test(){
         compactCentralityString = "_pythia8";
       }
 
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
 
         // Set the jet pT information for legends and figure saving
         jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
@@ -453,7 +453,7 @@ void drawUnfoldingChi2Test(){
         compactCentralityString = "_pythia8";
       }
 
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
 
         // Set the jet pT information for legends and figure saving
         jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
@@ -652,7 +652,7 @@ void drawUnfoldingChi2Test(){
         compactCentralityString = "_pythia8";
       }
 
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
 
         // Set the jet pT information for legends and figure saving
         jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
@@ -725,7 +725,7 @@ void drawUnfoldingChi2Test(){
         compactCentralityString = "_pythia8";
       }
 
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
 
         // Set the jet pT information for legends and figure saving
         jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
