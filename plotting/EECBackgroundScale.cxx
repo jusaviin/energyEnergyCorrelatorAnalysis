@@ -782,7 +782,7 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets, const int iSyst
 
   // The second part of the array gives the same numbers for a generator level jet study
   // File used to get these numbers: PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_processed_2023-10-24.root
-  // Git hash: 
+  // Git hash: 8e3ab0ca2cfebdf3723f1fb69cce97145f89dea4
   {
    // Squared energy weight pT1^2*pT2^2, 4% centrality shift
    // Centrality 0-10%

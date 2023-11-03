@@ -50,16 +50,16 @@ EECUnfoldConfiguration::EECUnfoldConfiguration(EECCard* card, const int iSplit, 
   if(fSplitIndex < 0 || fSplitIndex >= kNDatasetSplits){
     std::cout << "EECUnfoldConfiguration::ERROR! Selected split index for the response matrix is out or range!" << std::endl;
     std::cout << "You selected " << fSplitIndex << " while the allowed range is 0-" << kNDatasetSplits-1 << std::endl;
-    std::cout << "Next the code will crash, or you will see undefined behavior. Please check your code." << std::endl;
-    return;
+    std::cout << "Next the code will crash. Please fix your code." << std::endl;
+    throw std::invalid_argument("iSplit in EECUnfoldConfiguration is out of allowed range!");
   }
 
   // Check that the weight exponent is sensible
   if(fWeightExponent < 1 || fWeightExponent > 2){
     std::cout << "EECUnfoldConfiguration::ERROR! Selected weight exponent for the response matrix is out or range!" << std::endl;
     std::cout << "You selected " << fWeightExponent << " while currently implemented range is 1-2" << std::endl;
-    std::cout << "Next the code will crash, or you will see undefined behavior. Please check your code." << std::endl;
-    return;
+    std::cout << "Next the code will crash. Please fix your code." << std::endl;
+    throw std::invalid_argument("iWeightExponent in EECUnfoldConfiguration is out of allowed range!");
   }
 
   // Find the actual numbers based on the study 
