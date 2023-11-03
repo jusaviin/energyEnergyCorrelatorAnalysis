@@ -615,7 +615,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
           //        chi2Histograms_pp_energyWeightSquared_split2_nominalSmear_2023-10-31.root
           // To determine these numbers, the 120 < jet pT < 140 GeV bin is ignored, because the results differ a lot from all other bins
 
-          fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_processed_2023-10-30.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2023-10-30.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // track pT > 1 GeV
           fBestNumberOfIterations[0][2] = 3;  // track pT > 1.5 GeV
