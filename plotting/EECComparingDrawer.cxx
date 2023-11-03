@@ -740,7 +740,7 @@ void EECComparingDrawer::DrawEnergyEnergyCorrelatorHistograms(){
   double legendX1 = 0.27; // Default x1 location for the legend
   double legendY1 = 0.1;  // Default y1 location for the legend
   double legendX2 = 0.47; // Default x2 location for the legend
-  double legendY2 = 0.34 + 0.06*fnAddedHistograms; // Default y2 location for the legend
+  double legendY2 = 0.38 + 0.06*fnAddedHistograms; // Default y2 location for the legend
   
   // If we are not doing log-log drawing, move the legend to top right corner
   if(!fLogDeltaR || !fLogEEC){

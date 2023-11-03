@@ -995,7 +995,9 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               normalizationFactor = 1.0/drawnHistogram->Integral("width");
               drawnHistogram->Scale(normalizationFactor);
               drawnHistogram->SetLineColor(color[0]);
-              legend->AddEntry(drawnHistogram, "All combinations", "l");
+              drawnHistogram->SetMarkerColor(color[0]);
+              drawnHistogram->SetMarkerStyle(style[0]);
+              legend->AddEntry(drawnHistogram, "All combinations", "p");
               
               // For logarithmic x-axis, cannot go all the way to zero
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.39);
@@ -1013,9 +1015,11 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(normalizationFactor);
                 drawnHistogram->SetLineColor(color[iSubevent+colorAdder]);
+                drawnHistogram->SetMarkerColor(color[iSubevent+colorAdder]);
+                drawnHistogram->SetMarkerStyle(style[iSubevent+colorAdder]);
                 drawnHistogram->Draw("same");
                 
-                legend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "l");
+                legend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "p");
               } // Subevent type loop
               
               // Draw the legend
