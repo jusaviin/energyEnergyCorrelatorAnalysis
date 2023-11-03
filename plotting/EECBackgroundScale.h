@@ -21,10 +21,10 @@ public:
   static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
   static const int kNJetPtBins = 20;          // Number of jet pT bins for which the background scale is determined
   
-  EECBackgroundScale();                                            // Constructor
+  EECBackgroundScale();                 // Constructor
   EECBackgroundScale(EECCard* card, const int iSystmatic);         // Custom constructor
-  EECBackgroundScale(const bool useGenJets, const int iSystemtic); // Custom constructor
-  ~EECBackgroundScale() = default;                                 // Destructor
+  EECBackgroundScale(const bool useGenJets, const int iSystemtic, const int iWeightExponent); // Custom constructor
+  ~EECBackgroundScale() = default;      // Destructor
 
   // Getter for the background scale
   double GetEECBackgroundScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData) const;
@@ -45,7 +45,7 @@ private:
   double fBackgroundScalePp[kNJetPtBins][kNTrackPtBins];
   
   // Methods
-  void InitializeArrays(const bool useGenJets = false, const int iSystematic = 0);
+  void InitializeArrays(const bool useGenJets = false, const int iSystematic = 0, const int iWeightExponent = 1);
 
   // Getter for pp background scale
   double GetEECBackgroundScalePp(const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder) const;

@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 1 ]; then
   echo "Usage of the script:"
-  echo "$0 fileName [-o outputFileName] [-s split] [-u systematicUncertainty] [-e energyEnergyCorrelatorType]"
+  echo "$0 fileName [-o outputFileName] [-s split] [-u systematicUncertainty] [-e energyEnergyCorrelatorType] [-w weightExponent]"
   echo "fileName = Name of the file containing the energy-energy correlators that needs unfolding"
   echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the unfolded histograms"
   echo "-s split = Split index for response matrix. Default: 0."
@@ -24,6 +24,8 @@ if [ "$#" -lt 1 ]; then
   echo "   2 = Energy-energy correlator with negative track efficiency variation"
   echo "   3 = Energy-energy correlator with positive track pair efficiency variation"
   echo "   4 = Energy-energy correlator with negative track pair efficiency variation"
+  echo "-w weightExponent = Exponent given to the energy-energy correlator weight. Default: 1"
+  echo "   Currently only exponents 1 and 2 are implemented"
   exit
 fi
 
@@ -32,7 +34,7 @@ FILENAME=$1
 shift # Shift the positional argument such that optional ones are properly seen afterwards
 
 # Read the optional arguments
-while getopts ":o:s:u:e:" opt; do
+while getopts ":o:s:u:e:w:" opt; do
 case $opt in
 o) OUTPUTFILE="$OPTARG"
 ;;
@@ -41,6 +43,8 @@ s) SPLIT="$OPTARG"
 u) SYSTEMATIC="$OPTARG"
 ;;
 e) ENERGYENERGYCORRELATOR="$OPTARG"
+;;
+w) WEIGHTEXPONENT="$OPTARG"
 ;;
 \?) echo "Invalid option -$OPTARG" >&2
 exit 1
@@ -53,6 +57,7 @@ OUTPUTFILE=${OUTPUTFILE:-$FILENAME}
 SPLIT=${SPLIT:-0}
 SYSTEMATIC=${SYSTEMATIC:-0}
 ENERGYENERGYCORRELATOR=${ENERGYENERGYCORRELATOR:-0}
+WEIGHTEXPONENT=${WEIGHTEXPONENT:-1}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -61,7 +66,7 @@ GITHASH=`git rev-parse HEAD`
 sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/unfoldEEChistograms.C
 
 # Unfold the energy-energy correlator histograms
-root -l -b -q 'plotting/unfoldEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${SPLIT}','${SYSTEMATIC}','${ENERGYENERGYCORRELATOR}')'
+root -l -b -q 'plotting/unfoldEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${SPLIT}','${SYSTEMATIC}','${ENERGYENERGYCORRELATOR}','${WEIGHTEXPONENT}')'
 
 # Put the placeholder string back to the histogram unfolding file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/unfoldEEChistograms.C

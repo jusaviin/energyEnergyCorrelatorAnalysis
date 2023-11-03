@@ -659,7 +659,7 @@ void EECHistogramManager::SubtractBackground(const int iSystematic){
 void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
   
   double scalingFactor;
-  EECBackgroundScale* scaleProvider = new EECBackgroundScale(true, iSystematic); // Always use gen level correction for unfolded histograms
+  EECBackgroundScale* scaleProvider = new EECBackgroundScale(true, iSystematic, fCard->GetWeightExponent()); // Always use gen level correction for unfolded histograms
   bool isPbPb = fSystemAndEnergy.Contains("PbPb");
   
   // Bin borders that are searched from the background scaler

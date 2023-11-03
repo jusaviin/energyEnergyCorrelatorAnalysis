@@ -51,8 +51,9 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                           6: Evaluate systemtic uncertainty from 2% centrality shift
  *                           7: Evaluate systematic uncertainty from 6% centrality shift
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
+ *.  const int iWeightExponent = Exponent given for the energy weights for energy-energy correaltors. Currently 1 and 2 are implemented.
  */
-void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){
+void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator, const int iWeightExponent = 1){
 
   // **********************************
   //       Open the input files
@@ -75,7 +76,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   bool isPbPbData = collisionSystem.Contains("PbPb");
 
   // Use the information from the dataCard to create an unfolding configuration
-  EECUnfoldConfiguration* unfoldConfigurationProvider = new EECUnfoldConfiguration(dataCard, iSplit, iSystematic);
+  EECUnfoldConfiguration* unfoldConfigurationProvider = new EECUnfoldConfiguration(dataCard, iSplit, iSystematic, iWeightExponent);
 
   // Open the response matric file based on the information on the unfolding configuration
   TFile* responseInputFile = TFile::Open(unfoldConfigurationProvider->GetResponseFileName());
@@ -163,6 +164,11 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   
   int firstStudiedTrackPtBinEEC = 3;
   int lastStudiedTrackPtBinEEC = 5;
+
+  // Lower track pT bins can be included for higher energy weights:
+  if(iWeightExponent > 1){
+    firstStudiedTrackPtBinEEC = 1;
+  }
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;

@@ -22,7 +22,7 @@ public:
   static const int kNTrackPtBins = 8;         // Number of track pT bins for which the background scale is determined
   
   EECUnfoldConfiguration();               // Constructor
-  EECUnfoldConfiguration(EECCard* card, const int iSplit = 0, const int iSystematic = 0);  // Custom constructor with a card
+  EECUnfoldConfiguration(EECCard* card, const int iSplit = 0, const int iSystematic = 0, const int iWeightExponent = 1);  // Custom constructor with a card
   ~EECUnfoldConfiguration();              // Destructor
 
   // Getter for unfolding configuration
@@ -35,6 +35,7 @@ private:
   bool fIsPbPbData;                // Flag for PbPb data, read from card
   int fSystematicIndex;            // Index for systematic uncertainty study
   int fSplitIndex;                 // Index for the MC split. 0 = Whole dataset. 1 = Split 1, 2 = Split 2
+  int fWeightExponent;             // Exponent used for the energy weights for energy-energy correlators
   TString fResponseMatrixFileName; // Response matrix file name for which the configuration is determined
 
   // Binning information for the scaling tables

@@ -473,6 +473,19 @@ std::pair<double,double> EECCard::GetBinBordersJetPtUnfoldingTruth(const int iBi
   return std::make_pair(GetLowBinBorderJetPtUnfoldingTruth(iBin), GetHighBinBorderJetPtUnfoldingTruth(iBin)); 
 } 
 
+/*
+ *  Getter for the weight exponent used in energy-energy correlators
+ */
+int EECCard::GetWeightExponent() const{
+
+  // If the entry does not exist, the exponent must be 1 since this entry was added to the card to make a study for higher exponents
+  if(fCardEntries[kWeightExponent]){
+    return (*fCardEntries[kWeightExponent])[1];
+  } else {
+    return 1;
+  }
+}
+
 
 /*
  * Add one-dimensional vector to the card
