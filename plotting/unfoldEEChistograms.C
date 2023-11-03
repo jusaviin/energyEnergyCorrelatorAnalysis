@@ -51,9 +51,11 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                           6: Evaluate systemtic uncertainty from 2% centrality shift
  *                           7: Evaluate systematic uncertainty from 6% centrality shift
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
- *.  const int iWeightExponent = Exponent given for the energy weights for energy-energy correaltors. Currently 1 and 2 are implemented.
+ *.  int iWeightExponent = Exponent given for the energy weights for energy-energy correaltors. 
+ *                               0: Read the used weight exponent from the input file
+ *                               >0: Use manually defined exponent. Currently 1 and 2 are implemented.
  */
-void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator, const int iWeightExponent = 1){
+void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int iSplit = 0, const int iSystematic = 0, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator, int iWeightExponent = 0){
 
   // **********************************
   //       Open the input files
@@ -75,6 +77,9 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   TString collisionSystem = dataCard->GetDataType();
   bool isPbPbData = collisionSystem.Contains("PbPb");
 
+  // If the weight exponent is 0, read the value that has been used in the input data file
+  if(iWeightExponent == 0) iWeightExponent = dataCard->GetWeightExponent();
+
   // Use the information from the dataCard to create an unfolding configuration
   EECUnfoldConfiguration* unfoldConfigurationProvider = new EECUnfoldConfiguration(dataCard, iSplit, iSystematic, iWeightExponent);
 
@@ -88,7 +93,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
     return;
   }
 
-  // Get the EECCard also from the response matric file
+  // Get the EECCard also from the response matrix file
   EECCard* responseCard = new EECCard(responseInputFile);
   
   

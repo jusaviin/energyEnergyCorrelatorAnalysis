@@ -24,8 +24,9 @@ if [ "$#" -lt 1 ]; then
   echo "   2 = Energy-energy correlator with negative track efficiency variation"
   echo "   3 = Energy-energy correlator with positive track pair efficiency variation"
   echo "   4 = Energy-energy correlator with negative track pair efficiency variation"
-  echo "-w weightExponent = Exponent given to the energy-energy correlator weight. Default: 1"
-  echo "   Currently only exponents 1 and 2 are implemented"
+  echo "-w weightExponent = Exponent given to the energy-energy correlator weight. Default: 0"
+  echo "   0 = Read the used exponent from input file"
+  echo "   >0 = Use manually defined exponent. Currently only exponents 1 and 2 are implemented"
   exit
 fi
 
@@ -57,7 +58,7 @@ OUTPUTFILE=${OUTPUTFILE:-$FILENAME}
 SPLIT=${SPLIT:-0}
 SYSTEMATIC=${SYSTEMATIC:-0}
 ENERGYENERGYCORRELATOR=${ENERGYENERGYCORRELATOR:-0}
-WEIGHTEXPONENT=${WEIGHTEXPONENT:-1}
+WEIGHTEXPONENT=${WEIGHTEXPONENT:-0}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
