@@ -11,7 +11,7 @@ void compareFinalEECResults(){
   const int nComparisonFiles = 1;
   TString pbPbFileName[nComparisonFiles];
   //pbPbFileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
-  pbPbFileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_firstFinalResults_processed_2023-10-23.root";
+  pbPbFileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_firstFinalResultsWithFixedCard_processed_2023-10-23.root";
 
   TString ppFileName[nComparisonFiles];
   //ppFileName[0] = "data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root";
@@ -23,7 +23,8 @@ void compareFinalEECResults(){
   EECCard* pbPbCard[nComparisonFiles];
   TFile* ppInputFile[nComparisonFiles];
   EECCard* ppCard[nComparisonFiles];
-  TString fileTypeString[] = {"p_{T,1}^{2}p_{T,2}^{2}", "p_{T,1}^{2}p_{T,2}^{2}"};
+  TString energyWeightString[nComparisonFiles];
+  int weightExponent;
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     
     pbPbInputFile[iFile] = TFile::Open(pbPbFileName[iFile]);
@@ -47,6 +48,22 @@ void compareFinalEECResults(){
     }
 
     ppCard[iFile] = new EECCard(ppInputFile[iFile]);
+
+    // Check that the energy weights from PbPb and pp match. Otherwise taking ratio is meaningless
+    weightExponent = pbPbCard[iFile]->GetWeightExponent();
+    if(weightExponent != ppCard[iFile]->GetWeightExponent()){
+      cout << "ERROR! You are trying to take a PbPb to pp ratio with different energy weight exponents!" << endl;
+      cout << "I cannot allow you to do this. The ratio would not be what you want." << endl;
+      cout << "Please check that you are comparing files with the same energy weight exponents." << endl;
+      return;
+    }
+
+    // Put the correct energy weight to a string
+    if(weightExponent == 1){
+      energyWeightString[iFile] = "p_{T,1}p_{T,2}";
+    } else {
+      energyWeightString[iFile] = Form("p_{T,1}^{%d}p_{T,2}^{%d}", weightExponent, weightExponent);
+    }
   }
   
   // ====================================================
@@ -61,19 +78,77 @@ void compareFinalEECResults(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,10));
+  comparedCentralityBin.push_back(std::make_pair(10,30));
+  comparedCentralityBin.push_back(std::make_pair(30,50));
+  comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
+  comparedJetPtBin.push_back(std::make_pair(120,140));
   comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
-  comparedTrackPtBin.push_back(1.0);
+  //comparedTrackPtBin.push_back(1.0);
   comparedTrackPtBin.push_back(2.0);
   comparedTrackPtBin.push_back(3.0);
-  bool individualTrackPt = false; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
+  bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
+
+  // ====================================================
+  //                Drawing configuration
+  // ====================================================
+  
+  // Figure saving
+  const bool saveFigures = false;  // Save figures
+  const char* saveComment = "_energyWeightSquared";   // Comment given for this specific file
+  const char* figureFormat = "pdf"; // Format given for the figures
+
+  // Drawing configuration
+  std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
+  std::pair<double, double> eecZoom = std::make_pair(0.05, 50);
+
+  // Sanity checks for input. Ensure that all the selected bins actually exist in the input files
+  for(int iFile = 0; iFile < nComparisonFiles; iFile++){
+
+    // Sanity check for centrality bins
+    for(auto centralityBin : comparedCentralityBin){
+      if(pbPbCard[iFile]->FindBinIndexCentrality(centralityBin) < pbPbCard[iFile]->GetFirstUnfoldedCentralityBin() || pbPbCard[iFile]->FindBinIndexCentrality(centralityBin) > pbPbCard[iFile]->GetLastUnfoldedCentralityBin()){
+        cout << "ERROR! Centrality bin " << centralityBin.first << "-" << centralityBin.second << " does not exist in file " << pbPbFileName[iFile].Data() << endl;
+        cout << "Please only choose centrality bins that are included in the input files." << endl;
+        return;
+      } 
+    }
+
+    // Sanity check for jet pT bins
+    for(auto jetPtBin : comparedJetPtBin){
+      if(pbPbCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) < pbPbCard[iFile]->GetFirstUnfoldedJetPtBin() || pbPbCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) > pbPbCard[iFile]->GetLastUnfoldedJetPtBin()){
+        cout << "ERROR! Jet pT bin " << jetPtBin.first << "-" << jetPtBin.second << " does not exist in file " << pbPbFileName[iFile].Data() << endl;
+        cout << "Please only choose jet pT bins that are included in the input files." << endl;
+        return;
+      }
+      if(ppCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) < ppCard[iFile]->GetFirstUnfoldedJetPtBin() || ppCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) > ppCard[iFile]->GetLastUnfoldedJetPtBin()){
+        cout << "ERROR! Jet pT bin " << jetPtBin.first << "-" << jetPtBin.second << " does not exist in file " << ppFileName[iFile].Data() << endl;
+        cout << "Please only choose jet pT bins that are included in the input files." << endl;
+        return;
+      } 
+    }
+
+    // Sanity check for track pT bins
+    for(auto trackPtBin : comparedTrackPtBin){
+      if(pbPbCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) < pbPbCard[iFile]->GetFirstUnfoldedTrackPtBin() || pbPbCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) > pbPbCard[iFile]->GetLastUnfoldedTrackPtBin()){
+        cout << "ERROR! Track pT cut > " << trackPtBin << " GeV does not exist in file " << pbPbFileName[iFile].Data() << endl;
+        cout << "Please only choose track pT bins that are included in the input files." << endl;
+        return;
+      }
+      if(ppCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) < ppCard[iFile]->GetFirstUnfoldedTrackPtBin() || ppCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) > ppCard[iFile]->GetLastUnfoldedTrackPtBin()){
+        cout << "ERROR! Track pT cut > " << trackPtBin << " GeV does not exist in file " << ppFileName[iFile].Data() << endl;
+        cout << "Please only choose track pT bins that are included in the input files." << endl;
+        return;
+      }
+    } 
+  } // File loop for input sanity check
 
   // Only allow one variable for which all bins are plotted to the same figure
   if(individualCentrality + individualJetPt + individualTrackPt < 2){
@@ -210,19 +285,6 @@ void compareFinalEECResults(){
     } // Jet pT binning if-else
     
   } // Centrality binning if-else
-
-  // ====================================================
-  //                    Configuration
-  // ====================================================
-  
-  // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "";   // Comment given for this specific file
-  const char* figureFormat = "pdf"; // Format given for the figures
-
-  // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
-  std::pair<double, double> eecZoom = std::make_pair(0.05, 50);
   
   // Create and setup a new histogram managers to project and handle the histograms
   EECHistogramManager* pbPbHistograms[nComparisonFiles];
@@ -341,11 +403,10 @@ void compareFinalEECResults(){
   
   drawer->SetLogX(true);
 
-  //TString centralityString, trackPtString, jetPtString;
-  TString compactCentralityString = Form("_C=%.0f-%.0f", comparedCentralityBin.at(0).first, comparedCentralityBin.at(0).second);
-  TString compactJetPtString = Form("_J=%.0f-%.0f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second);
-  TString compactTrackPtString = Form("_T>%.1f",comparedTrackPtBin.at(0));
-  compactTrackPtString.ReplaceAll(".","v");
+  TString compactCentralityString = "";
+  TString compactJetPtString = "";
+  TString compactTrackPtString = "";
+  TString comparedVariableString = "";
   TString legendString;
   int markerStyle[2] = {kFullCircle, kOpenSquare};
   int color[] = {kBlack,kRed,kBlue,kGreen+3,kMagenta,kCyan,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
@@ -403,10 +464,31 @@ void compareFinalEECResults(){
     TLegend* legend = new TLegend(0.18,0.04,0.45,0.58);
     legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
 
-    // Add common legend variables
-    if(!colorWithCentrality) legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second), "");
-    if(!colorWithJetPt) legend->AddEntry((TObject*) 0, Form("%.0f < jet p_{T} < %.0f", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second), "");
-    if(!colorWithTrackPt) legend->AddEntry((TObject*) 0, Form("%.1f < track p_{T}", std::get<kTrackPt>(plottedBin).at(0)), "");
+    // Add common legend variables and define figure naming in case figures are saved
+    if(!colorWithCentrality){ 
+      legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second), "");
+      compactCentralityString = Form("_C=%.0f-%.0f", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second);
+    } else {
+      compactCentralityString = "";
+      comparedVariableString = "_centralityComparison";
+    }
+
+    if(!colorWithJetPt) {
+      legend->AddEntry((TObject*) 0, Form("%.0f < jet p_{T} < %.0f", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second), "");
+      compactJetPtString = Form("_J=%.0f-%.0f", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second);
+    } else {
+      compactJetPtString = "";
+      comparedVariableString = "_jetPtComparison";
+    }
+
+    if(!colorWithTrackPt){ 
+      legend->AddEntry((TObject*) 0, Form("%.1f < track p_{T}", std::get<kTrackPt>(plottedBin).at(0)), "");
+      compactTrackPtString = Form("_T>%.1f",std::get<kTrackPt>(plottedBin).at(0));
+      compactTrackPtString.ReplaceAll(".","v");
+    } else {
+      compactTrackPtString = "";
+      comparedVariableString = "_trackPtComparison";
+    }
 
     // Set drawing style for all histograms
     colorFinder = 0;
@@ -470,10 +552,10 @@ void compareFinalEECResults(){
           for(int iCentrality : currentCentralityIndices){
             if(colorWithCentrality) individualLegend = Form(" Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(legendCentralityIndex).first, std::get<kCentrality>(plottedBin).at(legendCentralityIndex).second);
             legendCentralityIndex++;
-            legend->AddEntry(hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt], Form("PbPb %s%s", fileTypeString[iFile].Data(), individualLegend.Data()), "p");
+            legend->AddEntry(hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt], Form("PbPb %s%s", energyWeightString[iFile].Data(), individualLegend.Data()), "p");
           } // Centrality loop 
           if(colorWithCentrality) individualLegend = "";
-          legend->AddEntry(hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt], Form("pp %s%s", fileTypeString[iFile].Data(), individualLegend.Data()), "p");
+          legend->AddEntry(hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt], Form("pp %s%s", energyWeightString[iFile].Data(), individualLegend.Data()), "p");
         } // Track pT loop
       } // Jet pT loop
     } // File loop
@@ -505,7 +587,7 @@ void compareFinalEECResults(){
           
     // Save the figures to a file
     if(saveFigures){
-    gPad->GetCanvas()->SaveAs(Form("figures/eecWeightSquared%s%s%s%s.%s", saveComment, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+    gPad->GetCanvas()->SaveAs(Form("figures/eecFinalResults%s%s%s%s%s.%s", saveComment, comparedVariableString.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
     }
   }
 
