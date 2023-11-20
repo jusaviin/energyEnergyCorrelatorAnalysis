@@ -13,29 +13,56 @@ void fullAnalysisClosure(){
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
   bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
+  const int weightExponent = 2;
+
+  // Ensure that a reasonable weight exponent is selected
+  if(weightExponent < 1 || weightExponent > 2){
+    cout << "ERROR! You have selected weightExponent = " << weightExponent << " while only 1 and 2 are implemented" << endl;
+    cout << "Please select either 1 or 2 for the weightExponent!" << endl;
+    return;
+  }
 
   // Open the input files
-  TString fileName[kNDistributionTypes][nSplits];
+  TString fileName[kNDistributionTypes][nSplits][2];
 
   if(isPbPbData){
-    fileName[kMeasured][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part2_processed_2023-07-15.root";
-    fileName[kMeasured][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part1_processed_2023-07-15.root";
+    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part2_processed_2023-07-15.root";
+    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part1_processed_2023-07-15.root";
 
-    fileName[kTruth][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root";
-    fileName[kTruth][1] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part1_processed_2023-07-11.root";
+    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part2_processed_2023-11-10.root";
+    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part1_processed_2023-11-10.root";
+
+    fileName[kTruth][0][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root";
+    fileName[kTruth][1][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part1_processed_2023-07-11.root";
+
+    fileName[kTruth][0][1] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-24.root";
+    fileName[kTruth][1][1] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_part1_processed_2023-10-24.root";
 
   } else {
-    fileName[kMeasured][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part2_processed_2023-07-15.root";
-    fileName[kMeasured][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part1_processed_2023-07-15.root";
-    fileName[kMeasured][2] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_processed_2023-07-15.root";
+    fileName[kMeasured][0][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part2_processed_2023-07-15.root";
+    fileName[kMeasured][1][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_part1_processed_2023-07-15.root";
+    fileName[kMeasured][2][0] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_32deltaRBins_newTrackPairEfficiency_nominalSmear_processed_2023-07-15.root";
 
-    fileName[kTruth][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part2_processed_2023-06-21.root";
-    fileName[kTruth][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part1_processed_2023-06-21.root";
-    fileName[kTruth][2] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_32deltaRBins_firstTest_processed_2023-07-10.root";
+    fileName[kMeasured][0][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_part2_processed_2023-11-10.root";
+    fileName[kMeasured][1][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_part1_processed_2023-11-10.root";
+    fileName[kMeasured][2][1] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_energyWeightSquared_nominalSmear_processed_2023-11-10.root";
+
+    fileName[kTruth][0][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part2_processed_2023-06-21.root";
+    fileName[kTruth][1][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_truthReference_part1_processed_2023-06-21.root";
+    fileName[kTruth][2][0] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_32deltaRBins_firstTest_processed_2023-07-10.root";
+
+    fileName[kTruth][0][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-30.root";
+    fileName[kTruth][1][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part1_processed_2023-10-30.root";
+    fileName[kTruth][2][1] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_energyWeightSquared_nominalSmear_processed_2023-11-10.root";
   }
 
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
-  TString uncertaintyFileName[2] = {"systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_2023-07-14.root", "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root"};
+  TString uncertaintyFileName[2][2] = {
+    // Uncertainty files for pT1*pT2 weight
+    {"systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_2023-07-14.root", "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root"},
+    // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
+    {"systematicUncertainties/systematicUncertaintiesForPp_energyWeightSquared_noMCnonClosure_2023-11-17.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2023-11-17.root"}
+  };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
   TFile* uncertaintyFile;
@@ -44,11 +71,11 @@ void fullAnalysisClosure(){
 
   for(int iFile = 0; iFile < kNDistributionTypes; iFile++){
     for(int iSplit = 0; iSplit < nSplits; iSplit++){
-      inputFile[iFile][iSplit] = TFile::Open(fileName[iFile][iSplit]);
+      inputFile[iFile][iSplit] = TFile::Open(fileName[iFile][iSplit][weightExponent-1]);
   
       // Check that the files exist
       if(inputFile[iFile][iSplit] == NULL){
-        cout << "Error! The file " << fileName[iFile][iSplit].Data() << " does not exist!" << endl;
+        cout << "Error! The file " << fileName[iFile][iSplit][weightExponent-1].Data() << " does not exist!" << endl;
         cout << "Maybe you forgot the data/ folder path?" << endl;
         cout << "Will not execute the code" << endl;
         return;
@@ -59,9 +86,9 @@ void fullAnalysisClosure(){
   }
 
   // File for systematic uncertainties. This is for drawing a band to ratio showing the relevant uncertainties for this comparison
-  uncertaintyFile = TFile::Open(uncertaintyFileName[isPbPbData]);
+  uncertaintyFile = TFile::Open(uncertaintyFileName[weightExponent-1][isPbPbData]);
   if(uncertaintyFile == NULL){
-    cout << "Error! The file " << uncertaintyFileName[isPbPbData].Data() << " does not exist!" << endl;
+    cout << "Error! The file " << uncertaintyFileName[weightExponent-1][isPbPbData].Data() << " does not exist!" << endl;
     cout << "Maybe you forgot the systematicUncertainties/ folder path?" << endl;
     cout << "Will not execute the code" << endl;
     return;
@@ -69,6 +96,10 @@ void fullAnalysisClosure(){
   uncertaintyCard = new EECCard(uncertaintyFile);
   
   // It is assumed that the different splits have the same binning. It might be worth implementing a check here to avoid bugs producing scary closures.
+
+  // Declare algortihm library object for making stuff easier
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
+  TString today = optimusPrimeTheTransformer->GetToday();
   
   // ====================================================
   //               Binning configuration
@@ -121,13 +152,18 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_PythiaHydjet";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = false;
-  const char* outputFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_pp_2023-07-16.root", "systematicUncertainties/monteCarloNonClosureRelative_PbPb_2023-07-16.root"};
+  const bool saveMonteCarloNonClosureFile = true;
+  TString outputFileName[2][2] = {
+    // Output file names for pT1*pT2 weight
+    {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_%s.root", today.Data())},
+    // Output file names for pT1^{2}*pT2^{2} weight
+    {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_energyWeightSquared_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_energyWeightSquared_%s.root", today.Data())}
+  };
   
   // Create and setup a new histogram managers to project and handle the histograms
   EECHistogramManager* histograms[kNDistributionTypes][nSplits];
@@ -232,7 +268,6 @@ void fullAnalysisClosure(){
   TH1D* trackSelectionHelper = NULL;
   std::pair<double,double> shiftedCentralityBin;
   double sumOfSquares;
-  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
 
   // Read the uncertainties, add relevant sources in quadrature, and transform them into relative uncertainties
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -307,6 +342,10 @@ void fullAnalysisClosure(){
             if(TMath::Abs(1-averageNonClosure) > relevantUncertainty){
               hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, TMath::Abs(1-averageNonClosure) - relevantUncertainty);
             } else {
+              hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, 0);
+            }
+            // For selected bins, suppress obvious oscillation
+            if(isPbPbData && iCentrality == 2 && iJetPt >= 8 && iBin == 23){
               hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, 0);
             }
             hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, 0);
@@ -446,7 +485,8 @@ void fullAnalysisClosure(){
 
   // If we are writing a file evaluating MC non-closure uncertainties, do it
   if(saveMonteCarloNonClosureFile){
-    TFile* outputFile = new TFile(outputFileName[isPbPbData],"UPDATE");
+    cout << "Saving to file: " << outputFileName[weightExponent-1][isPbPbData].Data() << endl;
+    TFile* outputFile = new TFile(outputFileName[weightExponent-1][isPbPbData],"UPDATE");
 
     for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
 

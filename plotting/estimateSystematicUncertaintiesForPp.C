@@ -29,23 +29,37 @@ void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
  *  - Background subtraction (uncorrelated)
  *
  *  The results will be saved to a file and also slides with different contributions can be printed
+ *
+ * Arguments:
+ *  const int weightExponent = Exponents for the energy weight in energy-energy correlators. Currently 1 and 2 are implemented.
  */
-void estimateSystematicUncertaintiesForPp(){
+void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
+
+  // First, do a sanity check for the weight exponents. Currently only 1 and 2 are implemented.
+  if(weightExponent < 1 || weightExponent > 2){
+    cout << "ERROR! The weight exponent you gave has not been implemented!" << endl;
+    cout << "Currently only values 1 and 2 are implemented." << endl;
+    cout << "Please select one of these values for weight exponent." << endl;
+    return;
+  }
   
   // ==================================================================
   // ============================= Input ==============================
   // ==================================================================
 
   // Nominal results
-  TFile* nominalResultFile = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root");
+  TString nominalResultFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_firstFinalResults_processed_2023-10-26.root"};
+  TFile* nominalResultFile = TFile::Open(nominalResultFileName[weightExponent-1]);
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
   loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
+  TString jetEnergyResolutionSmearDownFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithUncertaintySmearDown_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithUncertaintySmearDown_processed_2023-10-26.root"};
+  TString jetEnergyResolutionSmearUpFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithUncertaintySmearUp_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithUncertaintySmearUp_processed_2023-10-26.root"};
   TFile* jetEnergyResolutionFile[2];
-  jetEnergyResolutionFile[0] = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithUncertaintySmearDown_processed_2023-07-13.root");
-  jetEnergyResolutionFile[1] = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithUncertaintySmearUp_processed_2023-07-13.root");
+  jetEnergyResolutionFile[0] = TFile::Open(jetEnergyResolutionSmearDownFileName[weightExponent-1]);
+  jetEnergyResolutionFile[1] = TFile::Open(jetEnergyResolutionSmearUpFileName[weightExponent-1]);
   EECCard* jetEnergyResolutionCard[2];
   EECHistogramManager* jetEnergyResolutionHistogramManager[2];
   for(int iJetEnergyResolutionFile = 0; iJetEnergyResolutionFile < 2; iJetEnergyResolutionFile++){
@@ -55,9 +69,11 @@ void estimateSystematicUncertaintiesForPp(){
   }
   
   // Results unfolded with a response matrix smeared with jet energy scale
+  TString jetEnergyScaleMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithMinusJetEnergyScale_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithMinusJetEnergyScale_processed_2023-10-26.root"};
+  TString jetEnergyScalePlusFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithPlusJetEnergyScale_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithPlusJetEnergyScale_processed_2023-10-26.root"};
   TFile* jetEnergyScaleFile[2];
-  jetEnergyScaleFile[0] = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithMinusJetEnergyScale_processed_2023-07-13.root");
-  jetEnergyScaleFile[1] = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithPlusJetEnergyScale_processed_2023-07-13.root");
+  jetEnergyScaleFile[0] = TFile::Open(jetEnergyScaleMinusFileName[weightExponent-1]);
+  jetEnergyScaleFile[1] = TFile::Open(jetEnergyScalePlusFileName[weightExponent-1]);
   EECCard* jetEnergyScaleCard[2];
   EECHistogramManager* jetEnergyScaleHistogramManager[2];
   for(int iJetEnergyScaleFile = 0; iJetEnergyScaleFile < 2; iJetEnergyScaleFile++){
@@ -67,26 +83,29 @@ void estimateSystematicUncertaintiesForPp(){
   }
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
-  TFile* jetPtPriorFile = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithModifiedPrior_processed_2023-07-13.root");
+  TString jetPtPriorFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithModifiedPrior_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithModifiedPrior_processed_2023-10-26.root"};
+  TFile* jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
   loadRelevantHistograms(jetPtPriorHistogramManager);
 
   // Results where background scaling factor is determined from peripheral Pythia+Hydjet instead of not subtracting background
-  TFile* backgroundSubtractionFile;
-  backgroundSubtractionFile = TFile::Open("data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2023-07-13.root");
+  TString backgroundSubtractionFileName[2] = {"data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2023-10-26.root"};
+  TFile* backgroundSubtractionFile = TFile::Open(backgroundSubtractionFileName[weightExponent-1]);
   EECCard* backgroundSubtractionCard = new EECCard(backgroundSubtractionFile);
   EECHistogramManager* backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
   loadRelevantHistograms(backgroundSubtractionHistogramManager);
 
   // Results with varied single and pair track efficiency
-  TFile* trackEfficiencyFile = TFile::Open("data/ppData_pfJets_wtaAxis_trackSystematics_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root");
+  TString trackEfficiencyFileName[2] = {"data/ppData_pfJets_wtaAxis_trackSystematics_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_trackSystematics_unfoldingWithNominalSmear_processed_2023-10-26.root"};
+  TFile* trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
   loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
 
-    // File containing relative uncertainties resulting from Monte Carlo non-closure
-  TFile* monteCarloNonClosureFile = TFile::Open("systematicUncertainties/monteCarloNonClosureRelative_pp_2023-07-16.root");
+  // File containing relative uncertainties resulting from Monte Carlo non-closure
+  TString monteCarloNonClosureFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_pp_2023-07-16.root", "systematicUncertainties/monteCarloNonClosureRelative_pp_energyWeightSquared_2023-11-17.root"};
+  TFile* monteCarloNonClosureFile = TFile::Open(monteCarloNonClosureFileName[weightExponent-1]);
   EECCard* monteCarloNonClosureCard = new EECCard(monteCarloNonClosureFile);
   
   // ==================================================================
@@ -113,8 +132,13 @@ void estimateSystematicUncertaintiesForPp(){
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);         // Y-axis zoom for rations
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
+
+  // Transformer used for Monte Carlo non-closure uncertainty
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
+  TString today = optimusPrimeTheTransformer->GetToday();
   
-  TString outputFileName = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
+  TString nameAdder[] = {"","_energyWeightSquared"}; 
+  TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -124,6 +148,7 @@ void estimateSystematicUncertaintiesForPp(){
     plotExample[iUncertainty] = false;
   }
   //plotExample[SystematicUncertaintyOrganizer::kBackgroundSubtraction] = true;
+  //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -131,9 +156,6 @@ void estimateSystematicUncertaintiesForPp(){
   
   // Systematic uncertainty organizer can easily provide names for all your naming purposes
   SystematicUncertaintyOrganizer* nameGiver = new SystematicUncertaintyOrganizer();
-
-  // Transformer used for Monte Carlo non-closure uncertainty
-  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
   
   // Histograms for uncertainty estimation
   TH1D* nominalEnergyEnergyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
