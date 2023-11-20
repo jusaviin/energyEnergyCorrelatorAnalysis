@@ -488,5 +488,32 @@ void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram,
     }
   }
 
-  
+}
+
+/*
+ * Get a const char* with today's date
+ */
+TString AlgorithmLibrary::GetToday(){
+
+  // Get the current time_point
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+  // Convert the time_point to time_t
+  std::time_t now_t = std::chrono::system_clock::to_time_t(now);
+
+  // Convert the time_t to tm in local timezone
+  std::tm* now_tm = std::localtime(&now_t);
+
+  // Create an output string stream
+  std::ostringstream oss;
+
+  // Write the date in year-month-day format to the stream
+  oss << std::put_time(now_tm, "%Y-%m-%d");
+
+  // Get the string from the stream
+  std::string date_str = oss.str();
+
+  // Return the string as TString
+  return date_str;
+
 }

@@ -9,6 +9,10 @@
 // C++ includes
 #include <iostream>
 #include <tuple>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 // Root includes
 #include <TH1.h>
@@ -38,6 +42,7 @@ public:
   void TransformToRelativeUncertainty(TH1D* transformedHistogram, const bool centerAtOne = false);
   void TransformToAbsoluteUncertainty(TH1D* transformedHistogram, TH1D* absoluteScaleHistogram, const bool centerAtOne = false);
   void SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel);
+  TString GetToday(); // Getter for today's date
   
 private:
   
