@@ -9,8 +9,8 @@
 // Function definitions. Implementations after the main macro.
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
-void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
-void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
+void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
+void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 void loadRelevantHistograms(EECHistogramManager* histograms);
 void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
 
@@ -30,7 +30,7 @@ void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
  * Arguments:
  *  const int weightExponent = Exponents for the energy weight in energy-energy correlators. Currently 1 and 2 are implemented.
  */
-void estimateSystematicUncertainties(const int weightExponent = 1){
+void estimateSystematicUncertainties(const int weightExponent = 2){
 
   // First, do a sanity check for the weight exponents. Currently only 1 and 2 are implemented.
   if(weightExponent < 1 || weightExponent > 2){
@@ -162,16 +162,21 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   // Only draw example plots from selected subset of bins
   vector<int> drawnCentralityBins = {0,1,2,3};
   vector<int> drawnJetPtBins = {6,7,8,9};
-  vector<int> drawnTrackPtBins = {3,4,5};
+  vector<int> drawnTrackPtBins = {1,3,5};
   
   const bool printUncertainties = false;
   
   std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
+
+  // Transformer used for Monte Carlo non-closure uncertainty
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
+  TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_includeMCnonClosure_2023-11-20.root", nameAdder[weightExponent-1].Data());
+  //TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -180,7 +185,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  //plotExample[SystematicUncertaintyOrganizer::kCentralityShift] = true;
+  plotExample[SystematicUncertaintyOrganizer::kJetEnergyResolution] = true;
   //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================
@@ -189,9 +194,6 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   
   // Systematic uncertainty organizer can easily provide names for all your naming purposes
   SystematicUncertaintyOrganizer* nameGiver = new SystematicUncertaintyOrganizer();
-
-  // Transformer used for Monte Carlo non-closure uncertainty
-  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
   
   // Histograms for uncertainty estimation
   TH1D* nominalEnergyEnergyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -371,7 +373,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               ratioZoom = std::make_pair(0.9,1.1);
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyResolution), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -407,7 +409,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kJetEnergyScale), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -435,7 +437,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               ratioZoom = std::make_pair(0.9,1.1);
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kUnfoldingTruth), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kUnfoldingTruth), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -468,7 +470,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               }
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kBackgroundSubtraction), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kBackgroundSubtraction), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -497,7 +499,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               ratioZoom = std::make_pair(0.8,1.2);
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackSelectionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackSelection), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackSelectionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackSelection), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -526,7 +528,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               ratioZoom = std::make_pair(0.999999,1.000001);
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSingleTrackEfficiency), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSingleTrackEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -555,7 +557,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               ratioZoom = std::make_pair(0.8,1.2);
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackPairEfficiency), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackPairEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -588,7 +590,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
               }
             }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kCentralityShift), analysisDeltaR, ratioZoom);
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kCentralityShift), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -801,10 +803,11 @@ TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult){
  *  EECCard* card = Card used to interpret the bin index
  *  TString comparisonLegend[] = An array of strings describing each result variation
  *  TString plotName = String added to saved plots. If left empty, the plots are not saved into files.
+ *  TString plotComment = Comment given to the saved plots
  *  std::pair<double, double> drawingRange = Drawing range for x-axis
  *  std::pair<double, double> ratioZoom = Y-axis zoom for the ratio
  */
-void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom){
+void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom){
   
   const int markers[] = {kFullDiamond, kFullDoubleDiamond, kFullCross, kFullFourTrianglesPlus, kFullSquare, kFullStar};
   const int colors[] = {kBlue, kRed, kGreen+3, kMagenta, kCyan, kViolet, kBlack};
@@ -831,10 +834,14 @@ void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedRes
   // Use logarithmic axis for EEC
   drawer->SetLogY(true);
 
+  // Check from plot comment if we need to also add another line to the legend
+  bool hasHigherWeightExponent = (plotComment != "");
+
   // Setup the legend for plots
-  TLegend *legend = new TLegend(0.23,0.3-nVariations*0.06,0.53,0.6);
+  TLegend *legend = new TLegend(0.23,0.23-nVariations*0.06-hasHigherWeightExponent*0.06,0.46,0.6);
   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
   legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card->GetAlternativeDataType().Data()), "");
+  if(hasHigherWeightExponent) legend->AddEntry((TObject*) 0, "Energy weight squared","");
   legend->AddEntry((TObject*) 0, centralityString.Data(),"");
   legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
   legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
@@ -875,7 +882,7 @@ void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedRes
   
   // If a plot name is given, save the plot in a file
   if(plotName != ""){
-    gPad->GetCanvas()->SaveAs(Form("figures/systematicUncertainty_%s%s%s%s.pdf", plotName.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+    gPad->GetCanvas()->SaveAs(Form("figures/systematicUncertainty_%s_PbPb%s%s%s%s.pdf", plotName.Data(), plotComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
   }
 }
 
@@ -891,13 +898,14 @@ void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedRes
  *  EECCard* card = Card used to interpret the binning information
  *  TString comparisonLegend = String describing the variation
  *  TString plotName = String added to saved plots. If left empty, the plots are not saved into files.
+ *  TString plotComment = Comment given to the saved plots
  *  std::pair<double, double> drawingRange = Drawing range for x-axis
  *  std::pair<double, double> ratioZoom = Y-axis zoom for the ratio
  */
-void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom){
+void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom){
   TH1D* variedResultArray[1] = {variedResult};
   TString comparisonLegendArray[1] = {comparisonLegend};
-  drawIllustratingPlots(drawer, nominalResult, variedResultArray, 1, iCentrality, iJetPt, iTrackPt, card, comparisonLegendArray, plotName, drawingRange, ratioZoom);
+  drawIllustratingPlots(drawer, nominalResult, variedResultArray, 1, iCentrality, iJetPt, iTrackPt, card, comparisonLegendArray, plotName, plotComment, drawingRange, ratioZoom);
 }
 
 /*
