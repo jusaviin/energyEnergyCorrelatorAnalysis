@@ -9,10 +9,11 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_nominalSmear_noJetsInReflectedCone_processed_2023-09-22.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_squareEECweight_processed_2023-10-23.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_testClosureOldScales_processed_2023-10-10.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -44,9 +45,9 @@ void validateBackgroundSubtraction(){
   int lastDrawnCentralityBin = 0;
   
   int firstDrawnJetPtBinEEC = 6;
-  int lastDrawnJetPtBinEEC = 6; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 1;
+  int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = 5;
   
   // Select the types of energy-energy correlators are studied
@@ -74,8 +75,8 @@ void validateBackgroundSubtraction(){
   std::pair<double,double> ratioZoom = std::make_pair(0.9, 1.1);
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_genLevelCheck";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_squareEnergyWeight";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -120,7 +121,7 @@ void validateBackgroundSubtraction(){
   } // Energy-energy correlator type loop
   
   // Helper histograms
-  TH1D *helperHistogram;
+  TH1D* helperHistogram;
   double normalizationFactor;
   std::pair<double,double> drawingRange = std::make_pair(0.006, 0.39);
   double epsilon = 0.0000001;
@@ -163,7 +164,7 @@ void validateBackgroundSubtraction(){
   //        Draw the selected energy-energy correlator signal ratios
   // ==========================================================================
   
-  JDrawer *drawer = new JDrawer();
+  JDrawer* drawer = new JDrawer();
   drawer->SetDefaultAppearanceSplitCanvas();
   drawer->SetRelativeCanvasSize(1.1,1.1);
   drawer->SetLeftMargin(0.14);
@@ -173,7 +174,7 @@ void validateBackgroundSubtraction(){
   
   if(logDeltaR) drawer->SetLogX(true);
 
-  TLegend *legend;
+  TLegend* legend;
   TString centralityString, trackPtString, jetPtString;
   TString compactCentralityString, compactTrackPtString, compactJetPtString;
   TString legendString;
@@ -211,9 +212,9 @@ void validateBackgroundSubtraction(){
           compactTrackPtString.ReplaceAll(".","v");
           
           // Create a legend for the figure
-          legend = new TLegend(0.44,0.08,0.69,0.44);
+          legend = new TLegend(0.34,0.08,0.59,0.44);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-          legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",histograms->GetCard()->GetAlternativeDataType().Data()), "");
+          legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",histograms->GetCard()->GetAlternativeDataType(false).Data()), "");
           legend->AddEntry((TObject*) 0, centralityString.Data(),"");
           legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
           legend->AddEntry((TObject*) 0, trackPtString.Data(),"");

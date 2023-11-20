@@ -113,8 +113,14 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
   // Define the name for the file containing histograms needed for unfolding and reference distributions for checking the quality of unfolding
   TString inputFileName[kNFileTypes];
-  inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_processed_binWidthNormalized_2023-09-14.root";
-  inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_processed_binWidthNormalized_2023-09-14.root";
+  inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_processed_2023-09-14.root";
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_processed_2023-09-14.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_noBinWidthNormalization_processed_2023-09-14.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1DunfoldMoreBins_part1_processed_2023-09-19.root
+  inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_processed_2023-09-14.root";
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_processed_2023-09-14.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_noBinWidthNormalization_processed_2023-09-14.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1DunfoldMoreBins_part2_processed_2023-09-19.root
 
   // Open the input files
   TFile* inputFile[kNFileTypes];
@@ -209,8 +215,10 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   const bool unfoldResponseMatrixDataset = true;
 
   const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
-  const bool drawResponseMatrix = false;               // Draw the used response matrices
+  const bool drawResponseMatrix = true;               // Draw the used response matrices
   const bool drawRefoldingTest = false;                // Compare refolded distribution to the original measured distribution
+
+  std::pair<double,double> ratioZoom = std::make_pair(0,2);
 
   bool saveFigures = false;
   TString saveComment = "_bayesUnfold";
@@ -460,7 +468,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       // Draw the ratios to lower pad
       drawer->SetLogY(false);
       hMeasuredToTruthRatio[iCentrality]->SetLineColor(kRed);
-      hMeasuredToTruthRatio[iCentrality]->GetYaxis()->SetRangeUser(0.8, 1.2);
+      hMeasuredToTruthRatio[iCentrality]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
       hMeasuredToTruthRatio[iCentrality]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
       drawer->DrawHistogramToLowerPad(hMeasuredToTruthRatio[iCentrality], "Jet p_{T}", "Ratio to truth", " ", "");
 
@@ -499,6 +507,8 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
         compactCentralityString = "_pythia8";
       }
 
+      hUnfoldingResponse[iCentrality]->GetXaxis()->SetRangeUser(60,300);
+      hUnfoldingResponse[iCentrality]->GetYaxis()->SetRangeUser(60,300);
       drawer->DrawHistogram(hUnfoldingResponse[iCentrality], "Reco jet p_{T}", "Gen jet p_{T}", Form("Response for %s", centralityString.Data()), "colz");
 
       // Save the figures to a file
@@ -557,7 +567,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
       for(int iIteration = 0; iIteration < nIterations; iIteration++){
         hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->SetLineColor(iterationColor[iIteration]);
-        hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetYaxis()->SetRangeUser(0.8, 1.2);
+        hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
         hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
         if(iIteration == 0){
           drawer->DrawHistogramToLowerPad(hForwardFoldedToMeasuredRatio[iCentrality][iIteration], "Jet p_{T}", "Ratio to measured", " ", "");

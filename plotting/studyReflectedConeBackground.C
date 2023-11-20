@@ -10,7 +10,7 @@ void studyReflectedConeBackground(){
   enum enumDataType{kPythiaHydjetSimulation, kMinBiasHydjetSimulation, knDataTypes};
   
   // Input files: index 0 = Pythia+Hydjet simulation, index 1 = minimum bias Hydjet simulation
-  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_nominalSmear_noJetsInReflectedCone_processed_2023-09-22.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
+  TString inputFileName[knDataTypes] = {"data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_processed_2023-07-11.root", "data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root"};
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
@@ -101,10 +101,10 @@ void studyReflectedConeBackground(){
   
   // Bin range to be integrated
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 1;
+  int lastStudiedCentralityBin = 0;
   
-  int firstStudiedJetPtBinEEC[knDataTypes] = {6, skipMinBias ? 0 : nJetPtBinsEEC[kMinBiasHydjetSimulation]};
-  int lastStudiedJetPtBinEEC[knDataTypes] = {6, skipMinBias ? 0 : nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstStudiedJetPtBinEEC[knDataTypes] = {8, skipMinBias ? 0 : nJetPtBinsEEC[kMinBiasHydjetSimulation]};
+  int lastStudiedJetPtBinEEC[knDataTypes] = {8, skipMinBias ? 0 : nJetPtBinsEEC[kMinBiasHydjetSimulation]}; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstStudiedTrackPtBinEEC = 5;
   int lastStudiedTrackPtBinEEC = 5;
@@ -204,9 +204,10 @@ void studyReflectedConeBackground(){
   ratioZoom[0] = std::make_pair(0, 2);
   saveName[0] = "pythiaHydjetToSignalReflectedCone";
   addSignalToTotalRatio[0] = false;
+  if(drawComparisonType[0]) signalReflectedConeMode = 2;
   
   // Index 1: Compare fake+fake to corresponding reflected cone distribution
-  drawComparisonType[1] = false;
+  drawComparisonType[1] = true;
   ratioIndex[1] = std::make_pair(kFakeFakeEEC, kPairOnlyReflectedCone);
   legendTextEnergyEnergyCorrelator[1] = "Fake+fake pairs";
   legendTextReflectedCone[1] = "Ref+ref, Hydjet only";
@@ -215,6 +216,7 @@ void studyReflectedConeBackground(){
   ratioZoom[1] = std::make_pair(0, 2);
   saveName[1] = "hydjetHydjetToOnlyReflectedCone";
   addSignalToTotalRatio[1] = false;
+  if(drawComparisonType[1]) signalReflectedConeMode = 3;
   
   // Index 2: Compare total background to signal+fake reflected cone
   drawComparisonType[2] = false;
@@ -261,7 +263,7 @@ void studyReflectedConeBackground(){
   addSignalToTotalRatio[5] = false;
   
   // Index 6: Compare fake+fake to signal+reflected cone distribution
-  drawComparisonType[6] = true;
+  drawComparisonType[6] = false;
   ratioIndex[6] = std::make_pair(kFakeFakeEEC, kPairSignalReflectedCone);
   legendTextEnergyEnergyCorrelator[6] = "Fake+fake pairs";
   legendTextReflectedCone[6] = "Jet+ref, only hydjet";
@@ -701,7 +703,7 @@ void studyReflectedConeBackground(){
   TLegend *legend, *ptLegend;
   TString centralityString, trackPtString, jetPtString, jetPtStringMinBias;
   TString compactCentralityString, compactTrackPtString, compactJetPtString, compactJetPtStringMinBias;
-  int color[9] = {kBlue, kRed, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure+5, kOrange-2, kGray};
+  int color[9] = {kRed, kBlue, kGreen+2, kCyan, kMagenta, kOrange-1, kAzure+5, kOrange-2, kGray};
   int firstNormalizationIndex, lastNormalizationIndex, currentNormalizationIndex;
   TH1D *referenceHistogram;
   
@@ -733,6 +735,7 @@ void studyReflectedConeBackground(){
         
         // Set the centrality information for legends and figure saving
         centralityString = Form("Cent: %.0f-%.0f%%",histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality),histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality+1));
+        centralityString = "Cent: 0-10%";
         compactCentralityString = Form("_C=%.0f-%.0f",histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality),histograms[kPythiaHydjetSimulation]->GetCentralityBinBorder(iCentrality+1));
         
         for(int iJetPt = firstStudiedJetPtBinEEC[kPythiaHydjetSimulation]; iJetPt <= lastStudiedJetPtBinEEC[kPythiaHydjetSimulation]; iJetPt++){
@@ -756,7 +759,7 @@ void studyReflectedConeBackground(){
             // Create a legend for the figure
             legend = new TLegend(0.19,legendY1,0.39,legendY2);
             legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
-            legend->AddEntry((TObject*) 0, histograms[kPythiaHydjetSimulation]->GetCard()->GetAlternativeDataType().Data(), "");
+            legend->AddEntry((TObject*) 0, histograms[kPythiaHydjetSimulation]->GetCard()->GetAlternativeDataType(false).Data(), "");
             legend->AddEntry((TObject*) 0, centralityString.Data(),"");
             legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
             legend->AddEntry((TObject*) 0, jetPtString.Data(),"");

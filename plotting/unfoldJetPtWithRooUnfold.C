@@ -112,26 +112,33 @@ void unfoldJetPtWithRooUnfold(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrixWidePtBins_part1_processed_2023-08-17.root";
+  TString unfoldingInputFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-30.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_genPtWeight_responseMatrix_part1_processed_2023-06-15.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrix_part1_processed_2023-07-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrixDownTo80GeV_part1_processed_2023-08-17.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrixWidePtBins_part1_processed_2023-08-17.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-24.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-30.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReferenceWidePtBins_part2_processed_2023-08-17.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-30.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part2_processed_2023-06-05.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_part2_processed_2023-07-11.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReferenceDownTo80GeV_part2_processed_2023-08-17.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReferenceWidePtBins_part2_processed_2023-08-17.root
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReferenceWidePtBins_part2_processed_2023-08-17.root";
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-24.root
+  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-30.root
+
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-30.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part2_2023-06-15.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReferenceDownTo80GeV_part2_processed_2023-08-17.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReferenceWidePtBins_part2_processed_2023-08-17.root
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-24.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-30.root
 
   // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
   const bool ignoreTruthReferenceFile = false;
@@ -258,10 +265,10 @@ void unfoldJetPtWithRooUnfold(){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 3;
+  int lastStudiedCentralityBin = 0;
   
-  int firstStudiedTrackPtBinEEC = 3;
-  int lastStudiedTrackPtBinEEC = 5;
+  int firstStudiedTrackPtBinEEC = 1;
+  int lastStudiedTrackPtBinEEC = 1;
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;
@@ -287,7 +294,7 @@ void unfoldJetPtWithRooUnfold(){
   const bool drawResponseMatrix = false;               // Draw the used response matrices
   const bool drawRefoldingTest = false;                // Compare refolded distribution to the original measured distribution
 
-  bool saveFigures = true;
+  bool saveFigures = false;
   TString saveComment = "_bayesUnfold_wideBins";
   TString figureFormat = "pdf";
     
@@ -887,7 +894,7 @@ void unfoldJetPtWithRooUnfold(){
         trackPtString = Form("%.1f < track p_{T}", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
         compactTrackPtString = Form("_T%.0f", unfoldingHistograms->GetTrackPtBinBorderEEC(iTrackPt));
 
-        drawer->DrawHistogram(hUnfoldingResponse[iCentrality][iTrackPt], "Reco (#Deltar #otimes jet p_{T})", "Gen (#Deltar #otimes jet p_{T})", Form("Response for %s, %s", centralityString.Data(), trackPtString.Data()), "colz");
+        drawer->DrawHistogram(hUnfoldingResponse[iCentrality][iTrackPt], "Reco (#Deltar #otimes jet p_{T})", "Gen (#Deltar #otimes jet p_{T})", Form("Response for %s%%, %s", centralityString.Data(), trackPtString.Data()), "colz");
 
         // Save the figures to a file
         if(saveFigures) {

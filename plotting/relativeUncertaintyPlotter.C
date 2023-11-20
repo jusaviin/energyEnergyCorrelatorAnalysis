@@ -35,8 +35,11 @@ void relativeUncertaintyPlotter(){
   // Input files
   TString uncertaintyFileName[kNDataTypes];
   uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
+  // systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root
+  // systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2023-11-17.root
   uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
-  
+  // systematicUncertaintiesForPp_energyWeightSquared_noMCnonClosure_2023-11-13.root
+  // systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root
   TFile* uncertaintyFile[kNDataTypes];
   EECCard* uncertaintyCard[kNDataTypes];
   for(int iFile = 0; iFile < kNDataTypes; iFile++){
@@ -77,15 +80,15 @@ void relativeUncertaintyPlotter(){
   
   // Save the plots
   const bool saveFigures = true;
-  TString saveComment = "_jetMetUpdateUncertainty";
+  TString saveComment = "_nominalUncertainty";
 
   // Zoom settings
   std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> relativeZoom[nCentralityBins+1];
   relativeZoom[nCentralityBins] = std::make_pair(0, 0.05); // Y-axis zoom for pp
-  relativeZoom[0] = std::make_pair(0, 0.3);  // Y-axis zoom for 0-10% PbPb
-  relativeZoom[1] = std::make_pair(0, 0.15); // Y-axis zoom for 10-30% PbPb
-  relativeZoom[2] = std::make_pair(0, 0.1);  // Y-axis zoom for 30-50% PbPb
+  relativeZoom[0] = std::make_pair(0, 0.6);  // Y-axis zoom for 0-10% PbPb
+  relativeZoom[1] = std::make_pair(0, 0.3); // Y-axis zoom for 10-30% PbPb
+  relativeZoom[2] = std::make_pair(0, 0.2);  // Y-axis zoom for 30-50% PbPb
   relativeZoom[3] = std::make_pair(0, 0.1);  // Y-axis zoom for 50-90% PbPb
 
   // =================================================== //

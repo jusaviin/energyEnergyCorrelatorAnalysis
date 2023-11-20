@@ -175,7 +175,7 @@ public:
   double GetJetPtCut() const;      // Get the minimum jet pT cut
   bool GetDoReflectedCone() const; // Get the information if reflected cone histograms are filled
   bool GetDoReflectedConeQA() const; // Get the information if reflected cone QA hsitograms are filled
-  int GetWeightExponent() const; // Get the weight exponent used in 
+  int GetWeightExponent() const; // Get the weight exponent used in energy-energy correlators
   
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double* contents); // Add a vector to the card
