@@ -12,7 +12,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_pp_energyWeightSquared_split1_nominalSmear_2023-10-31.root", "chi2Files/chi2Histograms_pp_energyWeightSquared_split2_nominalSmear_2023-10-31.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_6pCentShift_2023-11-16.root", "chi2Files/chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_6pCentShift_2023-11-16.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
@@ -117,7 +117,7 @@ void drawUnfoldingChi2Test(){
   int firstStudiedTrackPtBinEEC = 1;
   int lastStudiedTrackPtBinEEC = 5;
 
-  int firstStudiedJetPtBin = 1;
+  int firstStudiedJetPtBin = 0;
   int lastStudiedJetPtBin = nJetPtBins-1;
 
   const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
