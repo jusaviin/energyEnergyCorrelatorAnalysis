@@ -782,7 +782,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
 } 
 
 /*
- * Get the background scaling factor for the given bin
+ * Get the optimal number of unfolding iterations for the given bin
  *
  *  const std::pair<double,double> centralityBinBorders = Centrality bin borders for the scaling factor
  *  double trackPtBorderLow = Lower track pT border for the studied track pT bin

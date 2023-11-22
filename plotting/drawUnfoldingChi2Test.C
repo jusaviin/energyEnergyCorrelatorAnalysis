@@ -1,6 +1,7 @@
 #include "EECCard.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "JDrawer.h"
 #include "AlgorithmLibrary.h"
+#include "EECUnfoldConfiguration.h"
 
 /*
  * Draw the chi2 test results to determine a good number of iterations for unfolding
@@ -12,7 +13,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_6pCentShift_2023-11-16.root", "chi2Files/chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_6pCentShift_2023-11-16.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root", "chi2Files/chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_4pCentShift_2023-10-26.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
@@ -125,8 +126,8 @@ void drawUnfoldingChi2Test(){
   const bool drawChi2mapForwardFolded = false;          // Draw the chi2 values for individual jet pT bins from forward folded distributions
   const bool drawChi2combinedForwardFolded = false;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
-  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
-  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
+  const bool drawBestIterationRatioComparison = true; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -136,6 +137,9 @@ void drawUnfoldingChi2Test(){
       }
     }
   }
+
+  // Create unfolding configuration object to read the best number of iterations when one iteration per matrix is used
+  EECUnfoldConfiguration* grandIterationOracle = new EECUnfoldConfiguration(unfoldingCard[0], 0, 0, 2);
 
   // Set manually the best number of iteration determined totally objectively
   if(isPbPbData){
@@ -190,39 +194,27 @@ void drawUnfoldingChi2Test(){
     bestNumberOfIterations[3][2][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 160 < jet pT < 180
     bestNumberOfIterations[3][3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV, 180 < jet pT < 200
 
-    // Best number of iteratios determined for combining all jet pT bins
-    if(oneIterationPerMatrix) {
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][3] = 3;  // Centrality = 0-10, track pT > 2 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][3] = 3;  // Centrality = 10-30, track pT > 2 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][3] = 4;  // Centrality = 30-50, track pT > 2 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
-
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
-
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 4;  // Centrality = 0-10, track pT > 3 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[1][iJetPt][5] = 4;  // Centrality = 10-30, track pT > 3 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[2][iJetPt][5] = 4;  // Centrality = 30-50, track pT > 3 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[3][iJetPt][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
-    }
   } else {    
     bestNumberOfIterations[0][0][5] = 11;  // pp, track pT > 3 GeV, 120 < jet pT < 140
     bestNumberOfIterations[0][1][5] = 4;  // pp, track pT > 3 GeV, 140 < jet pT < 160
     bestNumberOfIterations[0][2][5] = 10;  // pp, track pT > 3 GeV, 160 < jet pT < 180
     bestNumberOfIterations[0][3][5] = 6;  // pp, track pT > 3 GeV, 180 < jet pT < 200
 
-    // Best number of iteratios determined for combining all jet pT bins
-    if(oneIterationPerMatrix) {
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][3] = 9;  // pp, track pT > 2 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][4] = 9;  // pp, track pT > 2.5 GeV
-      for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++) bestNumberOfIterations[0][iJetPt][5] = 9;  // pp, track pT > 3 GeV
-    }
   }
 
-  bool saveFigures = false;
-  TString saveComment = "_splitComparisonNominalSmearIndividualPt";
+  // Best number of iteratios determined for combining all jet pT bins
+  if(oneIterationPerMatrix) {
+    for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+      for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+        for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
+          bestNumberOfIterations[iCentrality][iJetPt][iTrackPt] = grandIterationOracle->GetNumberOfIterations(unfoldingCard[0]->GetBinBordersCentrality(iCentrality), unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  }
+
+  bool saveFigures = true;
+  TString saveComment = "_energyWeightSquared";
   TString figureFormat = "pdf";
 
   // Histograms for chi2 and error2 map
@@ -528,7 +520,8 @@ void drawUnfoldingChi2Test(){
 
         // Set the track pT information for legends and figure saving
         trackPtString = Form("%.1f < track p_{T}", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
-        compactTrackPtString = Form("_T%.0f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        compactTrackPtString = Form("_T%.1f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+        compactTrackPtString.ReplaceAll(".","v");
 
         // Find good y-ranges for plotting
         histogramYrange = std::make_pair(10e10, 0);
@@ -552,7 +545,11 @@ void drawUnfoldingChi2Test(){
         }
 
         // Add a legend to the figure
-        legend = new TLegend(0.18, 0.54, 0.43, 0.87);
+        if(isPbPbData){
+          legend = new TLegend(0.18, 0.54, 0.43, 0.87);
+        } else {
+          legend = new TLegend(0.55, 0.24, 0.8, 0.57);
+        }
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
         legend->AddEntry((TObject*)0, centralityString.Data(), "");
@@ -662,7 +659,8 @@ void drawUnfoldingChi2Test(){
 
           // Set the track pT information for legends and figure saving
           trackPtString = Form("%.1f < track p_{T}", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
-          compactTrackPtString = Form("_T%.0f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.1f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+          compactTrackPtString.ReplaceAll(".","v");
 
           // Draw the first ratio to canvas
           hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][bestNumberOfIterations[iCentrality][iJetPt][iTrackPt]][0]->GetYaxis()->SetRangeUser(0.8, 1.2);
