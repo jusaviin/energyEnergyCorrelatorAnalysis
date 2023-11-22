@@ -106,6 +106,7 @@ public:
   void SetLogPt(const bool isLog);          // Setter for logarithmic pT axis
   void SetLogDeltaR(const bool isLog);      // Setter for logarithmic deltaR axis in energy-energy correlators
   void SetLogEEC(const bool isLog);         // Setter for logarithmic EEC axis in energy-energy correlators
+  void SetLegendComment(const TString newComment); // Setter for legend comment
   
   // Setters for drawing style and colors
   void SetColorPalette(const int color);     // Setter for color palette
@@ -120,6 +121,7 @@ private:
   TString fSystemAndEnergy;           // Collision system (pp,PbPb,pp MC,PbPb MC,localTest) and energy
   TString fCompactSystemAndEnergy;    // Same a before but without white spaces and dots
   TString fFigureSaveNameAppend;      // Text that can be appended to standard figure naming scheme
+  TString fLegendComment;             // Comment added to legend
   JDrawer *fDrawer;                   // JDrawer for drawing the histograms
   
   // ==============================================

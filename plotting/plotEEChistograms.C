@@ -77,11 +77,11 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
   
-  int firstDrawnJetPtBinEEC = 8;
-  int lastDrawnJetPtBinEEC = 8; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 6;
+  int lastDrawnJetPtBinEEC = 6; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 1;
-  int lastDrawnTrackPtBinEEC = 1;
+  int lastDrawnTrackPtBinEEC = 5;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -108,6 +108,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool saveFigures = false;
   const char* figureFormat = "png";
   TString figureNameSuffix = "_badRegion";
+
+  // Comment that can be added to figure legends
+  TString legendComment = "Energy weight squared";
   
   // Logarithmic scales for figures
   const bool logPt = true;          // pT distributions
@@ -124,10 +127,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = false;
+  bool drawEnergyEnergyCorrelatorsSubevent = true;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection
@@ -245,6 +248,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   resultDrawer->SetLogPt(logPt);
   resultDrawer->SetLogDeltaR(logDeltaR);
   resultDrawer->SetLogEEC(logEEC);
+  resultDrawer->SetLegendComment(legendComment);
   resultDrawer->SetDrawingStyles(colorPalette,style2D,style3D);
   
   // Draw the selected histograms

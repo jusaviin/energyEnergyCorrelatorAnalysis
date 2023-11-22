@@ -14,6 +14,7 @@
 EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   fHistograms(inputHistograms),
   fFigureSaveNameAppend(""),
+  fLegendComment(""),
   fDrawEventInformation(false),
   fDrawJets(false),
   fDrawIndividualParticleDensities(true),
@@ -759,6 +760,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   TString subeventString;
   TString compactSubeventString;
   TString namerY;
+
+  double legendY1;
   
   int colorAdder = 1;
   
@@ -983,9 +986,11 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               }
               
               // Only one legend for the plot
-              legend = new TLegend(0.62,0.55,0.82,0.9);
+              legendY1 = (fLegendComment != "") ? 0.5 : 0.55;
+              legend = new TLegend(0.62,legendY1,0.82,0.9);
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
               legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", fHistograms->GetCard()->GetAlternativeDataType(false).Data()), "");
+              if(fLegendComment != "") legend->AddEntry((TObject*) 0, fLegendComment.Data(), "");
               legend->AddEntry((TObject*) 0, centralityString.Data(),"");
               legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
@@ -1000,6 +1005,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->AddEntry(drawnHistogram, "All combinations", "p");
               
               // For logarithmic x-axis, cannot go all the way to zero
+              drawnHistogram->GetYaxis()->SetRangeUser(0.001, 10);
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.39);
               
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
@@ -1532,6 +1538,11 @@ void EECDrawer::SetLogDeltaR(const bool isLog){
 // Setter for logarithmic EEC axis in energy-energy correlators
 void EECDrawer::SetLogEEC(const bool isLog){
   fLogEEC = isLog;
+}
+
+// Setter for legend comment
+void EECDrawer::SetLegendComment(const TString newComment){
+  fLegendComment = newComment;
 }
 
 // Setter for color palette
