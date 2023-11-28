@@ -41,7 +41,7 @@ void finalResultPlotter(){
   // ============= //
 
   // Select the weight exponent that is used for the figures
-  const int weightExponent = 2;
+  const int weightExponent = 1;
 
   // Check that the selected weight exponent is reasonable
   if(weightExponent < 1 || weightExponent > 2){
@@ -135,8 +135,8 @@ void finalResultPlotter(){
   bool drawBigCanvasDistributions = false;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
-  bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
+  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawBigCanvasAllRatios = true; // Draw ratios with all defined energy weight exponents to the same figure
 
   // Normalize all distributions to 2 GeV integral
   bool normalizeTo2GeV = false;
@@ -158,7 +158,7 @@ void finalResultPlotter(){
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
@@ -166,7 +166,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "_lowPtComparison_180<jetPt<200"; // _updatedLegends
+  TString saveComment = energyWeightString[weightExponent-1] + "";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings
@@ -1167,7 +1167,7 @@ void finalResultPlotter(){
 
           // Add the centrality bin information to the leftmost column
           if(iJetPt == firstDrawnJetPtBinEEC[0]){
-            legend = new TLegend(0.19, 0.1 + bottomMarginAdder, 0.7, 0.25 / (thisPadScale*0.78));
+            legend = new TLegend(0.19, 0.05 + bottomMarginAdder*1.1, 0.7, 0.2 / (thisPadScale*0.78) + bottomMarginAdder*0.1);
             legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, Form("#frac{PbPb %.0f-%.0f%%}{pp} #rightarrow", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "");
             legend->Draw();
@@ -1200,8 +1200,8 @@ void finalResultPlotter(){
           oneLine->Draw();
 
           // Draw lines to 0.08 and 0.2 to
-          lineDrawer->DrawLine(0.08, 0.8, 0.08, 1.2);
-          lineDrawer->DrawLine(0.2, 0.8, 0.2, 1.2);
+          lineDrawer->DrawLine(0.08, 0.6, 0.08, 1.2);
+          lineDrawer->DrawLine(0.2, 0.6, 0.2, 1.2);
 
         }  // Jet pT loop
       }    // Centrality loop
