@@ -133,33 +133,41 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = true;
+  bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   // Normalize all distributions to 2 GeV integral
   bool normalizeTo2GeV = false;
   int trackPtBinFor2GeV[nWeightExponents];
-  int trackPtBinFor3GeV[nWeightExponents];
+  std::pair<int, int> trackPtBinsForDoubleRatio[nWeightExponents];
+  trackPtBinsForDoubleRatio[0] = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][0]->GetBinIndexTrackPtEEC(3.0));
+  trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(1.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0));
+  double trackPtForAllRatiosComparison = 2;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     trackPtBinFor2GeV[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(2.0);
-    trackPtBinFor3GeV[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(3.0);
+
+    if(drawBigCanvasAllRatios){
+      firstDrawnTrackPtBinEEC[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtForAllRatiosComparison);
+      lastDrawnTrackPtBinEEC[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtForAllRatiosComparison);
+    }
   }
 
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
   
   // Save the final plots
   const bool saveFigures = true;
-  TString saveComment = "_newLegendArrangement";
-  TString figureFormat = "png";
+  TString energyWeightString[nWeightExponents] = {"", "_energyWeightSquared"};
+  TString saveComment = energyWeightString[weightExponent-1] + "_lowPtComparison_180<jetPt<200"; // _updatedLegends
+  TString figureFormat = "pdf";
 
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
@@ -191,17 +199,17 @@ void finalResultPlotter(){
       // Create a new histogram manager
       histograms[iDataType][iWeightExponent] = new EECHistogramManager(inputFile[iDataType][iWeightExponent], card[iDataType][iWeightExponent]);
   
-    // Load all unfolded energy-energy correlators
-    histograms[iDataType][iWeightExponent]->SetLoadEnergyEnergyCorrelators(true);
-    histograms[iDataType][iWeightExponent]->SetCentralityBinRange(card[iDataType][iWeightExponent]->GetFirstUnfoldedCentralityBin(), card[iDataType][iWeightExponent]->GetLastUnfoldedCentralityBin());
-    histograms[iDataType][iWeightExponent]->SetTrackPtBinRangeEEC(card[iDataType][iWeightExponent]->GetFirstUnfoldedTrackPtBin(), card[iDataType][iWeightExponent]->GetLastUnfoldedTrackPtBin());
-    histograms[iDataType][iWeightExponent]->SetJetPtBinRangeEEC(card[iDataType][iWeightExponent]->GetFirstUnfoldedJetPtBin(), card[iDataType][iWeightExponent]->GetLastUnfoldedJetPtBin());
+      // Load all unfolded energy-energy correlators
+      histograms[iDataType][iWeightExponent]->SetLoadEnergyEnergyCorrelators(true);
+      histograms[iDataType][iWeightExponent]->SetCentralityBinRange(0, card[iDataType][iWeightExponent]->GetNCentralityBins());
+      histograms[iDataType][iWeightExponent]->SetTrackPtBinRangeEEC(0, card[iDataType][iWeightExponent]->GetNTrackPtBinsEEC());
+      histograms[iDataType][iWeightExponent]->SetJetPtBinRangeEEC(0, card[iDataType][iWeightExponent]->GetNJetPtBinsEEC());
 
-    // Load the histograms from the file
-    histograms[iDataType][iWeightExponent]->LoadProcessedHistograms();
+      // Load the histograms from the file
+      histograms[iDataType][iWeightExponent]->LoadProcessedHistograms();
 
-    // Create a new systematic uncertainty organizer
-    uncertainties[iDataType][iWeightExponent] = new SystematicUncertaintyOrganizer(uncertaintyFile[iDataType][iWeightExponent]);
+      // Create a new systematic uncertainty organizer
+      uncertainties[iDataType][iWeightExponent] = new SystematicUncertaintyOrganizer(uncertaintyFile[iDataType][iWeightExponent]);
 
     } // Data type loop
   } // Weight exponent loop
@@ -373,22 +381,24 @@ void finalResultPlotter(){
   } // Weight exponent loop
 
   // After regular ratios have been calculated, proceed to calculating double ratio. Here we need to use different histograms as above to properly take into account systematic uncertainty cancellation due to correlated datasets.
-  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
-      for(int iJetPt = firstDrawnJetPtBinEEC[iWeightExponent]; iJetPt <= lastDrawnJetPtBinEEC[iWeightExponent]; iJetPt++){
-        for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
-          // Calculate the single ratios with properly handled double ratio uncertainties
-          energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
-          systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
-        } // Track pT loop
-        // Calculate the double ratios from the single ratios with properly handled uncertainties
-        energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinFor3GeV[iWeightExponent]]->Clone(Form("energyEnergyCorrelatorDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinFor2GeV[iWeightExponent]]);
-        systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinFor3GeV[iWeightExponent]]->Clone(Form("systematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinFor2GeV[iWeightExponent]]);
-      } // Jet pT loop
-    } // Centrality llop
-  } // Weight exponent loop
+  if(drawDoubleRatios || drawDoubleRatioToSingleCanvas){
+    for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+      for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
+        for(int iJetPt = firstDrawnJetPtBinEEC[iWeightExponent]; iJetPt <= lastDrawnJetPtBinEEC[iWeightExponent]; iJetPt++){
+          for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
+            // Calculate the single ratios with properly handled double ratio uncertainties
+            energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
+            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
+          } // Track pT loop
+          // Calculate the double ratios from the single ratios with properly handled uncertainties
+          energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].second]->Clone(Form("energyEnergyCorrelatorDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].first]);
+          systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].second]->Clone(Form("systematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].first]);
+        } // Jet pT loop
+      } // Centrality llop
+    } // Weight exponent loop
+  }
 
   // For illustration purposes, create up and down shifted uncertainty bands
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -533,6 +543,14 @@ void finalResultPlotter(){
     SplitCanvas* bigCanvas[nTrackPtBinsEEC];
     mainTitle = new TLatex();
 
+    // Zoom for the y-axis
+    double yZoom1 = 0.15;
+    double yZoom2 = 30;
+    if(weightExponent == 2){
+      yZoom1 = 0.04;
+      yZoom2 = 80;
+    }
+
     for(int iTrackPt = firstDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt <= lastDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt++){
       compactTrackPtString = Form("_T>%.1f", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt));
       compactTrackPtString.ReplaceAll(".","v");
@@ -548,7 +566,7 @@ void finalResultPlotter(){
 
       for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
         for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++) {
-          jetPtString = Form("%.0f < jet p_{T} < %.0f", card[kPbPb][weightExponent-1]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][weightExponent-1]->GetHighBinBorderJetPtEEC(iJetPt));
+          jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][weightExponent-1]->GetHighBinBorderJetPtEEC(iJetPt));
 
           canvasIndex = (iCentrality - firstDrawnCentralityBin[weightExponent-1]) * (lastDrawnJetPtBinEEC[weightExponent-1] - firstDrawnJetPtBinEEC[weightExponent-1] + 1) + (iJetPt - firstDrawnJetPtBinEEC[weightExponent-1]);
           bigCanvas[iTrackPt]->CD(canvasIndex);
@@ -583,7 +601,7 @@ void finalResultPlotter(){
 
           // Set the drawing ranges
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.15, 30);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(yZoom1, yZoom2);
           systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
           systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
           systematicUncertaintyForPp[weightExponent-1][kCorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
@@ -629,15 +647,20 @@ void finalResultPlotter(){
           energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,p");
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
 
-          // Create a legend for each pad
+          // Create a legend for jet pT to each pad
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC[weightExponent-1]) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin[weightExponent-1]) ? bottomPadMargin : 0;
+          //legend = new TLegend(0.05 + leftMarginAdder, 0.7 + bottomMarginAdder*0.5, 0.5 / (1 - leftMarginAdder), 0.8 / (thisPadScale*0.81) - bottomMarginAdder*1.4);
+          //legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+          
+          //legend->Draw();
+
+          // Create a legend for collision systems to each pad
           legend = new TLegend(0.03 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.45 / thisPadScale);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
           legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality)), "p");
           legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp", "p");
-
+          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
           legend->Draw();
 
         }  // Jet pT loop
@@ -658,10 +681,12 @@ void finalResultPlotter(){
       mainTitle->DrawLatexNDC(0.53, 0.92, "|#eta_{jet}| < 1.6");
 
       mainTitle->SetTextSize(0.035);
-      if(iTrackPt == 4){
-        mainTitle->DrawLatexNDC(0.75, 0.94, Form("p_{T}^{ch} > %.1f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+      if(iTrackPt == 0 || iTrackPt == 2 || iTrackPt == 4){
+        mainTitle->DrawLatexNDC(0.7, 0.94, Form("p_{T}^{ch} > %.1f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.89, 0.94, Form("n=%d", weightExponent));
       } else {
-        mainTitle->DrawLatexNDC(0.75, 0.94, Form("p_{T}^{ch} > %.0f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.7, 0.94, Form("p_{T}^{ch} > %.0f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.87, 0.94, Form("n=%d", weightExponent));
       }
 
       // Save the figures to file
@@ -762,22 +787,26 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
 
-          // Create a legend for each pad
+          // Add the jet pT legend for each pad
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC[weightExponent-1]) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin[weightExponent-1]) ? bottomPadMargin : 0;
-          legend = new TLegend(0.05 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.33 / (thisPadScale*0.81));
+          legend = new TLegend(0.05 + leftMarginAdder, 0.7 + bottomMarginAdder*0.5, 0.5 / (1 - leftMarginAdder), 0.8 / (thisPadScale*0.81) - bottomMarginAdder*1.4);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%% / pp", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
+          legend->Draw();
 
+          // Add the centrality legend for each pad
+          legend = new TLegend(0.05 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.15 / (thisPadScale*0.6) + bottomMarginAdder*0.45);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%% / pp", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
           legend->Draw();
 
           // Draw a line to one
           oneLine->Draw();
 
           // Draw lines to 0.08 and 0.2 to
-          lineDrawer->DrawLine(0.08, 0.8, 0.08, 1.2);
-          lineDrawer->DrawLine(0.2, 0.8, 0.2, 1.2);
+          lineDrawer->DrawLine(0.08, 0.8-(weightExponent-1)*0.2, 0.08, 1.2);
+          lineDrawer->DrawLine(0.2, 0.8-(weightExponent-1)*0.2, 0.2, 1.2);
 
         }  // Jet pT loop
       }    // Centrality loop
@@ -797,10 +826,12 @@ void finalResultPlotter(){
       mainTitle->DrawLatexNDC(0.53, 0.92, "|#eta_{jet}| < 1.6");
 
       mainTitle->SetTextSize(0.035);
-      if(iTrackPt == 4){
-        mainTitle->DrawLatexNDC(0.75, 0.94, Form("p_{T}^{ch} > %.1f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+      if(iTrackPt == 0 || iTrackPt == 2 || iTrackPt == 4){
+        mainTitle->DrawLatexNDC(0.7, 0.94, Form("p_{T}^{ch} > %.1f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.89, 0.94, Form("n=%d", weightExponent));
       } else {
-        mainTitle->DrawLatexNDC(0.75, 0.94, Form("p_{T}^{ch} > %.0f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.7, 0.94, Form("p_{T}^{ch} > %.0f GeV", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        mainTitle->DrawLatexNDC(0.87, 0.94, Form("n=%d", weightExponent));
       }
 
       // Save the figures to file
@@ -851,7 +882,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetLabelOffset(0.01);
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetLabelSize(0.07);
 
-      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetTitle("#frac{PbPb/pp (p_{T}^{ch} > 3 GeV)}{PbPb/pp (p_{T}^{ch} > 2 GeV)}");
+      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetTitle(Form("#frac{PbPb/pp (p_{T}^{ch} > %.0f GeV)}{PbPb/pp (p_{T}^{ch} > %.0f GeV)}", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio[weightExponent-1].second), card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio[weightExponent-1].first)));
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->CenterTitle();
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->SetStats(0);
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetNdivisions(505);
@@ -935,6 +966,9 @@ void finalResultPlotter(){
     gPad->SetLogy(false);
     gPad->SetLogx();
 
+    double doubleRatioZoomMagnitude = 0.2;
+    if(trackPtBinsForDoubleRatio[weightExponent-1].first < 2) doubleRatioZoomMagnitude = 0.3;
+
     mainTitle = new TLatex();
     canvasIndex = 0;
 
@@ -952,7 +986,7 @@ void finalResultPlotter(){
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetLabelOffset(0.01);
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetLabelSize(0.07);
 
-      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetTitle("#frac{PbPb/pp (p_{T}^{ch} > 3 GeV)}{PbPb/pp (p_{T}^{ch} > 2 GeV)}");
+      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetTitle(Form("#frac{PbPb/pp (p_{T}^{ch} > %.0f GeV)}{PbPb/pp (p_{T}^{ch} > %.0f GeV)}", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio[weightExponent-1].second), card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio[weightExponent-1].first)));
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->CenterTitle();
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->SetStats(0);
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetNdivisions(505);
@@ -965,7 +999,8 @@ void finalResultPlotter(){
 
       // Set the drawing ranges
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(0.8, 1.2);
+
+      systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->GetYaxis()->SetRangeUser(1 - doubleRatioZoomMagnitude, 1 + doubleRatioZoomMagnitude);
 
       // Set the drawing styles 
       systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][doubleRatioJetPtBinIndex]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin[weightExponent-1]]);
@@ -1010,7 +1045,8 @@ void finalResultPlotter(){
     mainTitle->SetTextSize(0.055);
     mainTitle->DrawLatexNDC(0.47, 0.945, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
     mainTitle->DrawLatexNDC(0.47, 0.87, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-    mainTitle->DrawLatexNDC(0.3, 0.68, "anti-k_{T} R = 0.4");
+    mainTitle->DrawLatexNDC(0.3, 0.68, "anti-k_{T} R = 0.4,");
+    mainTitle->DrawLatexNDC(0.54, 0.68, Form("n=%d", weightExponent));
     mainTitle->DrawLatexNDC(0.3, 0.77, Form("%.f < p_{T,jet} < %.0f GeV, |#eta_{jet}| < 1.6",  card[kPbPb][weightExponent-1]->GetLowBinBorderJetPtEEC(doubleRatioJetPtBinIndex), card[kPbPb][weightExponent-1]->GetHighBinBorderJetPtEEC(doubleRatioJetPtBinIndex)));
 
     // Save the figures to file
@@ -1085,40 +1121,80 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0.006, 0.4);
 
           // Set the drawing style for histograms
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin[0]]);
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
-          energyEnergyCorrelatorSignalPbPb[0][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iCentrality - firstDrawnCentralityBin[0]]);
-          energyEnergyCorrelatorSignalPbPb[0][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+          for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iWeightExponent]);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
+            energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStylePbPb[iWeightExponent]);
+            energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(1.2);
 
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iCentrality - firstDrawnCentralityBin[0]], 0.4);
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin[0]]);
-          energyEnergyCorrelatorPbPbToPpRatio[0][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin[0]]);
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin[0]]);
-          energyEnergyCorrelatorPbPbToPpRatio[0][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iCentrality - firstDrawnCentralityBin[0]]);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(markerColorPbPb[iWeightExponent], 0.4);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iWeightExponent]);
+            energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetLineColor(markerColorPbPb[iWeightExponent]);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iWeightExponent]);
+            energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(markerColorPbPb[iWeightExponent]);
 
-          // Different drawing styles for correlated uncertainties
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorUpPbPb[iCentrality - firstDrawnCentralityBin[0]], 0.4);
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorDownPbPb[iCentrality - firstDrawnCentralityBin[0]], 0.4);
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
-          systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+            // Different drawing styles for correlated uncertainties
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorUpPbPb[iWeightExponent], 0.4);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(bandColorDownPbPb[iWeightExponent], 0.4);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+            systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          }
 
           // Draw the histograms
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("e2");
           systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           systematicUncertaintyPbPbToPpRatio[0][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorPbPbToPpRatio[0][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+          systematicUncertaintyPbPbToPpRatio[1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Draw("same,e2");
+          systematicUncertaintyPbPbToPpRatio[1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyPbPbToPpRatio[1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          energyEnergyCorrelatorPbPbToPpRatio[1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
 
-          // Create a legend for each pad
+          // Legend adders to put the legends to correct positions
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC[0]) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin[0]) ? bottomPadMargin : 0;
-          legend = new TLegend(0.05 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.33 / (thisPadScale*0.81));
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%% / pp", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
 
-          legend->Draw();
+          // Add the jet pT binning to the top row legend
+          if(iCentrality == firstDrawnCentralityBin[0]){
+            legend = new TLegend(-0.03 + leftMarginAdder, 0.83, 0.5 / (1 - leftMarginAdder), 0.93);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->AddEntry((TObject*)0, Form("#downarrow %s#downarrow", jetPtString.Data()), "");
+            legend->Draw();
+
+          }
+
+          // Add the centrality bin information to the leftmost column
+          if(iJetPt == firstDrawnJetPtBinEEC[0]){
+            legend = new TLegend(0.19, 0.1 + bottomMarginAdder, 0.7, 0.25 / (thisPadScale*0.78));
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->AddEntry((TObject*)0, Form("#frac{PbPb %.0f-%.0f%%}{pp} #rightarrow", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "");
+            legend->Draw();
+          }
+
+          // Add information about the nominal weight histogram to selected oad
+          if(iJetPt == firstDrawnJetPtBinEEC[0]+1 && iCentrality == firstDrawnCentralityBin[0]+1){
+            legend = new TLegend(0.1, 0.83, 0.5, 0.93);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->AddEntry(systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "EEC ratio with n=1", "p,e2");
+            legend->Draw();
+          }
+
+          // Add information about the squared weight histogram to selected oad
+          if(iJetPt == firstDrawnJetPtBinEEC[0]+2 && iCentrality == firstDrawnCentralityBin[0]+1){
+            legend = new TLegend(0.1, 0.83, 0.5, 0.93);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->AddEntry(systematicUncertaintyPbPbToPpRatio[1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "EEC ratio with n=2", "p,e2");
+            legend->Draw();
+          }
+
+          // Create a legend for each pad
+          //legend = new TLegend(0.05 + leftMarginAdder, 0.05 + bottomMarginAdder, 0.5 / (1 - leftMarginAdder), 0.2 / (thisPadScale*0.81));
+          //legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+          //legend->AddEntry(systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("#frac{PbPb %.0f-%.0f%%}{pp} #rightarrow", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "p,e2");
+
+          //legend->Draw();
 
           // Draw a line to one
           oneLine->Draw();
@@ -1153,7 +1229,7 @@ void finalResultPlotter(){
 
       // Save the figures to file
       if(saveFigures) {
-        gPad->GetCanvas()->SaveAs(Form("figures/finalbigDualRatioCanvas%s%s.%s", saveComment.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+        gPad->GetCanvas()->SaveAs(Form("figures/finalBigDualRatioCanvas%s%s.%s", saveComment.Data(), compactTrackPtString.Data(), figureFormat.Data()));
       }
 
     }  // Track pT loop
