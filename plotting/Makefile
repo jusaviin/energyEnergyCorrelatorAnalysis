@@ -24,7 +24,7 @@ all:            $(PROGRAM)
 
 $(PROGRAM) :    $(OBJS)
 		@echo "Linking $(PROGRAM) ..."
-		$(CXX) -shared -lEG -lPhysics -L$(PWD) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM).so
+		$(CXX) -shared -lEG -L$(PWD) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM).so
 		@echo "done"
 
 %.cxx:

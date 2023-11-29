@@ -27,7 +27,6 @@
 #include "trackingEfficiency2018PbPb.h"
 #include "trackingEfficiency2017pp.h"
 #include "TrackingEfficiencyInterface.h"
-#include "ReflectedConeWeight.h"
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
 #include "SmearingProvider.h"
@@ -106,7 +105,6 @@ public:
   TrackingEfficiencyInterface* fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
   JetCorrector* fJetCorrector2018;               // Class for making jet energy correction for 2018 data
   JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
-  ReflectedConeWeight* fReflectedConeWeighter;   // Class for weighting the tracks in the reflected cone
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
@@ -169,6 +167,7 @@ public:
   Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
+  Bool_t fCutJetsFromReflectedCone; // Do not analyze jets if there are other jets in the reflected cone
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms
