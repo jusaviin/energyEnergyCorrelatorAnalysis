@@ -107,6 +107,7 @@ EECAnalyzer::EECAnalyzer() :
   fDoReflectedCone(false),
   fDoReflectedConeQA(false),
   fCutJetsFromReflectedCone(false),
+  fUseRecoJetsForReflectedCone(false),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -124,6 +125,7 @@ EECAnalyzer::EECAnalyzer() :
   
   // Initialize readers to null
   fJetReader = NULL;
+  fRecoJetReader = NULL;
   fTrackReader = NULL;
   
   // Create a corrector for track pair efficiency
@@ -157,6 +159,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   
   // Initialize readers to null
   fJetReader = NULL;
+  fRecoJetReader = NULL;
   fTrackReader = NULL;
   
   // Configurure the analyzer from input card
@@ -292,6 +295,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
  */
 EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetReader(in.fJetReader),
+  fRecoJetReader(in.fRecoJetReader),
   fTrackReader(in.fTrackReader),
   fFileNames(in.fFileNames),
   fCard(in.fCard),
@@ -347,6 +351,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fDoReflectedCone(in.fDoReflectedCone),
   fDoReflectedConeQA(in.fDoReflectedConeQA),
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
+  fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -371,6 +376,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   if (&in==this) return *this;
   
   fJetReader = in.fJetReader;
+  fRecoJetReader = in.fRecoJetReader;
   fTrackReader = in.fTrackReader;
   fFileNames = in.fFileNames;
   fCard = in.fCard;
@@ -426,6 +432,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fDoReflectedCone = in.fDoReflectedCone;
   fDoReflectedConeQA = in.fDoReflectedConeQA;
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
+  fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -459,6 +466,7 @@ EECAnalyzer::~EECAnalyzer(){
   if(fSmearingFunction) delete fSmearingFunction;
   if(fRng) delete fRng;
   if(fJetReader) delete fJetReader;
+  if(fRecoJetReader) delete fRecoJetReader;
   if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
 }
 
@@ -576,7 +584,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
   fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
-  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == 0);
+  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
+  fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   
   //************************************************
   //         Read which histograms to fill
@@ -612,6 +621,7 @@ void EECAnalyzer::RunAnalysis(){
   TFile* inputFile;
   TFile* copyInputFile;      // If we read forest for tracks and jets with different readers, we need to give different file pointers to them
   TFile* unfoldingInputFile; // If using several readers, avoid problems by using different file pointers for different readers
+  TFile* anotherInputFile;  // If using several readers, avoid problems by using different file pointers for different readers
   
   // Event variables
   Int_t nEvents = 0;                // Number of events
@@ -637,6 +647,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetPtWeight = 1;         // Weighting for jet pT
 
   // Variables for reflected cone QA study
+  ForestReader* reflectedConeForestReader; // Forest reader for reflected cone studies
   Double_t reflectedConeJetPt = 0;   // pT of a jet that might be in the reflected cone
   Double_t reflectedConeJetPhi = 0;  // phi of a jet that might be in the reflected cone
   Double_t reflectedConeJetEta = 0;  // eta of a jet that might be in the reflected cone
@@ -753,6 +764,10 @@ void EECAnalyzer::RunAnalysis(){
     fTrackReader = fJetReader;
   }
 
+  if(fUseRecoJetsForReflectedCone){
+    fRecoJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,false);
+  }
+
   if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms){
     fUnfoldingForestReader = new UnfoldingForestReader(fDataType,fJetType,fJetAxis);
   }
@@ -775,6 +790,7 @@ void EECAnalyzer::RunAnalysis(){
     inputFile = TFile::Open(currentFile);
     if(useDifferentReaderForJetsAndTracks) copyInputFile = TFile::Open(currentFile);
     if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) unfoldingInputFile = TFile::Open(currentFile);
+    if(fUseRecoJetsForReflectedCone) anotherInputFile = TFile::Open(currentFile);
     
     // Check that the file exists
     if(!inputFile){
@@ -807,6 +823,7 @@ void EECAnalyzer::RunAnalysis(){
     fJetReader->ReadForestFromFile(inputFile);  // There might be a memory leak in handling the forest...
     if(useDifferentReaderForJetsAndTracks) fTrackReader->ReadForestFromFile(copyInputFile); // If we mix reco and gen, the reader for jets and tracks is different
     if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) fUnfoldingForestReader->ReadForestFromFile(unfoldingInputFile);
+    if(fUseRecoJetsForReflectedCone) fRecoJetReader->ReadForestFromFile(anotherInputFile);
     nEvents = fJetReader->GetNEvents();
     
 
@@ -829,6 +846,7 @@ void EECAnalyzer::RunAnalysis(){
       // If track reader is not the same as jet reader, read the event to memory in trackReader
       if(useDifferentReaderForJetsAndTracks) fTrackReader->GetEvent(iEvent);
       if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) fUnfoldingForestReader->GetEvent(iEvent);
+      if(fUseRecoJetsForReflectedCone) fRecoJetReader->GetEvent(iEvent);
 
       // Get vz, centrality and pT hat information
       vz = fJetReader->GetVz();
@@ -951,7 +969,8 @@ void EECAnalyzer::RunAnalysis(){
       
       const Bool_t circleJet = false; // Instead of actual jets, just draw a random circle somewhere to the event to mimic a jet
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
-      
+      Int_t nPotentialReflectedConeJets = fUseRecoJetsForReflectedCone ? fRecoJetReader->GetNJets() : nJets;
+
       // Jet loop
       for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
         
@@ -1282,13 +1301,17 @@ void EECAnalyzer::RunAnalysis(){
           // Fill the quality assuranve histograms for reflected cone
           if(fDoReflectedConeQA){
 
+            // Select the proper reflected cone forest reader
+            reflectedConeForestReader = fUseRecoJetsForReflectedCone ? fRecoJetReader : fJetReader;
+
             // Loop over the jets again
             nJetsInReflectedCone = 0;
-            for(Int_t reflectedConeJetIndex = 0; reflectedConeJetIndex < nJets; reflectedConeJetIndex++){
 
-              reflectedConeJetPt = fJetReader->GetJetRawPt(reflectedConeJetIndex);  // Get the raw pT and do manual correction later
-              reflectedConeJetPhi = fJetReader->GetJetPhi(reflectedConeJetIndex);
-              reflectedConeJetEta = fJetReader->GetJetEta(reflectedConeJetIndex);
+            for(Int_t reflectedConeJetIndex = 0; reflectedConeJetIndex < nPotentialReflectedConeJets; reflectedConeJetIndex++){
+
+              reflectedConeJetPt = reflectedConeForestReader->GetJetRawPt(reflectedConeJetIndex);  // Get the raw pT and do manual correction later
+              reflectedConeJetPhi = reflectedConeForestReader->GetJetPhi(reflectedConeJetIndex);
+              reflectedConeJetEta = reflectedConeForestReader->GetJetEta(reflectedConeJetIndex);
 
               // First check if the jet is close to the reflected cone
               if(GetDeltaR(jetReflectedEta, jetPhi, reflectedConeJetEta, reflectedConeJetPhi) > fJetRadius) continue;
@@ -1297,19 +1320,20 @@ void EECAnalyzer::RunAnalysis(){
               if(TMath::Abs(reflectedConeJetEta) >= fJetEtaCut) continue; // Cut for jet eta
               if(fCutBadPhiRegion && (reflectedConeJetPhi > -0.1 && reflectedConeJetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
 
-              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
+              if(fMinimumMaxTrackPtFraction >= reflectedConeForestReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
                 continue; // Cut for jets with only very low pT particles
               }
-              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
+              if(fMaximumMaxTrackPtFraction <= reflectedConeForestReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
                 continue; // Cut for jets where all the pT is taken by one track
               }
 
-              // For 2018 data: do a correction for the jet pT
-              fJetCorrector2018->SetJetPT(reflectedConeJetPt);
-              fJetCorrector2018->SetJetEta(reflectedConeJetEta);
-              fJetCorrector2018->SetJetPhi(reflectedConeJetPhi);
+              // For non-generator level jet pT: do a correction for the jet pT
+              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco) || fUseRecoJetsForReflectedCone){              fJetCorrector2018->SetJetPT(reflectedConeJetPt);
+                fJetCorrector2018->SetJetEta(reflectedConeJetEta);
+                fJetCorrector2018->SetJetPhi(reflectedConeJetPhi);
 
-              reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
+                reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
+              }
 
               // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
               if(reflectedConeJetPt < 25) continue;
@@ -1434,6 +1458,7 @@ void EECAnalyzer::RunAnalysis(){
     inputFile->Close();
     if(useDifferentReaderForJetsAndTracks) copyInputFile->Close();
     if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) unfoldingInputFile->Close();
+    if(fUseRecoJetsForReflectedCone) anotherInputFile->Close();
     
     // Write some debug messages if prompted
     if(fDebugLevel > 1){

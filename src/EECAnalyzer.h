@@ -91,6 +91,7 @@ public:
   
   // Private data members
   ForestReader* fJetReader;                      // Reader for jets in the event
+  ForestReader* fRecoJetReader;                  // Reader for reconstructed jets in the event
   ForestReader* fTrackReader;                    // Reader for tracks in the event
   UnfoldingForestReader* fUnfoldingForestReader; // Reader for unfolding study
   std::vector<TString> fFileNames;               // Vector for all the files to loop over
@@ -167,7 +168,8 @@ public:
   Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
-  Bool_t fCutJetsFromReflectedCone; // Do not analyze jets if there are other jets in the reflected cone
+  Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
+  Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms
