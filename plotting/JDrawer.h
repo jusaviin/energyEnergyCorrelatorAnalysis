@@ -719,6 +719,26 @@ public:
     fMarginTop = top;
     fMarginBottom = bottom;
   }
+
+  // Getter for left margin
+  double GetLeftMargin(){
+    return fMarginLeft;
+  }
+  
+  // Getter for right margin
+  double GetRightMargin(){
+    return fMarginRight;
+  }
+  
+  // Getter for bottom margin
+  double GetBottomMargin(){
+    return fMarginBottom;
+  }
+  
+  // Getter for top margin
+  double GetTopMargin(){
+    return fMarginTop;
+  }
   
   // Setter for x-axis title offset
   void SetTitleOffsetX(double offset){
@@ -733,6 +753,21 @@ public:
   // Setter for z-axis title offset
   void SetTitleOffsetZ(double offset){
     fTitleOffsetZ = offset;
+  }
+
+  // Getter for x-axis title offset
+  double GetTitleOffsetX(){
+    return fTitleOffsetX;
+  }
+  
+  // Getter for y-axis title offset
+  double GetTitleOffsetY(){
+    return fTitleOffsetY;
+  }
+  
+  // Getter for z-axis title offset
+  double GetTitleOffsetZ(){
+    return fTitleOffsetZ;
   }
   
   // Setter for x-axis title size

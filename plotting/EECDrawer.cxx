@@ -305,9 +305,9 @@ void EECDrawer::DrawTrackHistograms(){
     // Loop over centrality
     for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
       
-      centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
-      compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
-      
+      centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCard()->GetLowBinBorderCentrality(iCentrality),fHistograms->GetCard()->GetHighBinBorderCentrality(iCentrality));
+      compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCard()->GetLowBinBorderCentrality(iCentrality),fHistograms->GetCard()->GetHighBinBorderCentrality(iCentrality));
+
       // Select logarithmic drawing for pT
       fDrawer->SetLogY(fLogPt);
       
@@ -382,7 +382,9 @@ void EECDrawer::DrawTrackHistograms(){
         SaveFigure(namerX,compactCentralityString,compactTrackPtString);
         
         // Change the right margin better suited for 2D-drawing
-        fDrawer->SetRightMargin(0.1);
+        fDrawer->SetRightMargin(0.13);
+        fDrawer->SetLeftMargin(0.12);
+        fDrawer->SetTitleOffsetY(1.0);
         
         // === Track eta-phi ===
         drawnHistogram2D = fHistograms->GetHistogramTrackEtaPhi(iTrackType,iCentrality,iTrackPt);
@@ -400,6 +402,8 @@ void EECDrawer::DrawTrackHistograms(){
         
         // Change right margin back to 1D-drawing
         fDrawer->SetRightMargin(0.06);
+        fDrawer->SetLeftMargin(0.15);
+        fDrawer->SetTitleOffsetY(1.1);
         
       } // Track pT loop
     } // Centrality loop
@@ -1243,7 +1247,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
 void EECDrawer::SetupLegend(TLegend *legend, TString centralityString, TString jetString, TString trackString, TString extraString, TString anotherString){
   legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62); // Size: 0.05
   legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
-  if(fSystemAndEnergy.Contains("PbPb")) legend->AddEntry((TObject*) 0,centralityString.Data(),"");
+  if(fSystemAndEnergy.Contains("PbPb") || fSystemAndEnergy.Contains("Hydjet")) legend->AddEntry((TObject*) 0,centralityString.Data(),"");
   if(jetString != "") legend->AddEntry((TObject*) 0,jetString.Data(),"");
   if(trackString != "") legend->AddEntry((TObject*) 0,trackString.Data(),"");
   if(extraString != "") legend->AddEntry((TObject*) 0,extraString.Data(),"");
@@ -1266,7 +1270,7 @@ void EECDrawer::SaveFigure(TString figureName, TString centralityString, TString
   
   // Write the figure to a file
   TString figName = Form("figures/%s_%s",figureName.Data(),fCompactSystemAndEnergy.Data());
-  if(fCompactSystemAndEnergy.Contains("PbPb")) figName.Append(centralityString);
+  if(fCompactSystemAndEnergy.Contains("PbPb") || fCompactSystemAndEnergy.Contains("Hydjet")) figName.Append(centralityString);
   figName.Append(trackPtString);
   figName.Append(correlationTypeString);
   figName.Append(deltaPhiString);

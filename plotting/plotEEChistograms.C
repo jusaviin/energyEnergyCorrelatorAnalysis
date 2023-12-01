@@ -25,9 +25,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // Choose which figure sets to draw
   bool drawEventInformation = false;
   bool drawJets = false;
-  bool drawTracks = false;
+  bool drawTracks = true;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
@@ -72,7 +72,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = 3;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
@@ -95,7 +95,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
@@ -105,9 +105,9 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
   
   // Figure saving
-  const bool saveFigures = false;
-  const char* figureFormat = "png";
-  TString figureNameSuffix = "_badRegion";
+  const bool saveFigures = true;
+  const char* figureFormat = "pdf";
+  TString figureNameSuffix = "";
 
   // Comment that can be added to figure legends
   TString legendComment = "Energy weight squared";
