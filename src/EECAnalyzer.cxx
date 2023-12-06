@@ -832,6 +832,14 @@ void EECAnalyzer::RunAnalysis(){
     //************************************************
     
     for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
+
+      // For each event, chack that the file stays open:
+      // This is to try to combat file read errors occasionally happening during CRAB running.
+      // Will need to monitor the situation and see if this really works.
+      if(!inputFile->IsOpen() || inputFile->IsZombie()){
+        cout << "Error! Lost access to the file: " << currentFile.Data() << endl;
+        assert(0);
+      }
       
       //************************************************
       //         Read basic event information
