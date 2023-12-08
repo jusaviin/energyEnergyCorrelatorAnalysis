@@ -111,6 +111,9 @@ public:
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
   SmearingProvider* fEnergyWeightSmearer;        // Realistic smearing for energy weights from reco/gen ratios
   TRandom3* fRng;                                // Random number generator
+
+  // Histograms to determine the covariance matrix
+  TH1D* fThisEventCorrelator[10];        // Energy-energy correlators calculated exclusively from this event
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type

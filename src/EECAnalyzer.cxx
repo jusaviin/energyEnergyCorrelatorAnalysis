@@ -137,6 +137,10 @@ EECAnalyzer::EECAnalyzer() :
   // Create smearing providers for DeltaR and energy weights
   fDeltaRSmearer = new SmearingProvider();
   fEnergyWeightSmearer = new SmearingProvider();
+
+  for(int iBin = 0; iBin < 10; iBin++){
+    fThisEventCorrelator[iBin] = NULL;
+  }
 }
 
 /*
@@ -279,6 +283,19 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   // Initialize the random number generator with a random seed
   fRng = new TRandom3();
   fRng->SetSeed(0);
+
+  // Energy-energy correlator constructed only from this event
+  const Int_t nDeltaRBins = fHistograms->GetNDeltaRBinsEEC();
+  Double_t deltaRBins[nDeltaRBins+1];
+  for(Int_t iBin = 1; iBin <= nDeltaRBins; iBin++){
+    deltaRBins[iBin-1] = fHistograms->GetDeltaRBinBorderLowEEC(iBin);
+  }
+  deltaRBins[nDeltaRBins] = fHistograms->GetDeltaRBinBorderHighEEC(nDeltaRBins);
+
+  const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
+  for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+    fThisEventCorrelator[iTrackPt] = new TH1D(Form("thisEventCorrelator%d", iTrackPt), Form("thisEventCorrelator%d", iTrackPt), nDeltaRBins, deltaRBins);
+  }
   
   //**********************************************************
   //    Disable/enable the track pair efficiency correction
@@ -364,6 +381,10 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMultiplicityMode(in.fMultiplicityMode)
 {
   // Copy constructor
+
+  for(int iBin = 0; iBin < 10; iBin++){
+    fThisEventCorrelator[iBin] = in.fThisEventCorrelator[iBin];
+  }
   
 }
 
@@ -443,6 +464,10 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillJetPtUnfoldingResponse = in.fFillJetPtUnfoldingResponse;
   fFillTrackParticleMatchingHistograms = in.fFillTrackParticleMatchingHistograms;
   fMultiplicityMode = in.fMultiplicityMode;
+
+  for(int iBin = 0; iBin < 10; iBin++){
+    fThisEventCorrelator[iBin] = in.fThisEventCorrelator[iBin];
+  }
   
   return *this;
 }
@@ -468,6 +493,10 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetReader) delete fJetReader;
   if(fRecoJetReader) delete fRecoJetReader;
   if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
+
+  for(int iBin = 0; iBin < 10; iBin++){
+    if(fThisEventCorrelator[iBin]) delete fThisEventCorrelator[iBin];
+  }
 }
 
 /*
@@ -676,6 +705,14 @@ void EECAnalyzer::RunAnalysis(){
   Int_t trackSubeventIndex = 0;           // Simplified subevent index
   Double_t maxTrackPtInJetSignal = 0;     // Maximum signal track pT in the jet
   Double_t maxTrackPtInJetBackground = 0; // Maximum background track pT in the jet
+
+  // Variables for covariance study
+  const Int_t nDeltaRBins = fHistograms->GetNDeltaRBinsEEC(); // Number of DeltaR bins
+  Double_t pseudoCovariance = 0;          // A value that SMP group claims describes covariance?
+  Double_t deltaRBinContent1 = 0;         // Bin content of the i:th DeltaR bin
+  Double_t deltaRBinContent2 = 0;         // Bin content of the j:th DeltaR bin
+  Double_t transformedDeltaR1 = 0;        // Transformed bin contents of the i:th DeltaR bin
+  Double_t transformedDeltaR2 = 0;        // Transformed bin contents of the j:th DeltaR bin
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
@@ -712,12 +749,14 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
   const Int_t nFillReflectedConeQA = 2;
+  const Int_t nFillUnfoldingCovariance = 4;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
   Double_t fillerParticleDensityInJetCone[nFillParticleDensityInJetCone];
   Double_t fillerMaxParticlePtInJetCone[nFillMaxParticlePtInJetCone];
   Double_t fillerReflectedConeQA[nFillReflectedConeQA];
+  Double_t fillerUnfoldingCovariance[nFillUnfoldingCovariance];
   
   // For 2018 PbPb and 2017 pp data, we need to correct jet pT
   std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
@@ -1403,7 +1442,40 @@ void EECAnalyzer::RunAnalysis(){
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics){
+
+            // Before calculating the energy-energy correlators, reset histograms for covariance matrix calculation
+            /*for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+              fThisEventCorrelator[iTrackPt]->Reset();
+            }*/ // Track pT loop for covariance matrices
+
+            // Then calculate the energy-energy correlator for this jet
             CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
+
+            // After that is done, add the contents from this event to the total coveriance matrix
+            /*fillerUnfoldingCovariance[3] = centrality; // Axis 3: Centrality
+            for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+              trackPt = fCard->Get("TrackPtBinEdgesEEC", iTrackPt) + 0.1;
+              fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
+              for(int iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
+                deltaRBinContent1 = fThisEventCorrelator[iTrackPt]->GetBinContent(iDeltaRBin);
+                transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+                for(int jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
+                  deltaRBinContent2 = fThisEventCorrelator[iTrackPt]->GetBinContent(jDeltaRBin);
+                  pseudoCovariance = deltaRBinContent1 * deltaRBinContent2;
+
+                  // Only fill the histograms if there is something to fill!
+                  if(pseudoCovariance > 0){
+                    transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+
+                    fillerUnfoldingCovariance[0] = transformedDeltaR1; // Axis 0: Transformed deltaR axis
+                    fillerUnfoldingCovariance[1] = transformedDeltaR2; // Axis 1: Transformed deltaR axis
+
+                    fHistograms->fhJetPtUnfoldingCovariance->Fill(fillerUnfoldingCovariance, pseudoCovariance);
+                    
+                  } // Non-zero value filling
+                } // Inner DeltaR loop
+              } // Outer DeltaR loop
+            } // Track pT loop for covariance matrices*/
           }
           
         } // Fill energy-energy correltor histograms
@@ -1526,6 +1598,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Int_t subeventCombination;      // Subevent combination type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet)
   Int_t startIndex;        // First index when looping over the second tracks
 
+  // Variables for covariance matrix calculation
+  const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC"); // Number of track pT bins
+
   // Variables for systematic uncertainty study
   Double_t trackPairEfficiencyError;            // Error of the evaluated track pair efficiency
   Double_t trackPairInefficiency;               // Value for track pair inefficiency
@@ -1637,6 +1712,14 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
         if(fFillEnergyEnergyCorrelators){
           fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram
+
+          // Fill also the histograms just from this jet to calculate covariances
+          for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+            if(lowerTrackPt >= fCard->Get("TrackPtBinEdgesEEC", iTrackPt)){
+              fThisEventCorrelator[iTrackPt]->Fill(trackDeltaR, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
+            }
+          } // Track pT loop for covariance matrices
+
         }
         if(fFillEnergyEnergyCorrelatorsSystematics) {
           // For first systematic variation, increase the track efficiency corrections by the defined amount

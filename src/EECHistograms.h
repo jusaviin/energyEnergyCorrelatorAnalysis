@@ -37,6 +37,11 @@ public:
   void Write() const;                        // Write the histograms to a file that is opened somewhere else
   void Write(TString outputFileName) const;  // Write the histograms to a file
   void SetCard(ConfigurationCard* newCard);  // Set a new configuration card for the histogram class
+
+  // Getters
+  Int_t GetNDeltaRBinsEEC(); // Get the number of deltaR bins for energy-energy correlators
+  Double_t GetDeltaRBinBorderLowEEC(Int_t iBin);  // Getter for the low bin border of the i:th deltaR bin
+  Double_t GetDeltaRBinBorderHighEEC(Int_t iBin); // Getter for the high bin border of the i:th deltaR bin
   
   // Histograms defined public to allow easier access to them. Should not be abused
   // Notation in comments: l = leading jet, s = subleading jet, inc - inclusive jet, uc = uncorrected, ptw = pT weighted
@@ -78,9 +83,10 @@ public:
   THnSparseF* fhUnfoldingResponse;  // Unfolding response matrix
 
   // Histograms for 1-dimensional jet pT unfolding
-  THnSparseF* fhJetPtUnfoldingMeasured; // Measured jet pT distribution for unfolding test
-  THnSparseF* fhJetPtUnfoldingTruth;    // Truth jet pT distribution for unfolding test
-  THnSparseF* fhJetPtUnfoldingResponse; // Jet pT unfolding response matrix
+  THnSparseF* fhJetPtUnfoldingMeasured;   // Measured jet pT distribution for unfolding test
+  THnSparseF* fhJetPtUnfoldingTruth;      // Truth jet pT distribution for unfolding test
+  THnSparseF* fhJetPtUnfoldingResponse;   // Jet pT unfolding response matrix
+  THnSparseF* fhJetPtUnfoldingCovariance; // Covariance matrix for jet pT unfolding
 
   // Reconstructed to generator level particle matching
   THnSparseF* fhParticlesCloseToTracks;     // Histogram counting particles close to tracks

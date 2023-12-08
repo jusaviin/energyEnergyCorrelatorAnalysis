@@ -49,6 +49,7 @@ EECHistograms::EECHistograms() :
   fhJetPtUnfoldingMeasured(0),
   fhJetPtUnfoldingTruth(0),
   fhJetPtUnfoldingResponse(0),
+  fhJetPtUnfoldingCovariance(0),
   fhParticlesCloseToTracks(0),
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
@@ -98,6 +99,7 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhJetPtUnfoldingMeasured(0),
   fhJetPtUnfoldingTruth(0),
   fhJetPtUnfoldingResponse(0),
+  fhJetPtUnfoldingCovariance(0),
   fhParticlesCloseToTracks(0),
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
@@ -147,6 +149,7 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhJetPtUnfoldingMeasured(in.fhJetPtUnfoldingMeasured),
   fhJetPtUnfoldingTruth(in.fhJetPtUnfoldingTruth),
   fhJetPtUnfoldingResponse(in.fhJetPtUnfoldingResponse),
+  fhJetPtUnfoldingCovariance(in.fhJetPtUnfoldingCovariance),
   fhParticlesCloseToTracks(in.fhParticlesCloseToTracks),
   fhTracksWithMatchedParticle(in.fhTracksWithMatchedParticle),
   fhParticleDeltaRResponse(in.fhParticleDeltaRResponse),
@@ -200,6 +203,7 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhJetPtUnfoldingMeasured = in.fhJetPtUnfoldingMeasured;
   fhJetPtUnfoldingTruth = in.fhJetPtUnfoldingTruth;
   fhJetPtUnfoldingResponse = in.fhJetPtUnfoldingResponse;
+  fhJetPtUnfoldingCovariance = in.fhJetPtUnfoldingCovariance;
   fhParticlesCloseToTracks = in.fhParticlesCloseToTracks;
   fhTracksWithMatchedParticle = in.fhTracksWithMatchedParticle;
   fhParticleDeltaRResponse = in.fhParticleDeltaRResponse;
@@ -249,6 +253,7 @@ EECHistograms::~EECHistograms(){
   delete fhJetPtUnfoldingMeasured;
   delete fhJetPtUnfoldingTruth;
   delete fhJetPtUnfoldingResponse;
+  delete fhJetPtUnfoldingCovariance;
   delete fhParticlesCloseToTracks;
   delete fhTracksWithMatchedParticle;
   delete fhParticleDeltaRResponse;
@@ -961,12 +966,17 @@ void EECHistograms::CreateHistograms(){
 
   // Create the histogram for jet pT unfolding response
   fhUnfoldingResponse = new THnSparseF("jetPtUnfoldingResponse", "jetPtUnfoldingResponse", nAxesJetPtUnfoldResponse, nBinsJetPtUnfoldResponse, lowBinBorderJetPtUnfoldResponse, highBinBorderJetPtUnfoldResponse); fhUnfoldingResponse->Sumw2();
+  fhJetPtUnfoldingCovariance = new THnSparseF("jetPtUnfoldingCovariance", "jetPtUnfoldingCovariance", nAxesJetPtUnfoldResponse, nBinsJetPtUnfoldResponse, lowBinBorderJetPtUnfoldResponse, highBinBorderJetPtUnfoldResponse); fhJetPtUnfoldingCovariance->Sumw2();
 
   // Set custom bin axes for the histograms
   fhUnfoldingResponse->SetBinEdges(0, fullUnfoldingBinningReco);
+  fhJetPtUnfoldingCovariance->SetBinEdges(0, fullUnfoldingBinningReco);
   fhUnfoldingResponse->SetBinEdges(1, fullUnfoldingBinningTruth);
+  fhJetPtUnfoldingCovariance->SetBinEdges(1, fullUnfoldingBinningTruth);
   fhUnfoldingResponse->SetBinEdges(2, trackPtBinsEEC);
+  fhJetPtUnfoldingCovariance->SetBinEdges(2, trackPtBinsEEC);
   fhUnfoldingResponse->SetBinEdges(3, wideCentralityBins);
+  fhJetPtUnfoldingCovariance->SetBinEdges(3, wideCentralityBins);
 
   // ======== RooUnfold compatible jet pT distributions for 1-dimensional unfolding ========
 
@@ -1206,6 +1216,7 @@ void EECHistograms::Write() const{
   fhJetPtUnfoldingMeasured->Write();
   fhJetPtUnfoldingTruth->Write();
   fhJetPtUnfoldingResponse->Write();
+  fhJetPtUnfoldingCovariance->Write();
   fhParticlesCloseToTracks->Write();
   fhTracksWithMatchedParticle->Write();
   fhParticleDeltaRResponse->Write();
@@ -1230,4 +1241,17 @@ void EECHistograms::Write(TString outputFileName) const{
   delete outputFile;
 }
 
+// Get the number of deltaR bins for energy-energy correlators
+Int_t EECHistograms::GetNDeltaRBinsEEC(){
+  return fhEnergyEnergyCorrelator->GetAxis(0)->GetNbins();
+}
 
+// Getter for the low bin border of the i:th deltaR bin
+Double_t EECHistograms::GetDeltaRBinBorderLowEEC(Int_t iBin){
+  return fhEnergyEnergyCorrelator->GetAxis(0)->GetBinLowEdge(iBin);
+} 
+
+// Getter for the high bin border of the i:th deltaR bin
+Double_t EECHistograms::GetDeltaRBinBorderHighEEC(Int_t iBin){
+  return fhEnergyEnergyCorrelator->GetAxis(0)->GetBinUpEdge(iBin);
+}
