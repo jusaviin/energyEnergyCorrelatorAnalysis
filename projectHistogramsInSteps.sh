@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 2 ]; then
   echo "Usage of the script:"
-  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m] [-a]"
+  echo "$0 inputFile outputFile [-n] [-e] [-c] [-r] [-o] [-m] [-a] [-u]"
   echo "inputFile = Name of the input file"
   echo "outputFile = Name of the output file"
   echo "-n = Do not project nominal histograms"
@@ -11,7 +11,8 @@ if [ "$#" -lt 2 ]; then
   echo "-r = Project jet pT response matrices"
   echo "-o = Only project the jet histograms from nominal set of histograms"
   echo "-m = Project track/particle matching study histograms"
-  echo "-a = Project histograms for one-dimensional jet-pT unfolding"
+  echo "-a = Project histograms for one-dimensional jet pT unfolding"
+  echo "-u = Project covariance matrices used in jet pT unfolding"
   exit
 fi
 
@@ -20,7 +21,7 @@ OUTPUT=$2   # Name of the output file
 shift 2     # Shift the positional parameters to read the optional ones
 
 # Read the optional arguments. (Semicolon after letter: expects argument)
-while getopts ":necroma" opt; do
+while getopts ":necromau" opt; do
 case $opt in
 n) NOMINAL=false
 ;;
@@ -36,6 +37,8 @@ m) MATCHINGSTUDY=true
 ;;
 a) ONEDIMENSIONALUNFOLD=true
 ;;
+u) COVARIANCE=true
+;;
 \?) echo "Invalid option -$OPTARG" >&2
 exit 1
 ;;
@@ -50,6 +53,7 @@ RESPONSE=${RESPONSE:-false}
 MATCHINGSTUDY=${MATCHINGSTUDY:-false}
 ONLYJETS=${ONLYJETS:-false}
 ONEDIMENSIONALUNFOLD=${ONEDIMENSIONALUNFOLD:-false}
+COVARIANCE=${COVARIANCE:-false}
 
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
@@ -126,11 +130,17 @@ fi
 
 if $ONEDIMENSIONALUNFOLD; then
 
-  # Project histograms related to one dimensional jet pT undolfing study
+  # Project histograms related to one dimensional jet pT unfolding study
   root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",32768)'
 
 fi
 
+if $COVARIANCE; then
+
+  # Project covariiance matrices needed in jet pT unfolding
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",65536)'
+
+fi
 
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/projectEEChistograms.C

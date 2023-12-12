@@ -4,14 +4,14 @@
 DataType 3  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 
 # Select correlation type for Monte Carlo runs (Jet-Track)
-McCorrelationType 1 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
+McCorrelationType 3 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Anti-match jets
 
 # Select if you want to use the jet trigger
 TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 131 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -77,7 +77,7 @@ PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
 DoReflectedCone 2  # 0 = No background estimation, 1 = Estimate background using reflected cone
-AllowJetsInReflectedCone 0 # -1 = Do not allow reconstructed jets in reflected cone. 0 = Do not allow default jets in reflected cone, 1 = Allow jets in reflected cone
+AllowJetsInReflectedCone 1 # -1 = Do not allow reconstructed jets in reflected cone. 0 = Do not allow default jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

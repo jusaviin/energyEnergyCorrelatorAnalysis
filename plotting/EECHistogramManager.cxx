@@ -26,6 +26,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadMaxParticlePtWithinJetConeHistograms(false),
   fLoadReflectedConeQAHistograms(false),
   fLoadJetPtUnfoldingHistograms(false),
+  fLoadJetPtUnfoldingCovariance(false),
   fLoadJetPtOneDimensionalUnfoldingHistograms(false),
   fLoadTrackParticleMatchingHistograms(false),
   fJetFlavor(0),
@@ -201,6 +202,7 @@ EECHistogramManager::EECHistogramManager() :
     // Histograms required in the jet pT unfolding study
     for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
       fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = NULL;
+      fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = NULL;
       for(int iUnfoldType = 0; iUnfoldType < knUnfoldingDistributionTypes; iUnfoldType++){
         fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = NULL;
       }
@@ -354,6 +356,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadMaxParticlePtWithinJetConeHistograms(in.fLoadMaxParticlePtWithinJetConeHistograms),
   fLoadReflectedConeQAHistograms(in.fLoadReflectedConeQAHistograms),
   fLoadJetPtUnfoldingHistograms(in.fLoadJetPtUnfoldingHistograms),
+  fLoadJetPtUnfoldingCovariance(in.fLoadJetPtUnfoldingCovariance),
   fLoadJetPtOneDimensionalUnfoldingHistograms(in.fLoadJetPtOneDimensionalUnfoldingHistograms),
   fLoadTrackParticleMatchingHistograms(in.fLoadTrackParticleMatchingHistograms),
   fJetFlavor(in.fJetFlavor),
@@ -522,6 +525,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     // Histograms required in the jet pT unfolding study
     for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
       fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = in.fhJetPtUnfoldingResponse[iCentrality][iTrackPt];
+      fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = in.fhJetPtUnfoldingCovariance[iCentrality][iTrackPt];
       for(int iUnfoldType = 0; iUnfoldType < knUnfoldingDistributionTypes; iUnfoldType++){
         fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = in.fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt];
       }
@@ -794,6 +798,9 @@ void EECHistogramManager::LoadHistograms(){
 
   // Load the jet pT unfolding histograms
   LoadJetPtUnfoldingHistograms();
+
+  // Load the covariance histogram that is used as an input for unfolding algorithm
+  LoadJetPtUnfoldingCovariance();
 
   // Load the one dimensional jet pT unfolding histograms
   LoadJetPtOneDimensionalUnfoldingHistograms();
@@ -1835,6 +1842,66 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
 }
 
 /*
+ * Loader for covariance histograms used in jet pT unfolding algorithm
+ * 
+ *  THnSparse for unfolding response matrix:
+ *
+ *   Histogram name: jetPtUnfoldingCovariance
+ *
+ *     Axis index               Content of axis
+ * -----------------------------------------------------------
+ *       Axis 0              DeltaR in jet pT bins
+ *       Axis 1              DeltaR in jet pT bins
+ *       Axis 2                    Track pT
+ *       Axis 3                   Centrality
+ */
+void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
+  
+  if(!fLoadJetPtUnfoldingCovariance) return; // Do not load the histograms if they are not selected for loading
+  
+  // Define arrays to help find the histograms
+  int axisIndices[2] = {0};
+  int lowLimits[2] = {0};
+  int highLimits[2] = {0};
+  int nRestrictionAxes = 2;
+  
+  // Define helper variables
+  int duplicateRemoverCentrality = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  THnSparseD* histogramArray;
+
+  // Load the jet pT unfolding distribution
+  histogramArray = (THnSparseD*)fInputFile->Get(fJetPtCovarianceMatrixName);
+  higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+
+  for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+    // Select the centrality bin indices
+    lowerCentralityBin = fCentralityBinIndices[iCentrality];
+    higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
+
+    // Add restriction for centrality axis (3 = centrality)
+    axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+
+    // Loop over track pT bins
+    for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+      // Select the track pT bin indices. Notice that we do not change the higher bin index
+      lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+
+      // Add restriction for track pT axis (2 = track pT)
+      axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+
+      fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
+    }
+
+  } // Centrality loop
+}
+
+/*
  * Loader for one-dimensional jet pT unfolding histograms
  *
  * THnSparse for one-dimensional unfolding distributions:
@@ -2287,6 +2354,9 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
 
   // Write the jet pT unfolding histograms to the output file
   WriteJetPtUnfoldingHistograms();
+
+  // Write the covariance histograms used in jet pT unfolding
+  WriteJetPtUnfoldingCovariance();
 
   // Write the jet pT one-dimensional unfolding histograms to the output file
   WriteJetPtOneDimensionalUnfoldingHistograms();
@@ -2835,6 +2905,40 @@ void EECHistogramManager::WriteJetPtUnfoldingHistograms(){
         if(fhJetPtUnfoldingResponse[iCentrality][iTrackPt]){
           histogramNamer = Form("%s_C%dT%d", fJetPtResponseMatrixName, iCentrality, iTrackPt);
           fhJetPtUnfoldingResponse[iCentrality][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+        }
+
+      } // Track pT loop
+    } // Centrality loop
+
+    // Return back to main directory
+    gDirectory->cd("../");
+  }
+}
+
+/*
+ * Write the covariance histograms used in jet pT unfolding
+ */
+void EECHistogramManager::WriteJetPtUnfoldingCovariance(){
+  
+  // Helper variable for histogram naming
+  TString histogramNamer;
+  
+  // Only write the covariance histograms used in jet pT unfolding if they are previously loaded
+  if(fLoadJetPtUnfoldingCovariance){
+
+    if(!gDirectory->GetDirectory(fJetPtCovarianceMatrixName)) gDirectory->mkdir(fJetPtCovarianceMatrixName);
+    gDirectory->cd(fJetPtCovarianceMatrixName);
+
+    // Centrality loop
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Track pT loop
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+        // Only write histograms that are non-NULL
+        if(fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]){
+          histogramNamer = Form("%s_C%dT%d", fJetPtCovarianceMatrixName, iCentrality, iTrackPt);
+          fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
         }
 
       } // Track pT loop
@@ -3620,6 +3724,19 @@ void EECHistogramManager::LoadProcessedHistograms(){
 
   } // Loading jet pT unfolding histograms
 
+  // Load the covariance matrices used for jet pT unfolding
+  if(fLoadJetPtUnfoldingCovariance){
+
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+        histogramNamer = Form("%s/%s_C%dT%d", fJetPtCovarianceMatrixName, fJetPtCovarianceMatrixName, iCentrality, iTrackPt);
+        fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = (TH2D*) fInputFile->Get(histogramNamer.Data());
+      } // Track pT loop
+    } // Centrality loop
+
+
+  } // Loading jet pT unfolding histograms
+
   // Load the jet pT one dimensional unfolding histograms from a processed file
   if(fLoadJetPtOneDimensionalUnfoldingHistograms){
 
@@ -3926,6 +4043,11 @@ void EECHistogramManager::SetLoadReflectedConeQAHistograms(const bool loadOrNot)
 // Setter for loading histograms needed in the jet pT unfolding study
 void EECHistogramManager::SetLoadJetPtUnfoldingHistograms(const bool loadOrNot){
   fLoadJetPtUnfoldingHistograms = loadOrNot;
+}
+
+// Setter for loading the covariance histograms for input to jet pT unfolding
+void EECHistogramManager::SetLoadJetPtUnfoldingCovariance(const bool loadOrNot){
+  fLoadJetPtUnfoldingCovariance = loadOrNot;
 }
 
 // Setter for loading histograms needed in the one dimensional jet pT unfolding study
@@ -4433,6 +4555,11 @@ TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingTruth(const int iCentrality
 // Getter for jet pT unfolding response
 TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const{
   return fhJetPtUnfoldingResponse[iCentrality][iTrackPt];
+}
+
+// Getter for jet pT unfolding covariance
+TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingCovariance(const int iCentrality, const int iTrackPt) const{
+  return fhJetPtUnfoldingCovariance[iCentrality][iTrackPt];
 }
 
 // Getter for measured one dimensional jet pT unfolding distribution

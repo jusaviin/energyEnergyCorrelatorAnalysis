@@ -111,6 +111,7 @@ private:
   const char* fJetPtResponseMatrixName = "jetPtUnfoldingResponse";
   const char* fJetPtOneDimensionalUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"oneDimensionalJetPtUnfoldingMeasured", "oneDimensionalJetPtUnfoldingTruth"};
   const char* fJetPtOneDimensionalResponseMatrixName = "oneDimensionalJetPtUnfoldingResponse";
+  const char* fJetPtCovarianceMatrixName = "jetPtUnfoldingCovariance";
 
   // Naming for track/particle matching histograms
   const char* fTrackParticleMatchingQAName[knTrackParticleMatchingQAHistograms] = {"particlesCloseToTracks","tracksWithMatchedParticle"};
@@ -177,6 +178,7 @@ public:
 
   // Setters for jet pT unfolding study
   void SetLoadJetPtUnfoldingHistograms(const bool loadOrNot);               // Setter for loading histograms needed in the jet pT unfolding study
+  void SetLoadJetPtUnfoldingCovariance(const bool loadOrNot);               // Setter for loading the covariance histograms for input to jet pT unfolding
   void SetLoadJetPtOneDimensionalUnfoldingHistograms(const bool loadOrNot); // Setter for loading histograms needed in the one dimensional jet pT unfolding study
 
   // Setters for track/particle matching study
@@ -303,6 +305,7 @@ public:
   TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const; // Getter for measured jet pT unfolding distribution
   TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
   TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
+  TH2D* GetHistogramJetPtUnfoldingCovariance(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding covariance
 
   TH1D* GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality) const; // Getter for measured jet pT one dimensional unfolding distribution
   TH1D* GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality) const;    // Getter for truth jet pT one dimensional unfolding distribution
@@ -370,6 +373,7 @@ private:
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];           // Load the energy-energy correlator histograms
   bool fLoadReflectedConeQAHistograms;                     // Load the reflected cone QA histograms
   bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
+  bool fLoadJetPtUnfoldingCovariance;                      // Load the covariance distribution for unfolding
   bool fLoadJetPtOneDimensionalUnfoldingHistograms;        // Load the histograms needed in the one-dimensional jet pT unfolding study
   bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
@@ -470,6 +474,7 @@ private:
   // Histograms for jet pT unfolding study
   TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
   TH2D* fhJetPtUnfoldingResponse[kMaxCentralityBins][kMaxTrackPtBinsEEC];
+  TH2D* fhJetPtUnfoldingCovariance[kMaxCentralityBins][kMaxTrackPtBinsEEC];
 
   // Histograms for one-dimensional jet pT unfolding study
   TH1D* fhOneDimensionalJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins];
@@ -508,6 +513,7 @@ private:
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
   void LoadJetPtUnfoldingHistograms(); // Loader for jet pT unfolding histograms
+  void LoadJetPtUnfoldingCovariance(); // Loader for covariance histograms used in jet pT unfolding algorithm
   void LoadJetPtOneDimensionalUnfoldingHistograms(); // Loader for one dimensional jet pT unfolding histograms
   void LoadTrackParticleMatchingHistograms(); // Loader for track/particle matching histograms
   
@@ -529,6 +535,7 @@ private:
   void WriteJetPtResponseMatrix();                    // Write the jet pT response matrices
   void WriteClosureHistograms();                      // Write the closure histograms to the file that is currently open
   void WriteJetPtUnfoldingHistograms();               // Write the jet pT unfolding histograms to the output file
+  void WriteJetPtUnfoldingCovariance();               // Write the covariance histograms used in jet pT unfolding
   void WriteJetPtOneDimensionalUnfoldingHistograms(); // Write the jet pT one-dimensional unfolding histograms to the output file
   void WriteTrackParticleMatchingHistograms();        // Write the track/particle matching histograms to the output file
   

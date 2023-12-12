@@ -494,9 +494,9 @@ EECAnalyzer::~EECAnalyzer(){
   if(fRecoJetReader) delete fRecoJetReader;
   if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
 
-  for(int iBin = 0; iBin < 10; iBin++){
-    if(fThisEventCorrelator[iBin]) delete fThisEventCorrelator[iBin];
-  }
+  //for(int iBin = 0; iBin < 10; iBin++){
+  //  if(fThisEventCorrelator[iBin]) delete fThisEventCorrelator[iBin];
+  //}
 }
 
 /*
@@ -1444,15 +1444,15 @@ void EECAnalyzer::RunAnalysis(){
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics){
 
             // Before calculating the energy-energy correlators, reset histograms for covariance matrix calculation
-            /*for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+            for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
               fThisEventCorrelator[iTrackPt]->Reset();
-            }*/ // Track pT loop for covariance matrices
+            } // Track pT loop for covariance matrices
 
             // Then calculate the energy-energy correlator for this jet
             CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
 
             // After that is done, add the contents from this event to the total coveriance matrix
-            /*fillerUnfoldingCovariance[3] = centrality; // Axis 3: Centrality
+            fillerUnfoldingCovariance[3] = centrality; // Axis 3: Centrality
             for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
               trackPt = fCard->Get("TrackPtBinEdgesEEC", iTrackPt) + 0.1;
               fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
@@ -1475,7 +1475,7 @@ void EECAnalyzer::RunAnalysis(){
                   } // Non-zero value filling
                 } // Inner DeltaR loop
               } // Outer DeltaR loop
-            } // Track pT loop for covariance matrices*/
+            } // Track pT loop for covariance matrices
           }
           
         } // Fill energy-energy correltor histograms

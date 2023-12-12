@@ -37,8 +37,8 @@ JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus
 TrackEtaCut 2.4             # Region in eta around midrapidity from which tracks are accepted
 MinTrackPtCut 0.5           # Minimum track pT considered in the analysis
 MaxTrackPtCut 500           # Maximum track pT considered in the analysis
-MaxTrackPtRelativeError 0.3 # Maximum relative error allowed for track pT
-VertexMaxDistance 3         # TODO: Understand what this cut means
+MaxTrackPtRelativeError 0.1 # Maximum relative error allowed for track pT. 0.1 = Nominal, 0.1 = Loose, 0.05 = Tight
+VertexMaxDistance 3         # Position with respect to PV resolution. 3 = Nominal, 5 = Loose, 2 = Tight
 CalorimeterSignalLimitPt 20 # Require signal in calorimeters for all track above this pT
 HighPtEtFraction 0.5        # For high pT tracks, require Et to be at least this fraction of pT
 Chi2QualityCut 100000       # Maximum accepted chi2/(nDof*nHits) for tracks
