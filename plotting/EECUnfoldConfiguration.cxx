@@ -401,43 +401,44 @@ void EECUnfoldConfiguration::InitializeArrays(){
         if(fSystematicIndex == kNominalSmear){ 
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
-          // Input: chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
-          //        chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_4pCentShift_2023-10-26.root 
+          // Input: chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split1_nominalSmear_4pCentShift_2023-12-04.root
+          //        chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split2_nominalSmear_4pCentShift_2023-12-04.root 
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2023-10-24.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_nominalSmear_responseMatrix%s_processed_2023-12-02.root", splitName[fSplitIndex]);
 
-          fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
-          fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
+          fBestNumberOfIterations[0][1] = 4;  // Centrality = 0-10, track pT > 1 GeV
+          fBestNumberOfIterations[1][1] = 4;  // Centrality = 10-30, track pT > 1 GeV
           fBestNumberOfIterations[2][1] = 4;  // Centrality = 30-50, track pT > 1 GeV
           fBestNumberOfIterations[3][1] = 3;  // Centrality = 50-90, track pT > 1 GeV
 
-          fBestNumberOfIterations[0][2] = 3;  // Centrality = 0-10, track pT > 1.5 GeV
-          fBestNumberOfIterations[1][2] = 3;  // Centrality = 10-30, track pT > 1.5 GeV
+          fBestNumberOfIterations[0][2] = 4;  // Centrality = 0-10, track pT > 1.5 GeV
+          fBestNumberOfIterations[1][2] = 4;  // Centrality = 10-30, track pT > 1.5 GeV
           fBestNumberOfIterations[2][2] = 4;  // Centrality = 30-50, track pT > 1.5 GeV
           fBestNumberOfIterations[3][2] = 3;  // Centrality = 50-90, track pT > 1.5 GeV
 
-          fBestNumberOfIterations[0][3] = 3;  // Centrality = 0-10, track pT > 2 GeV
-          fBestNumberOfIterations[1][3] = 3;  // Centrality = 10-30, track pT > 2 GeV
+          fBestNumberOfIterations[0][3] = 4;  // Centrality = 0-10, track pT > 2 GeV
+          fBestNumberOfIterations[1][3] = 4;  // Centrality = 10-30, track pT > 2 GeV
           fBestNumberOfIterations[2][3] = 4;  // Centrality = 30-50, track pT > 2 GeV
           fBestNumberOfIterations[3][3] = 3;  // Centrality = 50-90, track pT > 2 GeV
 
-          fBestNumberOfIterations[0][4] = 3;  // Centrality = 0-10, track pT > 2.5 GeV
-          fBestNumberOfIterations[1][4] = 3;  // Centrality = 10-30, track pT > 2.5 GeV
+          fBestNumberOfIterations[0][4] = 4;  // Centrality = 0-10, track pT > 2.5 GeV
+          fBestNumberOfIterations[1][4] = 4;  // Centrality = 10-30, track pT > 2.5 GeV
           fBestNumberOfIterations[2][4] = 4;  // Centrality = 30-50, track pT > 2.5 GeV
           fBestNumberOfIterations[3][4] = 3;  // Centrality = 50-90, track pT > 2.5 GeV
 
           fBestNumberOfIterations[0][5] = 3;  // Centrality = 0-10, track pT > 3 GeV
-          fBestNumberOfIterations[1][5] = 3;  // Centrality = 10-30, track pT > 3 GeV
-          fBestNumberOfIterations[2][5] = 4;  // Centrality = 30-50, track pT > 3 GeV
+          fBestNumberOfIterations[1][5] = 4;  // Centrality = 10-30, track pT > 3 GeV
+          fBestNumberOfIterations[2][5] = 3;  // Centrality = 30-50, track pT > 3 GeV
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetPtResolutionUncertaintyDown){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for jet pT resolution uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_uncertaintySmearDown_4pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_uncertaintySmearDown_4pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_uncertaintySmearDown_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_uncertaintySmearDown_responseMatrix%s_processed_2023-12-06.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
@@ -465,12 +466,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetPtResolutionUncertaintyUp){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for jet pT resolution uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_uncertaintySmearUp_4pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_uncertaintySmearUp_4pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_uncertaintySmearUp_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_uncertaintySmearUp_responseMatrix%s_processed_2023-12-06.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
@@ -498,12 +500,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetEnergyScaleUncertaintyDown){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for jet energy scale uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_minusJECuncertainty_4pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_minusJECuncertainty_4pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_minusJECuncertainty_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_minusJECuncertainty_responseMatrix%s_processed_2023-12-05.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 4;  // Centrality = 10-30, track pT > 1 GeV
@@ -531,12 +534,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 4;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetEnergyScaleUncertaintyUp){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for jet energy scale uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_plusJECuncertainty_4pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_plusJECuncertainty_4pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_plusJECuncertainty_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_plusJECuncertainty_responseMatrix%s_processed_2023-12-06.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
@@ -564,12 +568,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kJetPtPriorUncertainty){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for jet pT prior uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_jetPtWeight_4pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_jetPtWeight_4pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_jetPtWeight_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_nominalSmear_jetPtWeight_responseMatrix%s_processed_2023-12-11.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
@@ -597,12 +602,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kCentralityShiftDown){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for centrality shift uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_2pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_2pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_2pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_2pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_nominalSmear_responseMatrix%s_processed_2023-12-06.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
@@ -630,12 +636,13 @@ void EECUnfoldConfiguration::InitializeArrays(){
           fBestNumberOfIterations[3][5] = 3;  // Centrality = 50-90, track pT > 3 GeV
 
         } else if(fSystematicIndex == kCentralityShiftUp){
+          // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for centrality shift uncertainty evaluation
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
           // Input: chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_6pCentShift_2023-11-16.root
           //        chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_6pCentShift_2023-11-16.root
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_6pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2023-11-14.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_6pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_nominalSmear_responseMatrix%s_processed_2023-12-06.root", splitName[fSplitIndex]);
 
           fBestNumberOfIterations[0][1] = 3;  // Centrality = 0-10, track pT > 1 GeV
           fBestNumberOfIterations[1][1] = 3;  // Centrality = 10-30, track pT > 1 GeV
