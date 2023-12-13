@@ -33,7 +33,7 @@ void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
  * Arguments:
  *  const int weightExponent = Exponents for the energy weight in energy-energy correlators. Currently 1 and 2 are implemented.
  */
-void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
+void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
 
   // First, do a sanity check for the weight exponents. Currently only 1 and 2 are implemented.
   if(weightExponent < 1 || weightExponent > 2){
@@ -96,6 +96,21 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   EECHistogramManager* backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
   loadRelevantHistograms(backgroundSubtractionHistogramManager);
 
+  // Result with different track selections
+  TString looseTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_looseTrackCuts_jet60or80triggers_processed_2023-12-06.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_looseTrackCuts_jet60or80triggers_processed_2023-12-06.root"};
+  TString tightTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_tightTrackCuts_jet60or80triggers_processed_2023-12-06.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_tightTrackCuts_jet60or80triggers_processed_2023-12-06.root"};
+  TFile* trackSelectionFile[2];
+  trackSelectionFile[0] = TFile::Open(looseTrackSelectionFileName[weightExponent-1]);
+  trackSelectionFile[1] = TFile::Open(tightTrackSelectionFileName[weightExponent-1]);
+  EECCard* trackSelectionCard[2];
+  EECHistogramManager* trackSelectionHistogramManager[2];
+  for(int iTrackSelectionFile = 0; iTrackSelectionFile < 2; iTrackSelectionFile++){
+    trackSelectionCard[iTrackSelectionFile] = new EECCard(trackSelectionFile[iTrackSelectionFile]);
+    trackSelectionHistogramManager[iTrackSelectionFile] = new EECHistogramManager(trackSelectionFile[iTrackSelectionFile], trackSelectionCard[iTrackSelectionFile]);
+    loadRelevantHistograms(trackSelectionHistogramManager[iTrackSelectionFile]);
+  }
+
+
   // Results with varied single and pair track efficiency
   TString trackEfficiencyFileName[2] = {"data/ppData_pfJets_wtaAxis_jet60or80triggers_trackingSystematics_processed_2023-08-07.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_trackSystematics_unfoldingWithNominalSmear_processed_2023-10-26.root"};
   TFile* trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
@@ -125,7 +140,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
 
   // Only draw example plots from selected subset of bins
   vector<int> drawnJetPtBins = {2,3,4,5};
-  vector<int> drawnTrackPtBins = {3,4,5};
+  vector<int> drawnTrackPtBins = {1,3,5};
   
   const bool printUncertainties = false;
   
@@ -138,8 +153,8 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
-  //TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  //TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -148,7 +163,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  //plotExample[SystematicUncertaintyOrganizer::kJetEnergyResolution] = true;
+  plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
   //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================
@@ -164,6 +179,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TH1D* jetEnergyScaleUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* jetPtPriorUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* backgroundSubtractionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* trackSelectionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* trackPairEfficiencyUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
 
@@ -179,6 +195,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
       for(int iFile = 0; iFile < 2; iFile++) {
         jetEnergyResolutionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
+        trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         singleTrackEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         trackPairEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
       }
@@ -222,6 +239,14 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
 
         // Normalize the jet energy scale histograms to one
         jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Scale(1.0 / jetEnergyScaleUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        // Read the track selection histograms
+        iTrackPtMatched = trackSelectionCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+        iJetPtMatched = trackSelectionCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+        trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = trackSelectionHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+        // Normalize the track selections histograms to one
+        trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Scale(1.0 / trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
       }
 
       // Read the jet pT prior histograms
@@ -387,6 +412,33 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
       } // Track pT loop
     } // Jet pT loop
   } // Background subtraction uncertainty
+
+  // =============================================== //
+  //     Uncertainty coming from track selection     //
+  // =============================================== //
+  
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection]){
+    for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackSelection] = findTheDifference(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt], 2);
+
+        // Draw example plots on how the uncertainty is obtained
+        if(plotExample[SystematicUncertaintyOrganizer::kTrackSelection] &&  std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+          legendNames[0] = "Loose track selection";
+          legendNames[1] = "Tight track selection";
+
+          // Set reasonable ratio zoom
+          if(setAutomaticRatioZoom){
+            ratioZoom = std::make_pair(0.8,1.2);
+          }
+
+          drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt], 2, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackSelection), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
+        }
+      
+      } // Track pT loop
+    } // Jet pT loop
+  } // Track selection uncertainty
 
   // =================================================== //
   //   Uncertainty coming from single track efficiency   //
