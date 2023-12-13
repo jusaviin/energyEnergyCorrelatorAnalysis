@@ -11,9 +11,9 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = false;
+  bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 1;
+  const int weightExponent = 2;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){
@@ -138,7 +138,10 @@ void fullAnalysisClosure(){
   const bool logEEC = true;
   
   // Axis zooming
-  std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
+  std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);  // Zoom for pp
+  double zoomForPbPbLow[] = {0, 0.5, 0.7, 0.7};   // Low zoom values for PbPb
+  double zoomForPbPbHigh[] = {2, 1.5, 1.3, 1.3};  // High zoom values for PbPb
+  const bool centralityDependentZoom = true; // Instead of single values, use centrality dependent zooming
 
   // Legend text referring to splits
   TString splitLegendText[nSplits];
@@ -154,11 +157,11 @@ void fullAnalysisClosure(){
   // Figure saving
   const bool saveFigures = true;  // Save figures
   TString nameAdder[] = {"","_energyWeightSquared"}; 
-  const char* saveComment = Form("%s_Pythia8_trackSelectionUpdate", nameAdder[weightExponent-1]);   // Comment given for this specific file
+  TString saveComment = Form("%s_PythiaHydjet_fixedBackground", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = true;
+  const bool saveMonteCarloNonClosureFile = false;
   TString outputFileName[2][2] = {
     // Output file names for pT1*pT2 weight
     {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_%s.root", today.Data())},
@@ -392,6 +395,10 @@ void fullAnalysisClosure(){
       if(isPbPbData){
         centralityString = Form("Cent: %.0f-%.0f%%", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
         compactCentralityString = Form("_C=%.0f-%.0f", histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality), histograms[kMeasured][0]->GetCentralityBinBorder(iCentrality+1));
+        if(centralityDependentZoom){
+          ratioZoom.first = zoomForPbPbLow[iCentrality];
+          ratioZoom.second = zoomForPbPbHigh[iCentrality];
+        }
       } else {
         centralityString = "";
         compactCentralityString = "";
@@ -477,7 +484,7 @@ void fullAnalysisClosure(){
           
           // Save the figures to a file
           if(saveFigures){
-            gPad->GetCanvas()->SaveAs(Form("figures/%sFullAnalysisClosure%s%s%s%s.%s", histograms[kMeasured][0]->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), saveComment, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            gPad->GetCanvas()->SaveAs(Form("figures/%sFullAnalysisClosure%s%s%s%s.%s", histograms[kMeasured][0]->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
           }
           
         } // Track pT loop
