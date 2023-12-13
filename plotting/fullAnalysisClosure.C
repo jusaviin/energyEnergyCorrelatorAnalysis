@@ -11,9 +11,9 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = true;
+  bool isPbPbData = false;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 2;
+  const int weightExponent = 1;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){
@@ -29,8 +29,8 @@ void fullAnalysisClosure(){
     fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part2_processed_2023-07-15.root";
     fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_newTrackPairEfficiencySmoothed_part1_processed_2023-07-15.root";
 
-    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part2_processed_2023-11-10.root";
-    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part1_processed_2023-11-10.root";
+    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part2_processed_2023-12-11.root";
+    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_part1_processed_2023-12-11.root";
 
     fileName[kTruth][0][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root";
     fileName[kTruth][1][0] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part1_processed_2023-07-11.root";
@@ -59,9 +59,9 @@ void fullAnalysisClosure(){
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
   TString uncertaintyFileName[2][2] = {
     // Uncertainty files for pT1*pT2 weight
-    {"systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_2023-07-14.root", "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root"},
+    {"systematicUncertainties/systematicUncertainties_pp_noMCnonClosure_2023-12-13.root", "systematicUncertainties/systematicUncertainties_jetMetUpdate_2023-07-14.root"},
     // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
-    {"systematicUncertainties/systematicUncertaintiesForPp_energyWeightSquared_noMCnonClosure_2023-11-17.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2023-11-17.root"}
+    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2023-12-13.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2023-12-12.root"}
   };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
@@ -152,8 +152,8 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_PythiaHydjet";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_Pythia8_trackSelectionUpdate";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
@@ -416,9 +416,10 @@ void fullAnalysisClosure(){
           compactTrackPtString.ReplaceAll(".","v");
           
           // Create a legend for the figure
-          legend = new TLegend(0.18,0.04,0.45,0.48);
+          legend = new TLegend(0.18,0.04,0.45,0.44+0.04*weightExponent);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
           legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card[kMeasured][0]->GetAlternativeDataType().Data()), "");
+          if(weightExponent > 1) legend->AddEntry((TObject*) 0, "Energy weight squared","");
           if(isPbPbData) legend->AddEntry((TObject*) 0, centralityString.Data(),"");
           legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
           legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
