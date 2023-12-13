@@ -47,7 +47,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[0][kJetEnergyResolution] = true;
   fIsRelevant[0][kJetEnergyScale] = true;
   fIsRelevant[0][kUnfoldingTruth] = true;
-  fIsRelevant[0][kTrackSelection] = false;
+  fIsRelevant[0][kTrackSelection] = true;
   fIsRelevant[0][kSingleTrackEfficiency] = false;
   fIsRelevant[0][kTrackPairEfficiency] = true;
   fIsRelevant[0][kBackgroundSubtraction] = true;
