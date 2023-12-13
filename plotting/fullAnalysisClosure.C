@@ -153,7 +153,8 @@ void fullAnalysisClosure(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_Pythia8_trackSelectionUpdate";   // Comment given for this specific file
+  TString nameAdder[] = {"","_energyWeightSquared"}; 
+  const char* saveComment = Form("%s_Pythia8_trackSelectionUpdate", nameAdder[weightExponent-1]);   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
