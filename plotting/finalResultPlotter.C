@@ -56,14 +56,14 @@ void finalResultPlotter(){
   // Input files
   TString inputFileName[kNDataTypes][nWeightExponents];
   inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
-  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_firstFinalResultsWithFixedCard_processed_2023-10-23.root";
-  inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_newTrackPairEfficiency_unfoldingWithNominalSmear_processed_2023-07-13.root";
+  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root";
+  inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_jet60or80triggers_finalResults_processed_2023-08-07.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_firstFinalResults_processed_2023-10-26.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
   uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2023-11-20.root";
-  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertaintiesForPp_jetMetUpdate_includeMCnonClosure_2023-07-16.root";
-  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertaintiesForPp_energyWeightSquared_includeMCnonClosure_2023-11-17.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2023-12-12.root";
+  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_includeMCnonClosure_2023-12-13.root";
+  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2023-12-13.root";
   
   TFile* inputFile[kNDataTypes][nWeightExponents];
   TFile* uncertaintyFile[kNDataTypes][nWeightExponents];
@@ -135,15 +135,15 @@ void finalResultPlotter(){
   bool drawBigCanvasDistributions = false;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
-  bool drawBigCanvasAllRatios = true; // Draw ratios with all defined energy weight exponents to the same figure
+  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   // Normalize all distributions to 2 GeV integral
   bool normalizeTo2GeV = false;
   int trackPtBinFor2GeV[nWeightExponents];
   std::pair<int, int> trackPtBinsForDoubleRatio[nWeightExponents];
   trackPtBinsForDoubleRatio[0] = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][0]->GetBinIndexTrackPtEEC(3.0));
-  trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(1.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0));
+  trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(3.0));
   double trackPtForAllRatiosComparison = 2;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -158,7 +158,7 @@ void finalResultPlotter(){
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(160,180);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
@@ -166,7 +166,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "";
+  TString saveComment = energyWeightString[weightExponent-1] + "_includeTrackSelection_180<jetpt<200";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings
