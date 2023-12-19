@@ -30,6 +30,7 @@
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
 #include "SmearingProvider.h"
+#include "CovarianceHelper.h"
 
 class EECAnalyzer{
   
@@ -108,6 +109,7 @@ public:
   JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
+  CovarianceHelper* fCovarianceHelper;           // Class to help find average EEC value in each analysis bin
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
   SmearingProvider* fEnergyWeightSmearer;        // Realistic smearing for energy weights from reco/gen ratios
   TRandom3* fRng;                                // Random number generator

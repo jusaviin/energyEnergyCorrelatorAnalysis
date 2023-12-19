@@ -134,6 +134,9 @@ EECAnalyzer::EECAnalyzer() :
   // Create a manager for jet energy resolution smearing in MC
   fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
 
+  // Create a helper class to find average values needed in covariance calculation
+  fCovarianceHelper = new CovarianceHelper();
+
   // Create smearing providers for DeltaR and energy weights
   fDeltaRSmearer = new SmearingProvider();
   fEnergyWeightSmearer = new SmearingProvider();
@@ -201,6 +204,15 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
     }
 
+    // Covariance helper for pp data
+    if(fWeightExponent == 1){
+      // Average energy-energy correlator values for nominal energy weight
+      fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_pp_2023-12-19.root");
+    } else {
+      // Average energy-energy correlator values for squared energy weight
+      fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_pp_energyWeightSquared_2023-12-19.root");
+    }
+
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
     if(fSmearDeltaR){
       const char* deltaRFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
@@ -252,6 +264,15 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
     }
 
+    // Covariance helper for PbPb data
+    if(fWeightExponent == 1){
+      // Average energy-energy correlator values for nominal energy weight
+      fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_PbPb_2023-12-19.root");
+    } else {
+      // Average energy-energy correlator values for squared energy weight
+      fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_PbPb_energyWeightSquared_2023-12-19.root");
+    }
+
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
     if(fSmearDeltaR){
       const char* deltaRFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
@@ -276,6 +297,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     fTrackPairEfficiencyCorrector = NULL;
     fEnergyResolutionSmearingFinder = NULL;
+    fCovarianceHelper = NULL;
     fDeltaRSmearer = NULL;
     fEnergyWeightSmearer = NULL;
   }
@@ -484,6 +506,7 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetUncertainty2018) delete fJetUncertainty2018;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
   if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
+  if(fCovarianceHelper) delete fCovarianceHelper;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
   if(fCentralityWeightFunctionPeripheral) delete fCentralityWeightFunctionPeripheral;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
@@ -494,9 +517,11 @@ EECAnalyzer::~EECAnalyzer(){
   if(fRecoJetReader) delete fRecoJetReader;
   if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
 
-  //for(int iBin = 0; iBin < 10; iBin++){
-  //  if(fThisEventCorrelator[iBin]) delete fThisEventCorrelator[iBin];
-  //}
+  /*for(int iBin = 0; iBin < 10; iBin++){
+    if(fThisEventCorrelator[iBin]) {
+      delete fThisEventCorrelator[iBin];
+    }
+  }*/
 }
 
 /*
@@ -708,7 +733,9 @@ void EECAnalyzer::RunAnalysis(){
 
   // Variables for covariance study
   const Int_t nDeltaRBins = fHistograms->GetNDeltaRBinsEEC(); // Number of DeltaR bins
-  Double_t pseudoCovariance = 0;          // A value that SMP group claims describes covariance?
+  Double_t eecCovariance = 0;             // Covariance between two deltaR bins in energy-energy correlators
+  Double_t averageEECvalue1 = 0;          // Average energy-energy correlator value in i:th bin. Needed to calculate covariance
+  Double_t averageEECvalue2 = 0;          // Average energy-energy correlator value in j:th bin. Needed to calculate covariance
   Double_t deltaRBinContent1 = 0;         // Bin content of the i:th DeltaR bin
   Double_t deltaRBinContent2 = 0;         // Bin content of the j:th DeltaR bin
   Double_t transformedDeltaR1 = 0;        // Transformed bin contents of the i:th DeltaR bin
@@ -1458,21 +1485,23 @@ void EECAnalyzer::RunAnalysis(){
               fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
               for(int iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
                 deltaRBinContent1 = fThisEventCorrelator[iTrackPt]->GetBinContent(iDeltaRBin);
+                averageEECvalue1 = fCovarianceHelper->GetAverageValue(iDeltaRBin, centrality, jetPt, trackPt);
                 transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+
                 for(int jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
                   deltaRBinContent2 = fThisEventCorrelator[iTrackPt]->GetBinContent(jDeltaRBin);
-                  pseudoCovariance = deltaRBinContent1 * deltaRBinContent2;
+                  averageEECvalue2 = fCovarianceHelper->GetAverageValue(jDeltaRBin, centrality, jetPt, trackPt);
+                  transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
 
-                  // Only fill the histograms if there is something to fill!
-                  if(pseudoCovariance > 0){
-                    transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+                  // Calculate the covariance between the two bins
+                  eecCovariance = (deltaRBinContent1 - averageEECvalue1) * (deltaRBinContent2 - averageEECvalue2);
 
-                    fillerUnfoldingCovariance[0] = transformedDeltaR1; // Axis 0: Transformed deltaR axis
-                    fillerUnfoldingCovariance[1] = transformedDeltaR2; // Axis 1: Transformed deltaR axis
+                  // Fill the calculation result to correct bin
+                  fillerUnfoldingCovariance[0] = transformedDeltaR1; // Axis 0: Transformed deltaR axis
+                  fillerUnfoldingCovariance[1] = transformedDeltaR2; // Axis 1: Transformed deltaR axis
 
-                    fHistograms->fhJetPtUnfoldingCovariance->Fill(fillerUnfoldingCovariance, pseudoCovariance);
+                  fHistograms->fhJetPtUnfoldingCovariance->Fill(fillerUnfoldingCovariance, eecCovariance);
                     
-                  } // Non-zero value filling
                 } // Inner DeltaR loop
               } // Outer DeltaR loop
             } // Track pT loop for covariance matrices

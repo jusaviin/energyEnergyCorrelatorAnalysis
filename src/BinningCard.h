@@ -51,8 +51,8 @@ public:
     kCentralityBinEdges,        // Centrality bin edges
     kTrackPtBinEdges,           // Track pT bin edges
     kTrackPairPtBinEdges,       // Track pT bin edges for track pair histogram
-    kJetPtBinEdgesEEC,          // Jet pT bin edges for the track pair histogram
-    kAverageEtaBinEdges,        // Average eta bin edges in the projected histograms
+    kJetPtBinEdgesEEC,          // Jet pT bin edges for energy-energy correlation analysis
+    kTrackPtBinEdgesEEC,        // Track pT binning for energy-energy correlation analysis
     kPtHatBinEdges,             // pT hat bin edges
     knEntries};                 // Number of entries in the card
   
@@ -62,7 +62,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char *fCardEntryNames[knEntries] = {"DataType","UseTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","TrackEtaCut","TriggerEtaCut","CutBadPhiTrigger","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","CentralityBinEdges","TrackPtBinEdges","TrackPairPtBinEdges","JetPtBinEdgesEEC","AverageEtaBinEdges","PtHatBinEdges"};
+  const char *fCardEntryNames[knEntries] = {"DataType","UseTrigger","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","TrackEtaCut","TriggerEtaCut","CutBadPhiTrigger","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","ZVertexCut","LowPtHatCut","HighPtHatCut","CentralityBinEdges","TrackPtBinEdges","TrackPairPtBinEdges","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","PtHatBinEdges"};
   const char *fFileNameType[knFileNames] = {"input"};
   const char *fFileNameSaveName[knFileNames] = {"InputFile"};
   
@@ -103,7 +103,7 @@ public:
   int GetNTrackPtBins() const;      // Get the number of track pT bins
   int GetNTrackPairPtBins() const;  // Get the number of track pT bins in track pair histograms
   int GetNJetPtBins() const;        // Get the number of jet pT bins
-  int GetNAverageEtaBins() const;   // Get the number of average eta bins
+  int GetNTrackPtBinsEEC() const;   // Get the number of track pT bins in energy-energy correlator analysis
   double GetLowBinBorderCentrality(const int iBin) const;    // Get the low border of i:th centrality bin
   double GetHighBinBorderCentrality(const int iBin) const;   // Get the high border of i:th centrality bin
   double GetLowBinBorderTrackPt(const int iBin) const;       // Get the low border of i:th track pT bin
@@ -112,13 +112,13 @@ public:
   double GetHighBinBorderTrackPairPt(const int iBin) const;  // Get the high border of i:th track pT bin in track pair histograms
   double GetLowBinBorderJetPt(const int iBin) const;         // Get the low border of i:th jet pT bin
   double GetHighBinBorderJetPt(const int iBin) const;        // Get the high border of i:th jet pT bin
-  double GetLowBinBorderAverageEta(const int iBin) const;    // Get the low border of i:th average eta bin
-  double GetHighBinBorderAverageEta(const int iBin) const;   // Get the high border of i:th average eta bin
+  double GetLowBinBorderTrackPtEEC(const int iBin) const;    // Get the low border of i:th track pT bin in energy-energy correlator analysis
+  double GetHighBinBorderTrackPtEEC(const int iBin) const;   // Get the high border of i:th track pT bin in energy-energy correlator analysis
   int GetBinIndexCentrality(const double value) const;       // Get the bin index for a given centrality value
   int GetBinIndexTrackPt(const double value) const;          // Get the bin index for a given track pT value
   int GetBinIndexTrackPairPt(const double value) const;      // Get the bin index for a given track pT value in track pair histograms
-  int GetBinIndexAverageEta(const double value) const;       // Get the bin index for a given average eta value
-  int GetBinIndexJetPt(const double value) const;            // Get the bin index for a given track pT value
+  int GetBinIndexTrackPtEEC(const double value) const;       // Get the bin index for a given track pT value in energy-energy correlator analysis
+  int GetBinIndexJetPt(const double value) const;            // Get the bin index for a given jet pT value
   int GetJetType() const;          // Get the jet type index
   double GetJetPtCut() const;      // Get the minimum jet pT cut
   

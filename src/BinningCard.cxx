@@ -131,9 +131,9 @@ int BinningCard::GetNJetPtBins() const{
   return GetNBins(kJetPtBinEdgesEEC);
 }
 
-// Get the number of average eta bins
-int BinningCard::GetNAverageEtaBins() const{
-  return GetNBins(kAverageEtaBinEdges);
+// Get the number of track pT bins in EEC analysis
+int BinningCard::GetNTrackPtBinsEEC() const{
+  return GetNBins(kTrackPtBinEdgesEEC);
 }
 
 /*
@@ -177,9 +177,9 @@ int BinningCard::GetBinIndexJetPt(const double value) const{
   return GetBinIndex(kJetPtBinEdgesEEC,value);
 }
 
-// Get the bin index for a given average eta value
-int BinningCard::GetBinIndexAverageEta(const double value) const{
-  return GetBinIndex(kAverageEtaBinEdges,value);
+// Get the bin index for a given track pT value in energy-energy correlators
+int BinningCard::GetBinIndexTrackPtEEC(const double value) const{
+  return GetBinIndex(kTrackPtBinEdgesEEC,value);
 }
 
 // Get the low border of i:th bin from internal index
@@ -214,9 +214,9 @@ double BinningCard::GetLowBinBorderJetPt(const int iBin) const{
   return GetLowBinBorder(kJetPtBinEdgesEEC,iBin);
 }
 
-// Get the low border of i:th average eta bin
-double BinningCard::GetLowBinBorderAverageEta(const int iBin) const{
-  return GetLowBinBorder(kAverageEtaBinEdges,iBin);
+// Get the low border of i:th track pT bin in energy-energy correlators
+double BinningCard::GetLowBinBorderTrackPtEEC(const int iBin) const{
+  return GetLowBinBorder(kTrackPtBinEdgesEEC,iBin);
 }
 
 // Get the high border of i:th bin from internal index
@@ -251,9 +251,9 @@ double BinningCard::GetHighBinBorderJetPt(const int iBin) const{
   return GetHighBinBorder(kJetPtBinEdgesEEC,iBin);
 }
 
-// Get the high border of i:th average eta bin
-double BinningCard::GetHighBinBorderAverageEta(const int iBin) const{
-  return GetHighBinBorder(kAverageEtaBinEdges,iBin);
+// Get the high border of i:th track pT bin in energy-energy correlators
+double BinningCard::GetHighBinBorderTrackPtEEC(const int iBin) const{
+  return GetHighBinBorder(kTrackPtBinEdgesEEC,iBin);
 }
 
 /*
