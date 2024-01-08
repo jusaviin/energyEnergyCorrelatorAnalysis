@@ -184,6 +184,8 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   const int nUnfoldedJetPtBins = unfoldedJetPtBins.size();
 
+  bool includeCovariance = true;
+
   bool saveFigures = false;
   TString saveComment = "_matrixInversion";
   TString figureFormat = "pdf";
@@ -209,12 +211,14 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   dataHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
   dataHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   dataHistograms->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
+  dataHistograms->SetLoadJetPtUnfoldingCovariance(true);
   dataHistograms->LoadProcessedHistograms();
 
   // Histograms that are needed to create the unfolding response
   TH1D* hUnfoldingMeasured[nCentralityBins][nTrackPtBins];
   TH1D* hUnfoldingTruth[nCentralityBins][nTrackPtBins];
   TH2D* hUnfoldingResponse[nCentralityBins][nTrackPtBins];
+  TH2D* hUnfoldingCovariance[nCentralityBins][nTrackPtBins];
   TH1D* hUnfoldedDistribution[nCentralityBins][nTrackPtBins];
   TH1D* energyEnergyCorrelatorForUnfolding[nCentralityBins][nTrackPtBins];
   TH1D* energyEnergyCorrelatorsFromData[nCentralityBins][nJetPtBins][nTrackPtBins];
@@ -228,6 +232,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       hUnfoldingMeasured[iCentrality][iTrackPt] = NULL;
       hUnfoldingTruth[iCentrality][iTrackPt] = NULL;
       hUnfoldingResponse[iCentrality][iTrackPt] = NULL;
+      hUnfoldingCovariance[iCentrality][iTrackPt] = NULL;
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt] = NULL;
       rooResponse[iCentrality][iTrackPt] = NULL;
       hUnfoldedDistribution[iCentrality][iTrackPt] = NULL;
@@ -238,6 +243,8 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   }  // Centrality loop
 
   // Read the histograms needed for the unfolding response and create the RooUnfold response objects
+  double normalizationFactor;
+  std::pair<double,double> jetPtBinBorders;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       hUnfoldingMeasured[iCentrality][iTrackPt] = responseHistograms->GetHistogramJetPtUnfoldingMeasured(iCentrality, iTrackPt);
@@ -252,11 +259,28 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       // Create the response object with trimmed histograms
       rooResponse[iCentrality][iTrackPt] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality][iTrackPt], hUnfoldingTruth[iCentrality][iTrackPt], hUnfoldingResponse[iCentrality][iTrackPt]);
 
+      // Read the covariance matrix from the data file
+      if(includeCovariance) {
+        hUnfoldingCovariance[iCentrality][iTrackPt] = dataHistograms->GetHistogramJetPtUnfoldingCovariance(iCentrality, iTrackPt);
+      }
+
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
         energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = dataHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+
+        // TODO TODO TODO DEBUG DEBUG DEBUG
+        // Normalize the distributions to the number of jets and see if this affect errors with covariances
+        jetPtBinBorders = dataCard->GetBinBordersJetPtEEC(iJetPt);
+        normalizationFactor = dataHistograms->GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
+        if(normalizationFactor > 0){
+          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / normalizationFactor);
+        }
+
       } // Measured jet pT loop
     } // Track pT loop
   } // Centrality loop
+
+  energyEnergyCorrelatorsFromData[0][8][4]->Draw();
+  return;
 
   // Next, we need to transform the data histograms into a format that can be read by RooUnfold
   // For this, we will need to combine the jet pT and deltaR axes
@@ -294,10 +318,31 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   // Unfolding using Bayesian unfolding
   RooUnfoldBayes* bayesUnfold[nCentralityBins][nTrackPtBins];
+  int nMatrixBins = 0;
+  if(includeCovariance) nMatrixBins = hUnfoldingCovariance[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetNbinsX();
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       bayesUnfold[iCentrality][iTrackPt] = new RooUnfoldBayes(rooResponse[iCentrality][iTrackPt], energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt], unfoldConfigurationProvider->GetNumberOfIterations(dataCard->GetBinBordersCentrality(iCentrality), dataCard->GetLowBinBorderTrackPtEEC(iTrackPt)));
-      hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kErrors);
+
+      // Create a matrix and set it as covariance
+      if(includeCovariance){
+        TMatrixD covarianceMatrix(nMatrixBins, nMatrixBins);
+        for(int iBin = 0; iBin < nMatrixBins; iBin++){
+          for(int jBin = 0; jBin < nMatrixBins; jBin++){
+            covarianceMatrix(iBin, jBin) = hUnfoldingCovariance[iCentrality][iTrackPt]->GetBinContent(iBin+1, jBin+1);
+          }
+        }
+        bayesUnfold[iCentrality][iTrackPt]->SetMeasuredCov(covarianceMatrix);
+
+        // Do the actual unfolding
+        hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kCovariance);
+      
+      } else {
+
+        // Do the actual unfolding
+        hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kErrors);
+      }
+
     } // Track pT loop
   }  // Centrality loop
 
@@ -355,6 +400,12 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
           hUnfolded[iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinContent(iBin + nDeltaRBins*jetPtUnfoldIndex) / hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinWidth(iBin));
           hUnfolded[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinError(iBin + nDeltaRBins*jetPtUnfoldIndex) / hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinWidth(iBin));
         } // DeltaR bin loop
+
+        // TODO TODO TODO DEBUG DEBUG DEBUG
+        // After unfolded histograms have been dissected, undo the normalization to the number of jets
+        jetPtBinBorders = dataCard->GetBinBordersJetPtEEC(jetPtUnfoldIndex);
+        normalizationFactor = dataHistograms->GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
+        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Scale(normalizationFactor);
 
       } // Jet pT loop
     } // Track pT loop
