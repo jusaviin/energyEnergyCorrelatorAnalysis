@@ -57,8 +57,8 @@ public:
     kWeightExponent,              // Exponent given to the energy-energy correlator weight
     kJetPtBinEdgesEEC,            // Jet pT binning for energy-energy correlation analysis
     kTrackPtBinEdgesEEC,          // Track pT binning for energy-energy correlation analysis
-    kJetPtBinEdgesUnfoldingReco,  // Jet pT binning for reconstructed level unfolding response matrix
-    kJetPtBinEdgesUnfoldingTruth, // Jet pT binning for generator level unfolding response matrix
+    kMinJetPtUnfoldingReco,       // Minimum jet pT for reconstructed jets in unfolding response matrix
+    kMinJetPtUnfoldingTruth,      // Minimum jet pT for generator level jets in unfolding response matrix
     kCentralityBinEdges,          // Centrality bin edges
     kTrackPtBinEdges,             // Track pT bin edges
     kPtHatBinEdges,               // pT hat bin edges
@@ -78,7 +78,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","JetPtBinEdgesUnfoldingReco","JetPtBinEdgesUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
+  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
   const char* fFileNameType[knFileNames] = {"input", "response matrix"};
   const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
@@ -126,32 +126,22 @@ public:
   int GetNTrackPtBins() const;    // Get the number of track pT bins
   int GetNJetPtBinsEEC() const;   // Get the number of jet pT bins in energy-energy correlator analysis
   int GetNTrackPtBinsEEC() const; // Get the number of track pT bins in energy-energy correlator analysis
-  int GetNJetPtBinsUnfoldingReco() const;   // Get the number of reconstructed jet pT bins in the unfolding response matrix
-  int GetNJetPtBinsUnfoldingTruth() const;  // Get the number of generator level jet pT bins in the unfolding response matrix
   double GetLowBinBorderCentrality(const int iBin) const;  // Get the low border of i:th centrality bin
   double GetLowBinBorderTrackPt(const int iBin) const;     // Get the low border of i:th track pT bin
   double GetLowBinBorderJetPtEEC(const int iBin) const;    // Get the low border of i:th jet pT bin in energy-energy correlator analysis
   double GetLowBinBorderTrackPtEEC(const int iBin) const;  // Get the low border of i:th track pT bin in energy-energy correlator analysis
-  double GetLowBinBorderJetPtUnfoldingReco(const int iBin) const;   // Get the low border of i:th reconsturcted jet pT bin in the unfolding response matrix
-  double GetLowBinBorderJetPtUnfoldingTruth(const int iBin) const;  // Get the low border of i:th generator level jet pT bin in the unfolding response matrix
   double GetHighBinBorderCentrality(const int iBin) const; // Get the high border of i:th centrality bin
   double GetHighBinBorderTrackPt(const int iBin) const;    // Get the high border of i:th track pT bin
   double GetHighBinBorderJetPtEEC(const int iBin) const;   // Get the high border of i:th jet pT bin in energy-energy correlator analysis
   double GetHighBinBorderTrackPtEEC(const int iBin) const; // Get the high border of i:th track pT bin in energy-energy correlator analysis
-  double GetHighBinBorderJetPtUnfoldingReco(const int iBin) const;  // Get the high border of i:th reconsturcted jet pT bin in the unfolding response matrix
-  double GetHighBinBorderJetPtUnfoldingTruth(const int iBin) const; // Get the high border of i:th generator level jet pT bin in the unfolding response matrix
   std::pair<double,double> GetBinBordersCentrality(const int iBin) const; // Get the bin borders of the i:th centrality bin
   std::pair<double,double> GetBinBordersTrackPt(const int iBin) const; // Get the bin borders of the i:th track pT bin
   std::pair<double,double> GetBinBordersJetPtEEC(const int iBin) const; // Get the bin borders of the i:th jet pT bin in energy-energy correlator analysis
   std::pair<double,double> GetBinBordersTrackPtEEC(const int iBin) const; // Get the bin borders of the i:th track pT bin in energy-energy correlator analysis
-  std::pair<double,double> GetBinBordersJetPtUnfoldingReco(const int iBin) const; // Get the bin borders of the i:th reconsturcted jet pT bin in the unfolding response matrix
-  std::pair<double,double> GetBinBordersJetPtUnfoldingTruth(const int iBin) const; // Get the bin borders of the i:th generator level jet pT bin in the unfolding response matrix
   int GetBinIndexCentrality(const double value) const;     // Get the bin index for a given centrality value
   int GetBinIndexTrackPt(const double value) const;        // Get the bin index for a given track pT value
   int GetBinIndexJetPtEEC(const double value) const;       // Get the bin index for a given jet pT value in energy-energy correlator analysis
   int GetBinIndexTrackPtEEC(const double value) const;     // Get the bin index for a given track pT value in energy-energy correlator analysis
-  int GetBinIndexJetPtUnfoldingReco(const double value) const;  // Get the bin index for a given reconstructed jet pT value in the unfolding response matrix
-  int GetBinIndexJetPtUnfoldingTruth(const double value) const; // Get the bin index for a given generator level jet pT value in the unfolding response matrix
   int FindBinIndexCentrality(const double lowBorder, const double highBorder) const; // Find if a centrality bin with given borders exists and return its index
   int FindBinIndexCentrality(const std::pair<double,double> binBorders) const; // Find if a centrality bin with given borders exists and return its index
   int FindBinIndexTrackPt(const double lowBorder, const double highBorder) const;    // Find if a track pT bin with given borders exists and return its index
@@ -160,10 +150,6 @@ public:
   int FindBinIndexJetPtEEC(const std::pair<double,double> binBorders) const;   // Find if a jet pT bin in energy-energy correlator analysis with given borders exists and return its index
   int FindBinIndexTrackPtEEC(const double lowBorder, const double highBorder) const; // Find if a track pT bin in energy-energy correlator analysis with given borders exists and return its index
   int FindBinIndexTrackPtEEC(const std::pair<double,double> binBorders) const; // Find if a track pT bin in energy-energy correlator analysis with given borders exists and return its index
-  int FindBinIndexJetPtUnfoldingReco(const double lowBorder, const double highBorder) const;  // Find if a reconstructed jet pT bin in unfolding response matrix with given borders exists and return its index
-  int FindBinIndexJetPtUnfoldingReco(const std::pair<double,double> binBorders) const;  // Find if a reconstructed jet pT bin in unfolding response matrix with given borders exists and return its index
-  int FindBinIndexJetPtUnfoldingTruth(const double lowBorder, const double highBorder) const; // Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
-  int FindBinIndexJetPtUnfoldingTruth(const std::pair<double,double> binBorders) const; // Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
   int GetFirstUnfoldedCentralityBin() const; // Getter for the first unfolded centrality bin index
   int GetLastUnfoldedCentralityBin() const;  // Getter for the last unfolded centrality bin index
   int GetFirstUnfoldedTrackPtBin() const;    // Getter for the first unfolded track pT bin index

@@ -559,17 +559,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //   Extra jet cuts for unfolding study
   //****************************************
 
-  fReconstructedJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingReco",0);
-  fGeneratorJetMinimumPtCut = fCard->Get("JetPtBinEdgesUnfoldingTruth",0);
-
-  fLowerTruthUnfoldingBins = 0;
-  for(Int_t iJetPt = 0; iJetPt < fCard->GetNBin("JetPtBinEdgesUnfoldingTruth")+1; iJetPt++){
-    if(fCard->Get("JetPtBinEdgesUnfoldingTruth",iJetPt) < fReconstructedJetMinimumPtCut){
-      fLowerTruthUnfoldingBins++;
-    } else {
-      break;
-    }
-  }
+  fReconstructedJetMinimumPtCut = fCard->Get("MinJetPtUnfoldingReco");
+  fGeneratorJetMinimumPtCut = fCard->Get("MinJetPtUnfoldingTruth");
 
   //****************************************
   //        Track selection cuts
@@ -1486,12 +1477,12 @@ void EECAnalyzer::RunAnalysis(){
               for(int iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
                 deltaRBinContent1 = fThisEventCorrelator[iTrackPt]->GetBinContent(iDeltaRBin);
                 averageEECvalue1 = fCovarianceHelper->GetAverageValue(iDeltaRBin, centrality, jetPt, trackPt);
-                transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+                transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt);
 
                 for(int jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
                   deltaRBinContent2 = fThisEventCorrelator[iTrackPt]->GetBinContent(jDeltaRBin);
                   averageEECvalue2 = fCovarianceHelper->GetAverageValue(jDeltaRBin, centrality, jetPt, trackPt);
-                  transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt, kUnfoldingReconstructed);
+                  transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt);
 
                   // Calculate the covariance between the two bins
                   eecCovariance = (deltaRBinContent1 - averageEECvalue1) * (deltaRBinContent2 - averageEECvalue2);
@@ -2125,10 +2116,10 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       }
 
       // Transform deltaR into deltaR as a function of reconstructed jet pT
-      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt, kUnfoldingReconstructed);
+      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt);
 
       // Transform deltaR into deltaR as a function of generator level jet pT
-      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt, kUnfoldingTruth);
+      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt);
 
       // If both reconstructed and generator level jet pT are given, fill the response matrix
       if(jetPt >= fReconstructedJetMinimumPtCut && genPt >= fGeneratorJetMinimumPtCut){
@@ -3020,18 +3011,16 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
  *  Arguments:
  *   const Double_t deltaR = DeltaR between the two particles
  *   const Double_t jetPt = pT of the jets the track pair is close to
- *   const Int_t unfoldingAxis = Select the type of unfolding axis (reconstructed/generator level)
  *
  * return: The new value transformed into the main unfolding axis
  */
-Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt, const Int_t unfoldingAxis) const{
+Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const{
 
-  const char* unfoldingBinName[kNUnfoldingAxes] = {"JetPtBinEdgesUnfoldingReco", "JetPtBinEdgesUnfoldingTruth"};
-  const Int_t nJetPtBinsEEC = fCard->GetNBin(unfoldingBinName[unfoldingAxis]);
+  const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
   const Double_t maxDeltaR = 0.8;
-  Double_t transformedDeltaR = deltaR + fLowerTruthUnfoldingBins*maxDeltaR*(1-unfoldingAxis);
+  Double_t transformedDeltaR = deltaR;
   for(Int_t iJetPt = 1; iJetPt < nJetPtBinsEEC+1; iJetPt++){
-    if(jetPt >= fCard->Get(unfoldingBinName[unfoldingAxis],iJetPt)){
+    if(jetPt >= fCard->Get("JetPtBinEdgesEEC",iJetPt)){
       transformedDeltaR += maxDeltaR;
     } else {
       return transformedDeltaR;

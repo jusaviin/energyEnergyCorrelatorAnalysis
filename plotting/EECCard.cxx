@@ -208,16 +208,6 @@ int EECCard::GetNTrackPtBinsEEC() const{
   return GetNBins(kTrackPtBinEdgesEEC);
 }
 
-// Get the number of reconstructed jet pT bins in the unfolding response matrix
-int EECCard::GetNJetPtBinsUnfoldingReco() const{
-  return GetNBins(kJetPtBinEdgesUnfoldingReco);
-}
-
-// Get the number of generator level jet pT bins in the unfolding response matrix
-int EECCard::GetNJetPtBinsUnfoldingTruth() const{
-  return GetNBins(kJetPtBinEdgesUnfoldingTruth);
-}
-
 /*
  * Get a bin index based on a given value.
  * If value is out of bounds, return -1
@@ -259,15 +249,6 @@ int EECCard::GetBinIndexTrackPtEEC(const double value) const{
   return GetBinIndex(kTrackPtBinEdgesEEC,value);
 }
 
-// Get the bin index for a given reconstructed jet pT value in the unfolding response matrix
-int EECCard::GetBinIndexJetPtUnfoldingReco(const double value) const{
-  return GetBinIndex(kJetPtBinEdgesUnfoldingReco,value);
-}
-
-// Get the bin index for a given generator level jet pT value in the unfolding response matrix
-int EECCard::GetBinIndexJetPtUnfoldingTruth(const double value) const{
-  return GetBinIndex(kJetPtBinEdgesUnfoldingTruth,value);
-}
 
 /*
  * Find if a bin with given borders exist in an array defined by internal index
@@ -339,26 +320,6 @@ int EECCard::FindBinIndexTrackPtEEC(const std::pair<double,double> binBorders) c
   return FindBinIndex(kTrackPtBinEdgesEEC,binBorders.first,binBorders.second);
 }
 
-// Find if a reconstructed jet pT bin in unfolding response matrix with given borders exists and return its index
-int EECCard::FindBinIndexJetPtUnfoldingReco(const double lowBorder, const double highBorder) const{
-  return FindBinIndex(kJetPtBinEdgesUnfoldingReco,lowBorder,highBorder);
-}
-
-// Find if a reconstructed jet pT bin in unfolding response matrix with given borders exists and return its index
-int EECCard::FindBinIndexJetPtUnfoldingReco(const std::pair<double,double> binBorders) const{
-  return FindBinIndex(kJetPtBinEdgesUnfoldingReco,binBorders.first,binBorders.second);
-}
-
-// Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
-int EECCard::FindBinIndexJetPtUnfoldingTruth(const double lowBorder, const double highBorder) const{
-  return FindBinIndex(kJetPtBinEdgesUnfoldingTruth,lowBorder,highBorder);
-}
-
-// Find if a generator level jet pT bin in unfolding response matrix with given borders exists and return its index
-int EECCard::FindBinIndexJetPtUnfoldingTruth(const std::pair<double,double> binBorders) const{
-  return FindBinIndex(kJetPtBinEdgesUnfoldingTruth,binBorders.first,binBorders.second);
-}
-
 // Get the low border of i:th bin from internal index
 double EECCard::GetLowBinBorder(const int index, const int iBin) const{
   
@@ -389,16 +350,6 @@ double EECCard::GetLowBinBorderJetPtEEC(const int iBin) const{
 // Get the low border of i:th track pT bin in energy-energy correlator analysis
 double EECCard::GetLowBinBorderTrackPtEEC(const int iBin) const{
   return GetLowBinBorder(kTrackPtBinEdgesEEC,iBin);
-}
-
-// Get the low border of i:th reconsturcted jet pT bin in the unfolding response matrix
-double EECCard::GetLowBinBorderJetPtUnfoldingReco(const int iBin) const{
-  return GetLowBinBorder(kJetPtBinEdgesUnfoldingReco,iBin);
-}
-
-// Get the low border of i:th generator level jet pT bin in the unfolding response matrix
-double EECCard::GetLowBinBorderJetPtUnfoldingTruth(const int iBin) const{
-  return GetLowBinBorder(kJetPtBinEdgesUnfoldingTruth,iBin);
 }
 
 // Get the high border of i:th bin from internal index
@@ -433,16 +384,6 @@ double EECCard::GetHighBinBorderTrackPtEEC(const int iBin) const{
   return GetHighBinBorder(kTrackPtBinEdgesEEC,iBin);
 }
 
-// Get the high border of i:th reconsturcted jet pT bin in the unfolding response matrix
-double EECCard::GetHighBinBorderJetPtUnfoldingReco(const int iBin) const{
-  return GetHighBinBorder(kJetPtBinEdgesUnfoldingReco,iBin);
-}
-
-// Get the high border of i:th generator level jet pT bin in the unfolding response matrix
-double EECCard::GetHighBinBorderJetPtUnfoldingTruth(const int iBin) const{
-  return GetHighBinBorder(kJetPtBinEdgesUnfoldingTruth,iBin);
-}
-
 // Get the bin borders of the i:th centrality bin
 std::pair<double,double> EECCard::GetBinBordersCentrality(const int iBin) const{
   return std::make_pair(GetLowBinBorderCentrality(iBin), GetHighBinBorderCentrality(iBin)); 
@@ -462,16 +403,6 @@ std::pair<double,double> EECCard::GetBinBordersJetPtEEC(const int iBin) const{
 std::pair<double,double> EECCard::GetBinBordersTrackPtEEC(const int iBin) const{
   return std::make_pair(GetLowBinBorderTrackPtEEC(iBin), GetHighBinBorderTrackPtEEC(iBin)); 
 }
-
-// Get the bin borders of the i:th reconsturcted jet pT bin in the unfolding response matrix
-std::pair<double,double> EECCard::GetBinBordersJetPtUnfoldingReco(const int iBin) const{
-  return std::make_pair(GetLowBinBorderJetPtUnfoldingReco(iBin), GetHighBinBorderJetPtUnfoldingReco(iBin)); 
-}
-
-// Get the bin borders of the i:th generator level jet pT bin in the unfolding response matrix
-std::pair<double,double> EECCard::GetBinBordersJetPtUnfoldingTruth(const int iBin) const{
-  return std::make_pair(GetLowBinBorderJetPtUnfoldingTruth(iBin), GetHighBinBorderJetPtUnfoldingTruth(iBin)); 
-} 
 
 /*
  *  Getter for the weight exponent used in energy-energy correlators

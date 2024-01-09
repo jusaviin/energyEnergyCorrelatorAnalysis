@@ -67,8 +67,8 @@ JetPtBinEdgesEEC 120 140 160 180 200 300 500 5020 # Jet pT bin edges for EEC
 TrackPtBinEdgesEEC 0.7 1 2 3 4 6 300 # Track pT bin edges for EEC
 
 # Configuration for unfolding response matrices
-JetPtBinEdgesUnfoldingReco 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for unfolding response matrix in reconstructed level
-JetPtBinEdgesUnfoldingTruth 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for unfolding response matrix in truth level
+MinJetPtUnfoldingReco 80  # Minimum jet pT for reconstructed jets in the response matrix
+MinJetPtUnfoldingTruth 60 # Minimum jet pT for generator level jets in the response matrix
 
 # Binning for THnSparses
 CentralityBinEdges -0.25 9.75 29.75 49.75 89.75  # Centrality binning

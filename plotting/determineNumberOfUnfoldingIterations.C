@@ -118,7 +118,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   TString systematicName[kNSystematicVariations] = {"nominalSmear", "uncertaintySmearDown", "uncertaintySmearUp", "minusJECuncertainty", "plusJECuncertainty", "nominalSmear_jetPtWeight"};
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_responseMatrix_part%d_processed_2023-11-14.root", systematicName[iSystematic].Data(), iSplit);
+  TString unfoldingInputFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_responseMatrix_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), iSplit);
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_responseMatrix_part%d_processed_2023-06-02.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtResolution_responseMatrix_part%d_processed_2023-06-02.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix_part%d_processed_2023-06-02.root
@@ -138,7 +138,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-11-14.root", systematicName[iSystematic].Data(), 3-iSplit);
+  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_reconstructedReference_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), 3-iSplit);
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part%d_processed_2023-06-05.root
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_reconstructedReference_part%d_processed_2023-06-15.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part%d_processed_2023-05-20.root
@@ -152,7 +152,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_reconstructedReference_part%d_processed_2023-07-06.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-10-24.root
 
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_truthReference_part%d_processed_2023-11-14.root", systematicName[iSystematic].Data(), 3-iSplit);
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_truthReference_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), 3-iSplit);
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_truthReferenceForUnfolding_part%d_processed_2023-06-05.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part%d_processed_2023-06-15.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part%d_processed_2023-05-20.root
@@ -248,31 +248,31 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
     }  // Checking the compatibility of track pT bins
   }
   
-  if(unfoldingCard->GetNJetPtBinsUnfoldingReco() != energyenergyCorrelatorCard[kDataFile]->GetNJetPtBinsEEC()) {
+  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kDataFile]->GetNJetPtBinsEEC()) {
     cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
     return;
   }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsUnfoldingReco(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtUnfoldingReco(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtUnfoldingReco(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
   }  // Checking the compatibility of reconstructed jet pT bins
 
-  if(unfoldingCard->GetNJetPtBinsUnfoldingTruth() != energyenergyCorrelatorCard[kTruthReferenceFile]->GetNJetPtBinsEEC()) {
+  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kTruthReferenceFile]->GetNJetPtBinsEEC()) {
     cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
     return;
   }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsUnfoldingTruth(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtUnfoldingTruth(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtUnfoldingTruth(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
@@ -319,7 +319,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
 
   const bool writeChi2ToFile = true; // Write the chi2 histograms to file
-  TString outputFileName = Form("chi2Files/chi2Histograms_PbPb_energyWeightSquared_split%d_%s_4pCentShift_2023-11-16.root", iSplit, systematicName[iSystematic].Data());
+  TString outputFileName = Form("chi2Files/chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split%d_%s_4pCentShift_2023-12-04.root", iSplit, systematicName[iSystematic].Data());
 
   bool saveFigures = false;
   TString saveComment = "_bayesSwapped";

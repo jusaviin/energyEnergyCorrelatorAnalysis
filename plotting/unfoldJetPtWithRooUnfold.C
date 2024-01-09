@@ -223,31 +223,31 @@ void unfoldJetPtWithRooUnfold(){
     }  // Checking the compatibility of track pT bins
   }
   
-  if(unfoldingCard->GetNJetPtBinsUnfoldingReco() != energyenergyCorrelatorCard[kDataFile]->GetNJetPtBinsEEC()) {
+  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kDataFile]->GetNJetPtBinsEEC()) {
     cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
     return;
   }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsUnfoldingReco(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtUnfoldingReco(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtUnfoldingReco(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
   }  // Checking the compatibility of reconstructed jet pT bins
 
-  if(unfoldingCard->GetNJetPtBinsUnfoldingTruth() != energyenergyCorrelatorCard[kTruthReferenceFile]->GetNJetPtBinsEEC()) {
+  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kTruthReferenceFile]->GetNJetPtBinsEEC()) {
     cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
     return;
   }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsUnfoldingTruth(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtUnfoldingTruth(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtUnfoldingTruth(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
       cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }

@@ -38,16 +38,10 @@ EECHistogramManager::EECHistogramManager() :
   fLastLoadedJetPtBinEEC(1),
   fFirstLoadedTrackPtBinEEC(0),
   fLastLoadedTrackPtBinEEC(1),
-  fFirstLoadedJetPtBinUnfoldingReco(0),
-  fLastLoadedJetPtBinUnfoldingReco(1),
-  fFirstLoadedJetPtBinUnfoldingTruth(0),
-  fLastLoadedJetPtBinUnfoldingTruth(1),
   fnCentralityBins(kMaxCentralityBins),
   fnTrackPtBins(kMaxTrackPtBins),
   fnJetPtBinsEEC(kMaxJetPtBinsEEC),
-  fnTrackPtBinsEEC(kMaxTrackPtBinsEEC),
-  fnJetPtBinsUnfoldingReco(kMaxJetPtBinsEEC),
-  fnJetPtBinsUnfoldingTruth(kMaxJetPtBinsEEC)
+  fnTrackPtBinsEEC(kMaxTrackPtBinsEEC)
 {
   
   // Do not draw anything by default
@@ -292,8 +286,6 @@ void EECHistogramManager::InitializeFromCard(){
   fnTrackPtBins = fCard->GetNTrackPtBins();
   fnJetPtBinsEEC = fCard->GetNJetPtBinsEEC();
   fnTrackPtBinsEEC = fCard->GetNTrackPtBinsEEC();
-  fnJetPtBinsUnfoldingReco = fCard->GetNJetPtBinsUnfoldingReco();
-  fnJetPtBinsUnfoldingTruth = fCard->GetNJetPtBinsUnfoldingTruth();
   
   // Centrality binning
   for(int iCentrality = 0; iCentrality <= fnCentralityBins; iCentrality++){
@@ -318,18 +310,6 @@ void EECHistogramManager::InitializeFromCard(){
     fTrackPtBinBordersEEC[iTrackPt] = fCard->GetLowBinBorderTrackPtEEC(iTrackPt);
   }
   fLastLoadedTrackPtBinEEC = fnTrackPtBinsEEC-1;
-
-  // Reconstructed jet pT binning for unfolding response matrix
-  for(int iJetPt = 0; iJetPt <= fnJetPtBinsUnfoldingReco; iJetPt++){
-    fJetPtBinBordersUnfoldingReco[iJetPt] = fCard->GetLowBinBorderJetPtUnfoldingReco(iJetPt);
-  }
-  fLastLoadedJetPtBinUnfoldingReco = fnJetPtBinsUnfoldingReco-1;
-
-  // Generator level jet pT binning for unfolding response matrix
-  for(int iJetPt = 0; iJetPt <= fnJetPtBinsUnfoldingTruth; iJetPt++){
-    fJetPtBinBordersUnfoldingTruth[iJetPt] = fCard->GetLowBinBorderJetPtUnfoldingTruth(iJetPt);
-  }
-  fLastLoadedJetPtBinUnfoldingTruth = fnJetPtBinsUnfoldingTruth-1;
   
   // Remove centrality selection from pp data and local testing
   if(collisionSystem.Contains("pp") || collisionSystem.Contains("localTest")){
@@ -368,10 +348,6 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLastLoadedJetPtBinEEC(in.fLastLoadedJetPtBinEEC),
   fFirstLoadedTrackPtBinEEC(in.fFirstLoadedTrackPtBinEEC),
   fLastLoadedTrackPtBinEEC(in.fLastLoadedTrackPtBinEEC),
-  fFirstLoadedJetPtBinUnfoldingReco(in.fFirstLoadedJetPtBinUnfoldingReco),
-  fLastLoadedJetPtBinUnfoldingReco(in.fLastLoadedJetPtBinUnfoldingReco),
-  fFirstLoadedJetPtBinUnfoldingTruth(in.fFirstLoadedJetPtBinUnfoldingTruth),
-  fLastLoadedJetPtBinUnfoldingTruth(in.fLastLoadedJetPtBinUnfoldingTruth),
   fhVertexZ(in.fhVertexZ),
   fhVertexZWeighted(in.fhVertexZWeighted),
   fhEvents(in.fhEvents),
@@ -1871,6 +1847,13 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
   int higherCentralityBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
+  int nDeltaRBins = 0;
+  int jetPtBinX = 0;
+  int jetPtBinY = 0;
+  double normalizationFactor;
+  std::pair<double,double> jetPtBinBorders;
+  double binContent;
+  double binError;
   THnSparseD* histogramArray;
 
   // Load the jet pT unfolding distribution
@@ -1896,7 +1879,50 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
       axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
 
       fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
-    }
+
+      // For proper normalization, each bin needs to be normalized to the number of jets in the corresponding pT
+
+      // First, we need to determine the number of DeltaR bins. We know the number of jet pT bins in card.
+      // We know that this histogram has nJetPt*nDeltaR bins, so number of DeltaR bins can be solved from this.
+      nDeltaRBins =  fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX() / fnJetPtBinsEEC;
+
+      for(int iBinX = 1; iBinX <= fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX(); iBinX++){
+
+        // Find the jet pt bin index corresponding to this bin index
+        jetPtBinX = (iBinX-1)/nDeltaRBins;
+
+        // Find the bin borders for the given bin
+        jetPtBinBorders = fCard->GetBinBordersJetPtEEC(jetPtBinX);
+
+        // Get the normalization factor by integrating the jet pT distribution over the bin borders
+        normalizationFactor = GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
+
+        // For some low-pT bins, we might not have any jets. Skip these bins for normalization
+        if(normalizationFactor < 1e-10){
+          iBinX += nDeltaRBins-1;
+          continue;
+        }
+
+        for(int iBinY = 1; iBinY <= fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsY(); iBinY++){
+
+          // No pairs between two different jets are paired, so if we are not in the same jet pT bin, we can skip normalization.
+          // The entries will be zero for all these cases
+          jetPtBinY = (iBinY-1)/nDeltaRBins;
+          if(jetPtBinX != jetPtBinY){
+            iBinY += nDeltaRBins-1;
+            continue;
+          }
+
+          // If we are in the non-zero part of the matrix, apply the normalization
+          binContent = fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetBinContent(iBinX, iBinY);
+          binError = fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetBinError(iBinX, iBinY);
+          fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->SetBinContent(iBinX, iBinY, binContent / normalizationFactor);
+          fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->SetBinError(iBinX, iBinY, binError / normalizationFactor);
+
+        } // Loop over y-axis bins of the covariance matrix
+      } // Loop over x-axis bins of the covariance matrix
+
+    } // Track pT loop
 
   } // Centrality loop
 }
@@ -1944,7 +1970,7 @@ void EECHistogramManager::LoadJetPtOneDimensionalUnfoldingHistograms(){
       lowerCentralityBin = fCentralityBinIndices[iCentrality];
       higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
 
-      fhOneDimensionalJetPtUnfoldingDistribution[iUnfoldType][iCentrality] = FindHistogram(histogramArray,0,1,lowerCentralityBin,higherCentralityBin,0);
+      fhOneDimensionalJetPtUnfoldingDistribution[iUnfoldType][iCentrality] = FindHistogram(histogramArray,0,1,lowerCentralityBin,higherCentralityBin, 0, 0, 0, false);
 
     } // Centrality loop
   } // Unfold distribution type loop
@@ -1958,7 +1984,7 @@ void EECHistogramManager::LoadJetPtOneDimensionalUnfoldingHistograms(){
     lowerCentralityBin = fCentralityBinIndices[iCentrality];
     higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
 
-    fhOneDimensionalJetPtUnfoldingResponse[iCentrality] = FindHistogram2D(histogramArray,0,1,2,lowerCentralityBin,higherCentralityBin,0);
+    fhOneDimensionalJetPtUnfoldingResponse[iCentrality] = FindHistogram2D(histogramArray, 0, 1, 2, lowerCentralityBin, higherCentralityBin, 0, 0, 0, false);
 
   }  // Centrality loop
 }
@@ -2281,7 +2307,7 @@ TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, 
 void EECHistogramManager::Write(const char* fileName, const char* fileOption){
   
   // Create the output file
-  TFile *outputFile = new TFile(fileName,fileOption);
+  TFile* outputFile = new TFile(fileName,fileOption);
   
   // Helper variable for renaming the saved histograms
   TString histogramNamer;
@@ -3909,34 +3935,6 @@ void EECHistogramManager::SetTrackPtBinsEEC(const bool readBinsFromFile, const i
   
 }
 
-/*
- * Set up reconstructed jet pT bin indices for unfolding response matrix according to provided bin borders
- *
- *  const bool readBinsFromFile = True: Disregard given bins ans use the ones in fCard. False: Use given bins
- *  const int nBins = Number of given track pT bins
- *  const double* binBorders = New bin borders for track pT
- *  const bool setIndices = Set the bin indices in THnSparse
- */
-void EECHistogramManager::SetJetPtBinsUnfoldingReco(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices){
-  
-  SetGenericBins(readBinsFromFile, fJetPtResponseMatrixName, 0, fnJetPtBinsUnfoldingReco, fJetPtBinBordersUnfoldingReco, fJetPtIndicesUnfoldingReco, nBins, binBorders, "jet pT unfolding reco", kMaxJetPtBinsEEC, setIndices);
-  
-}
-
-/*
- * Set up generator level jet pT bin indices for unfolding response matrix according to provided bin borders
- *
- *  const bool readBinsFromFile = True: Disregard given bins ans use the ones in fCard. False: Use given bins
- *  const int nBins = Number of given track pT bins
- *  const double* binBorders = New bin borders for track pT
- *  const bool setIndices = Set the bin indices in THnSparse
- */
-void EECHistogramManager::SetJetPtBinsUnfoldingTruth(const bool readBinsFromFile, const int nBins, const double* binBorders, bool setIndices){
-  
-  SetGenericBins(readBinsFromFile, fJetPtResponseMatrixName, 1, fnJetPtBinsUnfoldingTruth, fJetPtBinBordersUnfoldingTruth, fJetPtIndicesUnfoldingTruth, nBins, binBorders, "jet pT unfolding truth", kMaxJetPtBinsEEC, setIndices);
-  
-}
-
 // Setter for loading event information
 void EECHistogramManager::SetLoadEventInformation(const bool loadOrNot){
   fLoadEventInformation = loadOrNot;
@@ -4116,24 +4114,6 @@ void EECHistogramManager::SetTrackPtBinRangeEEC(const int first, const int last)
   BinSanityCheck(fnTrackPtBinsEEC,fFirstLoadedTrackPtBinEEC,fLastLoadedTrackPtBinEEC);
 }
 
-// Setter for reconstructed jet pT bin range in unfolding response matrices
-void EECHistogramManager::SetJetPtBinRangeUnfoldingReco(const int first, const int last){
-  fFirstLoadedJetPtBinUnfoldingReco = first;
-  fLastLoadedJetPtBinUnfoldingReco = last;
-  
-  // Sanity check for jet pT bins in energy-energy correlator histograms
-  BinSanityCheck(fnJetPtBinsUnfoldingReco,fFirstLoadedJetPtBinUnfoldingReco,fLastLoadedJetPtBinUnfoldingReco);
-}
-
-// Setter for generator level jet pT bin range in unfolding response matrices
-void EECHistogramManager::SetJetPtBinRangeUnfoldingTruth(const int first, const int last){
-  fFirstLoadedJetPtBinUnfoldingTruth = first;
-  fLastLoadedJetPtBinUnfoldingTruth = last;
-  
-  // Sanity check for jet pT bins in energy-energy correlator histograms
-  BinSanityCheck(fnJetPtBinsUnfoldingTruth,fFirstLoadedJetPtBinUnfoldingTruth,fLastLoadedJetPtBinUnfoldingTruth);
-}
-
 // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
 void EECHistogramManager::SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt){
 
@@ -4203,16 +4183,6 @@ int EECHistogramManager::GetNJetPtBinsEEC() const{
 // Getter for the number of track pT bins in energy-energy correlator histograms
 int EECHistogramManager::GetNTrackPtBinsEEC() const{
   return fnTrackPtBinsEEC;
-}
-
-// Getter for the number of reconstructed jet pT bins in unfolding response matrices
-int EECHistogramManager::GetNJetPtBinsUnfoldingReco() const{
-  return fnJetPtBinsUnfoldingReco;
-}
-
-// Getter for the number of generator level jet pT bins in unfolding response matrices
-int EECHistogramManager::GetNJetPtBinsUnfoldingTruth() const{
-  return fnJetPtBinsUnfoldingTruth;
 }
 
 // Getter for track histogram name
@@ -4353,16 +4323,6 @@ double EECHistogramManager::GetTrackPtBinBorderEEC(const int iTrackPt) const{
 // Getter for i:th track pT bin border in projections for maximum particle pT within the jet cone
 double EECHistogramManager::GetMaxTrackPtWithinJetConeBinBorder(const int iTrackPt) const{
   return fProjectedMaxParticlePtBinBorders[iTrackPt];
-}
-
-// Getter for i:th reconstructed jet pT bin border in unfolding response matrices
-double EECHistogramManager::GetJetPtBinBorderUnfoldingReco(const int iJetPt) const{
-  return fJetPtBinBordersUnfoldingReco[iJetPt];
-}
-
-// Getter for i:th generator level jet pT bin border in unfolding response matrices
-double EECHistogramManager::GetJetPtBinBorderUnfoldingTruth(const int iJetPt) const{
-  return fJetPtBinBordersUnfoldingTruth[iJetPt];
 }
 
 // Getters for event information histograms
@@ -4699,26 +4659,6 @@ int EECHistogramManager::GetFirstTrackPtBinEEC() const{
 // Get the last loaded energy-energy correlator track pT bin
 int EECHistogramManager::GetLastTrackPtBinEEC() const{
   return fLastLoadedTrackPtBinEEC;
-}
-
-// Get the first loaded reconstructed jet pT bin in unfolding response matrices
-int EECHistogramManager::GetFirstJetPtBinUnfoldingReco() const{
-  return fFirstLoadedJetPtBinUnfoldingReco;
-}
-
-// Get the last loaded reconstructed jet pT bin in unfolding response matrices
-int EECHistogramManager::GetLastJetPtBinUnfoldingReco() const{
-  return fLastLoadedJetPtBinUnfoldingReco;
-}
-
-// Get the first loaded generator level jet pT bin in unfolding response matrices
-int EECHistogramManager::GetFirstJetPtBinUnfoldingTruth() const{
-  return fFirstLoadedJetPtBinUnfoldingTruth;
-}
-
-// Get the last loaded generator level jet pT bin in unfolding response matrices
-int EECHistogramManager::GetLastJetPtBinUnfoldingTruth() const{
-  return fLastLoadedJetPtBinUnfoldingTruth;
 }
 
 // Getter for the number of events passing the cuts

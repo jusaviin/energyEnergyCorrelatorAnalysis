@@ -139,16 +139,16 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
     }
   }  // Checking the compatibility of track pT bins
 
-  if(responseCard->GetNJetPtBinsUnfoldingReco() != dataCard->GetNJetPtBinsEEC()){
+  if(responseCard->GetNJetPtBinsEEC() != dataCard->GetNJetPtBinsEEC()){
     cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
     return;
   }
-  for(int iJetPt = 0; iJetPt < responseCard->GetNJetPtBinsUnfoldingReco(); iJetPt++){
-    if(TMath::Abs(responseCard->GetLowBinBorderJetPtUnfoldingReco(iJetPt) - dataCard->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01){
+  for(int iJetPt = 0; iJetPt < responseCard->GetNJetPtBinsEEC(); iJetPt++){
+    if(TMath::Abs(responseCard->GetLowBinBorderJetPtEEC(iJetPt) - dataCard->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01){
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(responseCard->GetHighBinBorderJetPtUnfoldingReco(iJetPt) - dataCard->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01){
+    if(TMath::Abs(responseCard->GetHighBinBorderJetPtEEC(iJetPt) - dataCard->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01){
       cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
@@ -279,8 +279,6 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
     } // Track pT loop
   } // Centrality loop
 
-  energyEnergyCorrelatorsFromData[0][8][4]->Draw();
-  return;
 
   // Next, we need to transform the data histograms into a format that can be read by RooUnfold
   // For this, we will need to combine the jet pT and deltaR axes
