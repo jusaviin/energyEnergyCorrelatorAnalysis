@@ -74,17 +74,17 @@ TH1D* forwardFold(TH1D* unfoldedHistogram, TH2D* responseMatrix){
       // Fraction of the total reconstructed value that is found from this generator level bin
       recoFractionOfTotal = responseMatrix->GetBinContent(iRecoBin, iGenBin) / recoSum;
 
-      // Content of the generator level bin
+      // Content of the unfolded bin
       truthContent = unfoldedHistogram->GetBinContent(iGenBin);
 
-      // Relative uncertianties of the two values above
+      // Relative uncertainties of the two values above
       recoFractionOfTotalError = responseMatrix->GetBinError(iRecoBin, iGenBin) / responseMatrix->GetBinContent(iRecoBin, iGenBin);
       truthError = unfoldedHistogram->GetBinError(iGenBin) / unfoldedHistogram->GetBinContent(iGenBin);
 
       // If the bin content in matrix is 0, ensure that also error for this is 0
       if(responseMatrix->GetBinContent(iRecoBin, iGenBin) == 0) recoFractionOfTotalError = 0;
 
-      // Take the fraction of the truth as an input for the folded histogram
+      // Take the fraction of the unfolded as an input for the folded histogram
       valueUpdate = recoFractionOfTotal * truthContent;
       errorUpdate = TMath::Sqrt(recoFractionOfTotalError * recoFractionOfTotalError + truthError * truthError) * valueUpdate;
 
@@ -105,7 +105,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   enum enumEnergyEnergyCorrelatorFileType{kUnfoldingFile, kReferenceFile, kNFileTypes};
   enum enumUnfoldingMethods{kMatrixInversionUnfold, kBayesianUnfold, kNUnfoldMethods};
 
-  TString unfoldName[kNUnfoldMethods] = {"martix inversion", "Bayes, NIT iterations"};
+  TString unfoldName[kNUnfoldMethods] = {"martix inversion", "D'Agostini, NIT iterations"};
 
   // **********************************
   //       Open the input files
@@ -113,14 +113,26 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
   // Define the name for the file containing histograms needed for unfolding and reference distributions for checking the quality of unfolding
   TString inputFileName[kNFileTypes];
-  inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_processed_2023-09-14.root";
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_processed_2023-09-14.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part1_noBinWidthNormalization_processed_2023-09-14.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1DunfoldMoreBins_part1_processed_2023-09-19.root
-  inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_processed_2023-09-14.root";
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_processed_2023-09-14.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1Dunfolding_part2_noBinWidthNormalization_processed_2023-09-14.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_1DunfoldMoreBins_part2_processed_2023-09-19.root
+
+  // PbPb, many bins
+  //inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_manyBins_nominalSmear_part1_processed_2024-01-03.root";
+  //inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_manyBins_nominalSmear_part2_processed_2024-01-03.root";
+
+  // pp, many bins
+  //inputFileName[kUnfoldingFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtUnfoldingTesting_noSmearing_allTheBins_part1_noBinWidthNormalization_processed_2024-01-03.root";
+  //inputFileName[kReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtUnfoldingTesting_noSmearing_allTheBins_part2_noBinWidthNormalization_processed_2024-01-03.root";
+
+  // pp, analysis EEC bins
+  //inputFileName[kUnfoldingFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part1_processed_2024-01-09.root";
+  //inputFileName[kReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part2_processed_2024-01-09.root";
+  
+  // PbPb, analysis EEC bins
+  inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part1_processed_2024-01-09.root";
+  inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part2_processed_2024-01-09.root";
+
+  // Testing
+  //inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part1_processed_2024-01-09.root";
+  //inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part2_processed_2024-01-09.root";
 
   // Open the input files
   TFile* inputFile[kNFileTypes];
@@ -201,27 +213,31 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 3;
+  int lastStudiedCentralityBin = nCentralityBins-1;
 
   // Default binning ranges for reference
   // centrality = {0,10,30,50,90}
 
   const int iUnfoldMethod = kBayesianUnfold; // Select the unfolding method: kMatrixInversionUnfold or kBayesianUnfold
   const int nIterations = (iUnfoldMethod == kMatrixInversionUnfold) ? 1 : 5; // Number of iterations used with the regularized unfolding
-  const int iterationKey[] = {1,2,3,4,5};
+  const int iterationKey[] = {2,4,6,8,10};
   const bool calculateConditionNumber = false;
+  const bool cutReconstructedAt80GeV = false;
 
   // Flag to unfold the same dataset from which the response matrix in constructed
-  const bool unfoldResponseMatrixDataset = true;
+  const bool unfoldResponseMatrixDataset = false;
 
   const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
   const bool drawResponseMatrix = true;               // Draw the used response matrices
-  const bool drawRefoldingTest = false;                // Compare refolded distribution to the original measured distribution
+  const bool drawRefoldingTest = true;                // Compare refolded distribution to the original measured distribution
+
+  std::pair<double,double> drawingRange = std::make_pair(80+0.1,500-0.1);
 
   std::pair<double,double> ratioZoom = std::make_pair(0,2);
+  if(!isPbPbData) ratioZoom = std::make_pair(0.96,1.04);
 
   bool saveFigures = false;
-  TString saveComment = "_bayesUnfold";
+  TString saveComment = "_lowPtGenBins";
   TString figureFormat = "pdf";
     
   // ***************************************************************
@@ -285,6 +301,15 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       removeOutOfRange(hReferenceDistributionMeasured[iCentrality]);
       removeOutOfRange(hReferenceDistributionTruth[iCentrality]);
 
+      // For testing purposes, remove from reference distribution everything below 80 GeV
+      if(cutReconstructedAt80GeV){
+        int iJetPt80Bin = hReferenceDistributionMeasured[iCentrality]->FindBin(80.1);
+        for(int iBin = 1; iBin < iJetPt80Bin; iBin++){
+          hReferenceDistributionMeasured[iCentrality]->SetBinContent(iBin, 0);
+          hReferenceDistributionMeasured[iCentrality]->SetBinError(iBin, 0);
+        }
+      }
+
   } // Centrality loop
 
   // ******************************************************************
@@ -299,6 +324,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       cout << "Condition number for centrality bin " << iCentrality << " is: " << endl;
       cout << singular_values.Max() / singular_values.Min() << endl;
     } // Centrality loop
+    return;
   }
 
   // ********************************************************
@@ -321,19 +347,37 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   } else if(iUnfoldMethod == kBayesianUnfold){
 
     // Unfolding using Bayesian unfolding
+    TMatrixD responseTMatrix(hUnfoldingResponse[firstStudiedCentralityBin]->GetNbinsX(), hUnfoldingResponse[firstStudiedCentralityBin]->GetNbinsY());
+    double scaleFactor;
+    double binContent, binError;
     RooUnfoldBayes* bayesUnfold[nCentralityBins][nIterations];
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
       for(int iIteration = 0; iIteration < nIterations; iIteration++){
         bayesUnfold[iCentrality][iIteration] = new RooUnfoldBayes(rooResponse[iCentrality], unfoldResponseMatrixDataset ? hUnfoldingMeasured[iCentrality] : hReferenceDistributionMeasured[iCentrality], iterationKey[iIteration]);
         hUnfoldedDistribution[iCentrality][iIteration] = (TH1D*)bayesUnfold[iCentrality][iIteration]->Hunfold();
 
+        // After unfolding, get the updated response object and copy that to response histogram
+        responseTMatrix = rooResponse[iCentrality]->Mresponse();
+        for(int iBinX = 1; iBinX <= hUnfoldingResponse[iCentrality]->GetNbinsX(); iBinX++){
+          for(int iBinY = 1; iBinY <= hUnfoldingResponse[iCentrality]->GetNbinsY(); iBinY++){
+            binContent = hUnfoldingResponse[iCentrality]->GetBinContent(iBinX, iBinY);
+            binError = hUnfoldingResponse[iCentrality]->GetBinError(iBinX, iBinY);
+            if(binContent > 0){
+              scaleFactor = responseTMatrix(iBinX-1, iBinY-1) / binContent;
+              hUnfoldingResponse[iCentrality]->SetBinContent(iBinX, iBinY, binContent*scaleFactor);
+              hUnfoldingResponse[iCentrality]->SetBinError(iBinX, iBinY, binError*scaleFactor);
+            }
+          }
+        }
+
         // Forward fold the unfolded distribution
-        hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldedDistribution[iCentrality][iIteration], hUnfoldingResponse[iCentrality]);
-        
+        //hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldedDistribution[iCentrality][iIteration], hUnfoldingResponse[iCentrality]);
+
+        // Forward fold the truth distribution
+        hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldingTruth[iCentrality], hUnfoldingResponse[iCentrality]);
       } // Iteration loop
     } // Centrality loop
   }
-
 
   // **************************************************************************************
   //     Do bin width and total normalization for the distributions and calculate ratios
@@ -354,19 +398,19 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   } // Centrality loop
 
   // Also normalize the bins to bin width and histograms to one in the defined range
-  double normalizationRegionLow = 80+0.1;
+  double normalizationRegionLow = 120+0.1;
   double normalizationRegionHigh = 500-0.1;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
     // First do the bin width normalization for all distributions
-    /*hUnfoldingMeasured[iCentrality]->Scale(1.0,"width");
+    hUnfoldingMeasured[iCentrality]->Scale(1.0,"width");
     hUnfoldingTruth[iCentrality]->Scale(1.0,"width");
     hReferenceDistributionMeasured[iCentrality]->Scale(1.0,"width");
     hReferenceDistributionTruth[iCentrality]->Scale(1.0,"width");
     for(int iIteration = 0; iIteration < nIterations; iIteration++){
       hUnfoldedDistribution[iCentrality][iIteration]->Scale(1.0,"width");
       hForwardFoldedDistribution[iCentrality][iIteration]->Scale(1.0,"width");
-    }*/
+    }
 
     // Next, normalize all the distributions to one in the range 80-500
     hUnfoldingMeasured[iCentrality]->Scale(1.0 / hUnfoldingMeasured[iCentrality]->Integral(hUnfoldingMeasured[iCentrality]->FindBin(normalizationRegionLow), hUnfoldingMeasured[iCentrality]->FindBin(normalizationRegionHigh), "width"));
@@ -407,7 +451,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   drawer->SetTitleOffsetY(1.7);
   drawer->SetTitleOffsetX(1.0);
   
-  TLine* oneLine = new TLine(normalizationRegionLow, 1, normalizationRegionHigh, 1);
+  TLine* oneLine = new TLine(drawingRange.first, 1, drawingRange.second, 1);
   oneLine->SetLineStyle(2);
 
   // Helper variables
@@ -435,9 +479,9 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
       // Draw first the generator level distribution
       hUnfoldingTruth[iCentrality]->SetLineColor(kBlack);
-      hUnfoldingTruth[iCentrality]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+      hUnfoldingTruth[iCentrality]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
       hReferenceDistributionTruth[iCentrality]->SetLineColor(kBlack);
-      hReferenceDistributionTruth[iCentrality]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+      hReferenceDistributionTruth[iCentrality]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
       drawer->SetLogY(true);
       drawer->DrawHistogramToUpperPad(unfoldResponseMatrixDataset ? hUnfoldingTruth[iCentrality] : hReferenceDistributionTruth[iCentrality], "Jet p_{T}", "dN/dp_{T}", " ", "");
 
@@ -452,7 +496,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       } 
 
       // Add a legend to the figure
-      legend = new TLegend(0.25, 0.18- 0.03*nIterations, 0.5, 0.48 + 0.02*nIterations);
+      legend = new TLegend(0.17, 0.18- 0.03*nIterations, 0.42, 0.48 + 0.02*nIterations);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
       legend->AddEntry((TObject*)0, centralityString.Data(), "");
@@ -469,7 +513,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       drawer->SetLogY(false);
       hMeasuredToTruthRatio[iCentrality]->SetLineColor(kRed);
       hMeasuredToTruthRatio[iCentrality]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
-      hMeasuredToTruthRatio[iCentrality]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+      hMeasuredToTruthRatio[iCentrality]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
       drawer->DrawHistogramToLowerPad(hMeasuredToTruthRatio[iCentrality], "Jet p_{T}", "Ratio to truth", " ", "");
 
       for(int iIteration = 0; iIteration < nIterations; iIteration++){
@@ -495,6 +539,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
     drawer->SetTopMargin(0.07);
     drawer->SetRightMargin(0.12);
     drawer->SetTitleOffsetY(0.8);
+    double lowResponseMatrixRange = 0;
 
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
@@ -507,9 +552,17 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
         compactCentralityString = "_pythia8";
       }
 
-      hUnfoldingResponse[iCentrality]->GetXaxis()->SetRangeUser(60,300);
-      hUnfoldingResponse[iCentrality]->GetYaxis()->SetRangeUser(60,300);
+      lowResponseMatrixRange = hUnfoldingResponse[iCentrality]->GetXaxis()->GetBinLowEdge(1);
+      hUnfoldingResponse[iCentrality]->GetXaxis()->SetRangeUser(lowResponseMatrixRange,500);
+      hUnfoldingResponse[iCentrality]->GetYaxis()->SetRangeUser(lowResponseMatrixRange,500);
       drawer->DrawHistogram(hUnfoldingResponse[iCentrality], "Reco jet p_{T}", "Gen jet p_{T}", Form("Response for %s", centralityString.Data()), "colz");
+
+      // Add a legend to the figure
+      legend = new TLegend(0.06, 0.78, 0.56, 0.88);
+      legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+      legend->AddEntry((TObject*)0, centralityString.Data(), "");
+      legend->Draw();
 
       // Save the figures to a file
       if(saveFigures) {
@@ -522,11 +575,18 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   // Refold the unfolded distribution and compare it with the measured distribution
   if(drawRefoldingTest){
 
+    drawer->SetDefaultAppearanceSplitCanvas();
+    drawer->SetRelativeCanvasSize(1.1,1.1);
+    drawer->SetLeftMargin(0.14);
+    drawer->SetTopMargin(0.07);
+    drawer->SetTitleOffsetY(1.7);
+    drawer->SetTitleOffsetX(1.0);
+
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
       // Set the centrality information for legends and figure saving
       if(isPbPbData) {
-        centralityString = Form("PbPb data: %.0f-%.0f", unfoldingCard[kUnfoldingFile]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[kUnfoldingFile]->GetHighBinBorderCentrality(iCentrality));
+        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard[kUnfoldingFile]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[kUnfoldingFile]->GetHighBinBorderCentrality(iCentrality));
         compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard[kUnfoldingFile]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[kUnfoldingFile]->GetHighBinBorderCentrality(iCentrality));
       } else {
         centralityString = "Pythia8";
@@ -538,7 +598,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
       // Draw first the reconstructed distribution
       hReferenceDistributionMeasured[iCentrality]->SetLineColor(kBlack);
-      hReferenceDistributionMeasured[iCentrality]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+      hReferenceDistributionMeasured[iCentrality]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
       drawer->SetLogY(true);
       drawer->DrawHistogramToUpperPad(hReferenceDistributionMeasured[iCentrality], "Jet p_{T}", "dN/dp_{T}", " ", "");
 
@@ -549,7 +609,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       } 
 
       // Add a legend to the figure
-      legend = new TLegend(0.25, 0.18- 0.03*nIterations, 0.5, 0.48 + 0.02*nIterations);
+      legend = new TLegend(0.17, 0.18- 0.03*nIterations, 0.42, 0.48 + 0.02*nIterations);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
       legend->AddEntry((TObject*)0, centralityString.Data(), "");
@@ -568,7 +628,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       for(int iIteration = 0; iIteration < nIterations; iIteration++){
         hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->SetLineColor(iterationColor[iIteration]);
         hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
-        hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+        hForwardFoldedToMeasuredRatio[iCentrality][iIteration]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
         if(iIteration == 0){
           drawer->DrawHistogramToLowerPad(hForwardFoldedToMeasuredRatio[iCentrality][iIteration], "Jet p_{T}", "Ratio to measured", " ", "");
         } else {
