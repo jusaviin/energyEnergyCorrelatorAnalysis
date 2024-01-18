@@ -2,9 +2,7 @@ PROGRAM       = DrawingClasses
 version       = EEC
 CXX           = g++
 CXXFLAGS      = -O -Wall -fPIC -D$(version) # Add -g for debugger
-LD            = g++
 LDFLAGS       = -O
-SOFLAGS       = -shared
 #############################################
 # -bind_at_load helps to remove linker error
 ############################################
