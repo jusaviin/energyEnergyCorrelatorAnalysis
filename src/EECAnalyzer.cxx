@@ -2610,12 +2610,12 @@ Bool_t EECAnalyzer::PassSubeventCut(const Int_t subeventIndex) const{
  * Check if the event passes all the track cuts
  *
  *  Arguments:
- *   ForestReader *eventReader = ForestReader containing the event information checked for event cuts
+ *   ForestReader* eventReader = ForestReader containing the event information checked for event cuts
  *   const Bool_t fillHistograms = Flag for filling the event information histograms.
  *
  *   return = True if all event cuts are passed, false otherwise
  */
-Bool_t EECAnalyzer::PassEventCuts(ForestReader *eventReader, const Bool_t fillHistograms){
+Bool_t EECAnalyzer::PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms){
   
   // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction. Only applied for data.
   if(eventReader->GetPrimaryVertexFilterBit() == 0) return false;
