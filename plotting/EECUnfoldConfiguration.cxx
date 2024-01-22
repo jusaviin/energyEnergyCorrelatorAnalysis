@@ -426,7 +426,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
           // Input: chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split1_nominalSmear_4pCentShift_2023-12-04.root
           //        chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split2_nominalSmear_4pCentShift_2023-12-04.root 
 
-          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2024-01-10.root", splitName[fSplitIndex]);
+          fResponseMatrixFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2024-01-18.root", splitName[fSplitIndex]);
 
           // TODO: Recheck the iterations for the updated response matrix
           fBestNumberOfIterations[0][1] = 4;  // Centrality = 0-10, track pT > 1 GeV

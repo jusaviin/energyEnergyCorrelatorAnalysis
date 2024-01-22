@@ -13,7 +13,7 @@
 /*
  * Constructor
  */
-EECComparingDrawer::EECComparingDrawer(EECHistogramManager *fBaseHistograms) :
+EECComparingDrawer::EECComparingDrawer(EECHistogramManager* fBaseHistograms) :
   fBaseHistograms(fBaseHistograms),
   fnAddedHistograms(0),
   fMainHistogram(0),
@@ -114,7 +114,7 @@ EECComparingDrawer::~EECComparingDrawer(){
  *  Arguments:
  *   EECHistogramManager *additionalHistogram = Histogram manager containing the set of histograms for this dataset
  */
-void EECComparingDrawer::AddHistogramToDraw(EECHistogramManager *additionalHistogram){
+void EECComparingDrawer::AddHistogramToDraw(EECHistogramManager* additionalHistogram){
   if(fnAddedHistograms == knMaxRatios){
     cout << "Already at maximum amount of histograms (" << knMaxRatios << "), cannot add more!" << endl;
     return;
