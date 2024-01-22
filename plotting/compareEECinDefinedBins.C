@@ -5,65 +5,35 @@
 /*
  * Macro for comparing final energy-energy correlators results
  */
-void compareFinalEECResults(){
+void compareEECinDefinedBins(){
   
   // Files for comparison
   const int nComparisonFiles = 2;
-  TString pbPbFileName[nComparisonFiles];
-  pbPbFileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root";
-  pbPbFileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root";
+  TString fileName[nComparisonFiles];
+  fileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root";
+  //fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
 
-  TString ppFileName[nComparisonFiles];
-  ppFileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_firstFinalResults_processed_2023-10-26.root";
-  ppFileName[1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_firstFinalResults_processed_2023-10-26.root";
-  
+  TString fileDescription[nComparisonFiles];
+  fileDescription[0] = "Old";
+  fileDescription[1] = "New";
+  //fileDescription[2] = "5 iterations";
   
   // Open the files and check that they exist
-  TFile* pbPbInputFile[nComparisonFiles];
-  EECCard* pbPbCard[nComparisonFiles];
-  TFile* ppInputFile[nComparisonFiles];
-  EECCard* ppCard[nComparisonFiles];
-  TString energyWeightString[nComparisonFiles];
-  int weightExponent;
+  TFile* inputFile[nComparisonFiles];
+  EECCard* card[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     
-    pbPbInputFile[iFile] = TFile::Open(pbPbFileName[iFile]);
+    inputFile[iFile] = TFile::Open(fileName[iFile]);
     
-    if(pbPbInputFile[iFile] == NULL){
-      cout << "Error! The file " << pbPbFileName[iFile].Data() << " does not exist!" << endl;
+    if(inputFile[iFile] == NULL){
+      cout << "Error! The file " << fileName[iFile].Data() << " does not exist!" << endl;
       cout << "Maybe you forgot the data/ folder path?" << endl;
       cout << "Will not execute the code" << endl;
       return;
     }
 
-    pbPbCard[iFile] = new EECCard(pbPbInputFile[iFile]);
-
-    ppInputFile[iFile] = TFile::Open(ppFileName[iFile]);
-    
-    if(ppInputFile[iFile] == NULL){
-      cout << "Error! The file " << ppFileName[iFile].Data() << " does not exist!" << endl;
-      cout << "Maybe you forgot the data/ folder path?" << endl;
-      cout << "Will not execute the code" << endl;
-      return;
-    }
-
-    ppCard[iFile] = new EECCard(ppInputFile[iFile]);
-
-    // Check that the energy weights from PbPb and pp match. Otherwise taking ratio is meaningless
-    weightExponent = pbPbCard[iFile]->GetWeightExponent();
-    if(weightExponent != ppCard[iFile]->GetWeightExponent()){
-      cout << "ERROR! You are trying to take a PbPb to pp ratio with different energy weight exponents!" << endl;
-      cout << "I cannot allow you to do this. The ratio would not be what you want." << endl;
-      cout << "Please check that you are comparing files with the same energy weight exponents." << endl;
-      return;
-    }
-
-    // Put the correct energy weight to a string
-    if(weightExponent == 1){
-      energyWeightString[iFile] = "p_{T,1}p_{T,2}";
-    } else {
-      energyWeightString[iFile] = Form("p_{T,1}^{%d}p_{T,2}^{%d}", weightExponent, weightExponent);
-    }
+    card[iFile] = new EECCard(inputFile[iFile]);
   }
   
   // ====================================================
@@ -71,16 +41,16 @@ void compareFinalEECResults(){
   // ====================================================
   
   // Find the number of bins from the card
-  const int nCentralityBins = pbPbCard[0]->GetNCentralityBins();
-  const int nJetPtBinsEEC = pbPbCard[0]->GetNJetPtBinsEEC();
-  const int nTrackPtBinsEEC = pbPbCard[0]->GetNTrackPtBinsEEC();
+  const int nCentralityBins = card[0]->GetNCentralityBins();
+  const int nJetPtBinsEEC = card[0]->GetNJetPtBinsEEC();
+  const int nTrackPtBinsEEC = card[0]->GetNTrackPtBinsEEC();
   
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,10));
-  //comparedCentralityBin.push_back(std::make_pair(10,30));
-  //comparedCentralityBin.push_back(std::make_pair(30,50));
-  //comparedCentralityBin.push_back(std::make_pair(50,90));
+  comparedCentralityBin.push_back(std::make_pair(10,30));
+  comparedCentralityBin.push_back(std::make_pair(30,50));
+  comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
@@ -98,6 +68,16 @@ void compareFinalEECResults(){
   //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
+  // Choose the type of draw energy-energy correlator
+  // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
+  // EECHistogramManager::kEnergyEnergyCorrelatorBackground = Estimated background
+  // EECHistogramManager::kEnergyEnergyCorrelatorSignal = Background subtracted, but not unfolded energy-energy correlator
+  // EECHistogramManager::kEnergyEnergyCorrelatorUnfolded = Unfolded energy-energy correlator
+  // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
+  // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
+  // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+
   // ====================================================
   //                Drawing configuration
   // ====================================================
@@ -111,46 +91,39 @@ void compareFinalEECResults(){
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
   std::pair<double, double> eecZoom = std::make_pair(0.05, 50);
 
-  // Sanity checks for input. Ensure that all the selected bins actually exist in the input files
-  for(int iFile = 0; iFile < nComparisonFiles; iFile++){
+  // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
+  // This check is only needed for unfolded bins, so skip it if only raw distribution is drawn.
+  if(drawnEnergyEnergyCorrelator != EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+    for(int iFile = 0; iFile < nComparisonFiles; iFile++){
 
-    // Sanity check for centrality bins
-    for(auto centralityBin : comparedCentralityBin){
-      if(pbPbCard[iFile]->FindBinIndexCentrality(centralityBin) < pbPbCard[iFile]->GetFirstUnfoldedCentralityBin() || pbPbCard[iFile]->FindBinIndexCentrality(centralityBin) > pbPbCard[iFile]->GetLastUnfoldedCentralityBin()){
-        cout << "ERROR! Centrality bin " << centralityBin.first << "-" << centralityBin.second << " does not exist in file " << pbPbFileName[iFile].Data() << endl;
-        cout << "Please only choose centrality bins that are included in the input files." << endl;
-        return;
+      // Sanity check for centrality bins
+      for(auto centralityBin : comparedCentralityBin){
+        if(card[iFile]->FindBinIndexCentrality(centralityBin) < card[iFile]->GetFirstUnfoldedCentralityBin() || card[iFile]->FindBinIndexCentrality(centralityBin) > card[iFile]->GetLastUnfoldedCentralityBin()){
+          cout << "ERROR! Centrality bin " << centralityBin.first << "-" << centralityBin.second << " does not exist in file " << fileName[iFile].Data() << endl;
+          cout << "Please only choose centrality bins that are included in the input files." << endl;
+          return;
+        } 
+      }
+
+      // Sanity check for jet pT bins
+      for(auto jetPtBin : comparedJetPtBin){
+        if(card[iFile]->FindBinIndexJetPtEEC(jetPtBin) < card[iFile]->GetFirstUnfoldedJetPtBin() || card[iFile]->FindBinIndexJetPtEEC(jetPtBin) > card[iFile]->GetLastUnfoldedJetPtBin()){
+          cout << "ERROR! Jet pT bin " << jetPtBin.first << "-" << jetPtBin.second << " does not exist in file " << fileName[iFile].Data() << endl;
+          cout << "Please only choose jet pT bins that are included in the input files." << endl;
+          return;
+        }
+      }
+
+      // Sanity check for track pT bins
+      for(auto trackPtBin : comparedTrackPtBin){
+        if(card[iFile]->GetBinIndexTrackPtEEC(trackPtBin) < card[iFile]->GetFirstUnfoldedTrackPtBin() || card[iFile]->GetBinIndexTrackPtEEC(trackPtBin) > card[iFile]->GetLastUnfoldedTrackPtBin()){
+          cout << "ERROR! Track pT cut > " << trackPtBin << " GeV does not exist in file " << fileName[iFile].Data() << endl;
+          cout << "Please only choose track pT bins that are included in the input files." << endl;
+          return;
+        }
       } 
-    }
-
-    // Sanity check for jet pT bins
-    for(auto jetPtBin : comparedJetPtBin){
-      if(pbPbCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) < pbPbCard[iFile]->GetFirstUnfoldedJetPtBin() || pbPbCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) > pbPbCard[iFile]->GetLastUnfoldedJetPtBin()){
-        cout << "ERROR! Jet pT bin " << jetPtBin.first << "-" << jetPtBin.second << " does not exist in file " << pbPbFileName[iFile].Data() << endl;
-        cout << "Please only choose jet pT bins that are included in the input files." << endl;
-        return;
-      }
-      if(ppCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) < ppCard[iFile]->GetFirstUnfoldedJetPtBin() || ppCard[iFile]->FindBinIndexJetPtEEC(jetPtBin) > ppCard[iFile]->GetLastUnfoldedJetPtBin()){
-        cout << "ERROR! Jet pT bin " << jetPtBin.first << "-" << jetPtBin.second << " does not exist in file " << ppFileName[iFile].Data() << endl;
-        cout << "Please only choose jet pT bins that are included in the input files." << endl;
-        return;
-      } 
-    }
-
-    // Sanity check for track pT bins
-    for(auto trackPtBin : comparedTrackPtBin){
-      if(pbPbCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) < pbPbCard[iFile]->GetFirstUnfoldedTrackPtBin() || pbPbCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) > pbPbCard[iFile]->GetLastUnfoldedTrackPtBin()){
-        cout << "ERROR! Track pT cut > " << trackPtBin << " GeV does not exist in file " << pbPbFileName[iFile].Data() << endl;
-        cout << "Please only choose track pT bins that are included in the input files." << endl;
-        return;
-      }
-      if(ppCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) < ppCard[iFile]->GetFirstUnfoldedTrackPtBin() || ppCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin) > ppCard[iFile]->GetLastUnfoldedTrackPtBin()){
-        cout << "ERROR! Track pT cut > " << trackPtBin << " GeV does not exist in file " << ppFileName[iFile].Data() << endl;
-        cout << "Please only choose track pT bins that are included in the input files." << endl;
-        return;
-      }
-    } 
-  } // File loop for input sanity check
+    } // File loop for input sanity check
+  } // Unfolded distributions
 
   // Only allow one variable for which all bins are plotted to the same figure
   if(individualCentrality + individualJetPt + individualTrackPt < 2){
@@ -289,48 +262,32 @@ void compareFinalEECResults(){
   } // Centrality binning if-else
   
   // Create and setup a new histogram managers to project and handle the histograms
-  EECHistogramManager* pbPbHistograms[nComparisonFiles];
-  EECHistogramManager* ppHistograms[nComparisonFiles];
+  EECHistogramManager* histograms[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
-    pbPbHistograms[iFile] = new EECHistogramManager(pbPbInputFile[iFile], pbPbCard[iFile]);
+    histograms[iFile] = new EECHistogramManager(inputFile[iFile], card[iFile]);
 
     // Choose the energy-energy correlator types to load
-    pbPbHistograms[iFile]->SetLoadEnergyEnergyCorrelators(true);
+    histograms[iFile]->SetLoadEnergyEnergyCorrelators(true);
 
     // Choose the bin ranges
-    pbPbHistograms[iFile]->SetCentralityBinRange(0, pbPbCard[iFile]->GetNCentralityBins() - 1);
-    pbPbHistograms[iFile]->SetJetPtBinRangeEEC(0, pbPbCard[iFile]->GetNJetPtBinsEEC() - 1);
-    pbPbHistograms[iFile]->SetTrackPtBinRangeEEC(0, pbPbCard[iFile]->GetNTrackPtBinsEEC() - 1);
+    histograms[iFile]->SetCentralityBinRange(0, card[iFile]->GetNCentralityBins() - 1);
+    histograms[iFile]->SetJetPtBinRangeEEC(0, card[iFile]->GetNJetPtBinsEEC() - 1);
+    histograms[iFile]->SetTrackPtBinRangeEEC(0, card[iFile]->GetNTrackPtBinsEEC() - 1);
 
     // Load the histograms from the file
-    pbPbHistograms[iFile]->LoadProcessedHistograms();
-
-    ppHistograms[iFile] = new EECHistogramManager(ppInputFile[iFile], ppCard[iFile]);
-
-    // Choose the energy-energy correlator types to load
-    ppHistograms[iFile]->SetLoadEnergyEnergyCorrelators(true);
-
-    // Choose the bin ranges
-    ppHistograms[iFile]->SetCentralityBinRange(0, 1);
-    ppHistograms[iFile]->SetJetPtBinRangeEEC(0, ppCard[iFile]->GetNJetPtBinsEEC() - 1);
-    ppHistograms[iFile]->SetTrackPtBinRangeEEC(0, ppCard[iFile]->GetNTrackPtBinsEEC() - 1);
-
-    // Load the histograms from the file
-    ppHistograms[iFile]->LoadProcessedHistograms();
+    histograms[iFile]->LoadProcessedHistograms();
   }
 
   // Energy-energy correlator histograms
-  TH1D* hEnergyEnergyCorrelatorPbPb[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];  // Energy-energy correlators for PbPb
-  TH1D* hEnergyEnergyCorrelatorPp[nComparisonFiles][nJetPtBinsEEC][nTrackPtBinsEEC];    // Energy-energy correlators for pp
-  TH1D* hEnergyEnergyCorrelatorRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC]; // Ratio between PbPb and pp distributions
+  TH1D* hEnergyEnergyCorrelator[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hEnergyEnergyCorrelatorRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   
   // Initialize the energy-energy correlator histogram arrays to NULL
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-        hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt] = NULL;
         for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-          hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
+          hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
           hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
         } // Centrality loop
       } // Track pT loop
@@ -349,42 +306,48 @@ void compareFinalEECResults(){
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     for(auto jetPtBin : comparedJetPtBin){
       for(auto trackPtBin : comparedTrackPtBin){
-
-        // Load the final unfolded signal histograms for pp
-        iCentrality = 0;
-        iJetPt = ppCard[iFile]->FindBinIndexJetPtEEC(jetPtBin);
-        iTrackPt = ppCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin);
-        iJetPtReference = pbPbCard[0]->FindBinIndexJetPtEEC(jetPtBin);
-        iTrackPtReference = pbPbCard[0]->GetBinIndexTrackPtEEC(trackPtBin);
-
-        // Read the histogram using pp indices, fill it with PbPb indices from file 0 to facilitate drawing later
-        hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference] = ppHistograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-
-        // Normalize the distributions to one in the drawingRange
-        lowNormalizationBin = hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
-        highNormalizationBin = hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
-
-        hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
-
         for(auto centralityBin : comparedCentralityBin){
 
-          // Load the final unfolded signal histograms for PbPb
-          iJetPt = pbPbCard[iFile]->FindBinIndexJetPtEEC(jetPtBin);
-          iTrackPt = pbPbCard[iFile]->GetBinIndexTrackPtEEC(trackPtBin);
-          iCentrality = pbPbCard[iFile]->FindBinIndexCentrality(centralityBin);
-          iCentralityReference = pbPbCard[0]->FindBinIndexCentrality(centralityBin);
+          // Find the proper binning and express it in term of the bins in the first file
+          iJetPt = card[iFile]->FindBinIndexJetPtEEC(jetPtBin);
+          iTrackPt = card[iFile]->GetBinIndexTrackPtEEC(trackPtBin);
+          iCentrality = card[iFile]->FindBinIndexCentrality(centralityBin);
+          iJetPtReference = card[0]->FindBinIndexJetPtEEC(jetPtBin);
+          iTrackPtReference = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
+          iCentralityReference = card[0]->FindBinIndexCentrality(centralityBin);
 
-          hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = pbPbHistograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+          // Load the selected energy-energy correlator histogram
+          if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+          } else {
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);
+          }
 
           // Normalize the distributions to one in the drawingRange
-          lowNormalizationBin = hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
-          highNormalizationBin = hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+          lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
+          highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
 
-          // Calculate the PbPb to pp ratio
-          hEnergyEnergyCorrelatorRatio[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = (TH1D*)hEnergyEnergyCorrelatorPbPb[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Clone(Form("eecRatio%d", iFile));
-          hEnergyEnergyCorrelatorRatio[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Divide(hEnergyEnergyCorrelatorPp[iFile][iJetPtReference][iTrackPtReference]);
+        } // Centrality loop
+      } // Track pT loop
+    } // Jet pT loop
+  } // File loop
+
+  // After all the histograms have been read, calculate the ratios
+  for(int iFile = 0; iFile < nComparisonFiles; iFile++){
+    for(auto jetPtBin : comparedJetPtBin){
+      iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
+      iJetPtReference = individualJetPt ? iJetPt : card[0]->FindBinIndexJetPtEEC(comparedJetPtBin.at(0));
+      for(auto trackPtBin : comparedTrackPtBin){
+        iTrackPt = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
+        iTrackPtReference = individualTrackPt ? iTrackPt : card[0]->GetBinIndexTrackPtEEC(comparedTrackPtBin.at(0));
+        for(auto centralityBin : comparedCentralityBin){
+          iCentrality = card[0]->FindBinIndexCentrality(centralityBin);
+          iCentralityReference = individualCentrality ? iCentrality : card[0]->FindBinIndexCentrality(comparedCentralityBin.at(0));
+
+          hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecRatio%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
+          hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Divide(hEnergyEnergyCorrelator[0][iCentralityReference][iJetPtReference][iTrackPtReference]);
 
         } // Centrality loop
       } // Track pT loop
@@ -392,7 +355,7 @@ void compareFinalEECResults(){
   } // File loop
   
   // ==========================================================================
-  //                    All the ratios in the same figure
+  //                Draw all the distribution in the same figure
   // ==========================================================================
   
   JDrawer* drawer = new JDrawer();
@@ -409,8 +372,9 @@ void compareFinalEECResults(){
   TString compactJetPtString = "";
   TString compactTrackPtString = "";
   TString comparedVariableString = "";
+  TString ratioName = "";
   TString legendString;
-  int markerStyle[2] = {kFullCircle, kOpenSquare};
+  int markerStyle[4] = {kFullCircle, kOpenSquare, kOpenCross, kFullStar};
   int color[] = {kBlack,kRed,kBlue,kGreen+3,kMagenta,kCyan,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
 
   // Binning vectors
@@ -434,17 +398,17 @@ void compareFinalEECResults(){
     // Find the indices for each drawn bin
     currentCentralityIndices.clear();
     for(auto centralityBin : std::get<kCentrality>(plottedBin)){
-      currentCentralityIndices.push_back(pbPbCard[0]->FindBinIndexCentrality(centralityBin));
+      currentCentralityIndices.push_back(card[0]->FindBinIndexCentrality(centralityBin));
     }
 
     currentJetPtIndices.clear();
     for(auto jetPtBin : std::get<kJetPt>(plottedBin)){
-      currentJetPtIndices.push_back(pbPbCard[0]->FindBinIndexJetPtEEC(jetPtBin));
+      currentJetPtIndices.push_back(card[0]->FindBinIndexJetPtEEC(jetPtBin));
     }
 
     currentTrackPtIndices.clear();
     for(auto trackPtBin : std::get<kTrackPt>(plottedBin)){
-      currentTrackPtIndices.push_back(pbPbCard[0]->GetBinIndexTrackPtEEC(trackPtBin));
+      currentTrackPtIndices.push_back(card[0]->GetBinIndexTrackPtEEC(trackPtBin));
     }
 
     // If the lenght of the indices array is larger than 1, we are plotting all these bins to the same plot
@@ -456,10 +420,10 @@ void compareFinalEECResults(){
     firstCentralityBin = currentCentralityIndices.at(0);
     firstTrackPtBin = currentTrackPtIndices.at(0);
     firstJetPtBin = currentJetPtIndices.at(0);
-
+          
     // Create a new canvas for the plot
     drawer->CreateSplitCanvas();
-          
+
     // Logarithmic EEC axis
     drawer->SetLogY(true);
 
@@ -497,15 +461,12 @@ void compareFinalEECResults(){
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
       for(int iJetPt : currentJetPtIndices){
         for(int iTrackPt : currentTrackPtIndices){
-          hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[1]);
-          hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt]->SetMarkerColor(color[iFile+colorFinder]);
-          hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt]->SetLineColor(color[iFile+colorFinder]);
           for(int iCentrality : currentCentralityIndices){
             if(colorWithCentrality) colorFinder++;
-            hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[0]);
-            hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[iFile+colorFinder]);
-            hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[iFile+colorFinder]); 
-            hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[0]);
+            hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iFile+colorFinder]);
+            hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[iFile+colorFinder]);
+            hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[iFile+colorFinder]); 
+            hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iFile+colorFinder]);
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[iFile+colorFinder]);
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[iFile+colorFinder]);
           } // Centrality binning
@@ -515,37 +476,34 @@ void compareFinalEECResults(){
       } // Jet pT binning
     } // File loop
 
-    // Set the x-axis drawing range
-    hEnergyEnergyCorrelatorPbPb[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
-    hEnergyEnergyCorrelatorPbPb[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
+    // Set the x- and y-axis drawing ranges
+    hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+    hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
           
     // Draw the histograms to the upper canvas
-    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelatorPbPb[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "EEC", " ");
+    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "EEC", " ");
 
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
         for(int iTrackPt : currentTrackPtIndices){
           for(int iFile = 0; iFile < nComparisonFiles; iFile++){
             if(iFile == 0 && iCentrality == firstCentralityBin && iJetPt == firstJetPtBin && iTrackPt == firstTrackPtBin) continue;
-            hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
           } // File loop
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-    for(int iJetPt : currentJetPtIndices){
-      for(int iTrackPt : currentTrackPtIndices){
-        for(int iFile = 0; iFile < nComparisonFiles; iFile++){
-          hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt]->Draw("same");
-        } // File loop
-      } // Track pT loop
-    } // Jet pT loop
 
     // Add legends for drawn histograms
     legendCentralityIndex = 0;
     legendJetPtIndex = 0;
     legendTrackPtIndex = 0;
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
-      individualLegend = "";
+      if(nComparisonFiles > 1){
+        individualLegend = fileDescription[iFile];
+      } else {
+        individualLegend = "";
+      }
       for(int iJetPt : currentJetPtIndices){
         if(colorWithJetPt) individualLegend = Form(" %.0f < jet p_{T} < %.0f", std::get<kJetPt>(plottedBin).at(legendJetPtIndex).first, std::get<kJetPt>(plottedBin).at(legendJetPtIndex).second);
         legendJetPtIndex++;
@@ -554,10 +512,8 @@ void compareFinalEECResults(){
           for(int iCentrality : currentCentralityIndices){
             if(colorWithCentrality) individualLegend = Form(" Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(legendCentralityIndex).first, std::get<kCentrality>(plottedBin).at(legendCentralityIndex).second);
             legendCentralityIndex++;
-            legend->AddEntry(hEnergyEnergyCorrelatorPbPb[iFile][iCentrality][iJetPt][iTrackPt], Form("PbPb %s%s", energyWeightString[iFile].Data(), individualLegend.Data()), "p");
+            legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("PbPb %s", individualLegend.Data()), "p");
           } // Centrality loop 
-          if(colorWithCentrality) individualLegend = "";
-          legend->AddEntry(hEnergyEnergyCorrelatorPp[iFile][iJetPt][iTrackPt], Form("pp %s%s", energyWeightString[iFile].Data(), individualLegend.Data()), "p");
         } // Track pT loop
       } // Jet pT loop
     } // File loop
@@ -574,7 +530,17 @@ void compareFinalEECResults(){
 
     // Draw the histograms
     drawer->SetGridY(true);
-    drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "#frac{PbPb}{pp}", " ");
+    if(nComparisonFiles > 1){
+      ratioName = fileDescription[0];
+    } else if (colorWithCentrality){
+      ratioName = Form("Cent: %.0f-%.0f%%", comparedCentralityBin.at(0).first, comparedCentralityBin.at(0).second);
+    } else if (colorWithTrackPt){
+      ratioName = Form("%.1f < track p_{T}", comparedTrackPtBin.at(0));
+    } else if (colorWithJetPt){
+      ratioName = Form("%.0f < jet p_{T} < %.0f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second);
+    }
+
+    drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
         for(int iTrackPt : currentTrackPtIndices){

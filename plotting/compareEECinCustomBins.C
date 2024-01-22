@@ -10,8 +10,8 @@ void compareEECinCustomBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularCorrelators_processed_2023-10-02.root";
-  fileName[1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_5GeVshiftedCorrelators_processed_2023-10-02.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root";
   
   
   // Open the files and check that they exist

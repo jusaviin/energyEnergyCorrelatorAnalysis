@@ -8,7 +8,7 @@
 void compareRelativeUncertainties(){
   
   // Files for comparison
-  TString fileName = "data/ppData_pfJets_wtaAxis_energyWeightSquared_covarianceMatrix_jet60or80triggers_unfoldingWithCovarianceMatrix_processed_2023-12-14.root";
+  TString fileName = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_fixedCovarianceMatrix_correctNormalization_unfoldWithCovarianceMatrix_playWithNormalization_processed_2023-12-22.root";
   // eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_covarianceMatrix_unfoldingWithCovarianceMatrix_processed_2023-12-14.root
   // eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_covarianceMatrix_unfoldingOriginal_processed_2023-12-14.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_covarianceMatrix_jet60or80triggers_unfoldingWithCovarianceMatrix_processed_2023-12-14.root
@@ -286,7 +286,7 @@ void compareRelativeUncertainties(){
 
         // Load the unfolded energy-energy correlator histograms
 
-        hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+        hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfolded);
 
         // Normalize the distributions to one in the drawingRange
         lowNormalizationBin = hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.first + epsilon);

@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 3;
-  TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_truthReference_processed_2023-10-27.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_smearDeltaR_processed_2023-10-30.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_smearEnergyWeight_processed_2023-10-30.root", "data/PbPbMC2018_GenGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalJetPtSmear_smearEECweight_processed_2023-07-05.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_jetPtWeight_reconstructedReference_processed_2023-06-21.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
+  const int nDatasets = 2;
+  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_noJetsInReflectedCone08_processed_2023-12-05.root", "data/PbPbMC2018_GenGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalJetPtSmear_smearEECweight_processed_2023-07-05.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_jetPtWeight_reconstructedReference_processed_2023-06-21.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Nominal", "Smear #Deltar", "Smear weight", "New without smoothing", "0.8 < jet #eta < 1.6"};
+  TString legendComment[] = {"Old unfolding", "New unfolding", "No jets in R < 0.8", "New without smoothing", "0.8 < jet #eta < 1.6"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];
@@ -90,7 +90,7 @@ void compareEEChistograms(){
   // Choose if you want to write the figures to pdf file
   bool saveFigures = false;
   const char* figureFormat = "pdf";
-  const char* figureComment = "_dataToMCComparisonDownTo80GeV";
+  const char* figureComment = "_jetsInReflectedCone";
   
   // Logarithmic scales for figures
   bool logPt = true;       // pT axis for jet
@@ -108,9 +108,9 @@ void compareEEChistograms(){
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
-  double minZoom = 0.9;
-  double maxZoom = 1.1;
-  TString ratioLabel = "#frac{Smeared}{Nominal}";
+  double minZoom = 0;
+  double maxZoom = 2;
+  TString ratioLabel = "#frac{Color}{Nominal}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -143,8 +143,8 @@ void compareEEChistograms(){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 2;
-  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 8;
+  int lastDrawnJetPtBinEEC = 8; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
 
   int firstDrawnTrackPtBinEEC = 1;
   int lastDrawnTrackPtBinEEC = 5;
