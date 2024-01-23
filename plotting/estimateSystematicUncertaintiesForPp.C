@@ -139,7 +139,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   int lastStudiedTrackPtBinEEC = nominalResultCard->GetLastUnfoldedTrackPtBin();
 
   // Only draw example plots from selected subset of bins
-  vector<int> drawnJetPtBins = {2,3,4,5};
+  vector<int> drawnJetPtBins = {5,6,7,8};
   vector<int> drawnTrackPtBins = {1,3,5};
 
   if(weightExponent == 1){
@@ -737,7 +737,7 @@ void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedRes
   drawer->SetLogY(true);
 
   // Check from plot comment if we need to also add another line to the legend
-  bool hasHigherWeightExponent = (plotComment != "");
+  bool hasHigherWeightExponent = (plotComment == "_energyWeightSquared");
 
   // Setup the legend for plots
   TLegend *legend = new TLegend(0.23,0.23-nVariations*0.06,0.46,0.6);
