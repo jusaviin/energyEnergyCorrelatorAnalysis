@@ -141,6 +141,13 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   // Only draw example plots from selected subset of bins
   vector<int> drawnJetPtBins = {2,3,4,5};
   vector<int> drawnTrackPtBins = {1,3,5};
+
+  if(weightExponent == 1){
+    drawnTrackPtBins.clear();
+    drawnTrackPtBins.push_back(3);
+    drawnTrackPtBins.push_back(4);
+    drawnTrackPtBins.push_back(5);
+  }
   
   const bool printUncertainties = false;
   

@@ -163,6 +163,13 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   vector<int> drawnCentralityBins = {0,1,2,3};
   vector<int> drawnJetPtBins = {6,7,8,9};
   vector<int> drawnTrackPtBins = {1,3,5};
+
+  if(weightExponent == 1){
+    drawnTrackPtBins.clear();
+    drawnTrackPtBins.push_back(3);
+    drawnTrackPtBins.push_back(4);
+    drawnTrackPtBins.push_back(5);
+  }
   
   const bool printUncertainties = false;
   
