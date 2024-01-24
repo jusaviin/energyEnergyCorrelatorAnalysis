@@ -34,10 +34,10 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-01-22.root
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
   // systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root
   // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root
   TFile* uncertaintyFile[kNDataTypes];
@@ -82,7 +82,7 @@ void relativeUncertaintyPlotter(){
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   TString saveComment = "_optimizedUnfoldingBins";
 
   // Add a name describing the energy weight in the files
@@ -111,6 +111,9 @@ void relativeUncertaintyPlotter(){
       relativeZoom[3][iTrackPt] = std::make_pair(0, 0.15);  // Y-axis zoom for 50-90% PbPb with energy weight squared
     } 
   }
+
+  relativeZoom[0][5] = std::make_pair(0, 0.22);   // Y-axis zoom for 0-10% and 3 GeV track cut PbPb with nominal energy weight
+  relativeZoom[1][5] = std::make_pair(0, 0.12);   // Y-axis zoom for 10-30% and 3 GeV track cut PbPb with nomimal energy weight
 
   // Is some cases, we need to tune the zooming options for different track pT bins to better see the figures
   if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
