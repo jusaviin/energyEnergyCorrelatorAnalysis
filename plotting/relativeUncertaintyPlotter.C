@@ -34,13 +34,12 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2023-12-12.root";
-  // systematicUncertainties_jetMetUpdate_includeMCnonClosure_2023-07-16.root
-  // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2023-12-12.root
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2023-12-13.root";
-  // systematicUncertaintiesForPp_energyWeightSquared_noMCnonClosure_2023-11-13.root
-  // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2023-12-13.root
-  // systematicUncertainties_pp_includeMCnonClosure_2023-12-13.root
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root
+  // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-01-22.root
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  // systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root
+  // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root
   TFile* uncertaintyFile[kNDataTypes];
   EECCard* uncertaintyCard[kNDataTypes];
   for(int iFile = 0; iFile < kNDataTypes; iFile++){
@@ -79,21 +78,47 @@ void relativeUncertaintyPlotter(){
   int firstDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin();
   int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
 
-  firstDrawnTrackPtBinEEC = 1;
-  lastDrawnTrackPtBinEEC = 5;
+  //firstDrawnTrackPtBinEEC = 3;
+  //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
   const bool saveFigures = true;
-  TString saveComment = "_energyWeightSquared_fixedBackground";
+  TString saveComment = "_optimizedUnfoldingBins";
+
+  // Add a name describing the energy weight in the files
+  if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
+    saveComment.Prepend("_energyWeightSquared");
+  } else {
+    saveComment.Prepend("_nominalEnergyWeight");
+  }
 
   // Zoom settings
   std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
-  std::pair<double, double> relativeZoom[nCentralityBins+1];
-  relativeZoom[nCentralityBins] = std::make_pair(0, 0.06); // Y-axis zoom for pp
-  relativeZoom[0] = std::make_pair(0, 0.8);  // Y-axis zoom for 0-10% PbPb
-  relativeZoom[1] = std::make_pair(0, 0.3); // Y-axis zoom for 10-30% PbPb
-  relativeZoom[2] = std::make_pair(0, 0.18);  // Y-axis zoom for 30-50% PbPb
-  relativeZoom[3] = std::make_pair(0, 0.15);  // Y-axis zoom for 50-90% PbPb
+  std::pair<double, double> relativeZoom[nCentralityBins+1][nTrackPtBinsEEC];
+
+  for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+    relativeZoom[nCentralityBins][iTrackPt] = std::make_pair(0, 0.06); // Y-axis zoom for pp
+    relativeZoom[0][iTrackPt] = std::make_pair(0, 0.4);   // Y-axis zoom for 0-10% PbPb with nominal energy weight
+    relativeZoom[1][iTrackPt] = std::make_pair(0, 0.2);   // Y-axis zoom for 10-30% PbPb with nominal energy weight
+    relativeZoom[2][iTrackPt] = std::make_pair(0, 0.1);  // Y-axis zoom for 30-50% PbPb with nominal energy weight
+    relativeZoom[3][iTrackPt] = std::make_pair(0, 0.1);  // Y-axis zoom for 50-90% PbPb with nominal energy weight
+
+    // Different zooming options for PbPb uncertainties with the energy weight squared
+    if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
+      relativeZoom[0][iTrackPt] = std::make_pair(0, 1.05);   // Y-axis zoom for 0-10% PbPb with energy weight squared
+      relativeZoom[1][iTrackPt] = std::make_pair(0, 0.35);   // Y-axis zoom for 10-30% PbPb with energy weight squared
+      relativeZoom[2][iTrackPt] = std::make_pair(0, 0.18);  // Y-axis zoom for 30-50% PbPb with energy weight squared
+      relativeZoom[3][iTrackPt] = std::make_pair(0, 0.15);  // Y-axis zoom for 50-90% PbPb with energy weight squared
+    } 
+  }
+
+  // Is some cases, we need to tune the zooming options for different track pT bins to better see the figures
+  if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
+    relativeZoom[0][3] = std::make_pair(0, 0.5);   // Y-axis zoom for 0-10% and 2 GeV track cut PbPb with energy weight squared
+    relativeZoom[0][5] = std::make_pair(0, 0.3);   // Y-axis zoom for 0-10% and 3 GeV track cut PbPb with energy weight squared
+    relativeZoom[1][3] = std::make_pair(0, 0.25);   // Y-axis zoom for 10-30% and 2 GeV track cut PbPb with energy weight squared
+    relativeZoom[1][5] = std::make_pair(0, 0.18);   // Y-axis zoom for 10-30% and 3 GeV track cut PbPb with energy weight squared
+  } 
 
   // =================================================== //
   // Read the histograms from the uncertainty organizers //
@@ -181,10 +206,12 @@ void relativeUncertaintyPlotter(){
   TString trackPtString;
   TString compactTrackPtString;
 
+  double legendX1, legendX2, legendY1, legendY2;
+
   // Common variables for different plots
   TLegend* legend;
 
-  // D0 the drawing
+  // Do the drawing
 
   for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
     jetPtString = Form("%.0f < jet p_{T} < %.0f", uncertaintyCard[kPbPb]->GetLowBinBorderJetPtEEC(iJetPt), uncertaintyCard[kPbPb]->GetHighBinBorderJetPtEEC(iJetPt));
@@ -196,7 +223,11 @@ void relativeUncertaintyPlotter(){
       compactTrackPtString.ReplaceAll(".", "v");
 
       // Setup the legend for plots
-      legend = new TLegend(0.43, 0.55, 0.93, 0.98); // 0.43, 0.45, 0.93, 0.89
+      legendX1 = 0.41; legendX2 = 0.91; legendY1 = 0.45; legendY2 = 0.89;
+      if(uncertaintyCard[kPp]->GetWeightExponent() == 2){
+        legendX1 = 0.43; legendX2 = 0.93; legendY1 = 0.55; legendY2 = 0.98;
+      }
+      legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.04); legend->SetTextFont(62);
       legend->AddEntry((TObject*)0, "pp data", "");
       legend->AddEntry((TObject*)0, jetPtString.Data(), "");
@@ -207,7 +238,7 @@ void relativeUncertaintyPlotter(){
 
       // Set the x and y-axis drawing ranges
       relativeUncertaintyForPp[SystematicUncertaintyOrganizer::kAll][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-      relativeUncertaintyForPp[SystematicUncertaintyOrganizer::kAll][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(relativeZoom[nCentralityBins].first, relativeZoom[nCentralityBins].second);
+      relativeUncertaintyForPp[SystematicUncertaintyOrganizer::kAll][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(relativeZoom[nCentralityBins][iTrackPt].first, relativeZoom[nCentralityBins][iTrackPt].second);
 
       // Draw the relative uncertainties from all sources for pp
       drawer->DrawHistogram(relativeUncertaintyForPp[SystematicUncertaintyOrganizer::kAll][iJetPt][iTrackPt], "#Deltar", "Relative uncertainty", " ");
@@ -234,7 +265,11 @@ void relativeUncertaintyPlotter(){
         compactCentralityString = Form("_C=%.0f-%.0f", uncertaintyCard[kPbPb]->GetLowBinBorderCentrality(iCentrality), uncertaintyCard[kPbPb]->GetHighBinBorderCentrality(iCentrality));
 
         // Setup the legend for plots
-        legend = new TLegend(0.33, 0.4, 0.83, 0.9);
+        legendX1 = 0.37; legendX2 = 0.87; legendY1 = 0.4; legendY2 = 0.9;
+        if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
+          legendX1 = 0.34; legendX2 = 0.84; legendY1 = 0.4; legendY2 = 0.9;
+        }
+        legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.04); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, centralityString.Data(), "");
         legend->AddEntry((TObject*)0, jetPtString.Data(), "");
@@ -245,7 +280,7 @@ void relativeUncertaintyPlotter(){
 
         // Set the x and y-axis drawing ranges
         relativeUncertaintyForPbPb[SystematicUncertaintyOrganizer::kAll][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-        relativeUncertaintyForPbPb[SystematicUncertaintyOrganizer::kAll][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(relativeZoom[iCentrality].first, relativeZoom[iCentrality].second);
+        relativeUncertaintyForPbPb[SystematicUncertaintyOrganizer::kAll][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(relativeZoom[iCentrality][iTrackPt].first, relativeZoom[iCentrality][iTrackPt].second);
 
         // Draw the relative uncertainties from all sources for PbPb
         drawer->DrawHistogram(relativeUncertaintyForPbPb[SystematicUncertaintyOrganizer::kAll][iCentrality][iJetPt][iTrackPt], "#Deltar", "Relative uncertainty", " ");
