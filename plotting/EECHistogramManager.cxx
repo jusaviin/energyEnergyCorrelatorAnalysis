@@ -1881,10 +1881,11 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
       fhJetPtUnfoldingCovariance[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
 
       // For proper normalization, each bin needs to be normalized to the number of jets in the corresponding pT
+      // According to statistics committee, the approach below is wrong
 
       // First, we need to determine the number of DeltaR bins. We know the number of jet pT bins in card.
       // We know that this histogram has nJetPt*nDeltaR bins, so number of DeltaR bins can be solved from this.
-      nDeltaRBins =  fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX() / fnJetPtBinsEEC;
+      /*nDeltaRBins =  fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX() / fnJetPtBinsEEC;
 
       for(int iBinX = 1; iBinX <= fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX(); iBinX++){
 
@@ -1921,6 +1922,7 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
 
         } // Loop over y-axis bins of the covariance matrix
       } // Loop over x-axis bins of the covariance matrix
+      */
 
     } // Track pT loop
 
