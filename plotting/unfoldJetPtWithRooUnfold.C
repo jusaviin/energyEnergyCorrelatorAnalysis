@@ -105,43 +105,43 @@ void unfoldJetPtWithRooUnfold(){
   enum enumEnergyEnergyCorrelatorFileType{kDataFile, kTruthReferenceFile, kNFileTypes};
   enum enumUnfoldingMethods{kMatrixInversionUnfold, kBayesianUnfold, kNUnfoldMethods};
 
-  TString unfoldName[kNUnfoldMethods] = {"martix inversion", "Bayes, NIT iterations"};
+  TString unfoldName[kNUnfoldMethods] = {"martix inversion", "D'Agostini, NIT iterations"};
 
   // **********************************
   //       Open the input files
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-30.root";
+  TString unfoldingInputFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_responseMatrix_processed_2024-01-11.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_genPtWeight_responseMatrix_part1_processed_2023-06-15.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrix_part1_processed_2023-07-11.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrixDownTo80GeV_part1_processed_2023-08-17.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrixWidePtBins_part1_processed_2023-08-17.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_responseMatrix_part1_processed_2024-01-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-24.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2024-01-10.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_responseMatrix_part1_processed_2023-10-30.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-30.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_reconstructedReference_part2_processed_2024-01-11.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part2_processed_2023-06-05.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_part2_processed_2023-07-11.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReferenceDownTo80GeV_part2_processed_2023-08-17.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReferenceWidePtBins_part2_processed_2023-08-17.root
+  // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_reconstructedReference_part2_processed_2024-01-11.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-24.root
+  // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2024-01-10.root
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-30.root
 
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-30.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-11.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part2_2023-06-15.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReferenceDownTo80GeV_part2_processed_2023-08-17.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReferenceWidePtBins_part2_processed_2023-08-17.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-24.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_part2_processed_2024-01-10.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_truthReference_part2_processed_2023-10-30.root
 
   // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
-  const bool ignoreTruthReferenceFile = false;
+  const bool ignoreTruthReferenceFile = true;
   const bool unfoldResponseMatrixDataset = false;
 
   // Open the input files
@@ -207,51 +207,39 @@ void unfoldJetPtWithRooUnfold(){
       }
     }  // Checking compatible centrality bins
 
+    // Check track pT binning
+
     if(unfoldingCard->GetNTrackPtBinsEEC() != energyenergyCorrelatorCard[iFileType]->GetNTrackPtBinsEEC()) {
-      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+      cout << "Error! Track pT bins do not match between the two files! 1 Cannot execute the code!" << endl;
       return;
     }
     for(int iTrackPt = 0; iTrackPt < unfoldingCard->GetNTrackPtBinsEEC(); iTrackPt++) {
       if(TMath::Abs(unfoldingCard->GetLowBinBorderTrackPtEEC(iTrackPt) - energyenergyCorrelatorCard[iFileType]->GetLowBinBorderTrackPtEEC(iTrackPt)) > 0.01) {
-        cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+        cout << "Error! Track pT bins do not match between the two files! 2 Cannot execute the code!" << endl;
         return;
       }
       if(TMath::Abs(unfoldingCard->GetHighBinBorderTrackPtEEC(iTrackPt) - energyenergyCorrelatorCard[iFileType]->GetHighBinBorderTrackPtEEC(iTrackPt)) > 0.01) {
-        cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+        cout << "Error! Track pT bins do not match between the two files! 3 Cannot execute the code!" << endl;
         return;
       }
     }  // Checking the compatibility of track pT bins
-  }
-  
-  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kDataFile]->GetNJetPtBinsEEC()) {
-    cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
-    return;
-  }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
-      cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kDataFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
-      cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-  }  // Checking the compatibility of reconstructed jet pT bins
 
-  if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[kTruthReferenceFile]->GetNJetPtBinsEEC()) {
-    cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
-    return;
-  }
-  for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
-    if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
-      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
+    // Check jet pT binning
+    if(unfoldingCard->GetNJetPtBinsEEC() != energyenergyCorrelatorCard[iFileType]->GetNJetPtBinsEEC()) {
+      cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
       return;
     }
-    if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[kTruthReferenceFile]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
-      cout << "Error! Track pT bins do not match between the two files! Cannot execute the code!" << endl;
-      return;
-    }
-  }  // Checking the compatibility of generator level jet pT bins
+    for(int iJetPt = 0; iJetPt < unfoldingCard->GetNJetPtBinsEEC(); iJetPt++) {
+      if(TMath::Abs(unfoldingCard->GetLowBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[iFileType]->GetLowBinBorderJetPtEEC(iJetPt)) > 0.01) {
+        cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
+        return;
+      }
+      if(TMath::Abs(unfoldingCard->GetHighBinBorderJetPtEEC(iJetPt) - energyenergyCorrelatorCard[iFileType]->GetHighBinBorderJetPtEEC(iJetPt)) > 0.01) {
+        cout << "Error! Measured jet pT bins do not match between the two files! Cannot execute the code!" << endl;
+        return;
+      }
+    }  // Checking the compatibility of reconstructed jet pT bins
+  } // Loop for bin compatibility checks
 
   // ********************************************************
   //       Binning configuration for the unfolding study
@@ -265,16 +253,16 @@ void unfoldJetPtWithRooUnfold(){
 
   // Bin range to be studied
   int firstStudiedCentralityBin = 0;
-  int lastStudiedCentralityBin = 0;
+  int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 1;
-  int lastStudiedTrackPtBinEEC = 1;
+  int firstStudiedTrackPtBinEEC = 3;
+  int lastStudiedTrackPtBinEEC = 3;
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;
-  unfoldedJetPtBins.push_back(std::make_pair(120,140));
-  unfoldedJetPtBins.push_back(std::make_pair(140,160));
-  unfoldedJetPtBins.push_back(std::make_pair(160,180));
+  //unfoldedJetPtBins.push_back(std::make_pair(120,140));
+  //unfoldedJetPtBins.push_back(std::make_pair(140,160));
+  //unfoldedJetPtBins.push_back(std::make_pair(160,180));
   unfoldedJetPtBins.push_back(std::make_pair(180,200));
 
   const int nUnfoldedJetPtBins = unfoldedJetPtBins.size();
@@ -288,14 +276,14 @@ void unfoldJetPtWithRooUnfold(){
   const int iterationKey[] = {1,2,3,4,5};
   const bool calculateConditionNumber = false;
 
-  const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distribution to truth reference
+  const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
   const bool drawTruthToTruthComparison = false;       // Compare truth from unfolding histograms to truth from energy-energy correlator histograms
   const bool drawMeasuredToMeasuredComparison = false; // Compare reconstructed unfolding histograms to reconstructed energy-energy correlator histograms
-  const bool drawResponseMatrix = false;               // Draw the used response matrices
+  const bool drawResponseMatrix = true;               // Draw the used response matrices
   const bool drawRefoldingTest = false;                // Compare refolded distribution to the original measured distribution
 
-  bool saveFigures = false;
-  TString saveComment = "_bayesUnfold_wideBins";
+  bool saveFigures = true;
+  TString saveComment = "_example";
   TString figureFormat = "pdf";
     
   // ***************************************************************
@@ -428,6 +416,7 @@ void unfoldJetPtWithRooUnfold(){
         cout << singular_values.Max() / singular_values.Min() << endl;
       } // Track pT loop
     } // Centrality loop
+    return;
   }
 
   // ********************************************************
@@ -531,22 +520,24 @@ void unfoldJetPtWithRooUnfold(){
 
   // Dissect the big histograms and fill small histograms based on the information
   // Also normalize the bins to bin width and histograms to one in the defined range
-  double normalizationRegionLow = 0.006;
-  double normalizationRegionHigh = 0.4;
+  double normalizationRegionLow = 0.008;
+  double normalizationRegionHigh = 0.39;
   int jetPtUnfoldIndexMeasured = 0;
   int jetPtUnfoldIndexTruth = 0;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         jetPtUnfoldIndexMeasured = energyenergyCorrelatorCard[kDataFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
-        jetPtUnfoldIndexTruth = energyenergyCorrelatorCard[kTruthReferenceFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
+        if(!ignoreTruthReferenceFile) jetPtUnfoldIndexTruth = energyenergyCorrelatorCard[kTruthReferenceFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
         for(int iBin = 1; iBin <= nDeltaRBins; iBin++){
 
           hMeasured[iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, hUnfoldingMeasured[iCentrality][iTrackPt]->GetBinContent(iBin + nDeltaRBins*jetPtUnfoldIndexMeasured) / hUnfoldingMeasured[iCentrality][iTrackPt]->GetBinWidth(iBin));
           hMeasured[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, hUnfoldingMeasured[iCentrality][iTrackPt]->GetBinError(iBin + nDeltaRBins*jetPtUnfoldIndexMeasured) / hUnfoldingMeasured[iCentrality][iTrackPt]->GetBinWidth(iBin));
           
-          hTruth[iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, hUnfoldingTruth[iCentrality][iTrackPt]->GetBinContent(iBin + nDeltaRBins*jetPtUnfoldIndexTruth) / hUnfoldingTruth[iCentrality][iTrackPt]->GetBinWidth(iBin));
-          hTruth[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, hUnfoldingTruth[iCentrality][iTrackPt]->GetBinError(iBin + nDeltaRBins*jetPtUnfoldIndexTruth) / hUnfoldingTruth[iCentrality][iTrackPt]->GetBinWidth(iBin));
+          if(!ignoreTruthReferenceFile){
+            hTruth[iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, hUnfoldingTruth[iCentrality][iTrackPt]->GetBinContent(iBin + nDeltaRBins*jetPtUnfoldIndexTruth) / hUnfoldingTruth[iCentrality][iTrackPt]->GetBinWidth(iBin));
+            hTruth[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, hUnfoldingTruth[iCentrality][iTrackPt]->GetBinError(iBin + nDeltaRBins*jetPtUnfoldIndexTruth) / hUnfoldingTruth[iCentrality][iTrackPt]->GetBinWidth(iBin));
+          }
         } // DeltaR bin loop
 
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
@@ -561,9 +552,11 @@ void unfoldJetPtWithRooUnfold(){
 
         // Do the normalization of total distribution to one
         hMeasured[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hMeasured[iCentrality][iJetPt][iTrackPt]->Integral(hMeasured[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hMeasured[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
-        hTruth[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hTruth[iCentrality][iJetPt][iTrackPt]->Integral(hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
         energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->Integral(energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->FindBin(normalizationRegionLow), energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
-        energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->Integral(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->FindBin(normalizationRegionLow), energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
+        if(!ignoreTruthReferenceFile){ 
+          hTruth[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / hTruth[iCentrality][iJetPt][iTrackPt]->Integral(hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionLow), hTruth[iCentrality][iJetPt][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
+          energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->Integral(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->FindBin(normalizationRegionLow), energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]->FindBin(normalizationRegionHigh), "width"));
+        }
 
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
           hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->Scale(1.0 / hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->Integral(hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->FindBin(normalizationRegionLow), hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->FindBin(normalizationRegionHigh), "width"));
@@ -571,7 +564,7 @@ void unfoldJetPtWithRooUnfold(){
           hForwardFolded[iCentrality][iJetPt][iTrackPt][iIteration]->Scale(1.0 / hForwardFolded[iCentrality][iJetPt][iTrackPt][iIteration]->Integral(hForwardFolded[iCentrality][iJetPt][iTrackPt][iIteration]->FindBin(normalizationRegionLow), hForwardFolded[iCentrality][iJetPt][iTrackPt][iIteration]->FindBin(normalizationRegionHigh), "width"));
         } // Iteration loop
 
-        if(unfoldResponseMatrixDataset){
+        if(unfoldResponseMatrixDataset && !ignoreTruthReferenceFile){
           energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt] =  hTruth[iCentrality][iJetPt][iTrackPt];
         }
       } // Jet pT loop
@@ -583,20 +576,26 @@ void unfoldJetPtWithRooUnfold(){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         jetPtUnfoldIndexMeasured = energyenergyCorrelatorCard[kDataFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
-        jetPtUnfoldIndexTruth = energyenergyCorrelatorCard[kTruthReferenceFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
 
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->Clone(Form("measuredToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+        if(!ignoreTruthReferenceFile){
+          jetPtUnfoldIndexTruth = energyenergyCorrelatorCard[kTruthReferenceFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
 
-        hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hTruth[iCentrality][iJetPt][iTrackPt]->Clone(Form("truthToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+          hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hMeasured[iCentrality][iJetPt][iTrackPt]->Clone(Form("measuredToMeasuredRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
+          hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]);
 
-        hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hMeasured[iCentrality][iJetPt][iTrackPt]->Clone(Form("measuredToMeasuredRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hMeasuredToMeasuredRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]);
+          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]->Clone(Form("measuredToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
+          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+
+          hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt] = (TH1D*) hTruth[iCentrality][iJetPt][iTrackPt]->Clone(Form("truthToTruthRatio%d%d%d", iCentrality, iTrackPt, iJetPt));
+          hTruthToTruthRatio[iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+        }
 
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
-          hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration] = (TH1D*) hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->Clone(Form("unfoldedToTruthRatio%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
-          hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+
+          if(!ignoreTruthReferenceFile){
+            hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration] = (TH1D*) hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->Clone(Form("unfoldedToTruthRatio%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
+            hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Divide(energyEnergyCorrelatorsTruthReference[iCentrality][jetPtUnfoldIndexTruth][iTrackPt]);
+          }
 
           hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration] = (TH1D*) hForwardFolded[iCentrality][iJetPt][iTrackPt][iIteration]->Clone(Form("forwardFoldedToMeasuredRatio%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
           hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Divide(energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndexMeasured][iTrackPt]);
@@ -924,7 +923,6 @@ void unfoldJetPtWithRooUnfold(){
 
         // Set the unfolding jet pT indices to match potentially different binnings
         jetPtUnfoldIndexMeasured = energyenergyCorrelatorCard[kDataFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
-        jetPtUnfoldIndexTruth = energyenergyCorrelatorCard[kTruthReferenceFile]->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
 
         // Set the jet pT information for legends and figure saving
         jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldedJetPtBins.at(iJetPt).first, unfoldedJetPtBins.at(iJetPt).second);
