@@ -17,6 +17,7 @@ EECDrawer::EECDrawer(EECHistogramManager *inputHistograms) :
   fLegendComment(""),
   fDrawEventInformation(false),
   fDrawJets(false),
+  fDrawCovarianceMatrix(false),
   fDrawIndividualParticleDensities(true),
   fDrawParticleDensitiesForConstantJetPt(false),
   fDrawIndividualEnergyEnergyCorrelators(true),
@@ -126,6 +127,9 @@ void EECDrawer::DrawHistograms(){
   
   // Draw the processed energy-energy correlator histograms
   DrawProcessedEnergyEnergyCorrelators();
+
+  // Draw the covariance matrices
+  DrawCovarianceMatrices();
   
 }
 
@@ -137,8 +141,8 @@ void EECDrawer::DrawEventInformation(){
   if(!fDrawEventInformation) return;  // Only draw the event information histograms if they are selected for drawing
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
   
   // === Vertex z-position ===
   drawnHistogram = fHistograms->GetHistogramVertexZ();
@@ -193,9 +197,9 @@ void EECDrawer::DrawJetHistograms(){
   if(!fDrawJets) return;
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TH2D *drawnHistogram2D;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TH2D* drawnHistogram2D;
+  TLegend* legend;
   
   // Helper variables for centrality naming in figures
   TString centralityString;
@@ -279,9 +283,9 @@ void EECDrawer::DrawJetHistograms(){
 void EECDrawer::DrawTrackHistograms(){
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TH2D *drawnHistogram2D;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TH2D* drawnHistogram2D;
+  TLegend* legend;
   double legendX1;
   double legendY1;
   double legendX2;
@@ -416,8 +420,8 @@ void EECDrawer::DrawTrackHistograms(){
 void EECDrawer::DrawMultiplicityInJetCone(){
 
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
 
   // Helper variables for naming in figures
   TString centralityString;
@@ -493,8 +497,8 @@ void EECDrawer::DrawMultiplicityInJetCone(){
 void EECDrawer::DrawParticleDensityAroundJetAxis(){
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
 
   // Helper variables for naming in figures
   TString centralityString;
@@ -653,8 +657,8 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
 void EECDrawer::DrawMaxParticlePtWithinJetCone(){
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
 
   // Helper variables for naming in figures
   TString centralityString;
@@ -751,8 +755,8 @@ void EECDrawer::DrawMaxParticlePtWithinJetCone(){
 void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
   
   // Helper variables for centrality naming in figures
   TString centralityString;
@@ -1059,8 +1063,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
 void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
   
   // Helper variables for histogram drawing
-  TH1D *drawnHistogram;
-  TLegend *legend;
+  TH1D* drawnHistogram;
+  TLegend* legend;
   
   // Helper variables for centrality naming in figures
   TString centralityString;
@@ -1232,6 +1236,74 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
   // Reset logarithmic drawing flags
   fDrawer->SetLogX(false);
   fDrawer->SetLogY(false);
+}
+
+/*
+ * Draw covariance matrices
+ */
+void EECDrawer::DrawCovarianceMatrices(){
+  
+  // If jet histograms are not drawn, there is nothing to do here
+  if(!fDrawCovarianceMatrix) return;
+  
+  // Helper variables for histogram drawing
+  TH2D* drawnHistogram;
+  TLegend* legend;
+  
+  // Helper variables for centrality naming in figures
+  TString centralityString;
+  TString compactCentralityString;
+  TString trackPtString;
+  TString compactTrackPtString;
+  TString namerX;
+  TString namerY;
+
+  // Change the right margin better suited for 2D-drawing
+  fDrawer->SetRightMargin(0.12);
+  fDrawer->SetLeftMargin(0.12);
+  fDrawer->SetTitleOffsetY(0.8);
+  fDrawer->SetTitleOffsetX(1.2);
+  
+  // Loop over centrality
+  for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+    
+    centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+    compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+
+    for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+
+      trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+      compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+      compactTrackPtString.ReplaceAll(".","v");
+    
+      // Select logarithmic z-axis scale
+      fDrawer->SetLogZ(true);
+    
+      // === Covariance matrix ===
+      drawnHistogram = fHistograms->GetHistogramJetPtUnfoldingCovariance(iCentrality, iTrackPt);
+      namerX = "#Deltar #otimes jet p_{T}";
+      namerY = "#Deltar #otimes jet p_{T}";
+      fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),namerY.Data()," ",fStyle2D);
+      legend = new TLegend(0.17,0.7,0.37,0.9);
+      SetupLegend(legend,centralityString,trackPtString);
+      legend->Draw();
+    
+      // Save the figures to file
+      namerX = "covarianceMatrix";
+      SaveFigure(namerX,compactCentralityString,compactTrackPtString);
+    
+    } // Track pT loop
+    
+  } // Centrality loop
+
+  // Change right margin back to 1D-drawing
+  fDrawer->SetTitleOffsetY(1.1);
+  fDrawer->SetTitleOffsetX(1.1);
+  fDrawer->SetLeftMargin(0.15);
+  fDrawer->SetRightMargin(0.06);
+
+  // Reset logarithmic drawing setting
+  fDrawer->SetLogZ(false);
 }
 
 /*
@@ -1455,6 +1527,11 @@ void EECDrawer::SetDrawAllEnergyEnergyCorrelatorPairingTypes(const bool drawSame
   SetDrawSameJetEnergyEnergyCorrelators(drawSameJet);
   SetDrawSignalReflectedConeEnergyEnergyCorrelators(drawSignalReflectedCone);
   SetDrawReflectedConeOnlyEnergyEnergyCorrelators(drawReflectedConeOnly);
+}
+
+// Setter for drawing all jet histograms
+void EECDrawer::SetDrawCovarianceMatrices(const bool drawOrNot){
+  fDrawCovarianceMatrix = drawOrNot;
 }
 
 // Setter for drawing histograms without subevent selection

@@ -25,7 +25,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // Choose which figure sets to draw
   bool drawEventInformation = false;
   bool drawJets = false;
-  bool drawTracks = true;
+  bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
@@ -39,6 +39,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   bool drawMaxParticlePtWithinJetCone = false;
   bool drawMaxBackgroundParticlePtWithinJetCone = false;
+  bool drawCovarianceMatrix = true;
   
   // Open the input file
   TFile* inputFile = TFile::Open(inputFileName);
@@ -72,7 +73,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   
   // Bin range to be drawn
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 3;
+  int lastDrawnCentralityBin = 0;
   
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
@@ -80,8 +81,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnJetPtBinEEC = 6;
   int lastDrawnJetPtBinEEC = 6; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 1;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 3;
+  int lastDrawnTrackPtBinEEC = 3;
   
   // Remove centrality selection from pp data
   if(collisionSystem.Contains("pp")){
@@ -179,6 +180,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
   histograms->SetLoadMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone || drawMaxBackgroundParticlePtWithinJetCone);
   histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
+  histograms->SetLoadJetPtUnfoldingCovariance(drawCovarianceMatrix);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
@@ -240,6 +242,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   resultDrawer->SetDrawEnergyEnergyCorrelatorNormalized(drawEnergyEnergyCorrelatorNormalized);
   resultDrawer->SetDrawEnergyEnergyCorrelatorBackground(drawEnergyEnergyCorrelatorBackground);
   resultDrawer->SetDrawEnergyEnergyCorrelatorSignal(drawEnergyEnergyCorrelatorSignal);
+
+  resultDrawer->SetDrawCovarianceMatrices(drawCovarianceMatrix);
   
   resultDrawer->SetDrawAllSubeventTypes(drawAllSubevents, drawPythiaOnly, drawHydjetOnly);
   resultDrawer->SetDrawAllSubeventCombinations(drawAllSubeventPairs, drawSignalOnly, drawSignalFake, drawFakeFake);

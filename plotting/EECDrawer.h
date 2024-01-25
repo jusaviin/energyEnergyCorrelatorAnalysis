@@ -26,7 +26,7 @@ class EECDrawer {
   
 public:
   
-  EECDrawer(EECHistogramManager *inputHistograms);  // Constructor
+  EECDrawer(EECHistogramManager* inputHistograms);  // Constructor
   ~EECDrawer();                                     // Destructor
   
   void DrawHistograms();          // Draw the histograms
@@ -88,6 +88,9 @@ public:
   void SetDrawEnergyEnergyCorrelatorNormalized(const bool drawOrNot);  // Setter for drawing normalized energy-energy correlators
   void SetDrawEnergyEnergyCorrelatorBackground(const bool drawOrNot);  // Setter for drawing the normalized background estimate for energy-energy correlators
   void SetDrawEnergyEnergyCorrelatorSignal(const bool drawOrNor);      // Setter for drawing the background subtracted energy-energy correlators
+
+  // Setter for drawing the covariance matrices
+  void SetDrawCovarianceMatrices(const bool drawOrNor);  // Setter for drawing the covariance matrices
   
   // Setters for drawing different subevent types
   void SetDrawAllSubevents(const bool drawOrNot); // Setter for drawing histograms without subevent selection
@@ -117,12 +120,12 @@ public:
 private:
   
   // Data members
-  EECHistogramManager *fHistograms; // Manager for all the drawn histograms
+  EECHistogramManager* fHistograms; // Manager for all the drawn histograms
   TString fSystemAndEnergy;           // Collision system (pp,PbPb,pp MC,PbPb MC,localTest) and energy
   TString fCompactSystemAndEnergy;    // Same a before but without white spaces and dots
   TString fFigureSaveNameAppend;      // Text that can be appended to standard figure naming scheme
   TString fLegendComment;             // Comment added to legend
-  JDrawer *fDrawer;                   // JDrawer for drawing the histograms
+  JDrawer* fDrawer;                   // JDrawer for drawing the histograms
   
   // ==============================================
   // ======== Flags for histograms to draw ========
@@ -135,6 +138,7 @@ private:
   bool fDrawParticleDensityAroundJets[EECHistogramManager::knParticleDensityAroundJetAxisTypes];  // Draw the particle densities around jet axis
   bool fDrawMaxParticlePtWithinJetCone[EECHistogramManager::knMaxParticlePtWithinJetConeTypes];   // Draw the maximum particle pT within the jet cone
   bool fDrawEnergyEnergyCorrelators[EECHistogramManager::knEnergyEnergyCorrelatorTypes];          // Draw the energy-energy correlator histograms
+  bool fDrawCovarianceMatrix;                                                                     // Draw covariance matrices
   
   bool fDrawIndividualParticleDensities;        // Draw the individual particle density histograms
   bool fDrawParticleDensitiesForConstantJetPt;  // Draw the particle density histograms with different track pT cuts for constant jet pT
@@ -184,9 +188,10 @@ private:
   void DrawParticleDensityAroundJetAxis();  // Draw particle densities around the jet axis
   void DrawMaxParticlePtWithinJetCone();    // Draw the maximum particle pT within the jet cone histograms
   void DrawTrackHistograms();               // Draw track histograms
-  void DrawEnergyEnergyCorrelationHistograms();  // Draw the energy-energy correlation histograms
-  void DrawProcessedEnergyEnergyCorrelators();   // Draw processed energy-energy correlators
-  void SetupLegend(TLegend *legend, TString centralityString = "", TString jetString = "", TString trackString = "", TString extraString = "", TString anotherString = ""); // Common legend style setup for figures
+  void DrawEnergyEnergyCorrelationHistograms(); // Draw the energy-energy correlation histograms
+  void DrawProcessedEnergyEnergyCorrelators();  // Draw processed energy-energy correlators
+  void DrawCovarianceMatrices();                // Draw covariance matrices
+  void SetupLegend(TLegend* legend, TString centralityString = "", TString jetString = "", TString trackString = "", TString extraString = "", TString anotherString = ""); // Common legend style setup for figures
   void SaveFigure(TString figureName, TString centralityString = "", TString trackPtString = "", TString correlationTypeString = "", TString deltaPhiString = ""); // Save the figure from current canvas to file
   
 };
