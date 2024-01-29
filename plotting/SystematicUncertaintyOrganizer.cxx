@@ -23,6 +23,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fSystematicsGroupFlag[kJetEnergyResolution] = kCorrelatedInDeltaR;
   fSystematicsGroupFlag[kJetEnergyScale] = kCorrelatedInDeltaR;
   fSystematicsGroupFlag[kUnfoldingTruth] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kUnfoldingIterations] = kCorrelatedInDeltaR;
   fSystematicsGroupFlag[kTrackSelection] = kUncorrelatedInDeltaR;
   fSystematicsGroupFlag[kSingleTrackEfficiency] = kSkipped;
   fSystematicsGroupFlag[kTrackPairEfficiency] = kUncorrelatedInDeltaR;
@@ -35,6 +36,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fUncertaintyColor[kJetEnergyResolution] = kBlue;
   fUncertaintyColor[kJetEnergyScale] = kRed;
   fUncertaintyColor[kUnfoldingTruth] = kGreen+3;
+  fUncertaintyColor[kUnfoldingIterations] = kGray+1;
   fUncertaintyColor[kTrackSelection] = kMagenta;
   fUncertaintyColor[kSingleTrackEfficiency] = kWhite;
   fUncertaintyColor[kTrackPairEfficiency] = kCyan;
@@ -47,6 +49,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[0][kJetEnergyResolution] = true;
   fIsRelevant[0][kJetEnergyScale] = true;
   fIsRelevant[0][kUnfoldingTruth] = true;
+  fIsRelevant[0][kUnfoldingIterations] = true;
   fIsRelevant[0][kTrackSelection] = true;
   fIsRelevant[0][kSingleTrackEfficiency] = false;
   fIsRelevant[0][kTrackPairEfficiency] = true;
@@ -59,6 +62,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[1][kJetEnergyResolution] = true;
   fIsRelevant[1][kJetEnergyScale] = true;
   fIsRelevant[1][kUnfoldingTruth] = true;
+  fIsRelevant[1][kUnfoldingIterations] = true;
   fIsRelevant[1][kTrackSelection] = true;
   fIsRelevant[1][kSingleTrackEfficiency] = false;
   fIsRelevant[1][kTrackPairEfficiency] = true;

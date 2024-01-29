@@ -30,7 +30,7 @@ void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
  * Arguments:
  *  const int weightExponent = Exponents for the energy weight in energy-energy correlators. Currently 1 and 2 are implemented.
  */
-void estimateSystematicUncertainties(const int weightExponent = 1){
+void estimateSystematicUncertainties(const int weightExponent = 2){
 
   // First, do a sanity check for the weight exponents. Currently only 1 and 2 are implemented.
   if(weightExponent < 1 || weightExponent > 2){
@@ -85,6 +85,20 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
   loadRelevantHistograms(jetPtPriorHistogramManager);
+
+  // Results unfolded with a different number of iterations compared to nominal results
+  TString unfoldingIterationsMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root"};
+  TString unfoldingIterationsPlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root"};
+  TFile* unfoldingIterationsFile[2];
+  unfoldingIterationsFile[0] = TFile::Open(unfoldingIterationsMinusFileName[weightExponent-1]);
+  unfoldingIterationsFile[1] = TFile::Open(unfoldingIterationsPlusFileName[weightExponent-1]);
+  EECCard* unfoldingIterationsCard[2];
+  EECHistogramManager* unfoldingIterationsHistogramManager[2];
+  for(int iUnfoldingIterationsFile = 0; iUnfoldingIterationsFile < 2; iUnfoldingIterationsFile++){
+    unfoldingIterationsCard[iUnfoldingIterationsFile] = new EECCard(unfoldingIterationsFile[iUnfoldingIterationsFile]);
+    unfoldingIterationsHistogramManager[iUnfoldingIterationsFile] = new EECHistogramManager(unfoldingIterationsFile[iUnfoldingIterationsFile], unfoldingIterationsCard[iUnfoldingIterationsFile]);
+    loadRelevantHistograms(unfoldingIterationsHistogramManager[iUnfoldingIterationsFile]);
+  }
 
   // Results where background scaling factor is determined from 2% or 6% shifted simulation instead of nominal 4%
   TString backgroundSubtraction2pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift_processed_2024-01-17.root"};
@@ -190,6 +204,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   // SystematicUncertaintyOrganizer::kJetEnergyResolution
   // SystematicUncertaintyOrganizer::kJetEnergyScale
   // SystematicUncertaintyOrganizer::kUnfoldingTruth
+  // SystematicUncertaintyOrganizer::kUnfoldingIterations
   // SystematicUncertaintyOrganizer::kBackgroundSubtraction
   // SystematicUncertaintyOrganizer::kTrackSelection
   // SystematicUncertaintyOrganizer::kSingleTrackEfficiency
@@ -200,10 +215,10 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   bool plotExample[SystematicUncertaintyOrganizer::knUncertaintySources];
   for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++){
     skipUncertaintySource[iUncertainty] = false;
-    plotExample[iUncertainty] = true;
+    plotExample[iUncertainty] = false;
   }
   //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
-  //plotExample[SystematicUncertaintyOrganizer::kCentralityShift] = true;
+  plotExample[SystematicUncertaintyOrganizer::kUnfoldingIterations] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -217,6 +232,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   TH1D* jetEnergyResolutionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* jetEnergyScaleUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* jetPtPriorUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* unfoldingIterationsUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* backgroundSubtractionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* trackSelectionUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
@@ -235,6 +251,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         for(int iFile = 0; iFile < 2; iFile++){
           jetEnergyResolutionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
+          unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           backgroundSubtractionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           trackSelectionUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
@@ -323,6 +340,15 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
           // Normalize the jet energy scale histograms to one
           jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / jetEnergyScaleUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+          // Read the unfolding number of iteration histograms
+          iCentralityMatched = unfoldingIterationsCard[iFile]->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+          iTrackPtMatched = unfoldingIterationsCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+          iJetPtMatched = unfoldingIterationsCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+          unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = unfoldingIterationsHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+          // Normalize the unfolding number of iteration histograms to one
+          unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
           // Read the background subtraction uncertainty histograms
           iCentralityMatched = backgroundSubtractionCard[iFile]->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
@@ -456,6 +482,46 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
             }
 
             drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], jetPtPriorUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kUnfoldingTruth), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
+          }
+      
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Jet pT prior uncertainty
+
+  // ============================================================= //
+  //   Uncertainty coming from number of iterations in unfolding   //
+  // ============================================================= //
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kUnfoldingIterations]){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kUnfoldingIterations] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+
+          // Draw example plots on how the uncertainty is obtained
+          if(plotExample[SystematicUncertaintyOrganizer::kUnfoldingIterations] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+            legendNames[0] = "Unfolding with 3 iterations";
+            legendNames[1] = "Unfolding with 5 iterations";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              if(iCentrality == 0){
+                ratioZoom = std::make_pair(0.8,1.2);
+              } else if (iCentrality == 1){
+                ratioZoom = std::make_pair(0.85,1.15);
+              } else {
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+
+              if(weightExponent == 1){
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
+
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], unfoldingIterationsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kUnfoldingIterations), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
