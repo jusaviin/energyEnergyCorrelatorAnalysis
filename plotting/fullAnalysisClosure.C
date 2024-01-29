@@ -11,7 +11,7 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = true;
+  bool isPbPbData = false;
   const int nSplits = isPbPbData ? 2 : 3;
   const int weightExponent = 1;
 
@@ -59,9 +59,9 @@ void fullAnalysisClosure(){
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
   TString uncertaintyFileName[2][2] = {
     // Uncertainty files for pT1*pT2 weight
-    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-01-22.root", "systematicUncertainties/systematicUncertainties_PbPb_noMCnonClosure_2024-01-22.root"},
+    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-01-29.root"},
     // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
-    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-01-22.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-01-19.root"}
+    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-01-29.root"}
   };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
@@ -161,7 +161,7 @@ void fullAnalysisClosure(){
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = false;
+  const bool saveMonteCarloNonClosureFile = true;
   TString outputFileName[2][2] = {
     // Output file names for pT1*pT2 weight
     {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_nominalEnergyWeight_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_%s.root", today.Data())},
