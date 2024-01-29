@@ -13,7 +13,7 @@ void fullAnalysisClosure(){
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
   bool isPbPbData = false;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 1;
+  const int weightExponent = 2;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){
@@ -157,7 +157,7 @@ void fullAnalysisClosure(){
   // Figure saving
   const bool saveFigures = true;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString saveComment = Form("%s_PythiaHydjet", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
+  TString saveComment = Form("%s_PythiaHerwig", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
