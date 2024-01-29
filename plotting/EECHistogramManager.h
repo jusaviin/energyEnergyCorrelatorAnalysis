@@ -44,6 +44,9 @@ public:
   // Indices for unfolding distributions
   enum enumUnfoldingDistribution{kUnfoldingMeasured, kUnfoldingTruth, knUnfoldingDistributionTypes};
 
+  // Indices for covariance matrices
+  enum enumCovarianceMatrix{kCovarianceMatrixMeasured, kCovarianceMatrixUnfolded, knCovarianceMatrixTypes};
+
   // Indices for track/particle matching histograms
   enum enumTrackParticleMatchingQA{kNumberOfParticlesCloseToTrack, kHasMatchingParticle, knTrackParticleMatchingQAHistograms};
   enum enumTrackParticleMatchingResponse{kTrackParticleMatchingDeltaRRresponse, kTrackParticleMatchingPtResponse, knTrackParticleMatchingResponseTypes};
@@ -111,7 +114,7 @@ private:
   const char* fJetPtResponseMatrixName = "jetPtUnfoldingResponse";
   const char* fJetPtOneDimensionalUnfoldingDistributionName[knUnfoldingDistributionTypes] = {"oneDimensionalJetPtUnfoldingMeasured", "oneDimensionalJetPtUnfoldingTruth"};
   const char* fJetPtOneDimensionalResponseMatrixName = "oneDimensionalJetPtUnfoldingResponse";
-  const char* fJetPtCovarianceMatrixName = "jetPtUnfoldingCovariance";
+  const char* fJetPtCovarianceMatrixName[knCovarianceMatrixTypes] = {"jetPtUnfoldingCovariance", "jetPtCovarianceAfterUnfolding"};
 
   // Naming for track/particle matching histograms
   const char* fTrackParticleMatchingQAName[knTrackParticleMatchingQAHistograms] = {"particlesCloseToTracks","tracksWithMatchedParticle"};
@@ -132,6 +135,7 @@ public:
   void WriteProcessed(const char* fileName, const char* fileOption); // Write the processed histograms into a file
   void WriteUnfoldedEnergyEnergyCorrelators(const char* fileName, const char* fileOption); // Write the unfolded energy-energy correlators to a file
   void WriteProcessedAfterUnfolding(const char* fileName, const char* fileOption); // Write the processed energy-energy correlators after unfolding into a file
+  void WriteCovarianceMatrixAfterUnfolding(const char* fileName, const char* fileOption); // Write the unfolded covariance matrices into a file
   void LoadProcessedHistograms(); // Load processed histograms from the inputfile
   
   // Setters for binning information
@@ -197,6 +201,7 @@ public:
   
   // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
   void SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt);
+  void SetUnfoldedCoverianceMatrix(const TH2D* unfoldedCovarianceMatrix, const int iCentrality, const int iTrackPt);
 
   // Getters for number of bins in histograms
   int GetNCentralityBins() const;          // Getter for the number of centrality bins
@@ -237,6 +242,8 @@ public:
   
   const char* GetMaxParticlePtWithinJetConeSaveName(const int iMaxParticlePtWithinJetConeType) const; // Getter for maximum particle pT within jet cone save name
   const char* GetMaxParticlePtWithinJetConeAxisName(const int iMaxParticlePtWithinJetConeType) const; // Getter for maximum particle pT within jet cone axis name
+
+  const char* GetJetPtUnfoldingCovarianceSaveName(const int iCovarianceType) const; // Getter for the save name for covariance matrices
   
   TString GetSystem() const;  // Getter for collision system
   
@@ -296,7 +303,7 @@ public:
   TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const; // Getter for measured jet pT unfolding distribution
   TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
   TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
-  TH2D* GetHistogramJetPtUnfoldingCovariance(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding covariance
+  TH2D* GetHistogramJetPtUnfoldingCovariance(const int iCovarianceMatrixType, const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding covariance
 
   TH1D* GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality) const; // Getter for measured jet pT one dimensional unfolding distribution
   TH1D* GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality) const;    // Getter for truth jet pT one dimensional unfolding distribution
@@ -451,7 +458,7 @@ private:
   // Histograms for jet pT unfolding study
   TH1D* fhJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
   TH2D* fhJetPtUnfoldingResponse[kMaxCentralityBins][kMaxTrackPtBinsEEC];
-  TH2D* fhJetPtUnfoldingCovariance[kMaxCentralityBins][kMaxTrackPtBinsEEC];
+  TH2D* fhJetPtUnfoldingCovariance[knCovarianceMatrixTypes][kMaxCentralityBins][kMaxTrackPtBinsEEC];
 
   // Histograms for one-dimensional jet pT unfolding study
   TH1D* fhOneDimensionalJetPtUnfoldingDistribution[knUnfoldingDistributionTypes][kMaxCentralityBins];

@@ -1255,6 +1255,7 @@ void EECDrawer::DrawCovarianceMatrices(){
   TString compactCentralityString;
   TString trackPtString;
   TString compactTrackPtString;
+  TString covarianceString;
   TString namerX;
   TString namerY;
 
@@ -1264,37 +1265,42 @@ void EECDrawer::DrawCovarianceMatrices(){
   fDrawer->SetTitleOffsetY(0.8);
   fDrawer->SetTitleOffsetX(1.2);
   
-  // Loop over centrality
-  for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
-    
-    centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
-    compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+  // Loop over covariance matrix types
+  for(int iCovarianceMatrixType = 0; iCovarianceMatrixType < EECHistogramManager::knCovarianceMatrixTypes; iCovarianceMatrixType++){
+    covarianceString = fHistograms->GetJetPtUnfoldingCovarianceSaveName(iCovarianceMatrixType);
 
-    for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+    // Loop over centrality
+    for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
+    
+      centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+      compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
 
-      trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-      compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
-      compactTrackPtString.ReplaceAll(".","v");
+      for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
+
+        trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+        compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+        compactTrackPtString.ReplaceAll(".","v");
     
-      // Select logarithmic z-axis scale
-      fDrawer->SetLogZ(true);
+        // Select logarithmic z-axis scale
+        fDrawer->SetLogZ(true);
     
-      // === Covariance matrix ===
-      drawnHistogram = fHistograms->GetHistogramJetPtUnfoldingCovariance(iCentrality, iTrackPt);
-      namerX = "#Deltar #otimes jet p_{T}";
-      namerY = "#Deltar #otimes jet p_{T}";
-      fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),namerY.Data()," ",fStyle2D);
-      legend = new TLegend(0.17,0.7,0.37,0.9);
-      SetupLegend(legend,centralityString,trackPtString);
-      legend->Draw();
+        // === Covariance matrix ===
+        drawnHistogram = fHistograms->GetHistogramJetPtUnfoldingCovariance(iCovarianceMatrixType, iCentrality, iTrackPt);
+        if(drawnHistogram == NULL) continue; // Cannot draw the histogram if it does not exist
+        namerX = "#Deltar #otimes jet p_{T}";
+        namerY = "#Deltar #otimes jet p_{T}";
+        fDrawer->DrawHistogram(drawnHistogram,namerX.Data(),namerY.Data()," ",fStyle2D);
+        legend = new TLegend(0.17,0.7,0.37,0.9);
+        SetupLegend(legend,covarianceString,centralityString,trackPtString);
+        legend->Draw();
     
-      // Save the figures to file
-      namerX = "covarianceMatrix";
-      SaveFigure(namerX,compactCentralityString,compactTrackPtString);
+        // Save the figures to file
+        SaveFigure(covarianceString,compactCentralityString,compactTrackPtString);
     
-    } // Track pT loop
+      } // Track pT loop
     
-  } // Centrality loop
+    } // Centrality loop
+  }
 
   // Change right margin back to 1D-drawing
   fDrawer->SetTitleOffsetY(1.1);

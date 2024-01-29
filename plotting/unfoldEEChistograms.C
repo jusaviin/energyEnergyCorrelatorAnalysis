@@ -184,7 +184,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   const int nUnfoldedJetPtBins = unfoldedJetPtBins.size();
 
-  bool includeCovariance = true;
+  bool includeCovariance = false;
 
   bool saveFigures = false;
   TString saveComment = "_matrixInversion";
@@ -220,6 +220,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   TH2D* hUnfoldingResponse[nCentralityBins][nTrackPtBins];
   TH2D* hUnfoldingCovariance[nCentralityBins][nTrackPtBins];
   TH1D* hUnfoldedDistribution[nCentralityBins][nTrackPtBins];
+  TH2D* hCovarianceAfterUnfolding[nCentralityBins][nTrackPtBins];
   TH1D* energyEnergyCorrelatorForUnfolding[nCentralityBins][nTrackPtBins];
   TH1D* energyEnergyCorrelatorsFromData[nCentralityBins][nJetPtBins][nTrackPtBins];
 
@@ -233,6 +234,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       hUnfoldingTruth[iCentrality][iTrackPt] = NULL;
       hUnfoldingResponse[iCentrality][iTrackPt] = NULL;
       hUnfoldingCovariance[iCentrality][iTrackPt] = NULL;
+      hCovarianceAfterUnfolding[iCentrality][iTrackPt] = NULL;
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt] = NULL;
       rooResponse[iCentrality][iTrackPt] = NULL;
       hUnfoldedDistribution[iCentrality][iTrackPt] = NULL;
@@ -261,19 +263,13 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
       // Read the covariance matrix from the data file
       if(includeCovariance) {
-        hUnfoldingCovariance[iCentrality][iTrackPt] = dataHistograms->GetHistogramJetPtUnfoldingCovariance(iCentrality, iTrackPt);
+        hUnfoldingCovariance[iCentrality][iTrackPt] = dataHistograms->GetHistogramJetPtUnfoldingCovariance(EECHistogramManager::kCovarianceMatrixMeasured, iCentrality, iTrackPt);
+        hCovarianceAfterUnfolding[iCentrality][iTrackPt] = (TH2D*) hUnfoldingCovariance[iCentrality][iTrackPt]->Clone(Form("covarianceAfterUnfolding%d%d", iCentrality, iTrackPt));
+        hCovarianceAfterUnfolding[iCentrality][iTrackPt]->Reset();
       }
 
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
         energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt] = dataHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
-
-        // TODO TODO TODO DEBUG DEBUG DEBUG
-        // Normalize the distributions to the number of jets and see if this affect errors with covariances
-        jetPtBinBorders = dataCard->GetBinBordersJetPtEEC(iJetPt);
-        normalizationFactor = dataHistograms->GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
-        if(normalizationFactor > 0){
-          energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Scale(1.0 / normalizationFactor);
-        }
 
       } // Measured jet pT loop
     } // Track pT loop
@@ -291,14 +287,8 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       for(int iJetPt = 0; iJetPt < nJetPtBins; iJetPt++){
         jetPtLowerBound = dataCard->GetLowBinBorderJetPtEEC(iJetPt);
         for(int iBin = 1; iBin <= nDeltaRBinsData; iBin++){
-          // Check what happens if the measured jet pT is capped at 80
-          if(jetPtLowerBound < 80){
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, 0);
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, 0);
-          } else {
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
-          }
+          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
+          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
         } // DeltaR bin loop
       } // Jet pT loop
     } // Track pT loop
@@ -332,9 +322,19 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
         }
         bayesUnfold[iCentrality][iTrackPt]->SetMeasuredCov(covarianceMatrix);
 
+        // After unfolding, extract the unfolded coveriance matrix
+        TMatrixD unfoldedCovarianceMatrix = bayesUnfold[iCentrality][iTrackPt]->Eunfold(RooUnfolding::kCovariance);
+
+        // Put the information from TMatrixD to TH2D:
+        for(int iBin = 0; iBin < nMatrixBins; iBin++){
+          for(int jBin = 0; jBin < nMatrixBins; jBin++){
+            hCovarianceAfterUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin+1, jBin+1, unfoldedCovarianceMatrix(iBin, jBin));
+          }
+        }
+
         // Do the actual unfolding
         hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kCovariance);
-      
+
       } else {
 
         // Do the actual unfolding
@@ -399,12 +399,6 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
           hUnfolded[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinError(iBin + nDeltaRBins*jetPtUnfoldIndex) / hUnfoldedDistribution[iCentrality][iTrackPt]->GetBinWidth(iBin));
         } // DeltaR bin loop
 
-        // TODO TODO TODO DEBUG DEBUG DEBUG
-        // After unfolded histograms have been dissected, undo the normalization to the number of jets
-        jetPtBinBorders = dataCard->GetBinBordersJetPtEEC(jetPtUnfoldIndex);
-        normalizationFactor = dataHistograms->GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
-        energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->Scale(normalizationFactor);
-
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
@@ -433,12 +427,14 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
   histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus);
   histogramsSavedToFile->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus);
+  histogramsSavedToFile->SetLoadJetPtUnfoldingCovariance(includeCovariance);
   histogramsSavedToFile->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
   histogramsSavedToFile->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
   histogramsSavedToFile->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
 
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+      if(includeCovariance) histogramsSavedToFile->SetUnfoldedCoverianceMatrix(hCovarianceAfterUnfolding[iCentrality][iTrackPt], iCentrality, iTrackPt);
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         jetPtUnfoldIndex = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
         histogramsSavedToFile->SetUnfoldedEnergyEnergyCorrelator(hUnfolded[iCentrality][iJetPt][iTrackPt], iEnergyEnergyCorrelator, iCentrality, jetPtUnfoldIndex, iTrackPt);
@@ -447,4 +443,5 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   } // Centrality loop
 
   histogramsSavedToFile->WriteUnfoldedEnergyEnergyCorrelators(outputFileName, "UPDATE");
+  if(includeCovariance) histogramsSavedToFile->WriteCovarianceMatrixAfterUnfolding(outputFileName, "UPDATE");
 }
