@@ -9,11 +9,11 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_squareEECweight_processed_2023-10-23.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_noRecoJetsInRefCone_processed_2023-11-30.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_testClosureOldScales_processed_2023-10-10.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_forBackgroundValidation_processed_2023-07-11.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -42,7 +42,7 @@ void validateBackgroundSubtraction(){
   
   // Select which histograms are fitted
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnJetPtBinEEC = 6;
   int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
@@ -76,7 +76,7 @@ void validateBackgroundSubtraction(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_squareEnergyWeight";   // Comment given for this specific file
+  const char* saveComment = "_nominalEnergyWeight";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -212,9 +212,10 @@ void validateBackgroundSubtraction(){
           compactTrackPtString.ReplaceAll(".","v");
           
           // Create a legend for the figure
-          legend = new TLegend(0.34,0.08,0.59,0.44);
+          legend = new TLegend(0.34,0.04,0.59,0.44);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
           legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",histograms->GetCard()->GetAlternativeDataType(false).Data()), "");
+          //legend->AddEntry((TObject*) 0, "Energy weight squared","");
           legend->AddEntry((TObject*) 0, centralityString.Data(),"");
           legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
           legend->AddEntry((TObject*) 0, trackPtString.Data(),"");

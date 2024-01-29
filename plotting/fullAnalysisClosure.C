@@ -11,7 +11,7 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = false;
+  bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
   const int weightExponent = 1;
 
@@ -155,13 +155,13 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
+  const bool saveFigures = true;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
   TString saveComment = Form("%s_PythiaHydjet", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = true;
+  const bool saveMonteCarloNonClosureFile = false;
   TString outputFileName[2][2] = {
     // Output file names for pT1*pT2 weight
     {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_nominalEnergyWeight_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_%s.root", today.Data())},

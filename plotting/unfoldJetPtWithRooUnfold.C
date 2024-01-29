@@ -112,7 +112,7 @@ void unfoldJetPtWithRooUnfold(){
   // **********************************
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_responseMatrix_processed_2024-01-11.root";
+  TString unfoldingInputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_responseMatrix_processed_2024-01-16.root";
   // ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_unfoldingTestPart1_processed_2023-05-09.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_genPtWeight_responseMatrix_part1_processed_2023-06-15.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_responseMatrix_part1_processed_2023-07-11.root
@@ -123,7 +123,7 @@ void unfoldJetPtWithRooUnfold(){
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_reconstructedReference_part2_processed_2024-01-11.root";
+  energyEnergyCorrelatorInputFileName[kDataFile] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part2_processed_2023-06-05.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_part2_processed_2023-07-11.root
   // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_reconstructedReference_part2_processed_2024-01-11.root
@@ -131,7 +131,7 @@ void unfoldJetPtWithRooUnfold(){
   // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2024-01-10.root
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_nominalSmear_reconstructedReference_part2_processed_2023-10-30.root
 
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-11.root";
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-16.root";
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part2_2023-06-15.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_regularHistogramsTruthReferece_part2_processed_2023-05-09.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_part2_processed_2023-07-11.root
@@ -256,7 +256,7 @@ void unfoldJetPtWithRooUnfold(){
   int lastStudiedCentralityBin = nCentralityBins-1;
   
   int firstStudiedTrackPtBinEEC = 3;
-  int lastStudiedTrackPtBinEEC = 3;
+  int lastStudiedTrackPtBinEEC = 5;
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;
@@ -271,19 +271,19 @@ void unfoldJetPtWithRooUnfold(){
   // centrality = {0,10,30,50,90}
 
   const bool useBackgroundSubtractedForMeasured = false; // true = Unfold background subtracted measurement, false = Unfold measurement before background subtraction
-  const int iUnfoldMethod = kBayesianUnfold; // Select the unfolding method
+  const int iUnfoldMethod = kBayesianUnfold; // Select the unfolding method: kMatrixInversionUnfold kBayesianUnfold
   const int nIterations = (iUnfoldMethod == kMatrixInversionUnfold) ? 1 : 5; // Number of iterations used with the regularized unfolding
-  const int iterationKey[] = {1,2,3,4,5};
+  const int iterationKey[] = {10,20,30,40,50};
   const bool calculateConditionNumber = false;
 
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
   const bool drawTruthToTruthComparison = false;       // Compare truth from unfolding histograms to truth from energy-energy correlator histograms
   const bool drawMeasuredToMeasuredComparison = false; // Compare reconstructed unfolding histograms to reconstructed energy-energy correlator histograms
-  const bool drawResponseMatrix = true;               // Draw the used response matrices
-  const bool drawRefoldingTest = false;                // Compare refolded distribution to the original measured distribution
+  const bool drawResponseMatrix = false;               // Draw the used response matrices
+  const bool drawRefoldingTest = true;                // Compare refolded distribution to the original measured distribution
 
   bool saveFigures = true;
-  TString saveComment = "_example";
+  TString saveComment = "_dAgostini_data_allTheIterations";
   TString figureFormat = "pdf";
     
   // ***************************************************************

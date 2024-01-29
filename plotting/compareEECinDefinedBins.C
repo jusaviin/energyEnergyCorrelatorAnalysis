@@ -8,16 +8,20 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 2;
+  const int nComparisonFiles = 5;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_newTrackPairEfficiencySmoothed_unfoldingWithNominalSmear_processed_2023-07-13.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root";
-  //fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root";
+  fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
+  fileName[3] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith10Iterations_processed_2024-01-17.root";
+  fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Old";
-  fileDescription[1] = "New";
-  //fileDescription[2] = "5 iterations";
+  fileDescription[0] = "4 iterations";
+  fileDescription[1] = "3 iterations";
+  fileDescription[2] = "5 iterations";
+  fileDescription[3] = "10 iterations";
+  fileDescription[4] = "20 iterations";
   
   // Open the files and check that they exist
   TFile* inputFile[nComparisonFiles];
@@ -83,12 +87,12 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_energyWeightComparison";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_energyWeightSquared_iterationComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
+  std::pair<double, double> ratioZoom = std::make_pair(0.7, 1.3);
   std::pair<double, double> eecZoom = std::make_pair(0.05, 50);
 
   // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
@@ -373,8 +377,9 @@ void compareEECinDefinedBins(){
   TString compactTrackPtString = "";
   TString comparedVariableString = "";
   TString ratioName = "";
+  TString energyWeightString = (card[0]->GetWeightExponent() == 1) ? "Nominal energy weight" : "Energy weight squared";
   TString legendString;
-  int markerStyle[4] = {kFullCircle, kOpenSquare, kOpenCross, kFullStar};
+  int markerStyle[5] = {kFullCircle, kOpenSquare, kOpenCross, kFullStar, kFullCross};
   int color[] = {kBlack,kRed,kBlue,kGreen+3,kMagenta,kCyan,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
 
   // Binning vectors
@@ -455,6 +460,8 @@ void compareEECinDefinedBins(){
       compactTrackPtString = "";
       comparedVariableString = "_trackPtComparison";
     }
+
+    legend->AddEntry((TObject*) 0, energyWeightString, "");
 
     // Set drawing style for all histograms
     colorFinder = 0;

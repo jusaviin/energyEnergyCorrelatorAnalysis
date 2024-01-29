@@ -8,7 +8,7 @@
 void compareRelativeUncertainties(){
   
   // Files for comparison
-  TString fileName = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_fixedCovarianceMatrix_correctNormalization_unfoldWithCovarianceMatrix_playWithNormalization_processed_2023-12-22.root";
+  TString fileName = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root";
   // eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_covarianceMatrix_unfoldingWithCovarianceMatrix_processed_2023-12-14.root
   // eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_covarianceMatrix_unfoldingOriginal_processed_2023-12-14.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_covarianceMatrix_jet60or80triggers_unfoldingWithCovarianceMatrix_processed_2023-12-14.root
@@ -76,7 +76,7 @@ void compareRelativeUncertainties(){
   std::pair<double, double> eecZoom = std::make_pair(0,0.5);
 
   // Figure saving
-  const bool saveFigures = false;  // Save figures
+  const bool saveFigures = true;  // Save figures
   const char* saveComment = "_pythia8";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
@@ -283,10 +283,9 @@ void compareRelativeUncertainties(){
           hEnergyEnergyCorrelatorRelativeUncertainty[iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, 0);
         }
 
-
         // Load the unfolded energy-energy correlator histograms
 
-        hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfolded);
+        hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
 
         // Normalize the distributions to one in the drawingRange
         lowNormalizationBin = hEnergyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.first + epsilon);
@@ -506,7 +505,7 @@ void compareRelativeUncertainties(){
     hEnergyEnergyCorrelatorUnfoldedRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
           
     // Draw the histograms to the upper canvas
-    drawer->DrawHistogram(hEnergyEnergyCorrelatorUnfoldedRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "Unfolded signal with covariance EEC relative error", " ");
+    drawer->DrawHistogram(hEnergyEnergyCorrelatorUnfoldedRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "Unfolded signal EEC relative error", " ");
 
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){

@@ -118,7 +118,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   TString systematicName[kNSystematicVariations] = {"nominalSmear", "uncertaintySmearDown", "uncertaintySmearUp", "minusJECuncertainty", "plusJECuncertainty", "nominalSmear_jetPtWeight"};
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_responseMatrix_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), iSplit);
+  TString unfoldingInputFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_responseMatrix_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), iSplit);
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_responseMatrix_part%d_processed_2023-06-02.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtResolution_responseMatrix_part%d_processed_2023-06-02.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix_part%d_processed_2023-06-02.root
@@ -138,7 +138,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_reconstructedReference_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), 3-iSplit);
+  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_reconstructedReference_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), 3-iSplit);
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part%d_processed_2023-06-05.root
   // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_reconstructedReference_part%d_processed_2023-06-15.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part%d_processed_2023-05-20.root
@@ -152,7 +152,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_reconstructedReference_part%d_processed_2023-07-06.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-10-24.root
 
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_%s_truthReference_part%d_processed_2023-12-02.root", systematicName[iSystematic].Data(), 3-iSplit);
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_truthReference_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), 3-iSplit);
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_truthReferenceForUnfolding_part%d_processed_2023-06-05.root
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part%d_processed_2023-06-15.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part%d_processed_2023-05-20.root
@@ -319,7 +319,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
 
   const bool writeChi2ToFile = true; // Write the chi2 histograms to file
-  TString outputFileName = Form("chi2Files/chi2Histograms_PbPb_energyWeightSquared_nominalReflectedCone_split%d_%s_4pCentShift_2023-12-04.root", iSplit, systematicName[iSystematic].Data());
+  TString outputFileName = Form("chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split%d_%s_4pCentShift_2024-01-17.root", iSplit, systematicName[iSystematic].Data());
 
   bool saveFigures = false;
   TString saveComment = "_bayesSwapped";
@@ -422,7 +422,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         hChi2map[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("chi2map%d%d%d", iCentrality, iTrackPt, iJetPt), Form("chi2map%d%d%d", iCentrality, iTrackPt, iJetPt), nIterations, 0.5, 0.5+nIterations);
-        hChi2mapForwardFold[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("chi2mapForwardFold%d%d%d", iCentrality, iTrackPt, iJetPt), Form("hci2mapForwardFold%d%d%d", iCentrality, iTrackPt, iJetPt), nIterations, 0.5, 0.5+nIterations);
+        hChi2mapForwardFold[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("chi2mapForwardFold%d%d%d", iCentrality, iTrackPt, iJetPt), Form("chi2mapForwardFold%d%d%d", iCentrality, iTrackPt, iJetPt), nIterations, 0.5, 0.5+nIterations);
         hErrorMap[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("errorMap%d%d%d", iCentrality, iTrackPt, iJetPt), Form("errorMap%d%d%d", iCentrality, iTrackPt, iJetPt), nIterations, 0.5, 0.5+nIterations);
       } // Jet pT loop
     } // Track pT loop
@@ -439,14 +439,8 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
       for(int iJetPt = 0; iJetPt < nJetPtBinsMeasured; iJetPt++){
         jetPtLowerBound = energyenergyCorrelatorCard[kDataFile]->GetLowBinBorderJetPtEEC(iJetPt);
         for(int iBin = 1; iBin <= nDeltaRBinsData; iBin++){
-          // Check what happens if the measured jet pT is capped at 80
-          if(jetPtLowerBound < 80){
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, 0);
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, 0);
-            } else {
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
-            energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
-          }
+          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinContent(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinContent(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
+          energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->SetBinError(iBin + nDeltaRBinsData*iJetPt, energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * energyEnergyCorrelatorsFromData[iCentrality][iJetPt][iTrackPt]->GetBinWidth(iBin));
         } // DeltaR bin loop
       } // Jet pT loop
     } // Track pT loop
@@ -534,7 +528,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
 
   // Dissect the big histograms and fill small histograms based on the information
   // Also normalize the bins to bin width and histograms to one in the defined range
-  double normalizationRegionLow = 0.006;
+  double normalizationRegionLow = 0.008;
   double normalizationRegionHigh = 0.39;
   int jetPtUnfoldIndexMeasured = 0;
   int jetPtUnfoldIndexTruth = 0;
@@ -607,6 +601,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
+
           chiSquare = hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Chisquare(testFunction, "R");
           hChi2map[iCentrality][iJetPt][iTrackPt]->SetBinContent(iIteration+1,chiSquare);
 

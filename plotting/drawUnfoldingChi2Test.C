@@ -13,7 +13,7 @@ void drawUnfoldingChi2Test(){
   // **********************************
 
   const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root", "chi2Files/chi2Histograms_PbPb_energyWeightSquared_split2_nominalSmear_4pCentShift_2023-10-26.root"};
+  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split1_nominalSmear_4pCentShift_2024-01-17.root", "chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split2_nominalSmear_4pCentShift_2024-01-17.root"};
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
@@ -119,14 +119,14 @@ void drawUnfoldingChi2Test(){
   int lastStudiedTrackPtBinEEC = 5;
 
   int firstStudiedJetPtBin = 0;
-  int lastStudiedJetPtBin = nJetPtBins-1;
+  int lastStudiedJetPtBin = nJetPtBins-2;
 
-  const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
-  const bool drawChi2combined = true;                 // Draw single good chi2 value for each response matrix determined from relevent region
+  const bool drawChi2map = true;                      // Draw the chi2 values for individual jet pT bins
+  const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawChi2mapForwardFolded = false;          // Draw the chi2 values for individual jet pT bins from forward folded distributions
   const bool drawChi2combinedForwardFolded = false;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
-  const bool drawBestIterationRatioComparison = true; // Draw unfolded to truth ratios for the selected number of iterations
+  const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
   const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
@@ -213,7 +213,7 @@ void drawUnfoldingChi2Test(){
     } // Centrality loop
   }
 
-  bool saveFigures = true;
+  bool saveFigures = false;
   TString saveComment = "_energyWeightSquared";
   TString figureFormat = "pdf";
 
@@ -383,7 +383,8 @@ void drawUnfoldingChi2Test(){
 
           // Set the track pT information for legends and figure saving
           trackPtString = Form("%.1f < track p_{T}", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
-          compactTrackPtString = Form("_T%.0f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+          compactTrackPtString = Form("_T%.1f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+          compactTrackPtString.ReplaceAll(".","v");
 
           // Find good y-ranges for plotting
           histogramYrange = std::make_pair(10e10, 0);

@@ -82,7 +82,7 @@ void relativeUncertaintyPlotter(){
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
-  const bool saveFigures = false;
+  const bool saveFigures = true;
   TString saveComment = "_optimizedUnfoldingBins";
 
   // Add a name describing the energy weight in the files

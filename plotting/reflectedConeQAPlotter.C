@@ -14,7 +14,10 @@ void reflectedConeQAPlotter(){
   // ============= //
   
   // Input files
-  TString dataFileName = "data/eecAnalysis_akFlowJet_wtaAxis_reflectedConeQA_processed_2023-08-17.root";
+  TString dataFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_noRecoJetsInRefCone_processed_2023-11-30.root";
+  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_truthReference_processed_2023-10-24.root
+  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_reconstructedReference_part1_processed_2023-10-24.root
+  // eecAnalysis_akFlowJet_wtaAxis_reflectedConeQA_processed_2023-08-17.root
   TFile* dataFile = TFile::Open(dataFileName);
 
   // Check that the input file exists

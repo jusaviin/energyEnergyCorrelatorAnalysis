@@ -142,9 +142,9 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = true;
+  bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   // Normalize all distributions to 2 GeV integral
@@ -152,7 +152,7 @@ void finalResultPlotter(){
   int trackPtBinFor2GeV[nWeightExponents];
   std::pair<int, int> trackPtBinsForDoubleRatio[nWeightExponents];
   trackPtBinsForDoubleRatio[0] = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][0]->GetBinIndexTrackPtEEC(3.0));
-  trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(3.0));
+  trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(1.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0));
   double trackPtForAllRatiosComparison = 2;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -167,7 +167,7 @@ void finalResultPlotter(){
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(120,140);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
@@ -175,7 +175,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_noCovariance";
+  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_withCovariance_lowpt_120<jetpt<140";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings

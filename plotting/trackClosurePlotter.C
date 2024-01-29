@@ -115,7 +115,7 @@ void trackClosurePlotter(){
   // Configuration //
   // ============= //
   
-  bool saveFigures = true;          // Save the figures to a file
+  bool saveFigures = false;          // Save the figures to a file
   TString saveComment = "_highPtTracks"; // Comment given to saved figures
     
   int ptRebin = 10;                  // Rebin for track pT closure histograms (there are 500 bins)

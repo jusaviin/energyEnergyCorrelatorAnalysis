@@ -123,12 +123,12 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   //inputFileName[kReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtUnfoldingTesting_noSmearing_allTheBins_part2_noBinWidthNormalization_processed_2024-01-03.root";
 
   // pp, analysis EEC bins
-  //inputFileName[kUnfoldingFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part1_processed_2024-01-09.root";
-  //inputFileName[kReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part2_processed_2024-01-09.root";
+  inputFileName[kUnfoldingFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part1_processed_2024-01-09.root";
+  inputFileName[kReferenceFile] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_1DjetPtUnfolding_asymmetricBinsV3_part2_processed_2024-01-09.root";
   
   // PbPb, analysis EEC bins
-  inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part1_processed_2024-01-09.root";
-  inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part2_processed_2024-01-09.root";
+  //inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part1_processed_2024-01-09.root";
+  //inputFileName[kReferenceFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part2_processed_2024-01-09.root";
 
   // Testing
   //inputFileName[kUnfoldingFile] = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_1DjetPtUnfolding_asymmetricResponseMatrixV3_nominalSmear_part1_processed_2024-01-09.root";
@@ -233,11 +233,11 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
 
   std::pair<double,double> drawingRange = std::make_pair(80+0.1,500-0.1);
 
-  std::pair<double,double> ratioZoom = std::make_pair(0,2);
+  std::pair<double,double> ratioZoom = std::make_pair(0.9,1.1);
   if(!isPbPbData) ratioZoom = std::make_pair(0.96,1.04);
 
-  bool saveFigures = false;
-  TString saveComment = "_lowPtGenBins";
+  bool saveFigures = true;
+  TString saveComment = "_noMissesOrFakes";
   TString figureFormat = "pdf";
     
   // ***************************************************************
@@ -289,6 +289,10 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
       removeOutOfRange(hUnfoldingMeasured[iCentrality]);
       removeOutOfRange(hUnfoldingTruth[iCentrality]);
       removeOutOfRange(hUnfoldingResponse[iCentrality]);
+
+      // Test, to remove fakes and misses, just use projections of 2D histogram as an input
+      //hUnfoldingMeasured[iCentrality] = hUnfoldingResponse[iCentrality]->ProjectionX(Form("testProjectionX%d", iCentrality));
+      //hUnfoldingTruth[iCentrality] = hUnfoldingResponse[iCentrality]->ProjectionY(Form("testProjectionY%d", iCentrality));
 
       // Create the response object with trimmed histograms
       rooResponse[iCentrality] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality], hUnfoldingTruth[iCentrality], hUnfoldingResponse[iCentrality]);
@@ -371,10 +375,10 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
         }
 
         // Forward fold the unfolded distribution
-        //hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldedDistribution[iCentrality][iIteration], hUnfoldingResponse[iCentrality]);
+        hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldedDistribution[iCentrality][iIteration], hUnfoldingResponse[iCentrality]);
 
         // Forward fold the truth distribution
-        hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldingTruth[iCentrality], hUnfoldingResponse[iCentrality]);
+        //hForwardFoldedDistribution[iCentrality][iIteration] = forwardFold(hUnfoldingTruth[iCentrality], hUnfoldingResponse[iCentrality]);
       } // Iteration loop
     } // Centrality loop
   }
@@ -459,7 +463,7 @@ void unfoldJetPtWithRooUnfoldOneDimensional(){
   TString centralityString;
   TString compactCentralityString;
 
-  int iterationColor[] = {kBlue, kGreen+3, kMagenta, kCyan, kOrange, kViolet+3, kPink-7, kSpring+3, kAzure-7};
+  int iterationColor[] = {kBlue, kGreen+3, kCyan, kOrange, kMagenta, kViolet+3, kSpring+3, kPink-7, kAzure-7};
 
   if(drawUnfoldedToTruthComparison){
 
