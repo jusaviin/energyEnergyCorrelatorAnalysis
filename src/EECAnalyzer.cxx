@@ -506,7 +506,7 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetUncertainty2018) delete fJetUncertainty2018;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
   if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
-  if(fCovarianceHelper) delete fCovarianceHelper;
+  //if(fCovarianceHelper) delete fCovarianceHelper;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
   if(fCentralityWeightFunctionPeripheral) delete fCentralityWeightFunctionPeripheral;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
