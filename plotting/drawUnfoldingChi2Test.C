@@ -12,12 +12,16 @@ void drawUnfoldingChi2Test(){
   //       Open the input files
   // **********************************
 
-  const int nInputFiles = 2;
-  TString inputFileName[] = {"chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split1_nominalSmear_4pCentShift_2024-01-17.root", "chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split2_nominalSmear_4pCentShift_2024-01-17.root"};
+  const int nInputFiles = 1;
+  TString inputFileName[nInputFiles];
+  inputFileName[0] = "chi2Files/chi2HistogramsFromData_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_2024-01-22.root";
+  //inputFileName[1] = "chi2Files/chi2Histograms_PbPb_energyWeightSquared_optimizedUnfoldingBinning_split2_nominalSmear_4pCentShift_2024-01-11.root";
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
   // chi2Histograms_pp_energyWeightSquared_split1_nominalSmear_2023-10-31.root
+  // chi2Histograms_PbPb_energyWeightSquared_optimizedUnfoldingBinning_split1_nominalSmear_4pCentShift_2024-01-11.root
+  // chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split1_nominalSmear_4pCentShift_2024-01-17.root
 
   // Open the input files and read the card containing binning information
   TFile* inputFile[nInputFiles];
@@ -115,19 +119,20 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 1;
+  int firstStudiedTrackPtBinEEC = 3;
   int lastStudiedTrackPtBinEEC = 5;
 
-  int firstStudiedJetPtBin = 0;
-  int lastStudiedJetPtBin = nJetPtBins-2;
+  int firstStudiedJetPtBin = 3;
+  int lastStudiedJetPtBin = 3;
 
-  const bool drawChi2map = true;                      // Draw the chi2 values for individual jet pT bins
+  const bool drawChi2map = false;                      // Draw the chi2 values for individual jet pT bins
   const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawChi2mapForwardFolded = false;          // Draw the chi2 values for individual jet pT bins from forward folded distributions
   const bool drawChi2combinedForwardFolded = false;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
+  const bool drawForwardFoldedToMeasuredComparison = true;  // Compare measured distribution to forward folded distribution
   const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
-  const bool oneIterationPerMatrix = true;            // If drawing best iteration ratio, use single iteration number for each matrix 
+  const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
 
   int bestNumberOfIterations[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -137,6 +142,9 @@ void drawUnfoldingChi2Test(){
       }
     }
   }
+
+  // String for number of iterations
+  TString iterationString = "NIT iter";
 
   // Create unfolding configuration object to read the best number of iterations when one iteration per matrix is used
   EECUnfoldConfiguration* grandIterationOracle = new EECUnfoldConfiguration(unfoldingCard[0], 0, 0, 2);
@@ -214,8 +222,14 @@ void drawUnfoldingChi2Test(){
   }
 
   bool saveFigures = false;
-  TString saveComment = "_energyWeightSquared";
+  TString saveComment = "";
   TString figureFormat = "pdf";
+
+  if(unfoldingCard[0]->GetWeightExponent() == 1){
+    saveComment.Prepend("_nominalEnergyWeight");
+  } else {
+    saveComment.Prepend("_energyWeightSquared");
+  }
 
   // Histograms for chi2 and error2 map
   TH1D* hChi2map[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles+1];
@@ -253,36 +267,38 @@ void drawUnfoldingChi2Test(){
   } // File loop
 
   // Add all the files together for a combined result
-  for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
-    for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
-        hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2map[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2map%d%d%d", iCentrality, iTrackPt, iJetPt));
-        hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2mapForwardFolded%d%d%d", iCentrality, iTrackPt, iJetPt));
-        for(int iFile = 1; iFile < nInputFiles; iFile++){
-          hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
-          hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->Add(hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][iFile]);
-        }
-        for(int iBin = 1; iBin <= hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetNbinsX(); iBin++){
-          hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->SetBinContent(iBin, hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetBinContent(iBin) / nInputFiles);
-          hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->SetBinContent(iBin, hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetBinContent(iBin) / nInputFiles);
-        }
-      } // Jet pT loop
-    } // Track pT loop
-  } // Centrality loop
-
-  // Combine the chi2 values from each response matrix to a single grand chi2 value
-  for(int iFile = 0; iFile < nInputFiles+1; iFile++){
+  if(drawChi2combined || drawChi2combinedForwardFolded){
     for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
       for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
-        hChi2combined[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2map[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2%d%d%d", iCentrality, iTrackPt, iFile));
-        hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2mapForwardFolded[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2ForwardFolded%d%d%d", iCentrality, iTrackPt, iFile));
-        for(int iJetPt = firstStudiedJetPtBin+1; iJetPt <= lastStudiedJetPtBin; iJetPt++){
-          hChi2combined[iCentrality][iTrackPt][iFile]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
-          hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile]->Add(hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][iFile]);
-        }
+        for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
+          hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2map[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2map%d%d%d", iCentrality, iTrackPt, iJetPt));
+          hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles] = (TH1D*) hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][0]->Clone(Form("averageChi2mapForwardFolded%d%d%d", iCentrality, iTrackPt, iJetPt));
+          for(int iFile = 1; iFile < nInputFiles; iFile++){
+            hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
+            hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->Add(hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][iFile]);
+          }
+          for(int iBin = 1; iBin <= hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetNbinsX(); iBin++){
+            hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->SetBinContent(iBin, hChi2map[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetBinContent(iBin) / nInputFiles);
+            hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->SetBinContent(iBin, hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][nInputFiles]->GetBinContent(iBin) / nInputFiles);
+          }
+        } // Jet pT loop
       } // Track pT loop
     } // Centrality loop
-  } // File loop
+
+    // Combine the chi2 values from each response matrix to a single grand chi2 value
+    for(int iFile = 0; iFile < nInputFiles+1; iFile++){
+      for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+          hChi2combined[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2map[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2%d%d%d", iCentrality, iTrackPt, iFile));
+          hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile] = (TH1D*) hChi2mapForwardFolded[iCentrality][firstStudiedJetPtBin][iTrackPt][iFile]->Clone(Form("combinedChi2ForwardFolded%d%d%d", iCentrality, iTrackPt, iFile));
+          for(int iJetPt = firstStudiedJetPtBin+1; iJetPt <= lastStudiedJetPtBin; iJetPt++){
+            hChi2combined[iCentrality][iTrackPt][iFile]->Add(hChi2map[iCentrality][iJetPt][iTrackPt][iFile]);
+            hChi2combinedForwardFolded[iCentrality][iTrackPt][iFile]->Add(hChi2mapForwardFolded[iCentrality][iJetPt][iTrackPt][iFile]);
+          }
+        } // Track pT loop
+      } // Centrality loop
+    } // File loop
+  }
 
   // Determine the number of iterations from the chi2 histograms
   const int nIterations = hChi2map[firstStudiedCentralityBin][0][firstStudiedTrackPtBinEEC][0]->GetNbinsX();
@@ -293,6 +309,7 @@ void drawUnfoldingChi2Test(){
   TH1D* hUnfolded[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nIterations][nInputFiles];
   TH1D* hMeasuredToTruthRatio[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nInputFiles];
   TH1D* hUnfoldedToTruthRatio[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nIterations][nInputFiles];
+  TH1D* hForwardFoldedToMeasuredRatio[nCentralityBins][nJetPtBins][nTrackPtBinsEEC][nIterations][nInputFiles];
 
   // Initialize the energy-energy correlator distributions and their ratios to NULL
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -305,6 +322,7 @@ void drawUnfoldingChi2Test(){
           for(int iIteration = 0; iIteration < nIterations; iIteration++){
             hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = NULL;
             hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = NULL;
+            hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = NULL;
           }
         } // File loop
       } // Jet pT loop
@@ -322,6 +340,7 @@ void drawUnfoldingChi2Test(){
           for(int iIteration = 0; iIteration < nIterations; iIteration++) {
             hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = (TH1D*) inputFile[iFile]->Get(Form("unfolded/hUnfolded%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
             hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = (TH1D*) inputFile[iFile]->Get(Form("unfoldedToTruthRatio/unfoldedToTruthRatio%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
+            hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iFile] = (TH1D*) inputFile[iFile]->Get(Form("forwardFoldedToMeasuredRatio/unfoldedToTruthRatio%d%d%d%d", iCentrality, iTrackPt, iJetPt, iIteration));
           } // Iteration loop
         } // Jet pT loop
       } // Track pT loop
@@ -343,6 +362,8 @@ void drawUnfoldingChi2Test(){
   // Helper variables
   TLegend* legend;
   TLegend* lowLegend;
+  const int nIterationLegends = 4;
+  TLegend* iterationLegend[nIterationLegends];
   TString centralityString;
   TString compactCentralityString;
   TString jetPtString;
@@ -354,8 +375,17 @@ void drawUnfoldingChi2Test(){
   int fileMarker[] = {kFullSquare, kFullCircle, kFullDiamond, kFullCross};
   std::pair<double,double> histogramYrange;
   AlgorithmLibrary* methods = new AlgorithmLibrary();
-  double normalizationRegionLow = 0.006;
+  double normalizationRegionLow = 0.008;
   double normalizationRegionHigh = 0.39;
+
+  // Automatically extract colors for iterations:
+  gStyle->SetPalette(kBird);
+  auto niceColors =  TColor::GetPalette();
+  double step = 254.0/nIterations;
+  int iterationColor[nIterations];
+  for(int iIteration = 0; iIteration < nIterations; iIteration++){
+    iterationColor[iIteration] = niceColors.At(TMath::Ceil(iIteration*step));
+  }
 
   TLine* oneLine = new TLine(normalizationRegionLow, 1, normalizationRegionHigh, 1);
   oneLine->SetLineStyle(2);
@@ -702,96 +732,164 @@ void drawUnfoldingChi2Test(){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Unfolded to truth comparison
-
-  drawer->SetDefaultAppearanceSplitCanvas();
-  drawer->SetRelativeCanvasSize(1.1,1.1);
-  drawer->SetLeftMargin(0.14);
-  drawer->SetTopMargin(0.07);
-  drawer->SetTitleOffsetY(1.7);
-  drawer->SetTitleOffsetX(1.0);
+  } // Best iteration comparison
 
   if(drawUnfoldedToTruthComparison){
 
-    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+    // In order not to draw too much curves to one plot, treat the two splits separately
+    for(int iSplit = 0; iSplit < nInputFiles; iSplit++){
 
-      // Set the centrality information for legends and figure saving
-      if(isPbPbData) {
-        centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard[0]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[0]->GetHighBinBorderCentrality(iCentrality));
-        compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard[0]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[0]->GetHighBinBorderCentrality(iCentrality));
-      } else {
-        centralityString = "Pythia8";
-        compactCentralityString = "_pythia8";
-      }
+      for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
-      for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
+         // Set the centrality information for legends and figure saving
+        if(isPbPbData) {
+          centralityString = Form("Pythia+Hydjet: %.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[iSplit]->GetHighBinBorderCentrality(iCentrality));
+          compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[iSplit]->GetHighBinBorderCentrality(iCentrality));
+        } else {
+          centralityString = "Pythia8";
+          compactCentralityString = "_pythia8";
+        }
 
-        // Set the jet pT information for legends and figure saving
-        jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
-        compactJetPtString = Form("_J=%.0f-%.0f", unfoldingCard[0]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[0]->GetHighBinBorderJetPtEEC(iJetPt));
+        for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
 
-        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+          // Set the jet pT information for legends and figure saving
+          jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[iSplit]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[iSplit]->GetHighBinBorderJetPtEEC(iJetPt));
+          compactJetPtString = Form("_J=%.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[iSplit]->GetHighBinBorderJetPtEEC(iJetPt));
 
-          // Create a new canvas for the plot
-          drawer->CreateSplitCanvas();
+          for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          // Set the track pT information for legends and figure saving
-          trackPtString = Form("%.1f < track p_{T}", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
-          compactTrackPtString = Form("_T%.0f", unfoldingCard[0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            // Set the track pT information for legends and figure saving
+            trackPtString = Form("%.1f < track p_{T}", unfoldingCard[iSplit]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString = Form("_T%.1f", unfoldingCard[iSplit]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".","v");
+              
+            // Draw the ratios to the canvas
+            for(int iIteration = 0; iIteration < nIterations; iIteration++){
+              hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->SetLineColor(iterationColor[iIteration]);
+              if(iIteration == 0){
+                hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->GetYaxis()->SetRangeUser(0.8, 1.2);
+                hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+                drawer->DrawHistogram(hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit], "#Deltar", "Ratio to truth", " ", "");
+              } else {
+                hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->Draw("same");
+              }
+            }
 
-          // Draw first the generator level distribution
-          hTruth[iCentrality][iJetPt][iTrackPt][0]->SetLineColor(kBlack);
-          hTruth[iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
-          drawer->SetLogY(true);
-          drawer->DrawHistogramToUpperPad(hTruth[iCentrality][iJetPt][iTrackPt][0], "#Deltar", "EEC", " ", "");
+            // Add a legend to the figure
+            legend = new TLegend(0.2, 0.75, 0.5, 0.9);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
 
-          // Add the reconstructed and unfolded distributions to the same plot
-          hMeasured[iCentrality][iJetPt][iTrackPt][0]->SetLineColor(kRed);
-          hMeasured[iCentrality][iJetPt][iTrackPt][0]->Draw("same");
+            legend->AddEntry((TObject*)0, Form("Split %d   %s", iSplit+1, centralityString.Data()), "");
+            legend->AddEntry((TObject*)0, Form("%s   %s", jetPtString.Data(), trackPtString.Data()), "");
+              
 
-          //for(int iIteration = 0; iIteration < nIterations; iIteration++){
-          //  hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->SetLineColor(iterationColor[iIteration]);
-          //  hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration]->Draw("same");
-          //} 
+            // Put the iteration numbers to different legend
+            for(int iIterationLegend = 0; iIterationLegend < nIterationLegends; iIterationLegend++){
+              iterationLegend[iIterationLegend] = new TLegend(0.17+0.19*iIterationLegend, 0.18, 0.4+0.19*iIterationLegend, 0.38);
+              iterationLegend[iIterationLegend]->SetFillStyle(0); 
+              iterationLegend[iIterationLegend]->SetBorderSize(0); 
+              iterationLegend[iIterationLegend]->SetTextSize(0.05); 
+              iterationLegend[iIterationLegend]->SetTextFont(62);
+            }
 
-          // Add a legend to the figure
-          legend = new TLegend(0.25, 0.18, 0.5, 0.48);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+            for(int iIteration = 0; iIteration < nIterations; iIteration++){
+              iterationLegend[iIteration/(nIterations/nIterationLegends)]->AddEntry(hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit], Form("%s", iterationString.ReplaceAll("NIT",Form("%d",iIteration+1)).Data()), "l");
+              iterationString.ReplaceAll(Form("%d",iIteration+1),"NIT");
+            }
 
-          legend->AddEntry((TObject*)0, centralityString.Data(), "");
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+            oneLine->Draw();
+            legend->Draw();
+            for(int iIterationLegend = 0; iIterationLegend < nIterationLegends; iIterationLegend++){
+              iterationLegend[iIterationLegend]->Draw();
+            }
 
-          legend->AddEntry(hTruth[iCentrality][iJetPt][iTrackPt][0], "Generator level reference", "l");
-          legend->AddEntry(hMeasured[iCentrality][iJetPt][iTrackPt][0], "Reconstructed jets + gen particles", "l");
-          //for(int iIteration = 0; iIteration < nIterations; iIteration++){
-          //  legend->AddEntry(hUnfolded[iCentrality][iJetPt][iTrackPt][iIteration], Form("Unfolded result (%s)", unfoldName.ReplaceAll("NIT",Form("%d",iIteration+1)).Data()), "l");
-          //  unfoldName.ReplaceAll(Form("%d",iIteration+1),"NIT");
-          //}
+            // Save the figures to a file
+            if(saveFigures) {
+              gPad->GetCanvas()->SaveAs(Form("figures/unfoldedToTruthRatioCheck%s_split%d%s%s%s.%s", saveComment.Data(), iSplit+1, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+            }
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // MC split loop
+  } // Unfolded to truth comparison
 
-          legend->Draw();
+  if(drawForwardFoldedToMeasuredComparison){
 
-          // Draw the ratios to lower pad
-          drawer->SetLogY(false);
-          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt][0]->SetLineColor(kRed);
-          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(0.8, 1.2);
-          hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
-          drawer->DrawHistogramToLowerPad(hMeasuredToTruthRatio[iCentrality][iJetPt][iTrackPt][0], "#Deltar", "Ratio to truth", " ", "");
+    // In order not to draw too much curves to one plot, treat the two splits separately
+    for(int iSplit = 0; iSplit < nInputFiles; iSplit++){
 
-          //for(int iIteration = 0; iIteration < nIterations; iIteration++){
-          //  hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration]->SetLineColor(iterationColor[iIteration]);
-          //  hUnfoldedToTruthRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Draw("same");
-          //}
+      for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
 
-          oneLine->Draw();
+         // Set the centrality information for legends and figure saving
+        if(isPbPbData) {
+          centralityString = Form("PbPb: %.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[iSplit]->GetHighBinBorderCentrality(iCentrality));
+          compactCentralityString = Form("_C%.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderCentrality(iCentrality), unfoldingCard[iSplit]->GetHighBinBorderCentrality(iCentrality));
+        } else {
+          centralityString = "pp";
+          compactCentralityString = "_pp";
+        }
 
-          // Save the figures to a file
-          if(saveFigures) {
-            gPad->GetCanvas()->SaveAs(Form("figures/jetPtUnfoldingWithRooUnfoldTruthCheck%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
-          }
-        } // Track pT loop
-      } // Jet pT loop
-    } // Centrality loop
+        for(int iJetPt = firstStudiedJetPtBin; iJetPt <= lastStudiedJetPtBin; iJetPt++){
+
+          // Set the jet pT information for legends and figure saving
+          jetPtString = Form("%.0f < jet p_{T} < %.0f", unfoldingCard[iSplit]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[iSplit]->GetHighBinBorderJetPtEEC(iJetPt));
+          compactJetPtString = Form("_J=%.0f-%.0f", unfoldingCard[iSplit]->GetLowBinBorderJetPtEEC(iJetPt), unfoldingCard[iSplit]->GetHighBinBorderJetPtEEC(iJetPt));
+
+          for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+            // Set the track pT information for legends and figure saving
+            trackPtString = Form("%.1f < track p_{T}", unfoldingCard[iSplit]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString = Form("_T%.1f", unfoldingCard[iSplit]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            compactTrackPtString.ReplaceAll(".","v");
+              
+            // Draw the ratios to the canvas
+            for(int iIteration = 0; iIteration < nIterations; iIteration++){
+              hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->SetLineColor(iterationColor[iIteration]);
+              if(iIteration == 0){
+                hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->GetYaxis()->SetRangeUser(0.8, 1.2);
+                hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->GetXaxis()->SetRangeUser(normalizationRegionLow, normalizationRegionHigh);
+                drawer->DrawHistogram(hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit], "#Deltar", "Ratio to measured", " ", "");
+              } else {
+                hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit]->Draw("same");
+              }
+            }
+
+            // Add a legend to the figure
+            legend = new TLegend(0.2, 0.75, 0.5, 0.9);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+
+            legend->AddEntry((TObject*)0, Form("Split %d   %s", iSplit+1, centralityString.Data()), "");
+            legend->AddEntry((TObject*)0, Form("%s   %s", jetPtString.Data(), trackPtString.Data()), "");
+              
+
+            // Put the iteration numbers to different legend
+            for(int iIterationLegend = 0; iIterationLegend < nIterationLegends; iIterationLegend++){
+              iterationLegend[iIterationLegend] = new TLegend(0.17+0.19*iIterationLegend, 0.18, 0.4+0.19*iIterationLegend, 0.38);
+              iterationLegend[iIterationLegend]->SetFillStyle(0); 
+              iterationLegend[iIterationLegend]->SetBorderSize(0); 
+              iterationLegend[iIterationLegend]->SetTextSize(0.05); 
+              iterationLegend[iIterationLegend]->SetTextFont(62);
+            }
+
+            for(int iIteration = 0; iIteration < nIterations; iIteration++){
+              iterationLegend[iIteration/(nIterations/nIterationLegends)]->AddEntry(hForwardFoldedToMeasuredRatio[iCentrality][iJetPt][iTrackPt][iIteration][iSplit], Form("%s", iterationString.ReplaceAll("NIT",Form("%d",iIteration+1)).Data()), "l");
+              iterationString.ReplaceAll(Form("%d",iIteration+1),"NIT");
+            }
+
+            oneLine->Draw();
+            legend->Draw();
+            for(int iIterationLegend = 0; iIterationLegend < nIterationLegends; iIterationLegend++){
+              iterationLegend[iIterationLegend]->Draw();
+            }
+
+            // Save the figures to a file
+            if(saveFigures) {
+              gPad->GetCanvas()->SaveAs(Form("figures/forwardFoldedToMeasuredRatioCheck%s_split%d%s%s%s.%s", saveComment.Data(), iSplit+1, compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+            }
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // MC split loop
   } // Unfolded to truth comparison
 
 }
