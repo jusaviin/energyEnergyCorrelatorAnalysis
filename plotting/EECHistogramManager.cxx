@@ -2978,10 +2978,11 @@ void EECHistogramManager::WriteJetPtUnfoldingCovariance(){
 
         } // Track pT loop
       } // Centrality loop
-    } // Covariance matrix type loop  
+      
+      // Return back to main directory
+      gDirectory->cd("../");
 
-    // Return back to main directory
-    gDirectory->cd("../");
+    } // Covariance matrix type loop  
   }
 }
 
