@@ -1,6 +1,7 @@
 #include "EECHistogramManager.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "AlgorithmLibrary.h"
 
 /*
  * Reser underflow and overflow bins for a one-dimensional histogram
@@ -107,7 +108,7 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   enum enumEnergyEnergyCorrelatorFileType{kDataFile, kTruthReferenceFile, kNFileTypes};
   enum enumSystematicVariations{kNominal, kUncertaintySmearDown, kUncertaintySmearUp, kJECShiftDown, kJECShiftUp, kPriorShape, kNSystematicVariations};
 
-  TString unfoldName = "Bayes, NIT iterations";
+  TString unfoldName = "D'Agostini, NIT iterations";
 
   // **********************************
   //       Open the input files
@@ -118,53 +119,31 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   TString systematicName[kNSystematicVariations] = {"nominalSmear", "uncertaintySmearDown", "uncertaintySmearUp", "minusJECuncertainty", "plusJECuncertainty", "nominalSmear_jetPtWeight"};
 
   // Define the name for the file containing histograms needed for unfolding
-  TString unfoldingInputFileName = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_responseMatrix_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), iSplit);
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_responseMatrix_part%d_processed_2023-06-02.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtResolution_responseMatrix_part%d_processed_2023-06-02.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_smearJetPtUncertainty_responseMatrix_part%d_processed_2023-06-02.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_responseMatrix_part%d_processed_2023-06-15.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_unfoldingHistograms_part%d_processed_2023-05-20.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_smearJetPtResolution_responseMatrix_part%d_processed_2023-06-02.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_noJetPtWeight_smearJetPtUncertainty_responseMatrix_part%d_processed_2023-06-02.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_jetPtWeight_responseMatrix_part%d_processed_2023-06-15.root
+  TString unfoldingInputFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_responseMatrix_part%d_processed_2024-01-11.root", systematicName[iSystematic].Data(), iSplit);
 
-  // New files with JetMet jet energy resolution smearing factors
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_%s_responseMatrix_part%d_processed_2023-06-21.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_responseMatrix_part%d_processed_2023-10-30.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_responseMatrix_part%d_processed_2023-11-08.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_responseMatrix_part%d_processed_2023-06-23.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_responseMatrix_part%d_processed_2023-07-06.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_responseMatrix_part%d_processed_2023-10-24.root
+  // The latest files!
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_responseMatrix_part%d_processed_2024-01-11.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_%s_responseMatrix_part%d_processed_2024-01-10.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_responseMatrix_part%d_processed_2024-01-16.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_%s_responseMatrix_part%d_processed_2024-01-18.root
 
   // Name of the file containing the data that needs to be unfolded
   TString energyEnergyCorrelatorInputFileName[kNFileTypes];
-  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_reconstructedReference_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), 3-iSplit);
-  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_reconstructedReferenceForUnfolding_part%d_processed_2023-06-05.root
-  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_reconstructedReference_part%d_processed_2023-06-15.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_reconstructedReferenceForUnfolding_part%d_processed_2023-05-20.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_jetPtWeight_reconstructedReference_part%d_processed_2023-06-15.root
+  energyEnergyCorrelatorInputFileName[kDataFile] = Form("data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_reconstructedReference_part%d_processed_2024-01-11.root", systematicName[iSystematic].Data(), 3-iSplit);
 
-  // New files with JetMet jet energy resolution smearing factors
-  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_%s_reconstructedReference_part%d_processed_2023-06-21.root
-  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-10-30.root
-  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-11-08.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_reconstructedReference_part%d_processed_2023-06-23.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_reconstructedReference_part%d_processed_2023-07-06.root
-  // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_reconstructedReference_part%d_processed_2023-10-24.root
+  // The latest files!
+  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_reconstructedReference_part%d_processed_2024-01-11.root
+  // ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_%s_reconstructedReference_part%d_processed_2024-01-10.root
+  // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_reconstructedReference_part%d_processed_2024-01-16.root
+  // PbPbMC2018_RecoGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_%s_reconstructedReference_part%d_processed_2024-01-18.root
 
-  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_truthReference_part%d_processed_2024-01-12.root", systematicName[iSystematic].Data(), 3-iSplit);
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_truthReferenceForUnfolding_part%d_processed_2023-06-05.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetPtWeight_truthReference_part%d_processed_2023-06-15.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part%d_processed_2023-05-20.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_jetPtWeight_truthReference_part%d_processed_2023-06-15.root
+  energyEnergyCorrelatorInputFileName[kTruthReferenceFile] = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_truthReference_part%d_processed_2024-01-11.root", systematicName[iSystematic].Data(), 3-iSplit);
 
-  // New files with JetMet jet energy resolution smearing factors
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_%s_truthReference_part%d_processed_2023-06-21.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_truthReference_part%d_processed_2023-10-30.root
-  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_%s_truthReference_part%d_processed_2023-11-08.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_truthReference_part%d_processed_2023-06-23.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_%s_truthReference_part%d_processed_2023-07-06.root
-  // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_%s_truthReference_part%d_processed_2023-10-24.root
+  // The latest files!
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_%s_truthReference_part%d_processed_2024-01-11.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_%s_truthReference_part%d_processed_2024-01-10.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_%s_truthReference_part%d_processed_2024-01-16.root
+  // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_%s_truthReference_part%d_processed_2024-01-18.root
 
   // Option to ignore truth reference file. We might just want to do the regular unfolding without comparing results to truth.
   const bool ignoreTruthReferenceFile = false; 
@@ -319,7 +298,26 @@ void determineNumberOfUnfoldingIterations(int iSplit = 1, int iSystematic = 0){
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
 
   const bool writeChi2ToFile = true; // Write the chi2 histograms to file
-  TString outputFileName = Form("chi2Files/chi2Histograms_PbPb_nominalEnergyWeight_optimizedUnfoldingBinning_split%d_%s_4pCentShift_2024-01-17.root", iSplit, systematicName[iSystematic].Data());
+
+  // Find a nice system string to attach to file name
+  TString systemString;
+  Ssiz_t from = 0;
+  unfoldingCard->GetDataType().Tokenize(systemString, from, " ");
+
+  // Find the energy weight information to attach to file name
+  TString energyWeightString;
+  if(unfoldingCard->GetWeightExponent() == 1){
+    energyWeightString = "_nominalEnergyWeight";
+  } else {
+    energyWeightString = "_energyWeightSquared";
+  }
+
+  // Find today's date
+  AlgorithmLibrary* timeKeeper = new AlgorithmLibrary();
+  TString today = timeKeeper->GetToday();
+
+  // Generate a cool file name  
+  TString outputFileName = Form("chi2Files/chi2Histograms_%s%s_optimizedUnfoldingBinning_split%d_%s_4pCentShift_%s.root", systemString.Data(), energyWeightString.Data(), iSplit, systematicName[iSystematic].Data(), today.Data());
 
   bool saveFigures = false;
   TString saveComment = "_bayesSwapped";
