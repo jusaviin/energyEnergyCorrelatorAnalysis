@@ -16,7 +16,7 @@ class EECHistograms{
 public:
   
   // Enumeration for event types to event histogram and track cuts for track cut histogram
-  enum enumEventTypes {kAll, kPrimaryVertex, kHfCoincidence, kClusterCompatibility, kHBHENoise, kBeamScraping, kVzCut, knEventTypes};
+  enum enumEventTypes {kAll, kTriggered, kPrimaryVertex, kHfCoincidence, kClusterCompatibility, kHBHENoise, kBeamScraping, kVzCut, kJetOver80, kJetOver120, knEventTypes};
   enum enumTriggerBits {kNoTrigger, kOnlyCaloJet60, kOnlyCaloJet80, kOnlyCaloJet100, kCaloJet60And80, kCaloJet60And100, kCaloJet80And100, kCaloJet60And80And100, knTriggerCombinations};
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
@@ -97,7 +97,7 @@ public:
 private:
   
   ConfigurationCard* fCard;    // Card for binning info
-  const TString kEventTypeStrings[knEventTypes] = {"All", "PrimVertex", "HfCoin2Th4", "ClustCompt", "HBHENoise", "BeamScrape", "v_{z} cut"}; // Strings corresponding to event types
+  const TString kEventTypeStrings[knEventTypes] = {"All", "Triggered", "PrimVertex", "HfCoin2Th4", "ClustCompt", "HBHENoise", "BeamScrape", "v_{z} cut", "Jet>80", "Jet>120"}; // Strings corresponding to event types
   const TString kTriggerStrings[knTriggerCombinations] = {"No trigger", "60 && !80 && !100", "!60 && 80 && !100", "!60 && !80 && 100", "60 && 80 && !100", "60 && !80 && 100", "!60 && 80 && 100", "60 && 80 && 100"};
   const TString kTrackCutStrings[knTrackCuts] = {"All", "MC Charge", "MC sube", "MC status", "p_{T} cut", "#eta cut", "Track algo", "HighPurity", "p_{T} error", "vertexDist", "caloSignal", "RecoQuality"}; // String corresponding to track cuts
   

@@ -690,6 +690,8 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetEta = 0;              // eta of the i:th jet in the event
   Int_t jetFlavor = 0;              // Flavor of the jet. 0 = Quark jet. 1 = Gluon jet.
   Double_t jetPtWeight = 1;         // Weighting for jet pT
+  Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
+  Bool_t jetOver120Found = false;   // Flag for finding a jet above 120 GeV from the event
 
   // Variables for reflected cone QA study
   ForestReader* reflectedConeForestReader; // Forest reader for reflected cone studies
@@ -897,6 +899,10 @@ void EECAnalyzer::RunAnalysis(){
         cout << "Error! Lost access to the file: " << currentFile.Data() << endl;
         assert(0);
       }
+
+      // Reset the flags that show if high pT jets are found in the events
+      jetOver80Found = false;
+      jetOver120Found = false;
       
       //************************************************
       //         Read basic event information
@@ -946,8 +952,6 @@ void EECAnalyzer::RunAnalysis(){
       //  ===== Apply all the event quality cuts =====
       //  ============================================
       
-      if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
-      
       // Jet trigger combinations
       caloJet60Trigger = (fJetReader->GetCaloJet60FilterBit() == 1);
       caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
@@ -973,6 +977,12 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
       if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
       if(fTriggerSelection == 7 && (!caloJet60Trigger && !caloJet80Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 triggers
+
+      // Fill the histogram for triggered events
+      fHistograms->fhEvents->Fill(EECHistograms::kTriggered);
+
+      // Check event cuts
+      if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
       
       // If combining triggers, need to include event weight for events that only fire the lower trigger
       // The weight used here is the inverse of the average effective prescale in the whole sample
@@ -1171,6 +1181,18 @@ void EECAnalyzer::RunAnalysis(){
           // After the jet pT can been corrected, apply analysis jet pT cuts
           if(jetPt < fJetMinimumPtCut) continue;
           if(jetPt > fJetMaximumPtCut) continue;
+
+          // Check if a high pT jet is found from the event
+          if(jetPt > 80 && !jetOver80Found){
+            jetOver80Found = true;
+            fHistograms->fhEvents->Fill(EECHistograms::kJetOver80);
+          }
+
+          if(jetPt > 120 && !jetOver120Found){
+            jetOver120Found = true;
+            fHistograms->fhEvents->Fill(EECHistograms::kJetOver120);
+          }
+
           
           // If we are matching jets, require that the matched jet has at least half of the reconstructed pT
           if(fMatchJets > 0){
