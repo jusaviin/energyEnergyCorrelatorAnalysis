@@ -12,7 +12,7 @@ LDFLAGS  = $(shell root-config --libs)
 CXXFLAGS  += $(INCS)
 
 HDRSDICT = SplitCanvas.h
-HDRS	+= $(HDRSDICT) AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECUnfoldConfiguration.h SystematicUncertaintyOrganizer.h nanoDict.h
+HDRS	+= $(HDRSDICT) AlgorithmLibrary.h EECHistogramManager.h EECCard.h EECDrawer.h EECComparingDrawer.h EECBackgroundScale.h EECSignalToBackgroundUnfoldingScale.h EECUnfoldConfiguration.h SystematicUncertaintyOrganizer.h nanoDict.h
 
 
 SRCS = $(HDRS:.h=.cxx)
