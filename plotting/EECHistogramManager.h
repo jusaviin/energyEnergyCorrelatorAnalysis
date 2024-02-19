@@ -14,6 +14,7 @@
 #include "EECCard.h"
 #include "../src/EECHistograms.h"
 #include "EECBackgroundScale.h"
+#include "EECSignalToBackgroundUnfoldingScale.h"
 #include "AlgorithmLibrary.h"
 
 /*

@@ -39,7 +39,7 @@ private:
   const double fJetPtBinBorderLow[kNJetPtBins] = {100, 120, 140, 160, 180, 200};
   const double fJetPtBinBorderHigh[kNJetPtBins] = {120, 140, 160, 180, 200, 220};
   const double fTrackPtBinBorderLow[kNTrackPtBins] = {1, 1.5, 2, 2.5, 3};
-  const double fUpshift[kNCentralityBins] = {31.7, 20.6, 12.9, 9.6};
+  const double fRelativeUpshift[kNCentralityBins] = {0.077, 0.053, 0.034, 0.01};
 
   // Functions from which signal to background ratio scales are read
   TF1* fSignalToBackgroundFunction;

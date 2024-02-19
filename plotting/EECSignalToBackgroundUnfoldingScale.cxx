@@ -92,7 +92,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
   // ==================================================================== //
   {
    // Centrality 0-10%
-  {{0.227696,0.00970569,-4.76595e-06}, // track pT > 1.0 GeV
+  /*{{0.227696,0.00970569,-4.76595e-06}, // track pT > 1.0 GeV
    {0.0299163,0.0157925,-3.4004e-06}, // track pT > 1.5 GeV
    {-0.423722,0.028125,2.84121e-07}, // track pT > 2.0 GeV
    {-1.34799,0.0514155,1.11466e-05}, // track pT > 2.5 GeV
@@ -115,6 +115,33 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {2.566,0.221488,0}, // track pT > 2.0 GeV
    {6.56557,0.317407,0}, // track pT > 2.5 GeV
    {13.2054,0.417227,0}} // track pT > 3.0 GeV
+  },*/
+
+  // TEST from RecoReco MC
+   // Centrality 4-14%
+  {{0.597848,0.0048607,9.49442e-06}, // track pT > 1.0 GeV
+   {0.749652,0.00654232,2.44353e-05}, // track pT > 1.5 GeV
+   {0.920023,0.0108472,5.29838e-05}, // track pT > 2.0 GeV
+   {1.10411,0.0197509,0.00010062}, // track pT > 2.5 GeV
+   {2.11805,0.022876,0.000219022}}, // track pT > 3.0 GeV
+   // Centrality 14-34%
+  {{0.605675,0.00926718,1.02004e-05}, // track pT > 1.0 GeV
+   {0.623527,0.0161929,2.14429e-05}, // track pT > 1.5 GeV
+   {0.57199,0.0308665,3.93273e-05}, // track pT > 2.0 GeV
+   {0.182683,0.0598828,6.14116e-05}, // track pT > 2.5 GeV
+   {-1.81583,0.126338,1.78026e-05}}, // track pT > 3.0 GeV
+   // Centrality 34-54%
+  {{0.540152,0.0256505,6.0631e-06}, // track pT > 1.0 GeV
+   {0.583166,0.0456168,1.43452e-05}, // track pT > 1.5 GeV
+   {0.284055,0.0890745,1.0845e-05}, // track pT > 2.0 GeV
+   {-0.961002,0.174466,-6.09461e-05}, // track pT > 2.5 GeV
+   {-2.45728,0.296579,-0.000183023}}, // track pT > 3.0 GeV
+   // Centrality 54-94%
+  {{1.29654,0.0791985,0}, // track pT > 1.0 GeV
+   {2.7422,0.133188,0}, // track pT > 1.5 GeV
+   {6.68697,0.211723,0}, // track pT > 2.0 GeV
+   {15.4285,0.292103,0}, // track pT > 2.5 GeV
+   {29.4499,0.350802,0}} // track pT > 3.0 GeV
   },
 
   // ===================================================================== //
@@ -267,7 +294,7 @@ double EECSignalToBackgroundUnfoldingScale::GetEECSignalToBackgroundUnfoldingSca
   }
 
   // Calculate the difference on signal to background ratios in original and unfolded mean pT locations
-  double shiftedMeanPt = fMeanJetPt[centralityIndex][jetPtIndex] + fUpshift[centralityIndex];
+  double shiftedMeanPt = fMeanJetPt[centralityIndex][jetPtIndex] + fRelativeUpshift[centralityIndex]*fMeanJetPt[centralityIndex][jetPtIndex];
   double originalSignalToBackgroundRatio = fSignalToBackgroundFunction->Eval(fMeanJetPt[centralityIndex][jetPtIndex]);
   double unfoldedSignalToBackgroundRatio = fSignalToBackgroundFunction->Eval(shiftedMeanPt);
 

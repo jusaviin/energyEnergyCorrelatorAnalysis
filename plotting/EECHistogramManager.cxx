@@ -644,13 +644,16 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
   
   double scalingFactor;
   EECBackgroundScale* scaleProvider = new EECBackgroundScale(true, iSystematic, fCard->GetWeightExponent()); // Always use gen level correction for unfolded histograms
+  EECSignalToBackgroundUnfoldingScale* signalToBackgroundScaleProvider = new EECSignalToBackgroundUnfoldingScale(fCard->GetWeightExponent());
   bool isPbPb = fSystemAndEnergy.Contains("PbPb");
   
   // Bin borders that are searched from the background scaler
   std::pair<double,double> centralityBinBorders;
   std::pair<double,double> jetPtBinBorders;
   double trackPtLowBorder;  // We only care about the lower border in track pT bins
-  
+  //int highScaleBin;
+  //double targetRatio, initialRatio;
+
   // Loop over the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     
@@ -670,6 +673,13 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
           
           // First, close the unfolded distribution
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
+
+          // TODO: Experimental scaling here. NEED TO VERIFY THAT WORKS!!!!
+          /*targetRatio = signalToBackgroundScaleProvider->GetEECSignalToBackgroundUnfoldingScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb);
+          highScaleBin = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->FindBin(0.39);
+          initialRatio = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Integral(1,highScaleBin,"width") / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Integral(1,highScaleBin,"width");
+          scalingFactor = initialRatio / targetRatio;*/
+
           
           // Next, find the scaling factor for background from integrals of the unfolded, and the non-unfolded distributions
           scalingFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Integral("width") / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Integral("width");
@@ -681,6 +691,10 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
           // For nominal pp results, do not subtract the background
           // This is done only for PbPb and for systematic uncertainty analysis for pp
           if(isPbPb || iSystematic > 0){
+
+            // We also need to scale the reflected cone background estimate with the difference in signal to background
+            // ratios before and after unfolding in order to not oversubtract the background
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(signalToBackgroundScaleProvider->GetEECSignalToBackgroundUnfoldingScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
           
             // After the background is scaled to take into account the number integral changes during unfolding, we still need to scale it to take into account the excess background biasing the jet finding algorithm
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
