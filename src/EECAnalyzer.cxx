@@ -98,7 +98,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetPtWeightConfiguration(0),
   fReconstructedJetMinimumPtCut(0),
   fGeneratorJetMinimumPtCut(0),
-  fLowerTruthUnfoldingBins(0),
+  fSkipCovarianceMatrix(false),
   fMcCorrelationType(0),
   fJetRadius(0.4),
   fWeightExponent(2),
@@ -381,7 +381,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetPtWeightConfiguration(in.fJetPtWeightConfiguration),
   fReconstructedJetMinimumPtCut(in.fReconstructedJetMinimumPtCut),
   fGeneratorJetMinimumPtCut(in.fGeneratorJetMinimumPtCut),
-  fLowerTruthUnfoldingBins(in.fLowerTruthUnfoldingBins),
+  fSkipCovarianceMatrix(in.fSkipCovarianceMatrix),
   fMcCorrelationType(in.fMcCorrelationType),
   fJetRadius(in.fJetRadius),
   fWeightExponent(in.fWeightExponent),
@@ -466,7 +466,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetPtWeightConfiguration = in.fJetPtWeightConfiguration;
   fReconstructedJetMinimumPtCut = in.fReconstructedJetMinimumPtCut;
   fGeneratorJetMinimumPtCut = in.fGeneratorJetMinimumPtCut;
-  fLowerTruthUnfoldingBins = in.fLowerTruthUnfoldingBins;
+  fSkipCovarianceMatrix = in.fSkipCovarianceMatrix;
   fMcCorrelationType = in.fMcCorrelationType;
   fJetRadius = in.fJetRadius;
   fWeightExponent = in.fWeightExponent;
@@ -631,6 +631,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
   fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
   fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
+  fSkipCovarianceMatrix = (fCard->Get("SkipCovarianceMatrix") == 1);
   
   //************************************************
   //         Read which histograms to fill
@@ -1485,7 +1486,7 @@ void EECAnalyzer::RunAnalysis(){
 
             // Before calculating the energy-energy correlators, reset histograms for covariance matrix calculation
             // Covariance matrix calculation only for data, not needed in MC
-            if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb){
+            if(!fSkipCovarianceMatrix){
               for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                 fThisEventCorrelator[iTrackPt]->Reset();
               } // Track pT loop for covariance matrices
@@ -1496,7 +1497,7 @@ void EECAnalyzer::RunAnalysis(){
 
             // After that is done, add the contents from this event to the total coveriance matrix
             // Covariance matrix calculation only for data, not needed in MC
-            if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb){
+            if(!fSkipCovarianceMatrix){
               fillerUnfoldingCovariance[3] = centrality; // Axis 3: Centrality
               for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                 trackPt = fCard->Get("TrackPtBinEdgesEEC", iTrackPt) + 0.1;
@@ -1764,7 +1765,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 
           // Fill also the histograms just from this jet to calculate covariances
           // Covariance matrix calculation only for data, not needed in MC
-          if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb){
+          if(!fSkipCovarianceMatrix){
             for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
               if(lowerTrackPt >= fCard->Get("TrackPtBinEdgesEEC", iTrackPt)){
                 fThisEventCorrelator[iTrackPt]->Fill(trackDeltaR, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);

@@ -67,6 +67,7 @@ JetPtBinEdgesEEC 60 80 100 120 140 160 180 200 300 500 5020 # Jet pT bin edges f
 TrackPtBinEdgesEEC 0.7 1 1.5 2 2.5 3 3.5 4 300 # Track pT bin edges for EEC
 
 # Configuration for unfolding response matrices
+SkipCovarianceMatrix 1 # 0 = Fill covariance matrix. 1 = Do not fill covariance matrix
 MinJetPtUnfoldingReco 80  # Minimum jet pT for reconstructed jets in the response matrix
 MinJetPtUnfoldingTruth 60 # Minimum jet pT for generator level jets in the response matrix
 

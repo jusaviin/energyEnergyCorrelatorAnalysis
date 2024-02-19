@@ -57,6 +57,7 @@ public:
     kWeightExponent,              // Exponent given to the energy-energy correlator weight
     kJetPtBinEdgesEEC,            // Jet pT binning for energy-energy correlation analysis
     kTrackPtBinEdgesEEC,          // Track pT binning for energy-energy correlation analysis
+    kSkipCovarianceMatrix,        // 0 = Fill covariance matrix, 1 = Do not fill covariance matrix
     kMinJetPtUnfoldingReco,       // Minimum jet pT for reconstructed jets in unfolding response matrix
     kMinJetPtUnfoldingTruth,      // Minimum jet pT for generator level jets in unfolding response matrix
     kCentralityBinEdges,          // Centrality bin edges
@@ -78,7 +79,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
+  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","SkipCovarianceMatrix","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
   const char* fFileNameType[knFileNames] = {"input", "response matrix"};
   const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   

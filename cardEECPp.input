@@ -11,7 +11,7 @@ MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 TriggerSelection 1   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 63 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -67,6 +67,7 @@ JetPtBinEdgesEEC 120 140 160 180 200 300 500 5020 # Jet pT bin edges for EEC
 TrackPtBinEdgesEEC 0.7 1 1.5 2 2.5 3 3.5 4 300 # Track pT bin edges for EEC
 
 # Configuration for unfolding response matrices
+SkipCovarianceMatrix 0 # 0 = Fill covariance matrix. 1 = Do not fill covariance matrix
 MinJetPtUnfoldingReco 80  # Minimum jet pT for reconstructed jets in the response matrix
 MinJetPtUnfoldingTruth 60 # Minimum jet pT for generator level jets in the response matrix
 

@@ -161,7 +161,7 @@ public:
   // Extra jet cuts for jet pT unfolding
   Double_t fReconstructedJetMinimumPtCut;  // Minimum jet pT cut for reconstructed jets for jet pT unfolding
   Double_t fGeneratorJetMinimumPtCut;      // Minimum jet pT cut for generator level jets for jet pT unfolding
-  Int_t fLowerTruthUnfoldingBins;          // Number of truth level bins that are lower than the first reconstructed bin
+  Bool_t fSkipCovarianceMatrix;            // Do not fill the covariance matrix. Speeds up the code significantly.
   
   // Correlation type for Monte Carlo
   Int_t fMcCorrelationType;            // Correlation type for Monte Carlo. See enumeration enumMcCorrelationType
