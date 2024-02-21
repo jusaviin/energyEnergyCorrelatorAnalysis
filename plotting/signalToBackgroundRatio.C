@@ -12,6 +12,7 @@ void signalToBackgroundRatio(){
   TString inputFileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
+  // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-19.root
 
   TFile* inputFile = TFile::Open(inputFileName);
 
@@ -53,13 +54,28 @@ void signalToBackgroundRatio(){
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
-  comparedTrackPtBin.push_back(1.0);
-  comparedTrackPtBin.push_back(1.5);
+  //comparedTrackPtBin.push_back(1.0);
+  //comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
-  comparedTrackPtBin.push_back(2.5);
-  comparedTrackPtBin.push_back(3.0);
+  //comparedTrackPtBin.push_back(2.5);
+  //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
+  // Fitting parameters
+  const bool doFit = false;
+
+  // Figure saving
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "";   // Comment given for this specific file
+  const char* figureFormat = "pdf"; // Format given for the figures
+
+  // If we are dealing with MC, add 4% centrality shift to centrality bins
+  if(card->GetDataType().Contains("MC")){
+    for(auto& centralityBin : comparedCentralityBin){
+      centralityBin.first += 4;
+      centralityBin.second += 4;
+    }
+  }
 
   // Only allow one variable for which all bins are plotted to the same figure
   if(individualCentrality + individualJetPt + individualTrackPt < 2){
@@ -207,6 +223,16 @@ void signalToBackgroundRatio(){
   TString centralityString, compactCentralityString;
   TString trackPtString, compactTrackPtString;
 
+  // Add a name describing the energy weight in the files
+  TString energyWeightString, compactEnergyWeightString; 
+  if(card->GetWeightExponent() == 2){
+    energyWeightString = "Energy weight squared";
+    compactEnergyWeightString = "_energyWeightSquared";
+  } else {
+    energyWeightString = "Nominal energy weight";
+    compactEnergyWeightString = "_nominalEnergyWeight";
+  }
+
   double minimumValue, maximumValue, drawMargin;
 
   // Draw each graph to separate canvas
@@ -221,8 +247,9 @@ void signalToBackgroundRatio(){
       compactTrackPtString.ReplaceAll(".", "v");
 
       // Setup the legend for plots
-      legend = new TLegend(0.18, 0.5, 0.58, 0.85);
+      legend = new TLegend(0.18, 0.6, 0.58, 0.88);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+      legend->AddEntry((TObject*)0, energyWeightString.Data(), "");
       legend->AddEntry((TObject*)0, centralityString.Data(), "");
       legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
@@ -237,65 +264,106 @@ void signalToBackgroundRatio(){
       gSignalToBackgroundRatio[iCentrality][iTrackPt]->SetLineColor(kBlue);
 
       // Fit a line to the signal to background ratio
-      gSignalToBackgroundRatio[iCentrality][iTrackPt]->Fit(fitToRatio[iCentrality][iTrackPt]);
+      if(doFit) gSignalToBackgroundRatio[iCentrality][iTrackPt]->Fit(fitToRatio[iCentrality][iTrackPt]);
 
       // Draw the graphs to canvas
-      drawer->DrawGraphCustomAxes(gSignalToBackgroundRatio[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}", "Signal / BG", " ", "a,p");
+      drawer->DrawGraphCustomAxes(gSignalToBackgroundRatio[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}", "(Signal + BG) / BG", " ", "a,p");
 
       // Add the legend to the canvas
       legend->Draw();
+
+      // Save the figures to a file
+      if(saveFigures){
+      gPad->GetCanvas()->SaveAs(Form("figures/eecSignaltoBackgroundRatio%s%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat));
+      }
       
 
     } // Track pT loop
   } // Centrality loop
 
-  // Print a table of the fit parameters to be copy-pasted into a corrector class
+  // Print a table of mean pT:s to be copy-pasted into a corrector class
+  cout << endl;
+  cout << " double meanJetPt[" << comparedCentralityBin.size() << "][" << comparedJetPtBin.size() << "] = {" << endl;
+  iJetPt = 0;
     
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
+      
+    cout << "{";
+
+    for(auto jetPtBin : comparedJetPtBin){
+
+      cout << jetMeanPtAxis[iCentrality][1][iJetPt];
+
+      // Add the proper syntax
+      if(jetPtBin.first != comparedJetPtBin.back().first){
+        cout << ",";
+      } else {
+        cout << "}";
+      }
+
+      iJetPt++;
+    } // Jet pT loop
+
+    if(centralityBin.first != comparedCentralityBin.back().first){
+      cout << ", // " << Form("Centrality %.0f-%.0f%%", centralityBin.first, centralityBin.second) << endl;
+    } else {
+      if(centralityBin.first != comparedCentralityBin.back().first){
+        cout << ", // " << Form("Centrality %.0f-%.0f%%", centralityBin.first, centralityBin.second) << endl;
+      } else {
+        cout << " // " << Form("Centrality %.0f-%.0f%%", centralityBin.first, centralityBin.second) << endl;
+      }
+    }
+  } // Centrality loop
+  cout << "};" << endl;
+
+  // Print a table of the fit parameters to be copy-pasted into a corrector class 
+  cout << endl;
   cout << " double signalToBackgroundRatioFitParameters[" << comparedCentralityBin.size() << "][" << comparedTrackPtBin.size() << "][3] = {" << endl;
-    
-    for(auto centralityBin : comparedCentralityBin){
-      iCentrality = card->FindBinIndexCentrality(centralityBin);
+
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
       
-      // Set the centrality information for legends and figure saving
-      cout << " // " << Form("Centrality %.0f-%.0f%%", centralityBin.first, centralityBin.second) << endl;
+    // Set the centrality information for legends and figure saving
+    cout << " // " << Form("Centrality %.0f-%.0f%%", centralityBin.first, centralityBin.second) << endl;
+    cout << "{";
+      
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+        
       cout << "{";
-      
-      for(auto trackPtBin : comparedTrackPtBin){
-        iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
         
-        cout << "{";
-        
-        for(int iParameter = 0; iParameter < 3; iParameter++){
+      for(int iParameter = 0; iParameter < 3; iParameter++){
           
-          // Print the parameter value to the array:
-          if(iCentrality == 3 && iParameter == 2){
-            cout << 0;
-          } else {
-            cout << fitToRatio[iCentrality][iTrackPt]->GetParameter(iParameter);
-          }
+        // Print the parameter value to the array:
+        if(iCentrality == 3 && iParameter == 2){
+          cout << 0;
+        } else {
+          cout << fitToRatio[iCentrality][iTrackPt]->GetParameter(iParameter);
+        }
           
-          // Add the proper syntax
-          if(iParameter < 2){
-            cout << ",";
-          } else {
-            cout << "}";
-          }
-        } // Parameter pT loop
+        // Add the proper syntax
+        if(iParameter < 2){
+          cout << ",";
+        } else {
+          cout << "}";
+        }
+      } // Parameter pT loop
         
+      if(trackPtBin != comparedTrackPtBin.back()){
+        cout << ", // " << Form("track pT > %.1f GeV", trackPtBin) << endl;
+      } else {
+        cout << "}";
         if(trackPtBin != comparedTrackPtBin.back()){
           cout << ", // " << Form("track pT > %.1f GeV", trackPtBin) << endl;
         } else {
-          cout << "}";
-          if(trackPtBin != comparedTrackPtBin.back()){
-            cout << ", // " << Form("track pT > %.1f GeV", trackPtBin) << endl;
-          } else {
-            cout << " // " << Form("track pT > %.1f GeV", trackPtBin) << endl;
-          }
+          cout << " // " << Form("track pT > %.1f GeV", trackPtBin) << endl;
         }
+      }
         
-      } // Track pT loop
-    } // Centrality loop
-    cout << "};" << endl;
-
+    } // Track pT loop
+  } // Centrality loop
+  cout << "};" << endl;
+  
 
 }
