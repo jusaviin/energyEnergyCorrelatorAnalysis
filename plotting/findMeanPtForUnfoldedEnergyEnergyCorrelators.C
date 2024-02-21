@@ -43,7 +43,6 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   comparedCentralityBin.push_back(std::make_pair(10,30));
   comparedCentralityBin.push_back(std::make_pair(30,50));
   comparedCentralityBin.push_back(std::make_pair(50,90));
-  bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(100,120));
@@ -53,7 +52,6 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   comparedJetPtBin.push_back(std::make_pair(180,200));
   comparedJetPtBin.push_back(std::make_pair(200,220));
   comparedJetPtBin.push_back(std::make_pair(220,240));
-  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   if(weightExponent > 1){
@@ -63,11 +61,15 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   comparedTrackPtBin.push_back(2.0);
   comparedTrackPtBin.push_back(2.5);
   comparedTrackPtBin.push_back(3.0);
-  bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Drawing options
-  const bool drawRawEnergyEnergyCorrelatorFits = false;
+  const bool drawRawEnergyEnergyCorrelatorFits = true;
   const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
+
+  // Figure saving
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "";   // Comment given for this specific file
+  const char* figureFormat = "pdf"; // Format given for the figures
 
   // If we are dealing with MC, add 4% centrality shift to centrality bins
   if(card->GetDataType().Contains("MC")){
@@ -77,12 +79,14 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     }
   }
 
-  // Only allow one variable for which all bins are plotted to the same figure
-  if(individualCentrality + individualJetPt + individualTrackPt < 2){
-    cout << "You are tring to plot too many bins to the same figure!" << endl;
-    cout << "This macro can only plot all the bins from one variable." << endl;
-    cout << "Please check your configuration!" << endl; 
-    return;
+  // Add a name describing the energy weight in the files
+  TString energyWeightString, compactEnergyWeightString; 
+  if(weightExponent == 2){
+    energyWeightString = "Energy weight squared";
+    compactEnergyWeightString = "_energyWeightSquared";
+  } else {
+    energyWeightString = "Nominal energy weight";
+    compactEnergyWeightString = "_nominalEnergyWeight";
   }
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -234,12 +238,12 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
 
   // Define jet pT dependent fitting range for the distributions
   std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> fitRangeForJetPt;
-  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.02,0.05)));
+  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.015,0.05)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.01,0.04)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.01,0.04)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.008,0.03)));
-  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.008,0.028)));
-  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.008,0.028)));
+  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.006,0.028)));
+  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.006,0.028)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.006,0.025)));
 
   if(weightExponent == 2){
@@ -308,13 +312,19 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
           fitForPeak[iCentrality][iJetPt][iTrackPt]->SetRange(thisFitRange.first, thisFitRange.second);
           fitForPeak[iCentrality][iJetPt][iTrackPt]->Draw("same");
 
-          legend = new TLegend(0.5, 0.25, 0.8, 0.55);
+          legend = new TLegend(0.5, 0.55, 0.8, 0.9);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, "Raw correlator", "");
+          legend->AddEntry((TObject*)0, energyWeightString.Data(), "");
           legend->AddEntry((TObject*)0, centralityString.Data(), "");
           legend->AddEntry((TObject*)0, jetPtString.Data(), "");
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->Draw();
+
+          // Save the figures to a file
+          if(saveFigures){
+            gPad->GetCanvas()->SaveAs(Form("figures/rawEECpeakFit%s%s%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+          }
 
         } // Drawing fits to energy-energy correlators
 
@@ -337,13 +347,19 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
             fitForUnfoldedPeak[iCentrality][iJetPt][iTrackPt]->SetRange(thisFitRange.first, thisFitRange.second);
             fitForUnfoldedPeak[iCentrality][iJetPt][iTrackPt]->Draw("same");
 
-            legend = new TLegend(0.5, 0.25, 0.8, 0.55);
+            legend = new TLegend(0.5, 0.55, 0.8, 0.9);
             legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, "Unfolded correlator", "");
+            legend->AddEntry((TObject*)0, energyWeightString.Data(), "");
             legend->AddEntry((TObject*)0, centralityString.Data(), "");
             legend->AddEntry((TObject*)0, jetPtString.Data(), "");
             legend->AddEntry((TObject*)0, trackPtString.Data(), "");
             legend->Draw();
+
+            // Save the figures to a file
+            if(saveFigures){
+              gPad->GetCanvas()->SaveAs(Form("figures/unfoldedEECpeakFit%s%s%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+            }
 
           } // Drawing fits to unfolded energy-energy correlators
 
