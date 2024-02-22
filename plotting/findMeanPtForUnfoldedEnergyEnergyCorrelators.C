@@ -63,8 +63,8 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   comparedTrackPtBin.push_back(3.0);
 
   // Drawing options
-  const bool drawRawEnergyEnergyCorrelatorFits = true;
-  const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
+  const bool drawRawEnergyEnergyCorrelatorFits = false;
+  const bool drawUnfoldedEnergyEnergyCorrelatorFits = true;
 
   // Figure saving
   const bool saveFigures = true;  // Save figures
@@ -240,7 +240,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> fitRangeForJetPt;
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.015,0.05)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.01,0.04)));
-  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.01,0.04)));
+  fitRangeForJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.008,0.04)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.008,0.03)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.006,0.028)));
   fitRangeForJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.006,0.028)));
@@ -255,6 +255,26 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     fitRangeForJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.005,0.02)));
     fitRangeForJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.004,0.015)));
     fitRangeForJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.004,0.015)));
+  }
+
+  std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> fitRangeForUnfoldedJetPt;
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.012,0.048)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.01,0.04)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.008,0.032)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.008,0.03)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.006,0.028)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.006,0.028)));
+  fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.006,0.025)));
+
+  if(weightExponent == 2){
+    fitRangeForUnfoldedJetPt.clear();
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.008,0.03)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.008,0.028)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.006,0.025)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.005,0.02)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.005,0.02)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.004,0.015)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.004,0.015)));
   }
 
   // Make a drawer to check that the fits are reasonable
@@ -300,6 +320,11 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
           return;
         }
 
+        // For the most peripheral bin, we need to adjust the fit range in 140-160 bin slightly:
+        if(centralityBin.first == 50 && jetPtBin.first == 160){
+          thisFitRange.second = 0.033;
+        }
+
         // Once the fitting range is found, do the fitting with the fit function
         hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Fit(fitForPeak[iCentrality][iJetPt][iTrackPt], "0", "", thisFitRange.first, thisFitRange.second);
 
@@ -334,6 +359,28 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
 
         // There are some bins which are not unfolded. We cannot do fitting in those bins
         if(!skipUnfolded.at(iJetMeanPt)){
+
+          // The fit range for unfolded EECs can be different compared to the raw EECs
+          fitRangeFound = false;
+          for(auto fitRangeForThisJetPt : fitRangeForUnfoldedJetPt  ){
+            if(fitRangeForThisJetPt.first == jetPtBin){
+              thisFitRange = fitRangeForThisJetPt.second;
+              fitRangeFound = true;
+              break;
+            }
+          }
+
+          // If we did not find fit range, crash the code
+          if(!fitRangeFound){
+            cout << "ERROR! No fit range defined for " << jetPtBin.first << " < jet pT < " << jetPtBin.second << endl;
+            cout << "Please check your code! Cannot do fitting without a proper range!" << endl;
+            return;
+          }
+
+          // For the most peripheral bin, we need to adjust the fit range in 140-160 bin slightly:
+          if(centralityBin.first == 50 && jetPtBin.first == 140){
+            thisFitRange.second = 0.04;
+          }
 
           // Do the fitting also for the unfolded energy-energy correlators
           hUnfoldedEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt]->Fit(fitForUnfoldedPeak[iCentrality][iJetPt][iTrackPt], "0", "", thisFitRange.first, thisFitRange.second);
