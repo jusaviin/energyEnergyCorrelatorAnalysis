@@ -62,12 +62,18 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   comparedTrackPtBin.push_back(2.5);
   comparedTrackPtBin.push_back(3.0);
 
+  std::vector<std::pair<double,double>> finalAnalysisPtBins;
+  finalAnalysisPtBins.push_back(std::make_pair(120,140));
+  finalAnalysisPtBins.push_back(std::make_pair(140,160));
+  finalAnalysisPtBins.push_back(std::make_pair(160,180));
+  finalAnalysisPtBins.push_back(std::make_pair(180,200));
+
   // Drawing options
   const bool drawRawEnergyEnergyCorrelatorFits = false;
-  const bool drawUnfoldedEnergyEnergyCorrelatorFits = true;
+  const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
 
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
@@ -131,14 +137,19 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   int iTrackPt;
   int iJetPt;
   int iJetMeanPt = 0;
+  int iJetMeanPtFinalAnalysis = 0;
   int iJetUnfoldedPt = 0;
   std::vector<bool> skipUnfolded;
   bool firstLoop = true;
+  bool isFinalAnalysisBin = false;
   
   // Axes for mean jet pT vs. signal/background ratio plots 
   const int nAnalyzedJetPtBins = comparedJetPtBin.size();
+  const int nFinalAnalysisJetPtBins = finalAnalysisPtBins.size();
   double jetMeanPtAxis[nCentralityBins][nTrackPtBinsEEC][nAnalyzedJetPtBins];
   double jetMeanPtAxisError[nCentralityBins][nTrackPtBinsEEC][nAnalyzedJetPtBins];
+  double jetMeanPtAxisFinalAnalysisRegion[nCentralityBins][nTrackPtBinsEEC][nFinalAnalysisJetPtBins];
+  double jetMeanPtAxisErrorFinalAnalysisRegion[nCentralityBins][nTrackPtBinsEEC][nFinalAnalysisJetPtBins];
   double deltaRpeakRaw[nCentralityBins][nTrackPtBinsEEC][nAnalyzedJetPtBins];
   double deltaRpeakRawError[nCentralityBins][nTrackPtBinsEEC][nAnalyzedJetPtBins];
 
@@ -152,6 +163,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     for(auto trackPtBin : comparedTrackPtBin){
       iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
       iJetMeanPt = 0;
+      iJetMeanPtFinalAnalysis = 0;
       for(auto jetPtBin : comparedJetPtBin){
         iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
 
@@ -176,6 +188,21 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
         jetMeanPtAxis[iCentrality][iTrackPt][iJetMeanPt] = hJetPt[iCentrality]->GetMean();
         jetMeanPtAxisError[iCentrality][iTrackPt][iJetMeanPt] = hJetPt[iCentrality]->GetMeanError();
         iJetMeanPt++;
+
+        // If the bin is one of the final analysis bins, include it in the final analysis mean jet pT axis
+        isFinalAnalysisBin = false;
+        for(auto finalAnalysisBin : finalAnalysisPtBins){
+          if(finalAnalysisBin == jetPtBin){
+            isFinalAnalysisBin = true;
+            break;
+          }
+        }
+
+        if(isFinalAnalysisBin){
+          jetMeanPtAxisFinalAnalysisRegion[iCentrality][iTrackPt][iJetMeanPtFinalAnalysis] = hJetPt[iCentrality]->GetMean();
+          jetMeanPtAxisErrorFinalAnalysisRegion[iCentrality][iTrackPt][iJetMeanPtFinalAnalysis] = hJetPt[iCentrality]->GetMeanError();
+          iJetMeanPtFinalAnalysis++;
+        }
 
       } // Jet pT loop
       firstLoop = false;
@@ -476,7 +503,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   drawer->SetDefaultAppearanceGraph();
 
   // Helper variables
-  double minimumValue, maximumValue, drawMargin;
+  double minimumValue, maximumValue, drawMargin, currentValue;
 
   // Draw each graph to separate canvas
   for(auto centralityBin : comparedCentralityBin){
@@ -490,7 +517,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
       compactTrackPtString.ReplaceAll(".", "v");
 
       // Setup the legend for plots
-      legend = new TLegend(0.5, 0.7, 0.9, 0.85);
+      legend = new TLegend(0.4, 0.65, 0.9, 0.9);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
       legend->AddEntry((TObject*)0, centralityString.Data(), "");
       legend->AddEntry((TObject*)0, trackPtString.Data(), "");
@@ -509,10 +536,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
       gDeltaRPeakRaw[iCentrality][iTrackPt]->Fit(fitToRawDeltaRPeak[iCentrality][iTrackPt], "0");
 
       // Draw the graphs to canvas
-      drawer->DrawGraphCustomAxes(gDeltaRPeakRaw[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}", "Peak #Deltar", " ", "a,p");
-
-      // Add the legend to the canvas
-      legend->Draw();
+      drawer->DrawGraphCustomAxes(gDeltaRPeakRaw[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}  [GeV]", "Peak #Deltar", " ", "a,p");
 
       // Draw the fit function
       fitToRawDeltaRPeak[iCentrality][iTrackPt]->SetLineColor(kBlue);
@@ -531,15 +555,217 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
       // Draw the fit function
       fitToUnfoldedDeltaRPeak[iCentrality][iTrackPt]->SetLineColor(kRed);
       fitToUnfoldedDeltaRPeak[iCentrality][iTrackPt]->Draw("same");
+
+      // Add the legend to the canvas
+      legend->AddEntry(gDeltaRPeakRaw[iCentrality][iTrackPt], "Raw EEC peak", "p"); 
+      legend->AddEntry(gDeltaRPeakUnfolded[iCentrality][iTrackPt], "Unfolded EEC peak", "p"); 
+      legend->Draw();
+
+      // Save the figures to a file
+      if(saveFigures){
+        gPad->GetCanvas()->SaveAs(Form("figures/eecPeakGraph%s%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat));
+      }
       
 
     } // Track pT loop
   } // Centrality loop
 
-  // Determine the upshift be the difference of the two fits
+  // For visualization purposes, collect the absolute and relative pT shifts caused by unfolding
+  double absolutePtShift[nCentralityBins][nTrackPtBinsEEC][nFinalAnalysisJetPtBins];
+  double relativePtShift[nCentralityBins][nTrackPtBinsEEC][nFinalAnalysisJetPtBins];
+  double relativeMinimum[nCentralityBins];
+  double relativeMaximum[nCentralityBins];
+
+  // Initialize the arrays to 0
+  for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+    relativeMinimum[iCentrality] = 0;
+    relativeMaximum[iCentrality] = 0;
+    for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+      for(int iJetPt = 0; iJetPt < nFinalAnalysisJetPtBins; iJetPt++){
+        absolutePtShift[iCentrality][iTrackPt][iJetPt] = 0;
+        relativePtShift[iCentrality][iTrackPt][iJetPt] = 0;
+      }
+    }
+  }
+
+  // Determine the absolute and relative shift values from the fits
   double meanJetPt;
   double targetValue;
   double shiftedPt;
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+      iJetPt = 0;
+      for(auto jetPtBin : finalAnalysisPtBins){
+        meanJetPt = jetMeanPtAxisFinalAnalysisRegion[iCentrality][iTrackPt][iJetPt];
+
+        // Find the mean jet pT value from raw fit that corresponds to a given DeltaR value from unfolded fit
+        targetValue = fitToUnfoldedDeltaRPeak[iCentrality][iTrackPt]->Eval(meanJetPt);
+        shiftedPt = fitToRawDeltaRPeak[iCentrality][iTrackPt]->GetX(targetValue, comparedJetPtBin.at(0).first, comparedJetPtBin.back().second);
+
+        // Now that we know the shifted jet pT, we can calculate the absolute and relative shifts
+        absolutePtShift[iCentrality][iTrackPt][iJetPt] = shiftedPt - meanJetPt;
+        relativePtShift[iCentrality][iTrackPt][iJetPt] = (shiftedPt - meanJetPt) / meanJetPt;
+
+        iJetPt++;
+      } // Jet pT loop
+    } // Track pT loop
+  } // Centrality loop
+
+  // Fill the obtained information into TGraphs
+  TGraph* gAbsoluteShift[nCentralityBins][nTrackPtBinsEEC];
+  TGraph* gRelativeShift[nCentralityBins][nTrackPtBinsEEC];
+  TF1* fitToRelativeShift[nCentralityBins][nTrackPtBinsEEC];
+
+  // Initialize the graphs to NULL
+  for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+    for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+      gAbsoluteShift[iCentrality][iTrackPt] = NULL;
+      gRelativeShift[iCentrality][iTrackPt] = NULL;
+      fitToRelativeShift[iCentrality][iTrackPt] = NULL;
+    } // Track pT loop
+  } // Centrality loop
+
+  // Make new graphs for the selected bins
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+
+      gAbsoluteShift[iCentrality][iTrackPt] = new TGraph(nFinalAnalysisJetPtBins, jetMeanPtAxisFinalAnalysisRegion[iCentrality][iTrackPt], absolutePtShift[iCentrality][iTrackPt]);
+      gRelativeShift[iCentrality][iTrackPt] = new TGraph(nFinalAnalysisJetPtBins, jetMeanPtAxisFinalAnalysisRegion[iCentrality][iTrackPt], relativePtShift[iCentrality][iTrackPt]);
+
+      fitToRelativeShift[iCentrality][iTrackPt] = new TF1(Form("relativeShiftFit%d%d", iCentrality, iTrackPt), "pol0", finalAnalysisPtBins.at(0).first, finalAnalysisPtBins.back().second);
+
+    } // Track pT loop
+  } // Centrality loop
+
+  // To visualize the shift and see if there are trends, draw the absolute and relative shifts to the canvas
+  int trackPtDrawIndex = 0;
+  int colors[] = {kRed, kBlue, kGreen+3, kBlack};
+  int markers[] = {kFullSquare, kFullCross, kFullCircle, kFullStar};
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
+    centralityString = Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second);
+    compactCentralityString = Form("_C=%.0f-%.0f", centralityBin.first, centralityBin.second);
+
+    // Setup the legend for plots
+    legend = new TLegend(0.2, 0.65, 0.5, 0.9);
+    legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+    legend->AddEntry((TObject*)0, centralityString.Data(), "");
+
+    // Find a good y-axis scale for the plots
+    minimumValue = 1000;
+    maximumValue = 0;
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+      for(int iPoint = 0; iPoint < nFinalAnalysisJetPtBins; iPoint++){
+        currentValue = gAbsoluteShift[iCentrality][iTrackPt]->GetPointY(iPoint);
+        if(currentValue < minimumValue) minimumValue = currentValue;
+        if(currentValue > maximumValue) maximumValue = currentValue;
+      }
+    } // Track pT loop
+    drawMargin = (maximumValue - minimumValue) * 0.2;
+
+    trackPtDrawIndex = 0;
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+      trackPtString = Form("%.1f < track p_{T}", trackPtBin);
+
+      // Set a fancy style for the graph
+      gAbsoluteShift[iCentrality][iTrackPt]->SetMarkerStyle(markers[trackPtDrawIndex]);
+      gAbsoluteShift[iCentrality][iTrackPt]->SetMarkerColor(colors[trackPtDrawIndex]);
+      gAbsoluteShift[iCentrality][iTrackPt]->SetLineColor(colors[trackPtDrawIndex]);
+
+      // Draw the graphs to canvas
+      if(trackPtDrawIndex == 0){
+        drawer->DrawGraphCustomAxes(gAbsoluteShift[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}  [GeV]", "Absolute p_{T} shift [GeV]", " ", "a,p");
+      } else {
+        gAbsoluteShift[iCentrality][iTrackPt]->Draw("p,same");
+      }
+
+      legend->AddEntry(gAbsoluteShift[iCentrality][iTrackPt], trackPtString.Data(), "p");
+
+
+      trackPtDrawIndex++;
+
+    } // Track pT loop
+
+    // Add the legend to the canvas
+    legend->Draw();
+
+    // Save the figures to a file
+    if(saveFigures){
+      gPad->GetCanvas()->SaveAs(Form("figures/eecAbsoluteShift%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), figureFormat));
+    }
+
+  } // Centrality loop
+
+  for(auto centralityBin : comparedCentralityBin){
+    iCentrality = card->FindBinIndexCentrality(centralityBin);
+    centralityString = Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second);
+    compactCentralityString = Form("_C=%.0f-%.0f", centralityBin.first, centralityBin.second);
+
+    // Setup the legend for plots
+    legend = new TLegend(0.2 + 0.3*(iCentrality%2), 0.65, 0.5 + 0.3*(iCentrality%2), 0.9);
+    legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+    legend->AddEntry((TObject*)0, centralityString.Data(), "");
+
+    // Find a good y-axis scale for the plots
+    minimumValue = 1;
+    maximumValue = 0;
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+      for(int iPoint = 0; iPoint < nFinalAnalysisJetPtBins; iPoint++){
+        currentValue = gRelativeShift[iCentrality][iTrackPt]->GetPointY(iPoint);
+        if(currentValue < minimumValue) minimumValue = currentValue;
+        if(currentValue > maximumValue) maximumValue = currentValue;
+      }
+    } // Track pT loop
+    relativeMinimum[iCentrality] = minimumValue;
+    relativeMaximum[iCentrality] = maximumValue;
+    drawMargin = (maximumValue - minimumValue) * 0.2;
+
+    trackPtDrawIndex = 0;
+    for(auto trackPtBin : comparedTrackPtBin){
+      iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+      trackPtString = Form("%.1f < track p_{T}", trackPtBin);
+
+      // Set a fancy style for the graph
+      gRelativeShift[iCentrality][iTrackPt]->SetMarkerStyle(markers[trackPtDrawIndex]);
+      gRelativeShift[iCentrality][iTrackPt]->SetMarkerColor(colors[trackPtDrawIndex]);
+      gRelativeShift[iCentrality][iTrackPt]->SetLineColor(colors[trackPtDrawIndex]);
+
+      // Draw the graphs to canvas
+      if(trackPtDrawIndex == 0){
+        drawer->DrawGraphCustomAxes(gRelativeShift[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}  [GeV]", "Relative p_{T} shift", " ", "a,p");
+      } else {
+        gRelativeShift[iCentrality][iTrackPt]->Draw("p,same");
+      }
+
+      // Fit a pol0 to the graph
+      gRelativeShift[iCentrality][iTrackPt]->Fit(fitToRelativeShift[iCentrality][iTrackPt], "0");
+      fitToRelativeShift[iCentrality][iTrackPt]->SetLineColor(colors[trackPtDrawIndex]);
+      fitToRelativeShift[iCentrality][iTrackPt]->Draw("same");
+
+      legend->AddEntry(gRelativeShift[iCentrality][iTrackPt], trackPtString.Data(), "p");
+
+      trackPtDrawIndex++;
+
+    } // Track pT loop
+
+    // Add the legend to the canvas
+    legend->Draw();
+
+    // Save the figures to a file
+    if(saveFigures){
+      gPad->GetCanvas()->SaveAs(Form("figures/eecRelativeShift%s%s%s.%s", saveComment, compactEnergyWeightString.Data(), compactCentralityString.Data(), figureFormat));
+    }
+
+  } // Centrality loop
+
+  // Determine the upshift be the difference of the two fits
   double averageRelativeShift[nCentralityBins];
   int nBinsForAverage[nCentralityBins];
   for(auto centralityBin : comparedCentralityBin){
@@ -579,6 +805,8 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     iCentrality = card->FindBinIndexCentrality(centralityBin);
 
     cout << "Average relative shift for centrality " << centralityBin.first << "-" << centralityBin.second << " is " << averageRelativeShift[iCentrality]/nBinsForAverage[iCentrality] << endl;
+    cout << "Minimum value for uncertainty is " << relativeMinimum[iCentrality] << endl;
+    cout << "Maximum value for uncertainty is " << relativeMaximum[iCentrality] << endl;
   } // Centrality loop  
 
   /*
