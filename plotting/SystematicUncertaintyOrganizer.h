@@ -25,7 +25,7 @@ private:
   
 public:
   
-  enum enumUncertaintySources{kJetEnergyResolution, kJetEnergyScale, kUnfoldingTruth, kUnfoldingIterations, kTrackSelection, kSingleTrackEfficiency, kTrackPairEfficiency, kBackgroundSubtraction, kCentralityShift, kMonteCarloNonClosure, kAll, knUncertaintySources};
+  enum enumUncertaintySources{kJetEnergyResolution, kJetEnergyScale, kUnfoldingTruth, kUnfoldingIterations, kTrackSelection, kSingleTrackEfficiency, kTrackPairEfficiency, kBackgroundSubtraction, kSignalToBackgroundRatio, kCentralityShift, kMonteCarloNonClosure, kAll, knUncertaintySources};
   enum enumGroupFlagExplanation{kCorrelatedInDeltaR, kUncorrelatedInDeltaR, kSkipped, kGroupForAll, knUncertaintyGroups};
   
   SystematicUncertaintyOrganizer();                                          // Default constructor
@@ -53,9 +53,9 @@ public:
   
 private:
     
-  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "unfoldingIterations", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "centralityShift", "monteCarloNonClosure", "all"};
-  TString fSystematicUncertaintyLegendName[knUncertaintySources] = {"Jet energy resolution", "Jet energy scale", "Unfolding prior shape", "Unfolding iterations", "Track selection", "Single track efficiency", "Track pair efficiency", "Background subtraction", "Centrality shift", "MC non-closure", "all"};
-  TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "unfold iter", "track selection", "track eff", "pair eff", "bg sub", "cent shift", "MC non-closure", "all"};
+  TString fSystematicUncertaintyName[knUncertaintySources] = {"jetEnergyResolution", "jetEnergyCorrection", "unfoldingTruth", "unfoldingIterations", "trackSelection", "trackEfficiency", "trackPairEfficiency", "backgroundSubtraction", "signalToBackgroundRatio", "centralityShift", "monteCarloNonClosure", "all"};
+  TString fSystematicUncertaintyLegendName[knUncertaintySources] = {"Jet energy resolution", "Jet energy scale", "Unfolding prior shape", "Unfolding iterations", "Track selection", "Single track efficiency", "Track pair efficiency", "Background subtraction", "Signal-to-bg ratio", "Centrality shift", "MC non-closure", "all"};
+  TString fUncertaintyAxisName[knUncertaintySources] = {"JER", "JEC", "unfold truth", "unfold iter", "track selection", "track eff", "pair eff", "bg sub", "sig-to-bg ratio" "cent shift", "MC non-closure", "all"};
 
   // Systematic uncertainty for energy-energy correlators
   TH1D* fhEnergyEnergyCorrelatorUncertainty[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knUncertaintySources];
