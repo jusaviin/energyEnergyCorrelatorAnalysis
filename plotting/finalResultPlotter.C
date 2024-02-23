@@ -41,7 +41,7 @@ void finalResultPlotter(){
   // ============= //
 
   // Select the weight exponent that is used for the figures
-  const int weightExponent = 2;
+  const int weightExponent = 1;
 
   // Check that the selected weight exponent is reasonable
   if(weightExponent < 1 || weightExponent > 2){
@@ -55,15 +55,19 @@ void finalResultPlotter(){
 
   // Input files
   TString inputFileName[kNDataTypes][nWeightExponents];
-  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
-  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
+  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
+  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
   inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
-  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-20.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-20.root";
   uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
   uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+
+  TString shiftedPtFileName[nWeightExponents];
+  shiftedPtFileName[0] = "data/ppData_pfJets_wtaAxis_shiftedJetPtBins_nominalEnergyWeight_jet60or80trigger_unfoldWithShiftedResponse_processed_2024-02-19.root";
+  shiftedPtFileName[1] = "data/ppData_pfJets_wtaAxis_shiftedJetPtBins_energyWeightSquared_jet60or80trigger_unfoldWithShiftedResponse_processed_2024-02-19.root";
 
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root
@@ -76,8 +80,10 @@ void finalResultPlotter(){
   
   TFile* inputFile[kNDataTypes][nWeightExponents];
   TFile* uncertaintyFile[kNDataTypes][nWeightExponents];
+  TFile* shiftedPtFile[nWeightExponents];
   EECCard* card[kNDataTypes][nWeightExponents];
   EECCard* uncertaintyCard[kNDataTypes][nWeightExponents];
+  EECCard* shiftedPtCard[nWeightExponents];
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     for(int iFile = 0; iFile < kNDataTypes; iFile++){
 
@@ -109,6 +115,21 @@ void finalResultPlotter(){
       // Load the card from the file and read the collision system
       uncertaintyCard[iFile][iWeightExponent] = new EECCard(uncertaintyFile[iFile][iWeightExponent]);
     }  // File loop
+
+    // Load the shifted pT file
+    shiftedPtFile[iWeightExponent] = TFile::Open(shiftedPtFileName[iWeightExponent]);
+
+    // Check that the input file exists
+    if(shiftedPtFile[iWeightExponent] == NULL){
+      cout << "Error! The file " << shiftedPtFileName[iWeightExponent].Data() << " does not exist!" << endl;
+      cout << "Maybe you forgot the data/ folder path?" << endl;
+      cout << "Will not execute the code" << endl;
+      return;
+    }
+    
+    // Load the card from the file and read the collision system
+    shiftedPtCard[iWeightExponent] = new EECCard(shiftedPtFile[iWeightExponent]);
+
   } // Weight exponent loop
 
   // ==================================================================
@@ -142,10 +163,12 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = false;
+  bool drawBigCanvasRatios = true;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
+
+  bool drawShiftedPtRatio = false;
 
   // Normalize all distributions to 2 GeV integral
   bool normalizeTo2GeV = false;
@@ -175,7 +198,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_withCovariance_lowpt_120<jetpt<140";
+  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_newBackground";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings
@@ -190,6 +213,13 @@ void finalResultPlotter(){
   int bandColorUpPbPb[] = {kOrange+7, kViolet-3, kPink-3, kOrange-3};
   int bandColorDownPbPb[] = {kPink+9, kAzure+8, kViolet+6, kSpring};
 
+  // Definition on how much the jet pT is shifted for shifted pT figures
+  std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> jetPtShiftDefinition;
+  jetPtShiftDefinition.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(135,155)));
+  jetPtShiftDefinition.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(155,175)));
+  jetPtShiftDefinition.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(175,195)));
+  jetPtShiftDefinition.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(195,215)));
+
   TLine* lineDrawer = new TLine();
   lineDrawer->SetLineStyle(2);
   lineDrawer->SetLineColor(kBlack);
@@ -200,6 +230,7 @@ void finalResultPlotter(){
 
   // Create histogram managers for result files and systematic uncertainty organizers for systematic uncertainty files
   EECHistogramManager* histograms[kNDataTypes][nWeightExponents];
+  EECHistogramManager* shiftedPtHistograms[nWeightExponents];
   SystematicUncertaintyOrganizer* uncertainties[kNDataTypes][nWeightExponents];
   
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -221,12 +252,27 @@ void finalResultPlotter(){
       uncertainties[iDataType][iWeightExponent] = new SystematicUncertaintyOrganizer(uncertaintyFile[iDataType][iWeightExponent]);
 
     } // Data type loop
+
+    // Create a new histogram manager for histograms with shifted pT
+    shiftedPtHistograms[iWeightExponent] = new EECHistogramManager(shiftedPtFile[iWeightExponent], shiftedPtCard[iWeightExponent]);
+  
+    // Load all unfolded energy-energy correlators
+    shiftedPtHistograms[iWeightExponent]->SetLoadEnergyEnergyCorrelators(true);
+    shiftedPtHistograms[iWeightExponent]->SetCentralityBinRange(0, shiftedPtCard[iWeightExponent]->GetNCentralityBins());
+    shiftedPtHistograms[iWeightExponent]->SetTrackPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNTrackPtBinsEEC());
+    shiftedPtHistograms[iWeightExponent]->SetJetPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNJetPtBinsEEC());
+
+    // Load the histograms from the file
+    shiftedPtHistograms[iWeightExponent]->LoadProcessedHistograms();
+
   } // Weight exponent loop
  
   // Energy-energy correlators and PbPb to pp ratios
   TH1D* energyEnergyCorrelatorSignalPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorSignalShiftedPt[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorShiftedPtRatio[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyForPbPb[nWeightExponents][knSystematicUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyForPp[nWeightExponents][knSystematicUncertaintyTypes][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyPbPbToPpRatio[nWeightExponents][knSystematicUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -248,6 +294,8 @@ void finalResultPlotter(){
       }
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
+        energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt] = NULL;
+        energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt] = NULL;
 
         energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
         systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
@@ -273,8 +321,8 @@ void finalResultPlotter(){
   } // Weight exponent loop
 
   // Read the histograms from managers
-  int iTrackPtMatchedPp, iTrackPtMatchedPbPbUncertainty, iTrackPtMatchedPpUncertainty;
-  int iJetPtMatchedPp, iJetPtMatchedPbPbUncertainty, iJetPtMatchedPpUncertainty;
+  int iTrackPtMatchedPp, iTrackPtMatchedPbPbUncertainty, iTrackPtMatchedPpUncertainty, iTrackPtMatchedShifted;
+  int iJetPtMatchedPp, iJetPtMatchedPbPbUncertainty, iJetPtMatchedPpUncertainty, iJetPtMatchedShifted;
   int iCentralityMatched;
 
   // Define helper histograms to determine the uncertainties relevant for the double ratio
@@ -283,16 +331,38 @@ void finalResultPlotter(){
   TH1D* uncertaintyTrackPairEfficiency;
   TH1D* uncertaintyMCnonclosure;
   double trackCorrelation = 0.2;  // TODO: Check what is the actual number of overlapping tracks
+  std::pair<double,double> currentJetPtBin;
+  std::pair<double,double> shiftedJetPtBin;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     for(int iJetPt = firstDrawnJetPtBinEEC[iWeightExponent]; iJetPt <= lastDrawnJetPtBinEEC[iWeightExponent]; iJetPt++){
-      iJetPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexJetPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersJetPtEEC(iJetPt));
-      iJetPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersJetPtEEC(iJetPt));
-      iJetPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexJetPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersJetPtEEC(iJetPt));
+
+      // Find the current jet pT bin
+      currentJetPtBin = card[kPbPb][iWeightExponent]->GetBinBordersJetPtEEC(iJetPt);
+
+      // Find the shifted jet pT bin correcponding to the current pT bin
+      for(auto ptMatchingRecipe : jetPtShiftDefinition){
+        if(ptMatchingRecipe.first == currentJetPtBin){
+          shiftedJetPtBin = ptMatchingRecipe.second;
+          break;
+        }
+        shiftedJetPtBin = std::make_pair(-1,-1);
+      }
+
+      // Check that we found a shift definition
+      if(shiftedJetPtBin.first == -1){
+        cout << "ERROR! Could not find matching pT bin for jet pT bin " << currentJetPtBin.first << "-" << currentJetPtBin.second << endl;
+      }
+
+      iJetPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
+      iJetPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
+      iJetPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
+      iJetPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexJetPtEEC(shiftedJetPtBin);
       for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
         iTrackPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
         iTrackPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
         iTrackPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
+        iTrackPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
 
         // Read the pp histograms that do not have centrality binning
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt] = histograms[kPp][iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedPp, iTrackPtMatchedPp, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
@@ -308,6 +378,10 @@ void finalResultPlotter(){
         for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
           systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
         }
+
+        // Read the histograms with shifted pT spectrum
+        energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt] = shiftedPtHistograms[iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedShifted, iTrackPtMatchedShifted, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
 
         for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
           iCentralityMatched = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexCentrality(card[kPbPb][iWeightExponent]->GetBinBordersCentrality(iCentrality));
@@ -348,6 +422,13 @@ void finalResultPlotter(){
         systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
         systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
         systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10));
+
+        // Shifted pT to regular pT ratios
+        energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+        energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("shiftedPtRatio%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+        energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
+
         for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
           systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
@@ -812,6 +893,13 @@ void finalResultPlotter(){
 
           // Draw a line to one
           oneLine->Draw();
+
+          // Draw the shifted pT to regular pT ratio
+          if(drawShiftedPtRatio){
+            energyEnergyCorrelatorShiftedPtRatio[weightExponent-1][iJetPt][iTrackPt]->SetLineStyle(2);
+            energyEnergyCorrelatorShiftedPtRatio[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kBlack);
+            energyEnergyCorrelatorShiftedPtRatio[weightExponent-1][iJetPt][iTrackPt]->Draw("same,C");
+          }
 
           // Draw lines to 0.08 and 0.2 to
           lineDrawer->DrawLine(0.08, 0.8-(weightExponent-1)*0.2, 0.08, 1.2);
