@@ -111,7 +111,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for PbPb
       if(fIsPbPbData){
 
-        if(fSystematicIndex == kNominalSmear){ 
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){ 
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -315,7 +315,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for pp
       } else {
 
-        if(fSystematicIndex == kNominalSmear){
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -323,6 +323,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
           //        chi2Histograms_pp_split2_nominalSmear_2023-06-23.root
 
           fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_responseMatrix%s_processed_2024-01-11.root", splitName[fSplitIndex]);
+          //fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_shiftedPt_nominalSmear_responseMatrix%s_processed_2024-02-14.root", splitName[fSplitIndex]);
 
           // TODO: Recheck the iterations for the updated response matrix
           fBestNumberOfIterations[0][3] = 9;  // track pT > 2 GeV
@@ -419,7 +420,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
         // The configuration for PbPb
       if(fIsPbPbData){
 
-        if(fSystematicIndex == kNominalSmear){ 
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){ 
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -708,7 +709,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for pp
       } else {
 
-        if(fSystematicIndex == kNominalSmear){
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -717,6 +718,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
           // To determine these numbers, the 120 < jet pT < 140 GeV bin is ignored, because the results differ a lot from all other bins
 
           fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2024-01-10.root", splitName[fSplitIndex]);
+          //fResponseMatrixFileName = Form("data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_shiftedPt_energyWeightSquared_nominalSmear_responseMatrix%s_processed_2024-02-14.root", splitName[fSplitIndex]);
 
           // TODO: Recheck the iterations for the updated response matrix
           fBestNumberOfIterations[0][1] = 3;  // track pT > 1 GeV
@@ -841,6 +843,8 @@ void EECUnfoldConfiguration::InitializeArrays(){
 double EECUnfoldConfiguration::GetNumberOfIterations(const std::pair<double,double> centralityBinBorders, double trackPtBorderLow) const{
 
   // For now, just return 4. I will redo the logic later
+  if(fSystematicIndex == kNumberOfIterationsDown) return 3;
+  if(fSystematicIndex == kNumberOfIterationsUp) return 5;
   return 4;
 
   // ******************************************************************** //

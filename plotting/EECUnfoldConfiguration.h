@@ -14,7 +14,7 @@ class EECUnfoldConfiguration {
 public:
  
   // Helper enumeration for different defined Monte Carlo splits and systematic parameter sets
-  enum enumUnfoldingParameterSet{kNominalSmear, kJetPtResolutionUncertaintyDown, kJetPtResolutionUncertaintyUp, kJetEnergyScaleUncertaintyDown, kJetEnergyScaleUncertaintyUp, kJetPtPriorUncertainty, kCentralityShiftDown, kCentralityShiftUp, kNParameterSets};
+  enum enumUnfoldingParameterSet{kNominalSmear, kJetPtResolutionUncertaintyDown, kJetPtResolutionUncertaintyUp, kJetEnergyScaleUncertaintyDown, kJetEnergyScaleUncertaintyUp, kJetPtPriorUncertainty, kCentralityShiftDown, kCentralityShiftUp, kNumberOfIterationsDown, kNumberOfIterationsUp, kNParameterSets};
   enum enumMonteCarloSplit{kWholeDataset, kMonteCarloSplit1, kMonteCarloSplit2, kNDatasetSplits};
 
   // Dimensions for the arrays are defined by the files used the obtain the iteration numbers
