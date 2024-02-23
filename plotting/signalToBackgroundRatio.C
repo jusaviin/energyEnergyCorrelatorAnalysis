@@ -9,7 +9,7 @@
 void signalToBackgroundRatio(){
   
   // Input file
-  TString inputFileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
+  TString inputFileName = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root";
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-19.root
@@ -42,7 +42,6 @@ void signalToBackgroundRatio(){
   comparedCentralityBin.push_back(std::make_pair(10,30));
   comparedCentralityBin.push_back(std::make_pair(30,50));
   comparedCentralityBin.push_back(std::make_pair(50,90));
-  bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(100,120));
@@ -51,22 +50,20 @@ void signalToBackgroundRatio(){
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
   comparedJetPtBin.push_back(std::make_pair(200,220));
-  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
-  //comparedTrackPtBin.push_back(1.0);
+  comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
-  //comparedTrackPtBin.push_back(3.0);
-  bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
+  comparedTrackPtBin.push_back(3.0);
 
   // Fitting parameters
-  const bool doFit = false;
+  const bool doFit = true;
 
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "";   // Comment given for this specific file
+  const char* saveComment = "_includeFit";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // If we are dealing with MC, add 4% centrality shift to centrality bins
@@ -77,14 +74,6 @@ void signalToBackgroundRatio(){
     }
   }
 
-  // Only allow one variable for which all bins are plotted to the same figure
-  if(individualCentrality + individualJetPt + individualTrackPt < 2){
-    cout << "You are tring to plot too many bins to the same figure!" << endl;
-    cout << "This macro can only plot all the bins from one variable." << endl;
-    cout << "Please check your configuration!" << endl; 
-    return;
-  }
-  
   // Create and setup a new histogram managers to project and handle the histograms
   EECHistogramManager* histograms;
   histograms = new EECHistogramManager(inputFile, card);

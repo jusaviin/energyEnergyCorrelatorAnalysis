@@ -7,7 +7,7 @@
 void findBackgroundNormalizationScale(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_nominalReflectedCone_nominalSmear_truthReference_processed_2023-12-02.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root";
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_processed_2023-07-11.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_processed_2023-07-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_6pCentShift_noTrigger_cutBadPhi_noJetPtWeight_forBackgroundScale_processed_2023-06-06.root
@@ -125,8 +125,8 @@ void findBackgroundNormalizationScale(){
   
   double signalFakeIntegral, fakeFakeIntegral, reflectedConeIntegral;
   TString centralityString, trackPtString, jetPtString;
-  int lowIntegralBin = 1;
-  int highIntegralBin = hEnergyEnergyCorrelator[lowestEnergyEnergyCorrelatorIndex][EECHistograms::kSameJetPair][0][0][0][EECHistograms::kPythiaHydjet]->FindBin(0.79);
+  int lowIntegralBin = hEnergyEnergyCorrelator[lowestEnergyEnergyCorrelatorIndex][EECHistograms::kSameJetPair][0][0][0][EECHistograms::kPythiaHydjet]->FindBin(0.008);;
+  int highIntegralBin = hEnergyEnergyCorrelator[lowestEnergyEnergyCorrelatorIndex][EECHistograms::kSameJetPair][0][0][0][EECHistograms::kPythiaHydjet]->FindBin(0.39);
   
   // Get the histograms from the histogram manager and calculate integrals
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){

@@ -18,6 +18,8 @@ if [ "$#" -lt 1 ]; then
   echo "   5 = Jet pT prior uncertainty"
   echo "   6 = Centrality shift uncertainty from 2% shift"
   echo "   7 = Centrality shift uncertainty from 6% shift"
+  echo "   8 = Uncertainty from decreasing the number of iterations in unfolding"
+  echo "   9 = Uncertainty from increasing the number of iterations in unfolding"
   echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. Default: 0."
   echo "   0 = Regular energy-energy correlator"
   echo "   1 = Energy-energy correlator with positive track efficiency variation"

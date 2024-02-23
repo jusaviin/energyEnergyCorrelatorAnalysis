@@ -273,7 +273,7 @@ void unfoldJetPtWithRooUnfold(){
   const bool useBackgroundSubtractedForMeasured = false; // true = Unfold background subtracted measurement, false = Unfold measurement before background subtraction
   const int iUnfoldMethod = kBayesianUnfold; // Select the unfolding method: kMatrixInversionUnfold kBayesianUnfold
   const int nIterations = (iUnfoldMethod == kMatrixInversionUnfold) ? 1 : 5; // Number of iterations used with the regularized unfolding
-  const int iterationKey[] = {10,20,30,40,50};
+  const int iterationKey[] = {1,2,3,4,5};
   const bool calculateConditionNumber = false;
 
   const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distribution to truth reference
@@ -282,8 +282,8 @@ void unfoldJetPtWithRooUnfold(){
   const bool drawResponseMatrix = false;               // Draw the used response matrices
   const bool drawRefoldingTest = true;                // Compare refolded distribution to the original measured distribution
 
-  bool saveFigures = true;
-  TString saveComment = "_dAgostini_data_allTheIterations";
+  bool saveFigures = false;
+  TString saveComment = "_dAgostini_data";
   TString figureFormat = "pdf";
     
   // ***************************************************************

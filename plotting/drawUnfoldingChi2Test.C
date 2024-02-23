@@ -12,10 +12,10 @@ void drawUnfoldingChi2Test(){
   //       Open the input files
   // **********************************
 
-  const int nInputFiles = 2;
+  const int nInputFiles = 1;
   TString inputFileName[nInputFiles];
-  inputFileName[0] = "chi2Files/chi2Histograms_pp_nominalEnergyWeight_optimizedUnfoldingBinning_split1_nominalSmear_4pCentShift_2024-02-01.root";
-  inputFileName[1] = "chi2Files/chi2Histograms_pp_nominalEnergyWeight_optimizedUnfoldingBinning_split2_nominalSmear_4pCentShift_2024-02-01.root";
+  inputFileName[0] = "chi2Files/chi2HistogramsFromData_pp_squaredEnergyWeight_optimizedUnfoldingBinning_2024-01-22.root";
+  //inputFileName[1] = "chi2Files/chi2Histograms_pp_nominalEnergyWeight_optimizedUnfoldingBinning_split2_nominalSmear_4pCentShift_2024-02-01.root";
   // chi2Histograms_pp_split1_2023-06-05.root
   // chi2Histograms_pp_split2_2023-06-05.root
   // chi2Histograms_PbPb_energyWeightSquared_split1_nominalSmear_4pCentShift_2023-10-26.root
@@ -119,7 +119,7 @@ void drawUnfoldingChi2Test(){
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 3;
+  int firstStudiedTrackPtBinEEC = 1;
   int lastStudiedTrackPtBinEEC = 5;
 
   int firstStudiedJetPtBin = 0;
@@ -129,8 +129,8 @@ void drawUnfoldingChi2Test(){
   const bool drawChi2combined = false;                 // Draw single good chi2 value for each response matrix determined from relevent region
   const bool drawChi2mapForwardFolded = false;          // Draw the chi2 values for individual jet pT bins from forward folded distributions
   const bool drawChi2combinedForwardFolded = false;    // Draw single good chi2 value for each response matrix determined from relevent region from forward folded distributions
-  const bool drawUnfoldedToTruthComparison = true;    // Compare unfolded distributions to truth
-  const bool drawForwardFoldedToMeasuredComparison = false;  // Compare measured distribution to forward folded distribution
+  const bool drawUnfoldedToTruthComparison = false;    // Compare unfolded distributions to truth
+  const bool drawForwardFoldedToMeasuredComparison = true;  // Compare measured distribution to forward folded distribution
   const bool drawBestIterationRatioComparison = false; // Draw unfolded to truth ratios for the selected number of iterations
   const bool oneIterationPerMatrix = false;            // If drawing best iteration ratio, use single iteration number for each matrix 
 

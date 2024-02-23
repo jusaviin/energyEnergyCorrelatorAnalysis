@@ -48,8 +48,10 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                           3: Evaluate down systematic uncertainties for jet energy scale
  *                           4: Evaluate up systematic uncertainties for jet energy scale
  *                           5: Evaluate systematic uncertainties for jet pT prior shape
- *                           6: Evaluate systemtic uncertainty from 2% centrality shift
+ *                           6: Evaluate systematic uncertainty from 2% centrality shift
  *                           7: Evaluate systematic uncertainty from 6% centrality shift
+ *                           8: Evaluate systematic uncertainty from fewer number of iterations in unfolding
+ *                           9: Evaluate systematic uncertainty from larger number of iterations in unfolding
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  *.  int iWeightExponent = Exponent given for the energy weights for energy-energy correaltors. 
  *                               0: Read the used weight exponent from the input file
@@ -76,6 +78,10 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   // Determine if we are dealing with pp or PbPb data
   TString collisionSystem = dataCard->GetDataType();
   bool isPbPbData = collisionSystem.Contains("PbPb");
+
+  // Flag for generator level jets. If data file has generator level jets, do not unfold.
+  // Running it still through this macro gives consistent histogram naming, which makes some things easier later.
+  bool genJetsInData = (collisionSystem.Contains("GenGen") || collisionSystem.Contains("GenReco"));
 
   // If the weight exponent is 0, read the value that has been used in the input data file
   if(iWeightExponent == 0) iWeightExponent = dataCard->GetWeightExponent();
@@ -177,10 +183,18 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;
+  //unfoldedJetPtBins.push_back(std::make_pair(100,120));
   unfoldedJetPtBins.push_back(std::make_pair(120,140));
   unfoldedJetPtBins.push_back(std::make_pair(140,160));
   unfoldedJetPtBins.push_back(std::make_pair(160,180));
   unfoldedJetPtBins.push_back(std::make_pair(180,200));
+  //unfoldedJetPtBins.push_back(std::make_pair(200,220));
+  //unfoldedJetPtBins.push_back(std::make_pair(220,240));
+
+  //unfoldedJetPtBins.push_back(std::make_pair(135,155));
+  //unfoldedJetPtBins.push_back(std::make_pair(155,175));
+  //unfoldedJetPtBins.push_back(std::make_pair(175,195));
+  //unfoldedJetPtBins.push_back(std::make_pair(195,215));
 
   const int nUnfoldedJetPtBins = unfoldedJetPtBins.size();
 
@@ -281,6 +295,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   int nDeltaRBinsData = energyEnergyCorrelatorsFromData[firstStudiedCentralityBin][0][firstStudiedTrackPtBinEEC]->GetNbinsX();
   double jetPtLowerBound;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+    if(genJetsInData) break; // No unfolding for gen jets
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt] = (TH1D*) hUnfoldingMeasured[iCentrality][iTrackPt]->Clone(Form("dataCorrelatorForUnfolding%d%d", iCentrality, iTrackPt));
       energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt]->Reset();
@@ -309,6 +324,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   int nMatrixBins = 0;
   if(includeCovariance) nMatrixBins = hUnfoldingCovariance[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetNbinsX();
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+    if(genJetsInData) break; // No unfolding for gen jets
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       bayesUnfold[iCentrality][iTrackPt] = new RooUnfoldBayes(rooResponse[iCentrality][iTrackPt], energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt], unfoldConfigurationProvider->GetNumberOfIterations(dataCard->GetBinBordersCentrality(iCentrality), dataCard->GetLowBinBorderTrackPtEEC(iTrackPt)));
 
@@ -322,9 +338,13 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
         }
         bayesUnfold[iCentrality][iTrackPt]->SetMeasuredCov(covarianceMatrix);
 
-        // After unfolding, extract the unfolded coveriance matrix
-        TMatrixD unfoldedCovarianceMatrix = bayesUnfold[iCentrality][iTrackPt]->Eunfold(RooUnfolding::kCovariance);
+        // Do the actual unfolding
+        hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kCovariance);
 
+        // After unfolding, extract the unfolded coveriance matrix
+        TMatrixD unfoldedCovarianceMatrix(nMatrixBins, nMatrixBins);
+        unfoldedCovarianceMatrix = bayesUnfold[iCentrality][iTrackPt]->GetMeasuredCov();
+        
         // Put the information from TMatrixD to TH2D:
         for(int iBin = 0; iBin < nMatrixBins; iBin++){
           for(int jBin = 0; jBin < nMatrixBins; jBin++){
@@ -332,8 +352,6 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
           }
         }
 
-        // Do the actual unfolding
-        hUnfoldedDistribution[iCentrality][iTrackPt] = (TH1D*)bayesUnfold[iCentrality][iTrackPt]->Hunfold(RooUnfolding::kCovariance);
 
       } else {
 
@@ -378,18 +396,25 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   }
 
   // Create new histograms for the chosen bin range
+  int jetPtUnfoldIndex = 0;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
-        hUnfolded[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("hUnfolded%d%d%d", iCentrality, iTrackPt, iJetPt), Form("hUnfolded%d%d%d", iCentrality, iTrackPt, iJetPt), nDeltaRBins, deltaRBinning);
+        if(genJetsInData){
+          // If no unfolding is done, just copy the measured histograms directly for the unfolded collection
+          jetPtUnfoldIndex = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));
+          hUnfolded[iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorsFromData[iCentrality][jetPtUnfoldIndex][iTrackPt]->Clone(Form("hUnfolded%d%d%d", iCentrality, iTrackPt, iJetPt));
+        } else {
+          hUnfolded[iCentrality][iJetPt][iTrackPt] = new TH1D(Form("hUnfolded%d%d%d", iCentrality, iTrackPt, iJetPt), Form("hUnfolded%d%d%d", iCentrality, iTrackPt, iJetPt), nDeltaRBins, deltaRBinning);
+        }
       } // Jet pT loop
     } // Track pT loop
   } // Centrality loop
 
   // Dissect the big histograms and fill small histograms based on the information
   // Also normalize the bins to bin width
-  int jetPtUnfoldIndex = 0;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+    if(genJetsInData) break; // No unfolding for gen jets
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       for(int iJetPt = 0; iJetPt < nUnfoldedJetPtBins; iJetPt++){
         jetPtUnfoldIndex = dataCard->FindBinIndexJetPtEEC(unfoldedJetPtBins.at(iJetPt));

@@ -11,7 +11,7 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = false;
+  bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
   const int weightExponent = 2;
 
@@ -26,11 +26,17 @@ void fullAnalysisClosure(){
   TString fileName[kNDistributionTypes][nSplits][2];
 
   if(isPbPbData){
-    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_processed_2024-01-19.root";
-    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part1_processed_2024-01-19.root";
+    //fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_processed_2024-01-19.root";
+    //fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part1_processed_2024-01-19.root";
 
-    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part2_processed_2024-01-18.root";
-    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part1_processed_2024-01-18.root";
+    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part2_processed_2024-01-19.root";
+    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part1_processed_2024-01-19.root";
+
+    //fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part2_processed_2024-01-18.root";
+    //fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part1_processed_2024-01-18.root";
+
+    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part2_processed_2024-01-18.root";
+    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part1_processed_2024-01-18.root";
 
     fileName[kTruth][0][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-16.root";
     fileName[kTruth][1][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part1_processed_2024-01-16.root";
@@ -124,6 +130,10 @@ void fullAnalysisClosure(){
   
   int firstDrawnTrackPtBinEEC = card[kMeasured][0]->GetFirstUnfoldedTrackPtBin();
   int lastDrawnTrackPtBinEEC = card[kMeasured][0]->GetLastUnfoldedTrackPtBin();
+
+  //firstDrawnCentralityBin = 0;
+  //lastDrawnCentralityBin = 0;
+  //lastDrawnJetPtBinEEC = card[kMeasured][0]->GetFirstUnfoldedJetPtBin();
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -155,13 +165,13 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
   TString saveComment = Form("%s_PythiaHerwig", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
-  const bool saveMonteCarloNonClosureFile = true;
+  const bool saveMonteCarloNonClosureFile = false;
   TString outputFileName[2][2] = {
     // Output file names for pT1*pT2 weight
     {Form("systematicUncertainties/monteCarloNonClosureRelative_pp_nominalEnergyWeight_%s.root", today.Data()), Form("systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_%s.root", today.Data())},

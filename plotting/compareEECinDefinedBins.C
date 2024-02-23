@@ -8,20 +8,20 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 5;
+  const int nComparisonFiles = 1;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root";
-  fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
-  fileName[3] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith10Iterations_processed_2024-01-17.root";
-  fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root";
+  //fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
+  //fileName[3] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith10Iterations_processed_2024-01-17.root";
+  //fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "4 iterations";
-  fileDescription[1] = "3 iterations";
-  fileDescription[2] = "5 iterations";
-  fileDescription[3] = "10 iterations";
-  fileDescription[4] = "20 iterations";
+  fileDescription[0] = "PbPb data";
+  //fileDescription[1] = "3 iterations";
+  //fileDescription[2] = "5 iterations";
+  //fileDescription[3] = "10 iterations";
+  //fileDescription[4] = "20 iterations";
   
   // Open the files and check that they exist
   TFile* inputFile[nComparisonFiles];
@@ -52,9 +52,9 @@ void compareEECinDefinedBins(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,10));
-  comparedCentralityBin.push_back(std::make_pair(10,30));
-  comparedCentralityBin.push_back(std::make_pair(30,50));
-  comparedCentralityBin.push_back(std::make_pair(50,90));
+  //comparedCentralityBin.push_back(std::make_pair(10,30));
+  //comparedCentralityBin.push_back(std::make_pair(30,50));
+  //comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
@@ -62,7 +62,7 @@ void compareEECinDefinedBins(){
   comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
-  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   //comparedTrackPtBin.push_back(1.0);
@@ -80,20 +80,20 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
 
   // ====================================================
   //                Drawing configuration
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_energyWeightSquared_iterationComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.7, 1.3);
-  std::pair<double, double> eecZoom = std::make_pair(0.05, 50);
+  std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
+  std::pair<double, double> eecZoom = std::make_pair(0.05, 8);
 
   // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
   // This check is only needed for unfolded bins, so skip it if only raw distribution is drawn.
@@ -488,7 +488,7 @@ void compareEECinDefinedBins(){
     hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
           
     // Draw the histograms to the upper canvas
-    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "EEC", " ");
+    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "Reflected cone EEC", " ");
 
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){

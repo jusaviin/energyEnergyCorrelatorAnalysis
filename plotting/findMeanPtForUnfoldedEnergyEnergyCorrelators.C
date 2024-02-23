@@ -73,7 +73,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
 
   // Figure saving
-  const bool saveFigures = false;  // Save figures
+  const bool saveFigures = true;  // Save figures
   const char* saveComment = "";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 

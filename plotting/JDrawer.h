@@ -1079,7 +1079,7 @@ public:
    */
   void SetDefaultAppearanceGraph(){
     Reset();
-    SetHistogramAppearance(0.9, 1.3, 0.06,0.05, 0.01,0.001, 0.05,0.05, 505, 505,42);
+    SetHistogramAppearance(1.2, 1.6, 0.06,0.05, 0.01,0.001, 0.05,0.05, 505, 505,42);
     SetRelativeCanvasSize(0.8,1);
     SetLeftMargin(0.17);
   }

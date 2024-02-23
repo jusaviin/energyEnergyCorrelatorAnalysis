@@ -27,7 +27,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
@@ -39,7 +39,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   bool drawMaxParticlePtWithinJetCone = false;
   bool drawMaxBackgroundParticlePtWithinJetCone = false;
-  bool drawCovarianceMatrix = true;
+  bool drawCovarianceMatrix = false;
   
   // Open the input file
   TFile* inputFile = TFile::Open(inputFileName);
@@ -78,8 +78,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
   
-  int firstDrawnJetPtBinEEC = 6;
-  int lastDrawnJetPtBinEEC = 6; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 7;
+  int lastDrawnJetPtBinEEC = 7; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 1;
   int lastDrawnTrackPtBinEEC = 5;
@@ -96,7 +96,7 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawMultiplicityInReflectedConeUncorrected = false && drawMultiplicityHistograms;
   
   // Select track pairing type to be draw
-  const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
+  const bool drawSameJetEnergyEnergyCorrelator = true;       // Draw energy-energy correlator where tracks from the same jet are paired
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
   const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
@@ -106,12 +106,12 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawEnergyEnergyCorrelatorSignal = false;       // Draw background subtracted energy-energy correlators
   
   // Figure saving
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   const char* figureFormat = "pdf";
   TString figureNameSuffix = "";
 
   // Comment that can be added to figure legends
-  TString legendComment = "Energy weight squared";
+  TString legendComment = "";
   
   // Logarithmic scales for figures
   const bool logPt = true;          // pT distributions

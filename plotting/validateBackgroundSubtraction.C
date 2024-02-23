@@ -9,11 +9,12 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_noRecoJetsInRefCone_processed_2023-11-30.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_truthReference_forBackgroundValidation_processed_2023-07-11.root
+  // data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root
+  // data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-18.root
   TFile* inputFile = TFile::Open(inputFileName);
   
   // Check that the files exist
@@ -25,6 +26,7 @@ void validateBackgroundSubtraction(){
   }
 
   EECCard* card = new EECCard(inputFile);
+  const int weightExponent = card->GetWeightExponent();
   
   // ====================================================
   //               Binning configuration
@@ -42,10 +44,10 @@ void validateBackgroundSubtraction(){
   
   // Select which histograms are fitted
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = nCentralityBins-1;
+  int lastDrawnCentralityBin = 0;
   
-  int firstDrawnJetPtBinEEC = 6;
-  int lastDrawnJetPtBinEEC = 9; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 7;
+  int lastDrawnJetPtBinEEC = 7; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 0;
   int lastDrawnTrackPtBinEEC = 5;
@@ -73,6 +75,9 @@ void validateBackgroundSubtraction(){
   
   // Axis zooming
   std::pair<double,double> ratioZoom = std::make_pair(0.9, 1.1);
+
+  // Extra tag for the plots
+  const bool simulationTag = true;
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
@@ -175,9 +180,11 @@ void validateBackgroundSubtraction(){
   if(logDeltaR) drawer->SetLogX(true);
 
   TLegend* legend;
+  TLegend* simulationLegend;
   TString centralityString, trackPtString, jetPtString;
   TString compactCentralityString, compactTrackPtString, compactJetPtString;
   TString legendString;
+  double legendX1, legendX2;
   
   // Loop over all selected histograms
   for(int iEnergyEnergyCorrelator = 0; iEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelator++){
@@ -189,7 +196,8 @@ void validateBackgroundSubtraction(){
     for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
       
       // Set the centrality information for legends and figure saving
-      centralityString = Form("Cent: %.0f-%.0f%%", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
+      //centralityString = Form("Cent: %.0f-%.0f%%", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
+      centralityString = "Cent: 0-10%";
       compactCentralityString = Form("_C=%.0f-%.0f", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
       
       // Loop over jet pT bins
@@ -212,7 +220,7 @@ void validateBackgroundSubtraction(){
           compactTrackPtString.ReplaceAll(".","v");
           
           // Create a legend for the figure
-          legend = new TLegend(0.34,0.04,0.59,0.44);
+          legend = new TLegend(0.2,0.04,0.45,0.44);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
           legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",histograms->GetCard()->GetAlternativeDataType(false).Data()), "");
           //legend->AddEntry((TObject*) 0, "Energy weight squared","");
@@ -240,6 +248,17 @@ void validateBackgroundSubtraction(){
           
           // Draw the legends to the upper pad
           legend->Draw();
+
+          // Add simulation tag to the figures
+          if(simulationTag){
+            legendX1 = (weightExponent == 1) ? 0.23 : 0.18;
+            legendX2 = (weightExponent == 1) ? 0.48 : 0.43;
+            simulationLegend = new TLegend(legendX1,0.5,legendX2,0.65);
+            simulationLegend->SetFillStyle(0);simulationLegend->SetBorderSize(0);simulationLegend->SetTextSize(0.05);simulationLegend->SetTextFont(62);
+            simulationLegend->AddEntry((TObject*) 0, "CMS simulation +","");
+            simulationLegend->AddEntry((TObject*) 0, "   Private work","");
+            simulationLegend->Draw();
+          }
           
           // Linear scale for the ratio
           drawer->SetLogY(false);
