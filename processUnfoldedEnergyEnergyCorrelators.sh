@@ -9,6 +9,8 @@ if [ "$#" -lt 1 ]; then
   echo "  0 = Nominal result"
   echo "  1 = Background scale from 2% centrality shift" 
   echo "  2 = Background scale from 6% centrality shift"
+  echo "  3 = Lower scaling estimate for signal-to-background ratio after unfolding"
+  echo "  4 = Higher scaling estimate for signal-to-background ratio after unfolding"
   echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. Default: 0."
   echo "   0 = Regular energy-energy correlator"
   echo "   1 = Energy-energy correlator with positive track efficiency variation"

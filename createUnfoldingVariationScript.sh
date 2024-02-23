@@ -74,14 +74,14 @@ if $NOMINAL; then
 fi
 
 # Make arrays of all the configurations that will be done for unfolding
-VARIATIONS+=("unfoldingWithUncertaintySmearDown" "unfoldingWithUncertaintySmearUp" "unfoldingWithMinusJetEnergyScale" "unfoldingWithPlusJetEnergyScale" "unfoldingWithModifiedPrior")
-OPTIONS+=("-u 1" "-u 2" "-u 3" "-u 4" "-u 5")
-BACKGROUNDOPTIONS+=("-u 0" "-u 0" "-u 0" "-u 0" "-u 0")
+VARIATIONS+=("unfoldingWithUncertaintySmearDown" "unfoldingWithUncertaintySmearUp" "unfoldingWithMinusJetEnergyScale" "unfoldingWithPlusJetEnergyScale" "unfoldingWithModifiedPrior" "unfoldingWith3Iterations" "unfoldingWith5Iterations")
+OPTIONS+=("-u 1" "-u 2" "-u 3" "-u 4" "-u 5" "-u 8" "-u 9")
+BACKGROUNDOPTIONS+=("-u 0" "-u 0" "-u 0" "-u 0" "-u 0" "-u 0" "-u 0")
 
 if $ISPBPBDATA; then
-  VARIATIONS+=("unfoldingWith2pCentShift" "unfoldingWith6pCentShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty6pShift")
-  OPTIONS+=("-u 6" "-u 7" "-u 0" "-u 0")
-  BACKGROUNDOPTIONS+=("-u 1" "-u 2" "-u 1" "-u 2")
+  VARIATIONS+=("unfoldingWith2pCentShift" "unfoldingWith6pCentShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty6pShift" "unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding" "unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding")
+  OPTIONS+=("-u 6" "-u 7" "-u 0" "-u 0" "-u 0" "-u 0")
+  BACKGROUNDOPTIONS+=("-u 1" "-u 2" "-u 1" "-u 2" "-u 3" "-u 4")
 else
   VARIATIONS+=("unfoldingWithNominalSmear_backgroundSubtractionSystematics")
   OPTIONS+=("-u 0")

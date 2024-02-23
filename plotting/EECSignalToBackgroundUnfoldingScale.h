@@ -27,7 +27,7 @@ public:
   ~EECSignalToBackgroundUnfoldingScale() = default;      // Destructor
 
   // Getter for the background scale
-  double GetEECSignalToBackgroundUnfoldingScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData) const;
+  double GetEECSignalToBackgroundUnfoldingScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData, int iSystematic = 0) const;
   
 private:
   
@@ -39,7 +39,9 @@ private:
   const double fJetPtBinBorderLow[kNJetPtBins] = {100, 120, 140, 160, 180, 200};
   const double fJetPtBinBorderHigh[kNJetPtBins] = {120, 140, 160, 180, 200, 220};
   const double fTrackPtBinBorderLow[kNTrackPtBins] = {1, 1.5, 2, 2.5, 3};
-  const double fRelativeUpshift[kNCentralityBins] = {0.077, 0.053, 0.034, 0.01};
+  const double fRelativeUpshift[3][kNCentralityBins] = {{0.076, 0.050, 0.033, 0.029},
+                                                        {0.067, 0.046, 0.030, 0.025},
+                                                        {0.092, 0.053, 0.036, 0.033}};
 
   // Functions from which signal to background ratio scales are read
   TF1* fSignalToBackgroundFunction;

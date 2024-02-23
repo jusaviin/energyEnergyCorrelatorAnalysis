@@ -48,14 +48,14 @@ EECBackgroundScale::EECBackgroundScale(const bool useGenJets, const int iSystema
  * Initialization for background scale arrays
  *
  *  const bool useGenJets = Flag telling if we use scaling factors determined for reconstructed or generator level jets
- *  const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
- *                          0: Nominal results, no systematic uncertainty estimation
- *                          1: Systematic uncertainty derived from 2% centrality shifted simulation
- *                          2: Systematic uncertainty derived from 6% centrality shifted simulation
+ *  int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *                    0: Nominal results, no systematic uncertainty estimation
+ *                    1: Systematic uncertainty derived from 2% centrality shifted simulation
+ *                    2: Systematic uncertainty derived from 6% centrality shifted simulation
  *  const int iWeightExponent = Exponent given to the energy weight in energy-energy correlators
  *                              Currently implemented values: 1 and 2
  */
-void EECBackgroundScale::InitializeArrays(const bool useGenJets, const int iSystematic, const int iWeightExponent){
+void EECBackgroundScale::InitializeArrays(const bool useGenJets, int iSystematic, const int iWeightExponent){
   
   // First, check that the input values are reasonable
   if(iWeightExponent < 1 || iWeightExponent > 2){
@@ -65,9 +65,13 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets, const int iSyst
     throw std::invalid_argument("iWeightExponent in EECBackgroundScale is out of allowed range!");
   }
 
-  if(iSystematic < 0 || iSystematic >= kNBackgroundScaleChoices){
+  // Systematic uncertainty indices higher than 2 correspond to background scale for unfolding, which is dealt withi n another class
+  // Thus those indices are consider as nominal for this background scaling
+  if(iSystematic >= kNBackgroundScaleChoices) iSystematic = 0;
+
+  if(iSystematic < 0){
     std::cout << "EECBackgroundScale::ERROR! " << std::endl;
-    std::cout << "You have defined your iSystematic index as " << iSystematic << " which is outside of the allowed values 0-" << kNBackgroundScaleChoices-1 << std::endl;
+    std::cout << "Systematic uncertainty index cannot be negative!" << std::endl;
     std::cout << "The code will now crash. Better luck next time!" << std::endl;
     throw std::invalid_argument("iSystematic in EECBackgroundScale is out of allowed range!");
   }

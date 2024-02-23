@@ -92,7 +92,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
   // ==================================================================== //
   {
    // Centrality 0-10%
-  /*{{0.227696,0.00970569,-4.76595e-06}, // track pT > 1.0 GeV
+  {{0.227696,0.00970569,-4.76595e-06}, // track pT > 1.0 GeV
    {0.0299163,0.0157925,-3.4004e-06}, // track pT > 1.5 GeV
    {-0.423722,0.028125,2.84121e-07}, // track pT > 2.0 GeV
    {-1.34799,0.0514155,1.11466e-05}, // track pT > 2.5 GeV
@@ -115,11 +115,11 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {2.566,0.221488,0}, // track pT > 2.0 GeV
    {6.56557,0.317407,0}, // track pT > 2.5 GeV
    {13.2054,0.417227,0}} // track pT > 3.0 GeV
-  },*/
+  },
 
   // TEST from RecoReco MC
    // Centrality 4-14%
-  {{0.597848,0.0048607,9.49442e-06}, // track pT > 1.0 GeV
+  /*{{0.597848,0.0048607,9.49442e-06}, // track pT > 1.0 GeV
    {0.749652,0.00654232,2.44353e-05}, // track pT > 1.5 GeV
    {0.920023,0.0108472,5.29838e-05}, // track pT > 2.0 GeV
    {1.10411,0.0197509,0.00010062}, // track pT > 2.5 GeV
@@ -142,7 +142,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {6.68697,0.211723,0}, // track pT > 2.0 GeV
    {15.4285,0.292103,0}, // track pT > 2.5 GeV
    {29.4499,0.350802,0}} // track pT > 3.0 GeV
-  },
+  },*/
 
   // ===================================================================== //
   //    Second part of the array is for squared energy weights, pT1*pT2    //
@@ -211,13 +211,29 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
  *  const std::pair<double,double> jetPtBinBorders = Jet pT bin borders for the scaling factor
  *  const double trackPtLowBorder = Lower track pT bin border for the scaling factor. All tracks above this are used
  *  const bool isPbPbData = True for PbPb, false for pp
+ *  int iSystematic = Systematic uncertainty index.
+ *                    3: Lower scale for signal-to-background ratio uncertainty
+ *                    4: Higher scale for signal-to-background ratio uncertainty
+ *                    Any other index: Default value for signal-to-background ratio scaling factor
  *
  *  return: Scaling factor corresponding to the bin with the given bin borders
  */
-double EECSignalToBackgroundUnfoldingScale::GetEECSignalToBackgroundUnfoldingScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData) const{
+double EECSignalToBackgroundUnfoldingScale::GetEECSignalToBackgroundUnfoldingScale(const std::pair<double,double> centralityBinBorders, const std::pair<double,double> jetPtBinBorders, const double trackPtLowBorder, const bool isPbPbData, int iSystematic) const{
 
   // No scaling is needed for pp, signal to background ratio is so good that the effect of scaling is negligible
   if(!isPbPbData) return 1;
+
+  // Decode the systematic uncertainty index. Indices 1 and 2 are reserved for MC based scaling factor systematics.
+  // Thus indices 3 and 4 are used to vary the background scaling factor coming from signal-to-background ratio changes
+  // in unfolding. These need to be internally propagated back to indices 1 and 2 such that correct array indices are read.
+  // Any other systematic uncertainty index is interpreted as default case, which translates to index 0 internally.
+  if(iSystematic == 3){
+    iSystematic = 1;
+  } else if (iSystematic == 4){
+    iSystematic = 2;
+  } else {
+    iSystematic = 0;
+  }
 
   // ******************************************************************** //
   // First, find the bin indices that correspond to the input bin borders //
@@ -294,7 +310,7 @@ double EECSignalToBackgroundUnfoldingScale::GetEECSignalToBackgroundUnfoldingSca
   }
 
   // Calculate the difference on signal to background ratios in original and unfolded mean pT locations
-  double shiftedMeanPt = fMeanJetPt[centralityIndex][jetPtIndex] + fRelativeUpshift[centralityIndex]*fMeanJetPt[centralityIndex][jetPtIndex];
+  double shiftedMeanPt = fMeanJetPt[centralityIndex][jetPtIndex] + fRelativeUpshift[iSystematic][centralityIndex]*fMeanJetPt[centralityIndex][jetPtIndex];
   double originalSignalToBackgroundRatio = fSignalToBackgroundFunction->Eval(fMeanJetPt[centralityIndex][jetPtIndex]);
   double unfoldedSignalToBackgroundRatio = fSignalToBackgroundFunction->Eval(shiftedMeanPt);
 
