@@ -797,6 +797,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
       for(int iCentrality = fFirstDrawnCentralityBin; iCentrality <= fLastDrawnCentralityBin; iCentrality++){
         
         centralityString = Form("Cent: %.0f-%.0f%%",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
+        //centralityString = "Cent: 0-10%";
         compactCentralityString = Form("_C=%.0f-%.0f",fHistograms->GetCentralityBinBorder(iCentrality),fHistograms->GetCentralityBinBorder(iCentrality+1));
         
         // Draw individual energy-energy correlator histograms
@@ -1012,8 +1013,12 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               drawnHistogram->SetMarkerStyle(style[0]);
               legend->AddEntry(drawnHistogram, "All combinations", "p");
               
-              // For logarithmic x-axis, cannot go all the way to zero
-              drawnHistogram->GetYaxis()->SetRangeUser(0.001, 10);
+              // For logarithmic x-axis, cannot go all the way to zero. Drawing range based on weight exponent.
+              if(fHistograms->GetCard()->GetWeightExponent() == 1){
+                drawnHistogram->GetYaxis()->SetRangeUser(0.001, 10);
+              } else {
+                drawnHistogram->GetYaxis()->SetRangeUser(0.00005, 60);
+              }
               if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.39);
               
               namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
