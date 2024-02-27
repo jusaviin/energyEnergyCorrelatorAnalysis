@@ -55,13 +55,13 @@ void finalResultPlotter(){
 
   // Input files
   TString inputFileName[kNDataTypes][nWeightExponents];
-  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
-  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
+  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
   inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
-  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-20.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-20.root";
+  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-23.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-23.root";
   uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
   uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
 
@@ -163,9 +163,9 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = true;
+  bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   bool drawShiftedPtRatio = false;
@@ -190,15 +190,16 @@ void finalResultPlotter(){
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(120,140);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
+  TString doubleRatioJetPtString = Form("_%.0f<jetpt<%.0f", doubleRatioJetPtBin.first, doubleRatioJetPtBin.second);
   
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_newBackground";
+  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_updatedBackground";
   TString figureFormat = "pdf";
 
   // Ratio zoom settings
@@ -1065,6 +1066,7 @@ void finalResultPlotter(){
 
     double doubleRatioZoomMagnitude = 0.2;
     if(trackPtBinsForDoubleRatio[weightExponent-1].first < 2) doubleRatioZoomMagnitude = 0.3;
+    if(weightExponent == 1) doubleRatioZoomMagnitude = 0.3;
 
     mainTitle = new TLatex();
     canvasIndex = 0;
