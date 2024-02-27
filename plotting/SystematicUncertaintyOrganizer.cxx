@@ -42,7 +42,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fUncertaintyColor[kSingleTrackEfficiency] = kWhite;
   fUncertaintyColor[kTrackPairEfficiency] = kCyan;
   fUncertaintyColor[kBackgroundSubtraction] = kViolet-6;
-  fUncertaintyColor[kSignalToBackgroundRatio] = kTeal+5;
+  fUncertaintyColor[kSignalToBackgroundRatio] = kYellow+1;
   fUncertaintyColor[kCentralityShift] = kOrange+7;
   fUncertaintyColor[kMonteCarloNonClosure] = kSpring;
   fUncertaintyColor[kAll] = kBlack;
