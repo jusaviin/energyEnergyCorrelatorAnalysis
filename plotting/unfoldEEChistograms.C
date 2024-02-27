@@ -198,7 +198,7 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
 
   const int nUnfoldedJetPtBins = unfoldedJetPtBins.size();
 
-  bool includeCovariance = false;
+  bool includeCovariance = true;
 
   bool saveFigures = false;
   TString saveComment = "_matrixInversion";

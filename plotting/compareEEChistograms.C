@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/ppData_pfJets_wtaAxis_onlyJets_upgradedNevents_jet60or80trigger_processed_2024-02-02.root", "data/ppData_pfJets_wtaAxis_onlyJets_jet80trigger_processed_2024-02-01.root", "data/eecAnalysis_akFlowJet_onlyJets_jet100trigger_processed_2024-02-01.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_noJetsInReflectedCone08_processed_2023-12-05.root", "data/PbPbMC2018_GenGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalJetPtSmear_smearEECweight_processed_2023-07-05.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_jetPtWeight_reconstructedReference_processed_2023-06-21.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
+  TString inputFileName[] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root", "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root", "data/eecAnalysis_akFlowJet_onlyJets_jet100trigger_processed_2024-02-01.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root", "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_noJetsInReflectedCone08_processed_2023-12-05.root", "data/PbPbMC2018_GenGen_akFlowJets_miniAOD_4pCentShift_noTrigger_nominalJetPtSmear_smearEECweight_processed_2023-07-05.root", "data/ppMC2017_RecoGen_Pythia8_pfJets_wtaAxis_32deltaRBins_nominalSmear_jetPtWeight_reconstructedReference_processed_2023-06-21.root", "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_newTrackPairEfficiencyNoSmoothing_processed_2023-07-13.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_32deltaRBins_jetEta-0p8-1p6_processed_2023-07-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_removeBadAcceptance_wtaAxis_processed_2022-10-25.root
@@ -21,7 +21,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"Jet 60 || 80", "Jet 80", "Jet 100", "New without smoothing", "0.8 < jet #eta < 1.6"};
+  TString legendComment[] = {"Data", "MC", "Jet 100", "New without smoothing", "0.8 < jet #eta < 1.6"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];
@@ -41,7 +41,7 @@ void compareEEChistograms(){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = true;
+  bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -58,7 +58,7 @@ void compareEEChistograms(){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = false;
+  bool drawEnergyEnergyCorrelators = true;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
@@ -67,7 +67,7 @@ void compareEEChistograms(){
   // Select which pairing types to draw
   const bool drawSameJetEnergyEnergyCorrelator = false;       // Draw energy-energy correlator where tracks from the same jet are paired
   const bool drawSignalReflectedConeEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from jet cone are paired with tracks from reflected jet cone
-  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = false; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
+  const bool drawReflectedConeOnlyEnergyEnergyCorrelator = true; // Draw energy-energy correlator where tracks from reflected jet cone are paired with tracks from reflected jet cone
   
   // Select which processed energy-energy correlators to draw
   const bool drawEnergyEnergyCorrelatorNormalized = false;    // Draw normalized energy-energy correlators
@@ -88,7 +88,7 @@ void compareEEChistograms(){
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
   // Choose if you want to write the figures to pdf file
-  bool saveFigures = true;
+  bool saveFigures = false;
   const char* figureFormat = "pdf";
   const char* figureComment = "_jetTriggerComparison";
   
@@ -110,7 +110,7 @@ void compareEEChistograms(){
   bool useDifferenceInsteadOfRatio = false;
   double minZoom = 0;
   double maxZoom = 2;
-  TString ratioLabel = "#frac{Color}{60 || 80}";
+  TString ratioLabel = "#frac{MC}{Data}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
@@ -143,11 +143,11 @@ void compareEEChistograms(){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = nTrackPtBins-1;
   
-  int firstDrawnJetPtBinEEC = 8;
+  int firstDrawnJetPtBinEEC = 5;
   int lastDrawnJetPtBinEEC = 8; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
 
-  int firstDrawnTrackPtBinEEC = 1;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 3;
+  int lastDrawnTrackPtBinEEC = 3;
   
   // ==================================================================
   // ===================== Configuration ready ========================

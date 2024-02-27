@@ -8,7 +8,7 @@
 void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   
   // Input file
-  TString inputFileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_manyUnfoldingBinsForScaling_processed_2024-01-17.root";
+  TString inputFileName = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_manyUnfoldedBins_processed_2024-02-23.root";
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_manyUnfoldingBinsForScaling_processed_2024-01-17.root

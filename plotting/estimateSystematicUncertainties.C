@@ -164,7 +164,7 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   }
 
   // File containing relative uncertainties resulting from Monte Carlo non-closure
-  TString monteCarloNonClosureFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_2024-01-29.root", "systematicUncertainties/monteCarloNonClosureRelative_PbPb_energyWeightSquared_2024-01-29.root"};
+  TString monteCarloNonClosureFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_2024-02-23.root", "systematicUncertainties/monteCarloNonClosureRelative_PbPb_energyWeightSquared_2024-02-23.root"};
   TFile* monteCarloNonClosureFile = TFile::Open(monteCarloNonClosureFileName[weightExponent-1]);
   EECCard* monteCarloNonClosureCard = new EECCard(monteCarloNonClosureFile);
   
@@ -210,8 +210,8 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
-  //TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  //TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   // The different options are:
@@ -230,10 +230,10 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   bool plotExample[SystematicUncertaintyOrganizer::knUncertaintySources];
   for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++){
     skipUncertaintySource[iUncertainty] = false;
-    plotExample[iUncertainty] = false;
+    plotExample[iUncertainty] = true;
   }
-  skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
-  //plotExample[SystematicUncertaintyOrganizer::kSignalToBackgroundRatio] = true;
+  //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
+  //plotExample[SystematicUncertaintyOrganizer::kJetEnergyScale] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================

@@ -13,7 +13,7 @@ void fullAnalysisClosure(){
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
   bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 2;
+  const int weightExponent = 1;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){
@@ -26,17 +26,11 @@ void fullAnalysisClosure(){
   TString fileName[kNDistributionTypes][nSplits][2];
 
   if(isPbPbData){
-    //fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_processed_2024-01-19.root";
-    //fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part1_processed_2024-01-19.root";
+    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_processed_2024-02-23.root";
+    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part1_processed_2024-02-23.root";
 
-    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part2_processed_2024-01-19.root";
-    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part1_processed_2024-01-19.root";
-
-    //fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part2_processed_2024-01-18.root";
-    //fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_unfoldingWithNominalSmear_part1_processed_2024-01-18.root";
-
-    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part2_processed_2024-01-18.root";
-    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScaleTesting_test6_part1_processed_2024-01-18.root";
+    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_part2_processed_2024-02-23.root";
+    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_part1_processed_2024-02-23.root";
 
     fileName[kTruth][0][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-16.root";
     fileName[kTruth][1][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part1_processed_2024-01-16.root";
@@ -65,9 +59,9 @@ void fullAnalysisClosure(){
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
   TString uncertaintyFileName[2][2] = {
     // Uncertainty files for pT1*pT2 weight
-    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-01-29.root"},
+    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-02-23.root"},
     // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
-    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-01-29.root"}
+    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-02-23.root"}
   };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
@@ -149,8 +143,8 @@ void fullAnalysisClosure(){
   
   // Axis zooming
   std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);  // Zoom for pp
-  double zoomForPbPbLow[] = {0, 0.5, 0.7, 0.7};   // Low zoom values for PbPb
-  double zoomForPbPbHigh[] = {2, 1.5, 1.3, 1.3};  // High zoom values for PbPb
+  double zoomForPbPbLow[] = {0.7, 0.7, 0.7, 0.7};   // Low zoom values for PbPb
+  double zoomForPbPbHigh[] = {1.3, 1.3, 1.3, 1.3};  // High zoom values for PbPb
   const bool centralityDependentZoom = true; // Instead of single values, use centrality dependent zooming
 
   // Legend text referring to splits
@@ -167,7 +161,7 @@ void fullAnalysisClosure(){
   // Figure saving
   const bool saveFigures = false;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString saveComment = Form("%s_PythiaHerwig", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
+  TString saveComment = Form("%s_PythiaHydjet", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
@@ -359,7 +353,16 @@ void fullAnalysisClosure(){
               hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, 0);
             }
             hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, 0);
-          }
+
+            // Set manually uncertainty in some fluctuating bins to zero
+            // DeltaR index vs. iBin: 0.38 = 27
+            if(isPbPbData && weightExponent == 2 && iCentrality == 0 && iJetPt > 6 && iBin == 25){
+              hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, 0);
+            }
+            if(isPbPbData && weightExponent == 2 && iCentrality == 2 && (iBin == 25 || iBin == 23)){
+              hMonteCarloNonClosureUncertainty[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt]->SetBinContent(iBin, 0);
+            }
+          } // Bin loop
 
         } // Jet pT loop
       } // Track pT loop

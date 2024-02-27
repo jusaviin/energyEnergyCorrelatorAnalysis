@@ -41,7 +41,7 @@ void finalResultPlotter(){
   // ============= //
 
   // Select the weight exponent that is used for the figures
-  const int weightExponent = 1;
+  int weightExponent = 2;
 
   // Check that the selected weight exponent is reasonable
   if(weightExponent < 1 || weightExponent > 2){
@@ -163,12 +163,14 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = false;
+  bool drawBigCanvasRatios = true;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
+  bool drawVerticalLines = false; // Draw illustrative vertical lines
   bool drawShiftedPtRatio = false;
+  if(drawBigCanvasAllRatios) weightExponent = 1; // For technical reasons, use number 1 here when both ratios are drawn to same figure
 
   // Normalize all distributions to 2 GeV integral
   bool normalizeTo2GeV = false;
@@ -199,8 +201,11 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment = energyWeightString[weightExponent-1] + "_optimizedUnfoldingBins_updatedBackground";
+  TString saveComment =  "_optimizedUnfoldingBins_updatedBackground";
   TString figureFormat = "pdf";
+  if(!drawBigCanvasAllRatios){
+    saveComment.Prepend(energyWeightString[weightExponent-1]);
+  }
 
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
@@ -903,8 +908,10 @@ void finalResultPlotter(){
           }
 
           // Draw lines to 0.08 and 0.2 to
-          lineDrawer->DrawLine(0.08, 0.8-(weightExponent-1)*0.2, 0.08, 1.2);
-          lineDrawer->DrawLine(0.2, 0.8-(weightExponent-1)*0.2, 0.2, 1.2);
+          if(drawVerticalLines){
+            lineDrawer->DrawLine(0.08, 0.8-(weightExponent-1)*0.2, 0.08, 1.2);
+            lineDrawer->DrawLine(0.2, 0.8-(weightExponent-1)*0.2, 0.2, 1.2);
+          }
 
         }  // Jet pT loop
       }    // Centrality loop
@@ -1299,8 +1306,10 @@ void finalResultPlotter(){
           oneLine->Draw();
 
           // Draw lines to 0.08 and 0.2 to
-          lineDrawer->DrawLine(0.08, 0.6, 0.08, 1.2);
-          lineDrawer->DrawLine(0.2, 0.6, 0.2, 1.2);
+          if(drawVerticalLines){
+            lineDrawer->DrawLine(0.08, 0.6, 0.08, 1.2);
+            lineDrawer->DrawLine(0.2, 0.6, 0.2, 1.2);
+          }
 
         }  // Jet pT loop
       }    // Centrality loop
