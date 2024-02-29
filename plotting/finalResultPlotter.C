@@ -163,9 +163,9 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = true;
+  bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   bool drawVerticalLines = false; // Draw illustrative vertical lines
@@ -192,7 +192,7 @@ void finalResultPlotter(){
   // Select the bins to be drawn for double ratio plots
   std::pair<double, double> doubleRatioCentralityBin1 = std::make_pair(0.0,10.0);
   std::pair<double, double> doubleRatioCentralityBin2 = std::make_pair(10.0,30.0);
-  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(180,200);
+  std::pair<double, double> doubleRatioJetPtBin = std::make_pair(140,160);
   int doubleRatioCentralityBinIndex1;
   int doubleRatioCentralityBinIndex2;
   int doubleRatioJetPtBinIndex;
@@ -201,7 +201,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_optimizedUnfoldingBins_updatedBackground";
+  TString saveComment =  "_optimizedUnfoldingBins_updatedBackground" + doubleRatioJetPtString;
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
@@ -274,6 +274,8 @@ void finalResultPlotter(){
   } // Weight exponent loop
  
   // Energy-energy correlators and PbPb to pp ratios
+  TH1D* energyEnergyCorrelatorRawPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorRawPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* energyEnergyCorrelatorSignalShiftedPt[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
@@ -299,6 +301,7 @@ void finalResultPlotter(){
         systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt] = NULL;
       }
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+        energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt] = NULL;
@@ -311,6 +314,7 @@ void finalResultPlotter(){
         } // Uncertainty type loop
 
         for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+          energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
 
@@ -330,13 +334,17 @@ void finalResultPlotter(){
   int iTrackPtMatchedPp, iTrackPtMatchedPbPbUncertainty, iTrackPtMatchedPpUncertainty, iTrackPtMatchedShifted;
   int iJetPtMatchedPp, iJetPtMatchedPbPbUncertainty, iJetPtMatchedPpUncertainty, iJetPtMatchedShifted;
   int iCentralityMatched;
+  int referenceTrackPtBin, lowAnalysisBin, highAnalysisBin;
+  double lowPtIntegral, highPtIntegral;
+  double epsilon = 0.0001;
 
   // Define helper histograms to determine the uncertainties relevant for the double ratio
   TH1D* uncertaintyTrackSelection;
   TH1D* uncertaintyBackgroundSubtraction;
   TH1D* uncertaintyTrackPairEfficiency;
   TH1D* uncertaintyMCnonclosure;
-  double trackCorrelation = 0.2;  // TODO: Check what is the actual number of overlapping tracks
+  TH1D* uncertaintySignalToBackgroundRatio;
+  double trackCorrelation;
   std::pair<double,double> currentJetPtBin;
   std::pair<double,double> shiftedJetPtBin;
 
@@ -364,6 +372,22 @@ void finalResultPlotter(){
       iJetPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
       iJetPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
       iJetPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexJetPtEEC(shiftedJetPtBin);
+
+      // Before the main track pT loop, loop over all raw energy-energy correlators to have the information available to scale the tracking related uncertainties in double ratios.
+      for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
+        iTrackPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
+
+        // Read the raw pp energy-energy correlator distributions
+        energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt] = histograms[kPp][iWeightExponent]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedPp, iTrackPtMatchedPp);
+
+        for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
+
+          // Read the raw PbPb energy-energy correlator distributions
+          energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = histograms[kPbPb][iWeightExponent]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+        }
+      }
+
+      // Then go to the main track pT loop
       for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
         iTrackPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
         iTrackPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
@@ -379,10 +403,22 @@ void finalResultPlotter(){
         uncertaintyBackgroundSubtraction = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
         uncertaintyTrackPairEfficiency = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
         uncertaintyMCnonclosure = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
+        uncertaintyTrackSelection = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
 
+        // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
+        // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
+        // Thus integrals over the analysis region tell the degree of overlap of these regions.
+        lowAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
+        highAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
+        lowPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+        highPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+        trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+
+        // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
+        // by the expected overlap.
         systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
         for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-          systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
+          systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
         }
 
         // Read the histograms with shifted pT spectrum
@@ -402,10 +438,22 @@ void finalResultPlotter(){
           uncertaintyTrackPairEfficiency = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
           uncertaintyTrackSelection = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
           uncertaintyMCnonclosure = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
+          uncertaintySignalToBackgroundRatio = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kSignalToBackgroundRatio);
 
+          // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
+          // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
+          // Thus integrals over the analysis region tell the degree of overlap of these regions.
+          lowAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
+          highAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
+          lowPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+          highPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio[iWeightExponent].second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+          trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+
+          // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
+          // by the expected overlap.
           systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
           for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
+            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintySignalToBackgroundRatio->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
           }
         } // Centrality loop
       } // Track pT loop
@@ -416,11 +464,10 @@ void finalResultPlotter(){
   //   Normalize the histograms and calculate ratios  //
   // ================================================ //
 
-  double epsilon = 0.0001;
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    int referenceTrackPtBin = trackPtBinFor2GeV[iWeightExponent];
-    int lowAnalysisBin = energyEnergyCorrelatorSignalPbPb[iWeightExponent][firstDrawnCentralityBin[iWeightExponent]][firstDrawnJetPtBinEEC[iWeightExponent]][firstDrawnTrackPtBinEEC[iWeightExponent]]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
-    int highAnalysisBin = energyEnergyCorrelatorSignalPbPb[iWeightExponent][firstDrawnCentralityBin[iWeightExponent]][firstDrawnJetPtBinEEC[iWeightExponent]][firstDrawnTrackPtBinEEC[iWeightExponent]]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
+    referenceTrackPtBin = trackPtBinFor2GeV[iWeightExponent];
+    lowAnalysisBin = energyEnergyCorrelatorSignalPbPb[iWeightExponent][firstDrawnCentralityBin[iWeightExponent]][firstDrawnJetPtBinEEC[iWeightExponent]][firstDrawnTrackPtBinEEC[iWeightExponent]]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
+    highAnalysisBin = energyEnergyCorrelatorSignalPbPb[iWeightExponent][firstDrawnCentralityBin[iWeightExponent]][firstDrawnJetPtBinEEC[iWeightExponent]][firstDrawnTrackPtBinEEC[iWeightExponent]]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
     for(int iJetPt = firstDrawnJetPtBinEEC[iWeightExponent]; iJetPt <= lastDrawnJetPtBinEEC[iWeightExponent]; iJetPt++){
       for(int iTrackPt = lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt >= firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt--){
         if(!normalizeTo2GeV) referenceTrackPtBin = iTrackPt;
