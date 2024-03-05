@@ -69,11 +69,11 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   finalAnalysisPtBins.push_back(std::make_pair(180,200));
 
   // Drawing options
-  const bool drawRawEnergyEnergyCorrelatorFits = false;
+  const bool drawRawEnergyEnergyCorrelatorFits = true;
   const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
 
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
@@ -284,6 +284,18 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     fitRangeForJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.004,0.015)));
   }
 
+  // Numbers for MC simulations
+  if(card->GetDataType().Contains("MC")){
+    fitRangeForJetPt.clear();
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.02,0.055)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.015,0.045)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.008,0.045)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.008,0.035)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.006,0.035)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.006,0.028)));
+    fitRangeForJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.006,0.025)));
+  }
+
   std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> fitRangeForUnfoldedJetPt;
   fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.012,0.048)));
   fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.01,0.04)));
@@ -302,6 +314,18 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.005,0.02)));
     fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.004,0.015)));
     fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.004,0.015)));
+  }
+
+  // Numbers for MC simulations
+  if(card->GetDataType().Contains("MC")){
+    fitRangeForUnfoldedJetPt.clear();
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(100,120),std::make_pair(0.015,0.045)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(120,140),std::make_pair(0.01,0.04)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(140,160),std::make_pair(0.01,0.035)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(160,180),std::make_pair(0.008,0.03)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(180,200),std::make_pair(0.008,0.03)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(200,220),std::make_pair(0.005,0.025)));
+    fitRangeForUnfoldedJetPt.push_back(std::make_pair(std::make_pair(220,240),std::make_pair(0.005,0.025)));
   }
 
   // Make a drawer to check that the fits are reasonable

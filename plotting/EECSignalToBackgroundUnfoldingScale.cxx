@@ -117,7 +117,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {13.2054,0.417227,0}} // track pT > 3.0 GeV
   },
 
-  // TEST from RecoReco MC
+  // RecoReco MC. To be used only with MC test configuration
    // Centrality 4-14%
   /*{{0.597848,0.0048607,9.49442e-06}, // track pT > 1.0 GeV
    {0.749652,0.00654232,2.44353e-05}, // track pT > 1.5 GeV

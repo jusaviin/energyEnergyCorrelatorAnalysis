@@ -39,9 +39,16 @@ private:
   const double fJetPtBinBorderLow[kNJetPtBins] = {100, 120, 140, 160, 180, 200};
   const double fJetPtBinBorderHigh[kNJetPtBins] = {120, 140, 160, 180, 200, 220};
   const double fTrackPtBinBorderLow[kNTrackPtBins] = {1, 1.5, 2, 2.5, 3};
+
+  // Nominal values
   const double fRelativeUpshift[3][kNCentralityBins] = {{0.076, 0.050, 0.033, 0.029},
                                                         {0.067, 0.046, 0.030, 0.025},
                                                         {0.092, 0.053, 0.036, 0.033}};
+
+  // Alternative values to be only used with MC closures
+  //const double fRelativeUpshift[3][kNCentralityBins] = {{0.100, 0.081, 0.064, 0.029},
+  //                                                      {0.067, 0.046, 0.030, 0.025},
+  //                                                      {0.092, 0.053, 0.036, 0.033}};
 
   // Functions from which signal to background ratio scales are read
   TF1* fSignalToBackgroundFunction;
