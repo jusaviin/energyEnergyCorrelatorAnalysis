@@ -13,7 +13,7 @@ void fullAnalysisClosure(){
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
   bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 1;
+  const int weightExponent = 2;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){

@@ -42,8 +42,8 @@ private:
 
   // Nominal values
   const double fRelativeUpshift[3][kNCentralityBins] = {{0.076, 0.050, 0.033, 0.029},
-                                                        {0.067, 0.046, 0.030, 0.025},
-                                                        {0.092, 0.053, 0.036, 0.033}};
+                                                        {0.052, 0.042, 0.027, 0.021},
+                                                        {0.101, 0.058, 0.039, 0.037}};
 
   // Alternative values to be only used with MC closures
   //const double fRelativeUpshift[3][kNCentralityBins] = {{0.100, 0.081, 0.064, 0.029},

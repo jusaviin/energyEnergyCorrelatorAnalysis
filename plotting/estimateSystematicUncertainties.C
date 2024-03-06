@@ -115,8 +115,8 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   }
 
   // Results with varied signal-to-background ratios after unfolding
-  TString signalToBackgroundRatioLowScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-02-23.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-02-23.root"};
-  TString signalToBackgroundRatioHighScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-02-23.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-02-23.root"};
+  TString signalToBackgroundRatioLowScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_conservative_processed_2024-02-23.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_conservative_processed_2024-02-23.root"};
+  TString signalToBackgroundRatioHighScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_conservative_processed_2024-02-23.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_updatedBackgroundSubtraction_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_conservative_processed_2024-02-23.root"};
   TFile* signalToBackgroundRatioFile[2];
   signalToBackgroundRatioFile[0] = TFile::Open(signalToBackgroundRatioLowScaleFileName[weightExponent-1]);
   signalToBackgroundRatioFile[1] = TFile::Open(signalToBackgroundRatioHighScaleFileName[weightExponent-1]);
@@ -210,8 +210,8 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  //TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
-  TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  //TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   // The different options are:
@@ -230,10 +230,10 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   bool plotExample[SystematicUncertaintyOrganizer::knUncertaintySources];
   for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++){
     skipUncertaintySource[iUncertainty] = false;
-    plotExample[iUncertainty] = true;
+    plotExample[iUncertainty] = false;
   }
   //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
-  //plotExample[SystematicUncertaintyOrganizer::kJetEnergyScale] = true;
+  //plotExample[SystematicUncertaintyOrganizer::kSignalToBackgroundRatio] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -607,7 +607,9 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
               if(iCentrality == 0 && weightExponent == 2){
-                ratioZoom = std::make_pair(0.85,1.15);
+                ratioZoom = std::make_pair(0.78,1.22);
+              } else if(iCentrality == 0 && weightExponent == 1){
+                ratioZoom = std::make_pair(0.88,1.12);
               } else {
                 ratioZoom = std::make_pair(0.9,1.1);
               }

@@ -8,7 +8,7 @@
 void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   
   // Input file
-  TString inputFileName = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_part2_manyUnfoldedBins_processed_2024-02-23.root";
+  TString inputFileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_manyUnfoldingBinsForScaling_processed_2024-01-17.root";
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_manyUnfoldingBinsForScaling_processed_2024-01-17.root
@@ -69,7 +69,7 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
   finalAnalysisPtBins.push_back(std::make_pair(180,200));
 
   // Drawing options
-  const bool drawRawEnergyEnergyCorrelatorFits = true;
+  const bool drawRawEnergyEnergyCorrelatorFits = false;
   const bool drawUnfoldedEnergyEnergyCorrelatorFits = false;
 
   // Figure saving
@@ -829,8 +829,8 @@ void findMeanPtForUnfoldedEnergyEnergyCorrelators(){
     iCentrality = card->FindBinIndexCentrality(centralityBin);
 
     cout << "Average relative shift for centrality " << centralityBin.first << "-" << centralityBin.second << " is " << averageRelativeShift[iCentrality]/nBinsForAverage[iCentrality] << endl;
-    cout << "Minimum value for uncertainty is " << relativeMinimum[iCentrality] << endl;
-    cout << "Maximum value for uncertainty is " << relativeMaximum[iCentrality] << endl;
+    cout << "Minimum value for uncertainty is " << (averageRelativeShift[iCentrality]/nBinsForAverage[iCentrality]) - (relativeMaximum[iCentrality] - relativeMinimum[iCentrality]) << endl;
+    cout << "Maximum value for uncertainty is " << (averageRelativeShift[iCentrality]/nBinsForAverage[iCentrality]) + (relativeMaximum[iCentrality] - relativeMinimum[iCentrality]) << endl;
   } // Centrality loop  
 
   /*
