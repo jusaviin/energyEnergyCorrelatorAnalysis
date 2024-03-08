@@ -201,7 +201,7 @@ void estimateSystematicUncertainties(const int weightExponent = 2){
   
   const bool printUncertainties = false;
   
-  std::pair<double, double> analysisDeltaR = std::make_pair(0.006, 0.39); // DeltaR span in which the analysis is done
+  std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);         // Y-axis zoom for ratios
   bool setAutomaticRatioZoom = true;                                      // If true, use predefined ratio zooms for systematic uncertainties
 

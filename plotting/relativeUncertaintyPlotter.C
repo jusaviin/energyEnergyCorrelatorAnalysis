@@ -34,12 +34,12 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_variation2_2024-03-06.root";
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-06.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-23.root
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-23.root
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-29.root";
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-29.root";
   // systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-29.root
   // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-29.root
   TFile* uncertaintyFile[kNDataTypes];
@@ -84,7 +84,7 @@ void relativeUncertaintyPlotter(){
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   TString saveComment = "_optimizedUnfoldingBins";
 
   // Add a name describing the energy weight in the files

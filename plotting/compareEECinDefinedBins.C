@@ -8,17 +8,23 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 1;
+  const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_newBackgroundSubtraction_processed_2024-01-23.root";
-  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith3Iterations_processed_2024-01-17.root";
+  fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
+  fileName[1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root";
   //fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
   //fileName[3] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith10Iterations_processed_2024-01-17.root";
   //fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
 
+  // pp to Pythia8 comparison files
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root
+  // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root
+  // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
+  // ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
+
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "PbPb data";
-  //fileDescription[1] = "3 iterations";
+  fileDescription[0] = "pp data";
+  fileDescription[1] = "Pythia8 truth";
   //fileDescription[2] = "5 iterations";
   //fileDescription[3] = "10 iterations";
   //fileDescription[4] = "20 iterations";
@@ -62,14 +68,14 @@ void compareEECinDefinedBins(){
   comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
-  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
-  //comparedTrackPtBin.push_back(1.0);
+  comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
-  //comparedTrackPtBin.push_back(3.0);
+  comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Choose the type of draw energy-energy correlator
@@ -80,7 +86,13 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+
+  // If we are dealing with pp data, reset the centrality vector
+  if(card[0]->GetDataType().Contains("pp")){
+    comparedCentralityBin.clear();
+    comparedCentralityBin.push_back(std::make_pair(-1,100));
+  }
 
   // ====================================================
   //                Drawing configuration
@@ -93,7 +105,8 @@ void compareEECinDefinedBins(){
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
-  std::pair<double, double> eecZoom = std::make_pair(0.05, 8);
+  std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
+  const bool automaticZoom = true;
 
   // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
   // This check is only needed for unfolded bins, so skip it if only raw distribution is drawn.
@@ -396,6 +409,7 @@ void compareEECinDefinedBins(){
   int legendCentralityIndex = 0;
   int legendJetPtIndex = 0;
   int legendTrackPtIndex = 0;
+  double minimumCandidate, maximumCandidate;
   TString individualLegend;
 
   for(auto plottedBin : binningInformation){
@@ -437,8 +451,12 @@ void compareEECinDefinedBins(){
 
     // Add common legend variables and define figure naming in case figures are saved
     if(!colorWithCentrality){ 
-      legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second), "");
-      compactCentralityString = Form("_C=%.0f-%.0f", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second);
+      if(card[0]->GetDataType().Contains("pp")){
+        compactCentralityString = "";
+      } else {
+        legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second), "");
+        compactCentralityString = Form("_C=%.0f-%.0f", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second);
+      }
     } else {
       compactCentralityString = "";
       comparedVariableString = "_centralityComparison";
@@ -483,12 +501,33 @@ void compareEECinDefinedBins(){
       } // Jet pT binning
     } // File loop
 
+    // Automatic zooming for the drawn histograms
+    if(automaticZoom){
+      eecZoom.first = 10000;
+      eecZoom.second = 0;
+      for(int iCentrality : currentCentralityIndices){
+        for(int iJetPt : currentJetPtIndices){
+          for(int iTrackPt : currentTrackPtIndices){
+            for(int iFile = 0; iFile < nComparisonFiles; iFile++){
+              hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+              minimumCandidate = hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->GetMinimum();
+              maximumCandidate = hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->GetMaximum();
+              if(minimumCandidate < eecZoom.first) eecZoom.first = minimumCandidate;
+              if(maximumCandidate > eecZoom.second) eecZoom.second = maximumCandidate;
+            } // File loop
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+      eecZoom.first = eecZoom.first / 2.0;
+      eecZoom.second = eecZoom.second * 2.0;
+    }
+
     // Set the x- and y-axis drawing ranges
     hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
     hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
           
     // Draw the histograms to the upper canvas
-    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "Reflected cone EEC", " ");
+    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("EEC %s", histograms[0]->GetEnergyEnergyCorrelatorProcessSaveName(drawnEnergyEnergyCorrelator)), " ");
 
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
@@ -519,7 +558,7 @@ void compareEECinDefinedBins(){
           for(int iCentrality : currentCentralityIndices){
             if(colorWithCentrality) individualLegend = Form(" Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(legendCentralityIndex).first, std::get<kCentrality>(plottedBin).at(legendCentralityIndex).second);
             legendCentralityIndex++;
-            legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("PbPb %s", individualLegend.Data()), "p");
+            legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], individualLegend.Data(), "p");
           } // Centrality loop 
         } // Track pT loop
       } // Jet pT loop

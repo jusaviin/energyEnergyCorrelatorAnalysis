@@ -41,7 +41,7 @@ void finalResultPlotter(){
   // ============= //
 
   // Select the weight exponent that is used for the figures
-  int weightExponent = 2;
+  int weightExponent = 1;
 
   // Check that the selected weight exponent is reasonable
   if(weightExponent < 1 || weightExponent > 2){
@@ -60,10 +60,10 @@ void finalResultPlotter(){
   inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
-  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-23.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-23.root";
-  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-22.root";
-  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-22.root";
+  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-08.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root";
+  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-03-07.root";
+  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-03-07.root";
 
   TString shiftedPtFileName[nWeightExponents];
   shiftedPtFileName[0] = "data/ppData_pfJets_wtaAxis_shiftedJetPtBins_nominalEnergyWeight_jet60or80trigger_unfoldWithShiftedResponse_processed_2024-02-19.root";
@@ -163,9 +163,9 @@ void finalResultPlotter(){
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
   bool drawBigCanvasDistributions = false;
-  bool drawBigCanvasRatios = false;
+  bool drawBigCanvasRatios = true;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   bool drawVerticalLines = false; // Draw illustrative vertical lines
@@ -178,15 +178,9 @@ void finalResultPlotter(){
   std::pair<int, int> trackPtBinsForDoubleRatio[nWeightExponents];
   trackPtBinsForDoubleRatio[0] = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(2.0), card[kPbPb][0]->GetBinIndexTrackPtEEC(3.0));
   trackPtBinsForDoubleRatio[1] = std::make_pair(card[kPbPb][1]->GetBinIndexTrackPtEEC(1.0), card[kPbPb][1]->GetBinIndexTrackPtEEC(2.0));
-  double trackPtForAllRatiosComparison = 2;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     trackPtBinFor2GeV[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(2.0);
-
-    if(drawBigCanvasAllRatios){
-      firstDrawnTrackPtBinEEC[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtForAllRatiosComparison);
-      lastDrawnTrackPtBinEEC[iWeightExponent] = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtForAllRatiosComparison);
-    }
   }
 
   // Select the bins to be drawn for double ratio plots
@@ -201,10 +195,13 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_optimizedUnfoldingBins_updatedBackground" + doubleRatioJetPtString;
+  TString saveComment =  "_optimizedUnfoldingBins_updatedBackground";
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
+  }
+  if(drawDoubleRatioToSingleCanvas){
+    saveComment.Append(doubleRatioJetPtString);
   }
 
   // Ratio zoom settings
