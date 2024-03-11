@@ -728,8 +728,6 @@ void EECAnalyzer::RunAnalysis(){
   // Variables for covariance study
   const Int_t nDeltaRBins = fHistograms->GetNDeltaRBinsEEC(); // Number of DeltaR bins
   Double_t eecCovariance = 0;             // Covariance between two deltaR bins in energy-energy correlators
-  //Double_t averageEECvalue1 = 0;          // Average energy-energy correlator value in i:th bin. Needed to calculate covariance
-  //Double_t averageEECvalue2 = 0;          // Average energy-energy correlator value in j:th bin. Needed to calculate covariance
   Double_t deltaRBinContent1 = 0;         // Bin content of the i:th DeltaR bin
   Double_t deltaRBinContent2 = 0;         // Bin content of the j:th DeltaR bin
   Double_t transformedDeltaR1 = 0;        // Transformed bin contents of the i:th DeltaR bin
@@ -1504,16 +1502,13 @@ void EECAnalyzer::RunAnalysis(){
                 fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
                 for(int iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
                   deltaRBinContent1 = fThisEventCorrelator[iTrackPt]->GetBinContent(iDeltaRBin);
-                  //averageEECvalue1 = fCovarianceHelper->GetAverageValue(iDeltaRBin, centrality, jetPt, trackPt);
                   transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt);
 
                   for(int jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
                     deltaRBinContent2 = fThisEventCorrelator[iTrackPt]->GetBinContent(jDeltaRBin);
-                    //averageEECvalue2 = fCovarianceHelper->GetAverageValue(jDeltaRBin, centrality, jetPt, trackPt);
                     transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt);
 
                     // Calculate the covariance between the two bins
-                    // eecCovariance = (deltaRBinContent1 - averageEECvalue1) * (deltaRBinContent2 - averageEECvalue2);
                     eecCovariance = deltaRBinContent1 * deltaRBinContent2;
 
                     // Fill the calculation result to correct bin
