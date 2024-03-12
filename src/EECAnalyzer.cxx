@@ -869,30 +869,31 @@ void EECAnalyzer::RunAnalysis(){
 
   // Prepare mixed event files and a forest reader for reflected cone mixing
   const char* fileListName[2][4] = {
-      {"none", "mixingFileList/PbPbMC2018_MinBiasFiles.txt" "none", "mixingFileList/PbPbMC2018_MinBiasFiles.txt"}, // Crab
+      {"none", "mixingFileList/PbPbData2018_minBiasFiles.txt" "none", "mixingFileList/PbPbMC2018_minBiasHydjetFiles.txt"}, // Crab
       {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
         
-  // Create a stream to read the input file
-  std::string lineInFile;
-  std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType]);
-  while (std::getline(mixingFileStream,lineInFile)) {
-    mixingFiles.push_back(lineInFile);
-  }
-  fMixedEventReader->ReadForestFromFileList(mixingFiles);
-  fnEventsInMixingFile = fMixedEventReader->GetNEvents();
-  cout << "Mixed event number: " << fnEventsInMixingFile << endl;
-
-  // Print the used mixing files
-  if(fDebugLevel > 0){
-    cout << "Mixing files: " << endl;
-    for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
-      cout << *mixIterator << endl;
+  // Read the mixing files only for PbPb data and MC
+  if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb){
+    std::string lineInFile;
+    std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType]);
+    while (std::getline(mixingFileStream,lineInFile)) {
+      mixingFiles.push_back(lineInFile);
     }
-    cout << endl;
-  }
+    fMixedEventReader->ReadForestFromFileList(mixingFiles);
+    fnEventsInMixingFile = fMixedEventReader->GetNEvents();
 
-  // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
-  PrepareMixingVectors();
+    // Print the used mixing files
+    if(fDebugLevel > 0){
+      cout << "Mixing files: " << endl;
+      for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
+        cout << *mixIterator << endl;
+      }
+      cout << endl;
+    }
+
+    // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
+    PrepareMixingVectors();
+  } // Prepare event mixing for PbPb data and MC 
   
   //************************************************
   //       Main analysis loop over all files
