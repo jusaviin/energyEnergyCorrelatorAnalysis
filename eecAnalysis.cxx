@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
   EECHistograms* histograms;
   
   // Run the analysis over the list of files
-  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard);
+  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard, runLocal);
   eecAnalysis->RunAnalysis();
   histograms = eecAnalysis->GetHistograms();
   
