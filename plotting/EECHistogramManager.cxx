@@ -1386,7 +1386,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
       
 
       // If reflected cone histograms are not filled in the data file, do not try to load them
-      if((iPairingType == EECHistograms::kSignalReflectedConePair || iPairingType == EECHistograms::kReflectedConePair) && !fCard->GetDoReflectedCone()) continue;
+      if((iPairingType != EECHistograms::kSameJetPair) && !fCard->GetDoReflectedCone()) continue;
       
       // Setup axes with restrictions, (4 = pairing type)
       axisIndices[0] = 4; lowLimits[0] = iPairingType+1; highLimits[0] = iPairingType+1;
@@ -2727,6 +2727,10 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
     
     // Loop over pairing types (same jet/reflected cone)
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+
+      // Create a subdirectory for all pairing types. With mixed cone, there are too many histograms for a single folder
+      if(!gDirectory->GetDirectory(fPairingTypeSaveName[iPairingType])) gDirectory->mkdir(fPairingTypeSaveName[iPairingType]);
+      gDirectory->cd(fPairingTypeSaveName[iPairingType]);
       
       // Loop over centrality
       for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
@@ -2770,6 +2774,10 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
           } // Loop over jet pT bins
         } // Loop over track pT bins
       } // Loop over centrality bins
+
+      // Leave the pairing type directory
+      gDirectory->cd("../");
+
     } // Pairing type loop (same jet/reflected cone)
     
     // Return back to main directory
@@ -3391,9 +3399,12 @@ void EECHistogramManager::LoadProcessedHistograms(){
   
   // Helper variable for finding names of loaded histograms
   TString histogramNamer;
+  TString folderNamer;
   TH1D* testHistogram;
   bool legacyEnergyEnergyCorrelatorMode = false; // Older files have different subevent combination indexing for energy-energy correlators. Take that into account here
+  bool preMixingCompatibilityMode = false; // Before event mixing for energy-energy correlators were added, there was a different folder structure to hold energy-energy correlator histograms. Take that into account here 
   int subeventIndex;
+  const char* currentPairingType0;
   
   // Always load the number of events histogram
   fhEvents = (TH1D*) fInputFile->Get("nEvents");                           // Number of events surviving different event cuts
@@ -3635,17 +3646,37 @@ void EECHistogramManager::LoadProcessedHistograms(){
     // Only load the selected types of histograms
     if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;
     
-    // Old file compatibility mode. There are less subevent combinations in old files. Take this into account when loading older files.
-    histogramNamer = Form("%s/%s%s_C0T0S3", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[0]);
+    // New folder structure was added together with event mixing for reflected cones. We need to figure out if the files are produced before or after the folder structure change to find the correct paths for histograms
+    histogramNamer = Form("%s/%s/%s%s_C0T0", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[0], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[0]);
     testHistogram = (TH1D*) fInputFile->Get(histogramNamer.Data());
-    if(testHistogram == NULL) legacyEnergyEnergyCorrelatorMode = true;
+    if(testHistogram == NULL) preMixingCompatibilityMode = true;
+
+    // Old file compatibility mode. There are less subevent combinations in old files. Take this into account when loading older files.
+    if(preMixingCompatibilityMode){
+      histogramNamer = Form("%s/%s_C0T0S3", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
+      testHistogram = (TH1D*) fInputFile->Get(histogramNamer.Data());
+      if(testHistogram == NULL) legacyEnergyEnergyCorrelatorMode = true;
+    }
+
+    // The name for the first pairing type was also changed after event mixing was added. Take this into account here
+    if(preMixingCompatibilityMode){
+      currentPairingType0 = fPairingTypeSaveName[0];
+      fPairingTypeSaveName[0] = "";
+    }
     
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+
+      if(preMixingCompatibilityMode){
+        folderNamer = Form("%s/", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
+      } else {
+        folderNamer = Form("%s/%s/", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType]);
+      }
+
       for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
         for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
           
           // Load the histograms without jet pT binning
-          histogramNamer = Form("%s/%s%s_C%dT%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
+          histogramNamer = Form("%s%s%s_C%dT%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
           fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
           
           // For PbPb MC, load histograms without jet pT and with subevent type binning
@@ -3657,7 +3688,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
               if(legacyEnergyEnergyCorrelatorMode && iSubevent > EECHistograms::kPythiaHydjet) subeventIndex = iSubevent - 1;
               
               // Load the energy-energy correlator histograms with subevent binning
-              histogramNamer = Form("%s/%s%s_C%dT%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, subeventIndex);
+              histogramNamer = Form("%s%s%s_C%dT%dS%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, subeventIndex);
               fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
               
             } // Subevent type loop
@@ -3670,7 +3701,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
             if(fLastLoadedJetPtBinEEC >= fnJetPtBinsEEC) continue;
             
             // Load the energy-energy correlator histograms
-            histogramNamer = Form("%s/%s%s_C%dT%dJ%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
+            histogramNamer = Form("%s%s%s_C%dT%dJ%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
             fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
             
             // For PbPb MC, loop over subevent types
@@ -3682,7 +3713,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
                 if(legacyEnergyEnergyCorrelatorMode && iSubevent > EECHistograms::kPythiaHydjet) subeventIndex = iSubevent - 1;
                 
                 // Load the energy-energy correlator histograms with subevent binning
-                histogramNamer = Form("%s/%s%s_C%dT%dJ%dS%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, subeventIndex);
+                histogramNamer = Form("%s%s%s_C%dT%dJ%dS%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, subeventIndex);
                 fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
                 
               } // Subevent type loop
@@ -3692,6 +3723,10 @@ void EECHistogramManager::LoadProcessedHistograms(){
         } // Track pT loop
       } // Centrality loop
     } // Pairing type loop
+
+    if(preMixingCompatibilityMode){
+      fPairingTypeSaveName[0] = currentPairingType0;
+    }
     
     // Load also the processed energy-energy correlator histograms
     for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
