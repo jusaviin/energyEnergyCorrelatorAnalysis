@@ -47,7 +47,7 @@ public:
   
   // Constructors and destructor
   EECAnalyzer(); // Default constructor
-  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard, Bool_t runLocal); // Custom constructor
+  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard, Int_t runLocal); // Custom constructor
   EECAnalyzer(const EECAnalyzer& in); // Copy constructor
   virtual ~EECAnalyzer(); // Destructor
   EECAnalyzer& operator=(const EECAnalyzer& obj); // Equal sign operator
@@ -180,7 +180,7 @@ public:
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 
   // Reflected cone mixing
-  Bool_t fLocalRun;                     // Flag for local vs. CRAB run
+  Int_t fLocalRun;                      // Flag for local vs. CRAB run
   Int_t fMixingStartIndex;              // Event index from which event mixing is started
   Int_t fRunningMixingIndex;            // Mixed event index 
   Int_t fnEventsInMixingFile;           // Number of mixed events available

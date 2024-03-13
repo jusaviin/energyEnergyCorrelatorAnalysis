@@ -108,7 +108,7 @@ EECAnalyzer::EECAnalyzer() :
   fDoReflectedConeQA(false),
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
-  fLocalRun(false),
+  fLocalRun(0),
   fMixingStartIndex(0),
   fRunningMixingIndex(0),
   fnEventsInMixingFile(0),
@@ -156,7 +156,7 @@ EECAnalyzer::EECAnalyzer() :
 /*
  * Custom constructor
  */
-EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, Bool_t runLocal) :
+EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, Int_t runLocal) :
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
@@ -869,7 +869,7 @@ void EECAnalyzer::RunAnalysis(){
 
   // Prepare mixed event files and a forest reader for reflected cone mixing
   const char* fileListName[2][4] = {
-      {"none", "mixingFileList/PbPbData2018_minBiasFiles.txt" "none", "mixingFileList/PbPbMC2018_minBiasHydjetFiles.txt"}, // Crab
+      {"none", "mixingFileList/PbPbData2018_minBiasFiles.txt", "none", "mixingFileList/PbPbMC2018_minBiasHydjetFiles.txt"}, // Crab
       {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
         
   // Read the mixing files only for PbPb data and MC
