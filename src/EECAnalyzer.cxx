@@ -778,6 +778,7 @@ void EECAnalyzer::RunAnalysis(){
   vector<double> relativeTrackPhi[3];    // Track phi relative to the jet axis (same jet/reflected cone jet/mixed cone jet)
   vector<int> selectedTrackSubevent[3];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet/mixed cone jet)
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
+  Double_t jetMirroredPhi = 0;           // Mirrored phi value to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
   // File name helper variables
@@ -1118,12 +1119,14 @@ void EECAnalyzer::RunAnalysis(){
           jetPhi = fRng->Uniform(-TMath::Pi(), TMath::Pi());
           jetEta = fRng->Uniform(-fJetEtaCut, fJetEtaCut);
           jetReflectedEta = GetReflectedEta(jetEta);
+          jetMirroredPhi = GetMirroredPhi(jetPhi);
           jetFlavor = 0;
         } else {
           jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
           jetPhi = fJetReader->GetJetPhi(jetIndex);
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
+          jetMirroredPhi = GetMirroredPhi(jetPhi);
           jetFlavor = 0;
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
@@ -1410,12 +1413,12 @@ void EECAnalyzer::RunAnalysis(){
             if(fDoReflectedCone){
               deltaRTrackJet = GetDeltaR(jetReflectedEta, jetPhi, trackEta, trackPhi);
               if(deltaRTrackJet < fJetRadius){
-                relativeTrackPhi[1].push_back(trackPhi-jetPhi);
-                relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
+                //relativeTrackPhi[1].push_back(trackPhi-jetPhi);
+                //relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
-                selectedTrackPt[1].push_back(trackPt);
-                selectedTrackSubevent[1].push_back(trackSubevent);
+                //selectedTrackPt[1].push_back(trackPt);
+                //selectedTrackSubevent[1].push_back(trackSubevent);
                 
                 // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
                 if(fFillJetConeHistograms){
@@ -1571,7 +1574,18 @@ void EECAnalyzer::RunAnalysis(){
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
                 if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[2].push_back(trackPhi-jetPhi);
+                  relativeTrackPhi[1].push_back(trackPhi-jetPhi);
+                  relativeTrackEta[1].push_back(trackEta-jetEta);
+
+                  // Also remember track pT and subevent
+                  selectedTrackPt[1].push_back(trackPt);
+                  selectedTrackSubevent[1].push_back(trackSubevent);
+                } // Track is close to a jet
+
+                // If the track is close to a mirrored jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+                deltaRTrackJet = GetDeltaR(jetEta, jetMirroredPhi, trackEta, trackPhi);
+                if(deltaRTrackJet < fJetRadius){
+                  relativeTrackPhi[2].push_back(trackPhi-jetMirroredPhi);
                   relativeTrackEta[2].push_back(trackEta-jetEta);
 
                   // Also remember track pT and subevent
@@ -3189,6 +3203,21 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
 }
 
 /*
+ * Get mirrored phi value in interval [-pi,pi]
+ *
+ *  Arguments:
+ *   const Double_t phi = Phi value to be mirrored
+ *
+ * return: Mirroer phi value
+ */
+Double_t EECAnalyzer::GetMirroredPhi(const Double_t phi) const{
+
+  // Take advantage of fact that all values are within range [-pi,pi]
+  if(phi < 0) return phi + TMath::Pi();
+  return phi - TMath::Pi();
+}
+
+/*
  * Transform the deltaR value to the unfolding axis
  *
  *  Arguments:
@@ -3429,12 +3458,8 @@ void EECAnalyzer::PrepareMixingVectors(){
   // Print out debug message
   if(fDebugLevel > 1) cout << "Preparing for poolless mixing" << endl;
   
-  // Initialize the mixed event randomizer
-  TRandom3 *mixedEventRandomizer = new TRandom3();  // Randomizer for starting point in the mixed event file
-  mixedEventRandomizer->SetSeed(0);
-  
   // Start reading the file from a random point
-  fMixingStartIndex = fnEventsInMixingFile*mixedEventRandomizer->Rndm();  // Start mixing from random spot in file
+  fMixingStartIndex = fnEventsInMixingFile*fRng->Rndm();  // Start mixing from random spot in file
   if(fMixingStartIndex == fnEventsInMixingFile) fMixingStartIndex--;       // Move the index to allowed range
 
   // Read vz and hiBin from each event in event mixing file to memory.
@@ -3452,6 +3477,4 @@ void EECAnalyzer::PrepareMixingVectors(){
     }
   }
   
-  // Delete the randomizer before returning
-  delete mixedEventRandomizer;
 }

@@ -88,6 +88,7 @@ public:
   Int_t GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent combination type from two track subevents
   Int_t GetSubeventIndex(const Int_t subevent) const; // Get the subevent index for a track
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
+  Double_t GetMirroredPhi(const Double_t phi) const; // Get mirrored phi value in interval [-pi,pi]
   Double_t TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const; // Transform the deltaR value to the unfolding axis
   Double_t SimpleSmearDeltaR(const Double_t deltaR); // Simple smearing for deltaR to see if it affects the final distributions
 
