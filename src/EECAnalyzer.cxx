@@ -766,11 +766,15 @@ void EECAnalyzer::RunAnalysis(){
   Double_t multiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];;        // Efficiency corrected particle multiplicity within a jet cone
 
   // Event mixing variables
-  std::vector<TString> mixingFiles;  // List of mixing files
-  Int_t mixedEventIndex;             // Current index for mixed event file
-  Bool_t allEventsWentThrough;       // Flag telling if we have gone through all the events in mixing file without finding a matching event
-  Double_t vzTolerance;              // Difference in vz values that we allow between current and mixed events
-  Int_t hiBinTolerance;              // Difference in hiBin values that we allow between current and mixed events
+  std::vector<TString> mixingFiles;      // List of mixing files
+  Int_t mixedEventIndex;                 // Current index for mixed event file
+  Bool_t allEventsWentThrough;           // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Double_t vzTolerance;                  // Difference in vz values that we allow between current and mixed events
+  Int_t hiBinTolerance;                  // Difference in hiBin values that we allow between current and mixed events
+  Int_t mixedEventFillIndex;             // Index used to fill mixed event track information into vectors
+  std::vector<Int_t> mixedEventIndices;  // Vector for holding the events we have already mixed with
+  Bool_t skipEvent;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates;             // Flag for checking duplicate events in the mixing list
   
   // Variables for energy-energy correlators
   vector<double> selectedTrackPt[3];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet/mixed cone jet)
@@ -778,7 +782,6 @@ void EECAnalyzer::RunAnalysis(){
   vector<double> relativeTrackPhi[3];    // Track phi relative to the jet axis (same jet/reflected cone jet/mixed cone jet)
   vector<int> selectedTrackSubevent[3];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet/mixed cone jet)
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
-  Double_t jetMirroredPhi = 0;           // Mirrored phi value to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
   // File name helper variables
@@ -1119,14 +1122,12 @@ void EECAnalyzer::RunAnalysis(){
           jetPhi = fRng->Uniform(-TMath::Pi(), TMath::Pi());
           jetEta = fRng->Uniform(-fJetEtaCut, fJetEtaCut);
           jetReflectedEta = GetReflectedEta(jetEta);
-          jetMirroredPhi = GetMirroredPhi(jetPhi);
           jetFlavor = 0;
         } else {
           jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
           jetPhi = fJetReader->GetJetPhi(jetIndex);
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
-          jetMirroredPhi = GetMirroredPhi(jetPhi);
           jetFlavor = 0;
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
@@ -1526,7 +1527,15 @@ void EECAnalyzer::RunAnalysis(){
             hiBinTolerance = 0;   // Starting tolerance for hiBin: match the bin value
             vzTolerance = 0.5;    // Starting tolerance for vz position: 0.5 cm
             allEventsWentThrough = false;
-            while(true){
+            mixedEventFillIndex = 1; // First filled index is 1
+            checkForDuplicates = false; // We do not need to check for duplicate events if we have not gone through all event yet
+            mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+
+            // Find events to mix until we have found two matching events
+            while(mixedEventFillIndex < 3){
+
+              // By default, do not skip events
+              skipEvent = false;
 
               // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
               if(allEventsWentThrough){
@@ -1536,8 +1545,9 @@ void EECAnalyzer::RunAnalysis(){
                 }
       
                 hiBinTolerance += 1;
-                vzTolerance += 0.2;
+                vzTolerance += 0.5;
                 allEventsWentThrough = false;
+                checkForDuplicates = true;
               }
     
               // Increment the counter for event index to be mixed with the current event
@@ -1551,6 +1561,16 @@ void EECAnalyzer::RunAnalysis(){
 
               // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
               if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+              // Do not mix with events used in the previous iteration over the file
+              if(checkForDuplicates){
+                for(Int_t iMixedEvent : mixedEventIndices) {
+                  if(iMixedEvent == mixedEventIndex) skipEvent = true;
+                }
+              }
+
+              // If we have already used the current mixed event, do not use the same event
+              if(skipEvent) continue;
 
               // Match vz and hiBin between the current event and mixed event
               if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
@@ -1574,28 +1594,20 @@ void EECAnalyzer::RunAnalysis(){
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
                 if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[1].push_back(trackPhi-jetPhi);
-                  relativeTrackEta[1].push_back(trackEta-jetEta);
+                  relativeTrackPhi[mixedEventFillIndex].push_back(trackPhi-jetPhi);
+                  relativeTrackEta[mixedEventFillIndex].push_back(trackEta-jetEta);
 
                   // Also remember track pT and subevent
-                  selectedTrackPt[1].push_back(trackPt);
-                  selectedTrackSubevent[1].push_back(trackSubevent);
-                } // Track is close to a jet
-
-                // If the track is close to a mirrored jet, change the track eta-phi coordinates to a system where the jet axis is at origin
-                deltaRTrackJet = GetDeltaR(jetEta, jetMirroredPhi, trackEta, trackPhi);
-                if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[2].push_back(trackPhi-jetMirroredPhi);
-                  relativeTrackEta[2].push_back(trackEta-jetEta);
-
-                  // Also remember track pT and subevent
-                  selectedTrackPt[2].push_back(trackPt);
-                  selectedTrackSubevent[2].push_back(trackSubevent);
+                  selectedTrackPt[mixedEventFillIndex].push_back(trackPt);
+                  selectedTrackSubevent[mixedEventFillIndex].push_back(trackSubevent);
                 } // Track is close to a jet
               } // Mixed event track loop
 
-              // After we found a good event match, we can exit the loop
-              break;
+              // Mark that this event has already been used for mixing
+              mixedEventIndices.push_back(mixedEventIndex);
+
+              // Increment the index of event that we have found for mixing purposes
+              mixedEventFillIndex++;
       
             } // While loop for searching for a good event to mix with
 
@@ -3203,21 +3215,6 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
   
   // Now eta must be positive. Subtract twice the jet radius from the value to avoid overlapping cones
   return eta - 2*fJetRadius;
-}
-
-/*
- * Get mirrored phi value in interval [-pi,pi]
- *
- *  Arguments:
- *   const Double_t phi = Phi value to be mirrored
- *
- * return: Mirroer phi value
- */
-Double_t EECAnalyzer::GetMirroredPhi(const Double_t phi) const{
-
-  // Take advantage of fact that all values are within range [-pi,pi]
-  if(phi < 0) return phi + TMath::Pi();
-  return phi - TMath::Pi();
 }
 
 /*
