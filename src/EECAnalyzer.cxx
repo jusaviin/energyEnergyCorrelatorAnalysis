@@ -1600,7 +1600,10 @@ void EECAnalyzer::RunAnalysis(){
             } // While loop for searching for a good event to mix with
 
             // For the next event, start mixing the events from where we were left with in the previous event
-            fMixingStartIndex = mixedEventIndex;
+            //fMixingStartIndex = mixedEventIndex;
+
+            // For the next event, randomize the starting event again
+            fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
 
           } // Event mixing for PbPb data and MC
 
@@ -3459,8 +3462,7 @@ void EECAnalyzer::PrepareMixingVectors(){
   if(fDebugLevel > 1) cout << "Preparing for poolless mixing" << endl;
   
   // Start reading the file from a random point
-  fMixingStartIndex = fnEventsInMixingFile*fRng->Rndm();  // Start mixing from random spot in file
-  if(fMixingStartIndex == fnEventsInMixingFile) fMixingStartIndex--;       // Move the index to allowed range
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);
 
   // Read vz and hiBin from each event in event mixing file to memory.
   // This way we avoid loading different mixed events in a loop several times
