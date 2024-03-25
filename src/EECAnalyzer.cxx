@@ -109,6 +109,7 @@ EECAnalyzer::EECAnalyzer() :
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
   fLocalRun(0),
+  fMixingListIndex(1),
   fMixingStartIndex(0),
   fRunningMixingIndex(0),
   fnEventsInMixingFile(0),
@@ -156,7 +157,7 @@ EECAnalyzer::EECAnalyzer() :
 /*
  * Custom constructor
  */
-EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, Int_t runLocal) :
+EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, Int_t runLocal, Int_t mixingListIndex) :
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
@@ -166,7 +167,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fCentralityWeight(1),
   fPtHatWeight(1),
   fTotalEventWeight(1),
-  fLocalRun(runLocal)
+  fLocalRun(runLocal),
+  fMixingListIndex(mixingListIndex)
 {
   // Custom constructor
   fHistograms = new EECHistograms(fCard);
@@ -402,6 +404,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fLocalRun(in.fLocalRun),
+  fMixingListIndex(in.fMixingListIndex),
   fMixingStartIndex(in.fMixingStartIndex),
   fRunningMixingIndex(in.fRunningMixingIndex),
   fnEventsInMixingFile(in.fnEventsInMixingFile),
@@ -494,6 +497,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fLocalRun = in.fLocalRun;
+  fMixingListIndex = in.fMixingListIndex;
   fMixingStartIndex = in.fMixingStartIndex;
   fRunningMixingIndex = in.fRunningMixingIndex;
   fnEventsInMixingFile = in.fnEventsInMixingFile;
@@ -873,7 +877,7 @@ void EECAnalyzer::RunAnalysis(){
 
   // Prepare mixed event files and a forest reader for reflected cone mixing
   const char* fileListName[2][4] = {
-      {"none", "mixingFileList/PbPbData2018_minBiasFiles.txt", "none", "mixingFileList/PbPbMC2018_minBiasHydjetFiles.txt"}, // Crab
+      {"none", Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex), "none", Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex)}, // Crab
       {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
         
   // Read the mixing files only for PbPb data and MC

@@ -6,6 +6,7 @@ echo "This is job number $1"
 CARD=${2#*=}
 OUTPUT=${3#*=}
 LOCATION=${4#*=}
+MIXINGLIST=${5#*=}
 
 # Untar the input file list
 tar xf input_files.tar.gz
@@ -17,4 +18,4 @@ tar -xvzf eec5TeV.tar.gz
 make
 
 # Run the code
-./eecAnalysis $1 $CARD $OUTPUT $LOCATION
+./eecAnalysis $1 $CARD $OUTPUT $LOCATION "false" $MIXINGLIST

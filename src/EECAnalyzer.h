@@ -47,7 +47,7 @@ public:
   
   // Constructors and destructor
   EECAnalyzer(); // Default constructor
-  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard, Int_t runLocal); // Custom constructor
+  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard, Int_t runLocal, Int_t mixingListIndex); // Custom constructor
   EECAnalyzer(const EECAnalyzer& in); // Copy constructor
   virtual ~EECAnalyzer(); // Destructor
   EECAnalyzer& operator=(const EECAnalyzer& obj); // Equal sign operator
@@ -181,6 +181,7 @@ public:
 
   // Reflected cone mixing
   Int_t fLocalRun;                      // Flag for local vs. CRAB run
+  Int_t fMixingListIndex;               // Index of the used mixing file list
   Int_t fMixingStartIndex;              // Event index from which event mixing is started
   Int_t fRunningMixingIndex;            // Mixed event index 
   Int_t fnEventsInMixingFile;           // Number of mixed events available
