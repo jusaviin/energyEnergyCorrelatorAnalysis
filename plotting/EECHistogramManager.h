@@ -99,7 +99,7 @@ private:
   const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Pythia", "Hydjet-Hydjet"};
   
   // Naming for pairing types
-  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "ReflectedMixedConePair", "MixedConePair"};
+  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "ReflectedMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "ReflectedSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair"};
   
   // Naming for jet cone types
   const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone", "MixedCone"};
@@ -186,8 +186,9 @@ public:
   // Setters for track/particle matching study
   void SetLoadTrackParticleMatchingHistograms(const bool loadOrNot); // Setter for loading histograms needed in track/particle matching study
 
-  // Setter for jet flavor
+  // Setters for jet flavor and loaded weight exponent
   void SetJetFlavor(const int iFlavor);  // For Monte Carlo, can select if we are looking for quark or gluon initiated jets
+  void SetLoadedWeightExponent(const double weightExponent); // Define the weight exponent value that is searched from the file
   
   // Setter for loading additional histograms
   void SetLoad2DHistograms(const bool loadOrNot);           // Setter for loading two-dimensional histograms
@@ -372,6 +373,7 @@ private:
   bool fLoadJetPtOneDimensionalUnfoldingHistograms;        // Load the histograms needed in the one-dimensional jet pT unfolding study
   bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
+  double fLoadedWeightExponent;                            // Value for weight exponent in energy-energy correlators that is searched from the files
   
   // ==============================================
   // ======== Ranges of histograms to load ========
@@ -501,6 +503,11 @@ private:
   void LoadJetPtUnfoldingCovariance(); // Loader for covariance histograms used in jet pT unfolding algorithm
   void LoadJetPtOneDimensionalUnfoldingHistograms(); // Loader for one dimensional jet pT unfolding histograms
   void LoadTrackParticleMatchingHistograms(); // Loader for track/particle matching histograms
+  void StabilizeBackground(); // Stabilize the background histograms by combining all jet pT bins for histograms that do not depend on jet pT
+
+  // Handling of weight exponents
+  void CheckWeightExponent(); // Check that the weight exponent requested is present in the input data
+  void UpdateWeightExponent(); // If one weight exponent from many is projected, update the information in card
   
   // Generic setter for bin indice and borders
   void SetGenericBins(const bool readBinsFromFile, const char* histogramName, const int iAxis, int nSetBins, double* setBinBorders, int* setBinIndices, const int nBins, const double* binBorders, const char* errorMessage, const int maxBins, const bool setIndices); // Generic bin setter

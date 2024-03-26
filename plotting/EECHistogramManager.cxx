@@ -30,6 +30,7 @@ EECHistogramManager::EECHistogramManager() :
   fLoadJetPtOneDimensionalUnfoldingHistograms(false),
   fLoadTrackParticleMatchingHistograms(false),
   fJetFlavor(0),
+  fLoadedWeightExponent(1),
   fFirstLoadedCentralityBin(0),
   fLastLoadedCentralityBin(1),
   fFirstLoadedTrackPtBin(0),
@@ -342,6 +343,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fLoadJetPtOneDimensionalUnfoldingHistograms(in.fLoadJetPtOneDimensionalUnfoldingHistograms),
   fLoadTrackParticleMatchingHistograms(in.fLoadTrackParticleMatchingHistograms),
   fJetFlavor(in.fJetFlavor),
+  fLoadedWeightExponent(in.fLoadedWeightExponent),
   fFirstLoadedCentralityBin(in.fFirstLoadedCentralityBin),
   fLastLoadedCentralityBin(in.fLastLoadedCentralityBin),
   fFirstLoadedTrackPtBin(in.fFirstLoadedTrackPtBin),
@@ -583,12 +585,14 @@ void EECHistogramManager::SubtractBackground(const int iSystematic){
         normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
         
-        // Next, find the reflected cone distribution to be used as background and normalize it with the same factor as the the raw distribution
+        // Next, find the reflected cone distribution to be used as background and normalize it with the same factor as the the raw distribution. To better estimate the background, we need subtract fake-fake distribution between cones, and add back reflected cone distribution within one cone
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kReflectedConePair][EECHistograms::knSubeventCombinations]);
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kReflectedMixedConePair][EECHistograms::knSubeventCombinations],-1);
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
         
         // After the background is normalized, we still need to scale it with a scaling factor taking into account the excess background fluctuations in the jet cone
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+        //fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
         
         // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
@@ -611,12 +615,14 @@ void EECHistogramManager::SubtractBackground(const int iSystematic){
           normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
           
-          // Next, find the reflected cone distribution to be used as background and normalize it with the same factor as the the raw distribution
+          // Next, find the reflected cone distribution to be used as background and normalize it with the same factor as the the raw distribution. To better estimate the background, we need subtract fake-fake distribution between cones, and add back reflected cone distribution within one cone
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedConePair][EECHistograms::knSubeventCombinations]);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedMixedConePair][EECHistograms::knSubeventCombinations],-1);
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
           
           // After the background is normalized, we still need to scale it with a scaling factor taking into account the excess background fluctuations in the jet cone
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+          //fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
           
           // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
@@ -665,13 +671,10 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
       centralityBinBorders = fCard->GetBinBordersCentrality(iCentrality);
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
         trackPtLowBorder = fCard->GetLowBinBorderTrackPtEEC(iTrackPt);
-        jetPtBinBorders.first = fCard->GetLowBinBorderJetPtEEC(0);
-        jetPtBinBorders.second = fCard->GetHighBinBorderJetPtEEC(fCard->GetNJetPtBinsEEC()-1);
-
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
           jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
-          // First, close the unfolded distribution
+          // First, clone the unfolded distribution
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
           
           // Next, find the scaling factor for background from integrals of the unfolded, and the non-unfolded distributions
@@ -679,6 +682,8 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
           
           // Scale the reflected cone background estimate with the difference in yields before and after unfolding to keep to total background level correct
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedConePair][EECHistograms::knSubeventCombinations]);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kReflectedMixedConePair][EECHistograms::knSubeventCombinations],-1);
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(scalingFactor);
 
           // For nominal pp results, do not subtract the background
@@ -690,13 +695,58 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(const int iSystematic){
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(signalToBackgroundScaleProvider->GetEECSignalToBackgroundUnfoldingScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb, iSystematic));
           
             // After the background is scaled to take into account the number integral changes during unfolding, we still need to scale it to take into account the excess background biasing the jet finding algorithm
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+            //fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
           
             // Now that the background is properly normalized, it can be subtracted from the unfolded distribution to get the signal
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding], -1);
           }
           
         } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // Energy-energy correlator type loop
+}
+
+/*
+ * Stabilize the background histograms by combining all jet pT bins for histograms that do not depend on jet pT
+ */
+void EECHistogramManager::StabilizeBackground(){
+
+  // Helper variables
+  double targetIntegral;
+  int lowIntegralBin, highIntegralBin;
+
+  // Loop over the energy-energy correlator histograms from the input file
+  for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
+
+    // Only subtract background from selected types of histograms
+    if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;
+    
+    // Loop over selected bin range
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+        // Do the stabilization only for background+background contributions, which are for sure not dependent of jet pT
+        for(int iPairingType = EECHistograms::kReflectedConePair; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+          if(iPairingType == EECHistograms::kSignalMixedConePair) continue;
+          for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
+
+            // Subevent binning is only relevant for PbPb MC. Skip this for all other systems
+            if(!fSystemAndEnergy.Contains("PbPb MC") && iSubevent < EECHistograms::knSubeventCombinations) continue;
+
+            // After the summation has been performed, put a properly scaled sum histogram in each jet pT bin as the new background histogram
+            lowIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.008);
+            highIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.39);
+            for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+              targetIntegral = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width");
+
+              // Only do the sacling if there is some content in the original histogram
+              if(targetIntegral > 0){
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Clone(Form("stabilizedBackground%d%d%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent));
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Scale(targetIntegral / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width"));
+              }
+            } // Jet pT loop
+          } // Subevent loop
+        } // Pairing type loop
       } // Track pT loop
     } // Centrality loop
   } // Energy-energy correlator type loop
@@ -738,6 +788,9 @@ void EECHistogramManager::NormalizeToDeltaRBinArea(TH1D* histogramInNeedOfNormal
  * Load all the selected histograms from the inputfile
  */
 void EECHistogramManager::LoadHistograms(){
+
+  // First, do a sanity check for the weight exponent
+  CheckWeightExponent();
   
   // Always load the number of events histogram
   fhEvents = (TH1D*) fInputFile->Get("nEvents");                           // Number of events surviving different event cuts
@@ -774,6 +827,9 @@ void EECHistogramManager::LoadHistograms(){
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
 
+  // Stabilize the background energy-energy correlator histograms
+  StabilizeBackground();
+
   // Load reflected cone QA histograms
   LoadReflectedConeQAHistograms();
   
@@ -794,6 +850,9 @@ void EECHistogramManager::LoadHistograms(){
 
   // Load the track/particle matching histograms
   LoadTrackParticleMatchingHistograms();
+
+  // Update the weight exponent to the card if necessary
+  UpdateWeightExponent();
   
 }
 
@@ -1347,21 +1406,22 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
  *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus/
  *                   energyEnergyCorrelatorPairEfficiencyVariationPlus/energyEnergyCorrelatorPairEfficiencyVariationMinus
  *
- *     Axis index       Content of axis                Note
+ *     Axis index       Content of axis                   Note
  * ----------------------------------------------------------------------
  *       Axis 0              DeltaR
  *       Axis 1              Jet pT
  *       Axis 2           Track pT cut
  *       Axis 3            Centrality
- *       Axis 4           Pairing type         Same jet/reflected cone
- *       Axis 5       Subevent combination      Only relevant for MC
+ *       Axis 4           Pairing type           Same jet/reflected cone
+ *       Axis 5       Subevent combination        Only relevant for MC
+ *       Axis 6        Energy weight index      Only present in new files
  */
 void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   
   // Define arrays to help find the histograms
-  int axisIndices[5] = {0};
-  int lowLimits[5] = {0};
-  int highLimits[5] = {0};
+  int axisIndices[6] = {0};
+  int lowLimits[6] = {0};
+  int highLimits[6] = {0};
   
   // Define helper variables
   int duplicateRemover = -1;
@@ -1371,6 +1431,8 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   int higherJetPtBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
+  int weightExponentBin = 0;
+  int weightRestricted = 0;
   THnSparseD* histogramArray;
   
   // Loop over all different energy-energy correlator histograms
@@ -1380,6 +1442,23 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     // For track pT bins, we are looking at all the tracks above the lower threshold
     histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
     higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+
+    // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
+    // We need this information in newer files to project the desired energy weight from the THnSparse
+    // We also only need to restrict the axis if there are more than one bin.
+    if(histogramArray->GetNdimensions() >= 7 && fCard->GetNWeightExponents() > 1){
+
+      // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+      weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+      // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+      axisIndices[0] = 6; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+      // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+      weightRestricted = 1;
+    } else {
+      weightRestricted = 0;
+    }
     
     // Loop over pairing types
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
@@ -1389,7 +1468,9 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
       if((iPairingType != EECHistograms::kSameJetPair) && !fCard->GetDoReflectedCone()) continue;
       
       // Setup axes with restrictions, (4 = pairing type)
-      axisIndices[0] = 4; lowLimits[0] = iPairingType+1; highLimits[0] = iPairingType+1;
+      axisIndices[weightRestricted] = 4; 
+      lowLimits[weightRestricted] = iPairingType+1; 
+      highLimits[weightRestricted] = iPairingType+1;
       
       // Loop over centrality bins
       for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
@@ -1399,7 +1480,9 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
         higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
         
         // Setup axes with restrictions, (3 = centrality)
-        axisIndices[1] = 3; lowLimits[1] = lowerCentralityBin; highLimits[1] = higherCentralityBin;
+        axisIndices[weightRestricted+1] = 3; 
+        lowLimits[weightRestricted+1] = lowerCentralityBin; 
+        highLimits[weightRestricted+1] = higherCentralityBin;
         
         // Loop over track pT bins
         for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -1413,10 +1496,12 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
           
           // Add restriction for track pT axis (2 = track pT)
-          axisIndices[2] = 2; lowLimits[2] = lowerTrackPtBin; highLimits[2] = higherTrackPtBin;
+          axisIndices[weightRestricted+2] = 2; 
+          lowLimits[weightRestricted+2] = lowerTrackPtBin; 
+          highLimits[weightRestricted+2] = higherTrackPtBin;
           
           // Read the energy-energy correlator histograms without jet pT restrictions
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3, axisIndices, lowLimits, highLimits);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3+weightRestricted, axisIndices, lowLimits, highLimits);
           
           // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1426,13 +1511,17 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
               
               // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
               if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
-                axisIndices[3] = 5; lowLimits[3] = EECHistograms::kPythiaHydjet+1; highLimits[3] = EECHistograms::kHydjetPythia+1;
+                axisIndices[weightRestricted+3] = 5; 
+                lowLimits[weightRestricted+3] = EECHistograms::kPythiaHydjet+1; 
+                highLimits[weightRestricted+3] = EECHistograms::kHydjetPythia+1;
               } else {
-                axisIndices[3] = 5; lowLimits[3] = iSubevent+1; highLimits[3] = iSubevent+1;
+                axisIndices[weightRestricted+3] = 5; 
+                lowLimits[weightRestricted+3] = iSubevent+1; 
+                highLimits[weightRestricted+3] = iSubevent+1;
               }
               
               // Read the energy-energy correlator histograms
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits);
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
               
             } // Subevent loop
 
@@ -1449,10 +1538,12 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
             
             // Add restriction for jet pT axis (1 = jet pT)
-            axisIndices[3] = 1; lowLimits[3] = lowerJetPtBin; highLimits[3] = higherJetPtBin;
+            axisIndices[weightRestricted+3] = 1; 
+            lowLimits[weightRestricted+3] = lowerJetPtBin; 
+            highLimits[weightRestricted+3] = higherJetPtBin;
             
             // Read the energy-energy correlator histograms
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4, axisIndices, lowLimits, highLimits);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1462,13 +1553,17 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
                 
                 // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
                 if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
-                  axisIndices[4] = 5; lowLimits[4] = EECHistograms::kPythiaHydjet+1; highLimits[4] = EECHistograms::kHydjetPythia+1;
+                  axisIndices[weightRestricted+4] = 5; 
+                  lowLimits[weightRestricted+4] = EECHistograms::kPythiaHydjet+1; 
+                  highLimits[weightRestricted+4] = EECHistograms::kHydjetPythia+1;
                 } else {
-                  axisIndices[4] = 5; lowLimits[4] = iSubevent+1; highLimits[4] = iSubevent+1;
+                  axisIndices[weightRestricted+4] = 5; 
+                  lowLimits[weightRestricted+4] = iSubevent+1; 
+                  highLimits[weightRestricted+4] = iSubevent+1;
                 }
                 
                 // Read the energy-energy correlator histograms
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 5, axisIndices, lowLimits, highLimits);
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 5+weightRestricted, axisIndices, lowLimits, highLimits);
 
               } // Subevent loop
 
@@ -1735,32 +1830,34 @@ void EECHistogramManager::LoadJetPtClosureHistograms(){
  *
  *   Histogram name: jetPtUnfoldingMeasured/jetPtUnfoldingTruth
  *
- *     Axis index               Content of axis
- * -----------------------------------------------------------
+ *     Axis index               Content of axis                       Note
+ * -----------------------------------------------------------------------------------
  *       Axis 0              DeltaR in jet pT bins
  *       Axis 1                    Track pT
  *       Axis 2                   Centrality
+ *       Axis 3               Energy weight index           Only present in new files
  *
  * 
  *  THnSparse for unfolding response matrix:
  *
  *   Histogram name: jetPtUnfoldingResponse
  *
- *     Axis index               Content of axis
- * -----------------------------------------------------------
+ *     Axis index               Content of axis                       Note
+ * ------------------------------------------------------------------------------------
  *       Axis 0         DeltaR in reconstructed jet pT bins
  *       Axis 1        DeltaR in generator level jet pT bins
  *       Axis 2                    Track pT
  *       Axis 3                   Centrality
+ *       Axis 4               Energy weight index           Only present in new files
  */
 void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
   
   if(!fLoadJetPtUnfoldingHistograms) return; // Do not load the histograms if they are not selected for loading
   
   // Define arrays to help find the histograms
-  int axisIndices[2] = {0};
-  int lowLimits[2] = {0};
-  int highLimits[2] = {0};
+  int axisIndices[3] = {0};
+  int lowLimits[3] = {0};
+  int highLimits[3] = {0};
   int nRestrictionAxes = 2;
   
   // Define helper variables
@@ -1769,12 +1866,31 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
   int higherCentralityBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
+  int weightExponentBin = 0;
+  int weightRestricted = 0;
   THnSparseD* histogramArray;
 
   // Load the jet pT unfolding distribution
   for(int iUnfoldType = 0; iUnfoldType < knUnfoldingDistributionTypes; iUnfoldType++){
     histogramArray = (THnSparseD*)fInputFile->Get(fJetPtUnfoldingDistributionName[iUnfoldType]);
     higherTrackPtBin = histogramArray->GetAxis(1)->GetNbins()+1;
+
+    // Check the number of dimensions in the histogram array. It will be 3 in older files and 4 in newer files
+    // We need this information in newer files to project the desired energy weight from the THnSparse
+    // We also only need to restrict the axis if there are more than one bin.
+    if(histogramArray->GetNdimensions() >= 4 && fCard->GetNWeightExponents() > 1){
+
+      // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+      weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+      // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+      axisIndices[0] = 3; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+      // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+      weightRestricted = 1;
+    } else {
+      weightRestricted = 0;
+    }
 
     for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
 
@@ -1783,7 +1899,9 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
       higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
 
       // Add restriction for centrality axis (2 = centrality)
-      axisIndices[0] = 2; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+      axisIndices[weightRestricted] = 2; 
+      lowLimits[weightRestricted] = lowerCentralityBin; 
+      highLimits[weightRestricted] = higherCentralityBin;
 
       // Loop over track pT bins
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -1792,9 +1910,11 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
         lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
 
         // Add restriction for track pT axis (1 = track pT)
-        axisIndices[1] = 1; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+        axisIndices[weightRestricted+1] = 1; 
+        lowLimits[weightRestricted+1] = lowerTrackPtBin; 
+        highLimits[weightRestricted+1] = higherTrackPtBin;
 
-        fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = FindHistogram(histogramArray,0,nRestrictionAxes,axisIndices,lowLimits,highLimits,false);
+        fhJetPtUnfoldingDistribution[iUnfoldType][iCentrality][iTrackPt] = FindHistogram(histogramArray, 0, nRestrictionAxes+weightRestricted, axisIndices, lowLimits, highLimits, false);
       }
 
     } // Centrality loop
@@ -1804,6 +1924,23 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
   histogramArray = (THnSparseD*)fInputFile->Get(fJetPtResponseMatrixName);
   higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
 
+  // Check the number of dimensions in the histogram array. It will be 4 in older files and 5 in newer files
+  // We need this information in newer files to project the desired energy weight from the THnSparse
+  // We also only need to restrict the axis if there are more than one bin.
+  if(histogramArray->GetNdimensions() >= 5 && fCard->GetNWeightExponents() > 1){
+
+    // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+    weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+    // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+    axisIndices[0] = 4; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+    // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+    weightRestricted = 1;
+  } else {
+    weightRestricted = 0;
+  }
+
   for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
 
     // Select the centrality bin indices
@@ -1811,7 +1948,9 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
     higherCentralityBin = fCentralityBinIndices[iCentrality + 1] + duplicateRemoverCentrality;
 
     // Add restriction for centrality axis (3 = centrality)
-    axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+    axisIndices[weightRestricted] = 3; 
+    lowLimits[weightRestricted] = lowerCentralityBin; 
+    highLimits[weightRestricted] = higherCentralityBin;
 
     // Loop over track pT bins
     for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -1820,9 +1959,11 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
       lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
 
       // Add restriction for track pT axis (2 = track pT)
-      axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+      axisIndices[weightRestricted+1] = 2; 
+      lowLimits[weightRestricted+1] = lowerTrackPtBin; 
+      highLimits[weightRestricted+1] = higherTrackPtBin;
 
-      fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
+      fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes+weightRestricted, axisIndices, lowLimits, highLimits, false);
     }
 
   }  // Centrality loop
@@ -1835,21 +1976,22 @@ void EECHistogramManager::LoadJetPtUnfoldingHistograms(){
  *
  *   Histogram name: jetPtUnfoldingCovariance
  *
- *     Axis index               Content of axis
- * -----------------------------------------------------------
+ *     Axis index               Content of axis                       Note
+ * -----------------------------------------------------------------------------------
  *       Axis 0              DeltaR in jet pT bins
  *       Axis 1              DeltaR in jet pT bins
  *       Axis 2                    Track pT
  *       Axis 3                   Centrality
+ *       Axis 4               Energy weight index           Only present in new files
  */
 void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
   
   if(!fLoadJetPtUnfoldingCovariance) return; // Do not load the histograms if they are not selected for loading
   
   // Define arrays to help find the histograms
-  int axisIndices[2] = {0};
-  int lowLimits[2] = {0};
-  int highLimits[2] = {0};
+  int axisIndices[3] = {0};
+  int lowLimits[3] = {0};
+  int highLimits[3] = {0};
   int nRestrictionAxes = 2;
   
   // Define helper variables
@@ -1858,18 +2000,30 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
   int higherCentralityBin = 0;
   int lowerTrackPtBin = 0;
   int higherTrackPtBin = 0;
-  /*int nDeltaRBins = 0;
-  int jetPtBinX = 0;
-  int jetPtBinY = 0;
-  double normalizationFactor;
-  std::pair<double,double> jetPtBinBorders;
-  double binContent;
-  double binError;*/
+  int weightExponentBin = 0;
+  int weightRestricted = 0;
   THnSparseD* histogramArray;
 
   // Load the jet pT unfolding distribution
   histogramArray = (THnSparseD*)fInputFile->Get(fJetPtCovarianceMatrixName[kCovarianceMatrixMeasured]);
   higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+
+  // Check the number of dimensions in the histogram array. It will be 4 in older files and 5 in newer files
+  // We need this information in newer files to project the desired energy weight from the THnSparse
+  // We also only need to restrict the axis if there are more than one bin.
+  if(histogramArray->GetNdimensions() >= 5 && fCard->GetNWeightExponents() > 1){
+
+    // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+    weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+    // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+    axisIndices[0] = 4; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+    // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+    weightRestricted = 1;
+  } else {
+    weightRestricted = 0;
+  }
 
   for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
 
@@ -1878,7 +2032,9 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
     higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemoverCentrality;
 
     // Add restriction for centrality axis (3 = centrality)
-    axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+    axisIndices[weightRestricted] = 3; 
+    lowLimits[weightRestricted] = lowerCentralityBin; 
+    highLimits[weightRestricted] = higherCentralityBin;
 
     // Loop over track pT bins
     for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -1887,53 +2043,11 @@ void EECHistogramManager::LoadJetPtUnfoldingCovariance(){
       lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
 
       // Add restriction for track pT axis (2 = track pT)
-      axisIndices[1] = 2; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+      axisIndices[weightRestricted+1] = 2; 
+      lowLimits[weightRestricted+1] = lowerTrackPtBin; 
+      highLimits[weightRestricted+1] = higherTrackPtBin;
 
-      fhJetPtUnfoldingCovariance[kCovarianceMatrixMeasured][iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
-
-      // For proper normalization, each bin needs to be normalized to the number of jets in the corresponding pT
-      // According to statistics committee, the approach below is wrong
-
-      // First, we need to determine the number of DeltaR bins. We know the number of jet pT bins in card.
-      // We know that this histogram has nJetPt*nDeltaR bins, so number of DeltaR bins can be solved from this.
-      /*nDeltaRBins =  fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX() / fnJetPtBinsEEC;
-
-      for(int iBinX = 1; iBinX <= fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsX(); iBinX++){
-
-        // Find the jet pt bin index corresponding to this bin index
-        jetPtBinX = (iBinX-1)/nDeltaRBins;
-
-        // Find the bin borders for the given bin
-        jetPtBinBorders = fCard->GetBinBordersJetPtEEC(jetPtBinX);
-
-        // Get the normalization factor by integrating the jet pT distribution over the bin borders
-        normalizationFactor = GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
-
-        // For some low-pT bins, we might not have any jets. Skip these bins for normalization
-        if(normalizationFactor < 1e-10){
-          iBinX += nDeltaRBins-1;
-          continue;
-        }
-
-        for(int iBinY = 1; iBinY <= fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetNbinsY(); iBinY++){
-
-          // No pairs between two different jets are paired, so if we are not in the same jet pT bin, we can skip normalization.
-          // The entries will be zero for all these cases
-          jetPtBinY = (iBinY-1)/nDeltaRBins;
-          if(jetPtBinX != jetPtBinY){
-            iBinY += nDeltaRBins-1;
-            continue;
-          }
-
-          // If we are in the non-zero part of the matrix, apply the normalization
-          binContent = fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetBinContent(iBinX, iBinY);
-          binError = fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->GetBinError(iBinX, iBinY);
-          fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->SetBinContent(iBinX, iBinY, binContent / normalizationFactor);
-          fhJetPtUnfoldingCovariance[iCentrality][iTrackPt]->SetBinError(iBinX, iBinY, binError / normalizationFactor);
-
-        } // Loop over y-axis bins of the covariance matrix
-      } // Loop over x-axis bins of the covariance matrix
-      */
+      fhJetPtUnfoldingCovariance[kCovarianceMatrixMeasured][iCentrality][iTrackPt] = FindHistogram2D(histogramArray, 0, 1, nRestrictionAxes+weightRestricted, axisIndices, lowLimits, highLimits, false);
 
     } // Track pT loop
 
@@ -2034,14 +2148,15 @@ void EECHistogramManager::LoadJetPtOneDimensionalUnfoldingHistograms(){
  *
  *   Histogram name: particlePtResponseMatrix
  *
- *     Axis index                 Content of axis
- * ---------------------------------------------------------------
+ *     Axis index                  Content of axis                               Note
+ * ----------------------------------------------------------------------------------------------
  *       Axis 0          pT1*pT2 for reconstructed track pairs
  *       Axis 1        pT1*pT2 for generator level particle pairs
  *       Axis 2                        Jet pT
  *       Axis 3                       Track pT
  *       Axis 4                      Centrality
  *       Axis 5     reconstructed pT1*pT2 / generator level pT1*pT2
+ *       Axis 6                 Energy weight index                    Only present in new files
  */
 void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
 
@@ -2061,6 +2176,8 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
   int higherTrackPtBin = 0;
   int lowerJetPtBin = 0;
   int higherJetPtBin = 0;
+  int weightExponentBin = 0;
+  int weightRestricted = 0;
   THnSparseD* histogramArray;
 
   // First, load the track/particle matching QA histograms
@@ -2153,6 +2270,23 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
   histogramArray = (THnSparseD*)fInputFile->Get("particlePtResponseMatrix");
   higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1;
 
+  // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
+  // We need this information in newer files to project the desired energy weight from the THnSparse
+  // We also only need to restrict the axis if there are more than one bin.
+  if(histogramArray->GetNdimensions() >= 7 && fCard->GetNWeightExponents() > 1){
+
+    // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+    weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+    // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+    axisIndices[0] = 6; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+    // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+    weightRestricted = 1;
+  } else {
+    weightRestricted = 0;
+  }
+
   // Loop over centrality bins
   for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
 
@@ -2161,7 +2295,9 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
     higherCentralityBin = fCentralityBinIndices[iCentrality+1] + duplicateRemover;
 
     // Setup axes with restrictions, (4 = centrality)
-    axisIndices[0] = 4; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;
+    axisIndices[weightRestricted] = 4; 
+    lowLimits[weightRestricted] = lowerCentralityBin; 
+    highLimits[weightRestricted] = higherCentralityBin;
 
     // Loop over track pT bins
     for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
@@ -2170,7 +2306,9 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
       lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
 
       // Add restriction for track pT axis (3 = track pT)
-      axisIndices[1] = 3; lowLimits[1] = lowerTrackPtBin; highLimits[1] = higherTrackPtBin;
+      axisIndices[weightRestricted+1] = 3; 
+      lowLimits[weightRestricted+1] = lowerTrackPtBin; 
+      highLimits[weightRestricted+1] = higherTrackPtBin;
 
       // Loop over jet pT bins
       for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
@@ -2180,10 +2318,12 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
         higherJetPtBin = fJetPtIndicesEEC[iJetPt+1] + duplicateRemover;
 
         // Add restriction for jet pT axis (2 = jet pT)
-        axisIndices[2] = 2; lowLimits[2] = lowerJetPtBin; highLimits[2] = higherJetPtBin;
+        axisIndices[weightRestricted+2] = 2; 
+        lowLimits[weightRestricted+2] = lowerJetPtBin; 
+        highLimits[weightRestricted+2] = higherJetPtBin;
 
         // Read the track/particle pair pT1*pT2 closure histograms
-        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 5, nRestrictionAxes, axisIndices, lowLimits, highLimits, false);
+        fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = FindHistogram(histogramArray, 5, nRestrictionAxes+weightRestricted, axisIndices, lowLimits, highLimits, false);
 
       }  // Jet pT loop
     }    // Track pT loop
@@ -3906,6 +4046,55 @@ void EECHistogramManager::LoadProcessedHistograms(){
 }
 
 /*
+ * Check that the weight exponent requested is present in the input data.
+ */
+void EECHistogramManager::CheckWeightExponent(){
+
+  // If we have only one weight exponent, we are golden and can just use that. Nothing needs to be done here.
+  if(fCard->GetNWeightExponents() == 1) return;
+
+  // We start by checking if the defined weight exponent exists in the card
+  int weightExponentIndex = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+  // If there are several weight exponents, we need to make sure that the one we are looking for exists in the card.
+  // If it does not, we should throw an exception
+  if(weightExponentIndex < 0){
+    std::cout << "EECHistogramManager::ERROR! The weight exponent " << fLoadedWeightExponent << " is not present in the file " << fInputFile->GetName() << std::endl;
+    std::cout << "The exponents available in this file are ";
+    for(int iIndex = 1; iIndex <= fCard->GetNWeightExponents(); iIndex++){
+      std::cout << fCard->GetWeightExponent(iIndex) << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Enjoy your exception!" << std::endl;
+    throw std::invalid_argument("Defined weight exponent in EECHistogramManager is not present in input file!");
+  }
+
+}
+
+/*
+ * If one weight exponent from many is projected, update the information in card
+ */
+void EECHistogramManager::UpdateWeightExponent(){
+
+  // Start by finding the index for the weight exponent
+  int weightExponentIndex = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+  // In case index is 0, weight exponent is undefined in the card. This happens in older files before this was added to the card.
+  // In this case we know that wegiht exponent must be 1. Add it to the card.
+  if(weightExponentIndex == 0){
+    fCard->AddOneDimensionalVector(EECCard::kWeightExponent, 1);
+    return;
+  }
+
+  // If we have only one weight exponent, nothing needs to be updated
+  if(fCard->GetNWeightExponents() == 1) return;
+
+  // If the weight exponent exists, update the card such that we only leave single weight exponent value there
+  fCard->AddOneDimensionalVector(EECCard::kWeightExponent, fLoadedWeightExponent);
+
+}
+
+/*
  * Read the bin indices for given bin borders
  *
  *  Arguments:
@@ -4160,6 +4349,11 @@ void EECHistogramManager::SetLoadTrackParticleMatchingHistograms(const bool load
 // Setter for flavor selection for jets in jet histograms
 void EECHistogramManager::SetJetFlavor(const int iFlavor){
   fJetFlavor = iFlavor;
+}
+
+// Define the weight exponent value that is searched from the file
+void EECHistogramManager::SetLoadedWeightExponent(const double weightExponent){
+  fLoadedWeightExponent = weightExponent;
 }
 
  // Setter for loading two-dimensional histograms

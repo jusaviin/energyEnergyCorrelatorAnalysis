@@ -60,7 +60,7 @@ MultiplicityMode 0 # 0 = Weight MC centrality to match data. 1 = Weight multipli
 
 # Configuration for energy-energy correlators
 JetRadius 0.4       # Radius around jets used to calculate the correlations
-WeightExponent 2    # Exponent given for the energy weight in EECs
+WeightExponent 1 2  # Exponents given for the energy weight in EECs
 SmearDeltaR 0       # Flag for smearing DeltaR values in EECs
 SmearEnergyWeight 0 # Flag for smearing energy weights in EECs
 JetPtBinEdgesEEC 120 140 160 180 200 300 500 5020 # Jet pT bin edges for EEC
@@ -77,7 +77,7 @@ TrackPtBinEdges     0.7 1 2 3 4 8 12 300                # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
-DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone
+DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background
 AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug

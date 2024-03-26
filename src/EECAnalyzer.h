@@ -30,7 +30,6 @@
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
 #include "SmearingProvider.h"
-#include "CovarianceHelper.h"
 
 class EECAnalyzer{
   
@@ -59,7 +58,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[3], const vector<double> relativeTrackEta[3], const vector<double> relativeTrackPhi[3], const vector<int> selectedTrackSubevent[3], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -112,13 +111,12 @@ public:
   JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
-  CovarianceHelper* fCovarianceHelper;           // Class to help find average EEC value in each analysis bin
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
   SmearingProvider* fEnergyWeightSmearer;        // Realistic smearing for energy weights from reco/gen ratios
   TRandom3* fRng;                                // Random number generator
 
   // Histograms to determine the covariance matrix
-  TH1D* fThisEventCorrelator[10];        // Energy-energy correlators calculated exclusively from this event
+  TH1D* fThisEventCorrelator[5][10];        // Energy-energy correlators calculated exclusively from this event
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
@@ -171,11 +169,11 @@ public:
   
   // Configuration for energy-energy correlators
   Double_t fJetRadius;       // Jet radius parameter
-  Int_t fWeightExponent;     // Exponent for the energy weight in energy-energy correlators
+  std::vector<Double_t> fWeightExponent;  // Exponents for the energy weight in energy-energy correlators
   Bool_t fSmearDeltaR;       // Flag for smearing DeltaR in energy-energy correlators
   Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
-  Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
+  Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
   Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 

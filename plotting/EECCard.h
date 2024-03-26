@@ -162,7 +162,9 @@ public:
   double GetJetPtCut() const;      // Get the minimum jet pT cut
   bool GetDoReflectedCone() const; // Get the information if reflected cone histograms are filled
   bool GetDoReflectedConeQA() const; // Get the information if reflected cone QA hsitograms are filled
-  int GetWeightExponent() const; // Get the weight exponent used in energy-energy correlators
+  int GetWeightExponent(int index = 1) const; // Get the weight exponent used in energy-energy correlators
+  int FindWeightExponentIndex(double weightExponent) const; // Find the index in card for the input weight exponent
+  int GetNWeightExponents() const;  // Get the number of weight exponents that are defined in the file
   
   void AddOneDimensionalVector(int entryIndex, float entryContent); // Add one dimensional vector to the card
   void AddVector(int entryIndex, int dimension, double* contents); // Add a vector to the card

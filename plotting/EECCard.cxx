@@ -407,16 +407,51 @@ std::pair<double,double> EECCard::GetBinBordersTrackPtEEC(const int iBin) const{
 /*
  *  Getter for the weight exponent used in energy-energy correlators
  */
-int EECCard::GetWeightExponent() const{
+int EECCard::GetWeightExponent(int index) const{
+
+  // Do a sanity check for the input index. Return -1 for nonsensical indices
+  if(index < 1) return -1;
+  if(index > fCardEntries[kWeightExponent]->GetNoElements()) return -1;
 
   // If the entry does not exist, the exponent must be 1 since this entry was added to the card to make a study for higher exponents
   if(fCardEntries[kWeightExponent]){
-    return (*fCardEntries[kWeightExponent])[1];
+    return (*fCardEntries[kWeightExponent])[index];
   } else {
     return 1;
   }
 }
 
+/*
+ * Find the index in card for the input weight exponent
+ */
+int EECCard::FindWeightExponentIndex(double weightExponent) const{
+
+  // In very old files the weight exponent does not exist. Return 0 in this case.
+  if(!fCardEntries[kWeightExponent]) return 0;
+
+  // If an entry exists, loop over all the entries in the card and search for the input value
+  double epsilon = 0.001;
+  for(int iElement = 1; iElement <= fCardEntries[kWeightExponent]->GetNoElements(); iElement++){
+    if(TMath::Abs(weightExponent - (*fCardEntries[kWeightExponent])[iElement]) < epsilon) return iElement;
+  }
+
+  // If we did not find an entry from the vector, return -1 to tell the entry does not exist
+  return -1;
+
+} 
+
+/*
+ * Get the number of weight exponents that are defined in the file
+ */
+int EECCard::GetNWeightExponents() const{
+
+  // In very old files the weight exponent does not exist. Return 1 in this case.
+  if(!fCardEntries[kWeightExponent]) return 1;
+
+  // The number of the defined exponents is in the number of elements of the vector
+  return fCardEntries[kWeightExponent]->GetNoElements();
+
+}
 
 /*
  * Add one-dimensional vector to the card
@@ -428,7 +463,7 @@ int EECCard::GetWeightExponent() const{
 void EECCard::AddOneDimensionalVector(int entryIndex, float entryContent){
   
   // Only allow addition to postprocessing vectors
-  if(entryIndex <= kPtHatBinEdges) return;
+  if(entryIndex <= kPtHatBinEdges && entryIndex != kWeightExponent) return;
   
   // Make a new one dimensional vector to the desired index with given content
   float contents[1] = {entryContent};
