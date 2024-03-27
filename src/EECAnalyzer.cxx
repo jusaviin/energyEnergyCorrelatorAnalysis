@@ -1529,7 +1529,7 @@ void EECAnalyzer::RunAnalysis(){
               if(allEventsWentThrough){
                 if(fDebugLevel > 0){
                   cout << "Could not find matching mixed events for event " << iEvent << endl;
-                  cout << "Increasing vz tolerance by 0.2 and hiBin tolerance by 1" << endl;
+                  cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
                 }
       
                 hiBinTolerance += 1;
