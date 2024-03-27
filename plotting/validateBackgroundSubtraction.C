@@ -9,7 +9,7 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_onlyMixedConeBackground_backgroundSubtracted_processed_2024-03-15.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
@@ -44,13 +44,13 @@ void validateBackgroundSubtraction(){
   
   // Select which histograms are fitted
   int firstDrawnCentralityBin = 0;
-  int lastDrawnCentralityBin = 0;
+  int lastDrawnCentralityBin = nCentralityBins-1;
   
-  int firstDrawnJetPtBinEEC = 7;
-  int lastDrawnJetPtBinEEC = 7; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 5;
+  int lastDrawnJetPtBinEEC = 8; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
-  int firstDrawnTrackPtBinEEC = 0;
-  int lastDrawnTrackPtBinEEC = 5;
+  int firstDrawnTrackPtBinEEC = 1;
+  int lastDrawnTrackPtBinEEC = 1;
   
   // Select the types of energy-energy correlators are studied
   bool studyEnergyEnergyCorrelator[EECHistogramManager::knEnergyEnergyCorrelatorTypes];
@@ -74,14 +74,14 @@ void validateBackgroundSubtraction(){
   const bool logEEC = true;
   
   // Axis zooming
-  std::pair<double,double> ratioZoom = std::make_pair(0.9, 1.1);
+  std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
 
   // Extra tag for the plots
-  const bool simulationTag = true;
+  const bool simulationTag = false;
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_nominalEnergyWeight";   // Comment given for this specific file
+  const bool saveFigures = false;  // Save figures
+  const char* saveComment = "_energyWeightSquared_newBackground";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -196,8 +196,8 @@ void validateBackgroundSubtraction(){
     for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
       
       // Set the centrality information for legends and figure saving
-      //centralityString = Form("Cent: %.0f-%.0f%%", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
-      centralityString = "Cent: 0-10%";
+      centralityString = Form("Cent: %.0f-%.0f%%", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
+      //centralityString = "Cent: 0-10%";
       compactCentralityString = Form("_C=%.0f-%.0f", histograms->GetCentralityBinBorder(iCentrality), histograms->GetCentralityBinBorder(iCentrality+1));
       
       // Loop over jet pT bins

@@ -11,7 +11,14 @@
 void compareDifferentEECpairings(){
   
   // Studied file
-  TString fileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeWithEventMixing_notAllStats_processed_2024-03-12.root";
+  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_onlyMixedConeBackground_processed_2024-03-20.root";
+
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_processed_2024-03-13.root
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedCone_midRapidity_processed_2024-03-15.root
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedCone_forwardRapidity_processed_2024-03-15.root
+  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_mixedConeBackground_processed_2024-03-15.root
+  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_onlyMixedConeBackground_processed_2024-03-15.root
+  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_onlyMixedConeBackground_processed_2024-03-20.root
   
   // Open the files and check that they exist
   TFile* inputFile = TFile::Open(fileName);
@@ -72,22 +79,25 @@ void compareDifferentEECpairings(){
   //   EECHistograms::knSubeventCombinations (accept any subevent combination)
   std::vector<std::pair<int,int>> comparedEnergyEnergyCorrelatorPairings;
   comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSameJetPair, kAllBackground));
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSignalReflectedConePair, knSubeventCombinations));
   comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackgroundTruthLevel, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSignalMixedConePair, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(EECHistograms::kReflectedMixedConePair, EECHistograms::knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(EECHistograms::kMixedConePair, EECHistograms::knSubeventCombinations));
+  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kReflectedConePair, kHydjetHydjet));
+  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, kHydjetHydjet));
 
   // Option to manually provide legend text for the compared distributions
   const bool useManualLegend = true;
   std::vector<TString> manualLegend;
-  manualLegend.push_back("Truth level background");
-  manualLegend.push_back("Reflected cone estimate");
-  manualLegend.push_back("Reflected+mixed cone estimate");
+  manualLegend.push_back("True background");
+  manualLegend.push_back("Compiled background");
+  //manualLegend.push_back("Mixed cone 2");
 
   // Flag for normalizing distributions to one over studied deltaR range
-  const bool normalizeDistributions = true;
+  bool normalizeDistributions = false;
+
+  // Compare integrals of the distributions
+  const bool compareIntegrals = true;
+
+  // It makes no sense to normalize distributions to 1 if you want to compare their integrals...
+  if(compareIntegrals) normalizeDistributions = false;
 
   // If we are dealing with MC, shift the centrality by 4% as is done in order to match background energy density
   if(card->GetDataType().Contains("MC")){
@@ -114,7 +124,7 @@ void compareDifferentEECpairings(){
   }
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);
+  std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -447,6 +457,17 @@ void compareDifferentEECpairings(){
         if(saveFigures){
           gPad->GetCanvas()->SaveAs(Form("figures/eecPairingTypeComparison%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
         }
+
+        if(compareIntegrals){
+          cout << "Bin: " << Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second) << " " << Form("%.0f < jet p_{T} < %.0f", jetPtBin.first, jetPtBin.second) << " " << Form("%.1f < track p_{T}", trackPtBin) << endl;
+          legendIndex = 0;
+          for(auto pairingType : comparedEnergyEnergyCorrelatorPairings){
+            lowNormalizationBin = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->FindBin(drawingRange.first + epsilon);
+            highNormalizationBin = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+            cout << "Integral of " << manualLegend.at(legendIndex++) << " is " << hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Integral(lowNormalizationBin, highNormalizationBin, "width") << endl;
+            cout << "Ratio to " << manualLegend.at(0) << " is " << hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Integral(lowNormalizationBin, highNormalizationBin, "width") / hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][comparedEnergyEnergyCorrelatorPairings.at(0).first][comparedEnergyEnergyCorrelatorPairings.at(0).second]->Integral(lowNormalizationBin, highNormalizationBin, "width") << endl;
+          } // Loop over compared bins
+        } // Compare integrals
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop

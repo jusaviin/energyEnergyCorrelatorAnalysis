@@ -7,7 +7,7 @@
 void findBackgroundNormalizationScale(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_noRecoJetsInRefCone08_processed_2023-11-30.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_onlyMixedConeBackground_processed_2024-03-15.root";
   // PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root
   // PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalSmear_reconstructedReference_processed_2023-07-11.root
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_6pCentShift_noTrigger_cutBadPhi_noJetPtWeight_forBackgroundScale_processed_2023-06-06.root
@@ -39,6 +39,8 @@ void findBackgroundNormalizationScale(){
   const int nCentralityBins = card->GetNCentralityBins();
   const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
   const int nTrackPtBinsEEC = card->GetNTrackPtBinsEEC();
+
+  const bool addMixedCone = true;
   
   // Default binning ranges for reference
   // centrality = {0,10,30,50,90}
@@ -124,7 +126,7 @@ void findBackgroundNormalizationScale(){
   } // Energy-energy correlator loop
   
   
-  double signalFakeIntegral, fakeFakeIntegral, reflectedConeIntegral;
+  double signalFakeIntegral, fakeFakeIntegral, reflectedConeIntegral, reflectedConeAddIntegral, reflectedConeSubtractIntegral;
   TString centralityString, trackPtString, jetPtString;
   int lowIntegralBin = hEnergyEnergyCorrelator[lowestEnergyEnergyCorrelatorIndex][EECHistograms::kSameJetPair][0][0][0][EECHistograms::kPythiaHydjet]->FindBin(0.008);;
   int highIntegralBin = hEnergyEnergyCorrelator[lowestEnergyEnergyCorrelatorIndex][EECHistograms::kSameJetPair][0][0][0][EECHistograms::kPythiaHydjet]->FindBin(0.39);
@@ -154,9 +156,19 @@ void findBackgroundNormalizationScale(){
           signalFakeIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kSameJetPair][iCentrality][iJetPt][iTrackPt][EECHistograms::kPythiaHydjet]->Integral(lowIntegralBin, highIntegralBin, "width");
           fakeFakeIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kSameJetPair][iCentrality][iJetPt][iTrackPt][EECHistograms::kHydjetHydjet]->Integral(lowIntegralBin, highIntegralBin, "width");
           reflectedConeIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kSignalReflectedConePair][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Integral(lowIntegralBin, highIntegralBin, "width");
-          
-          // Print the number to the array:
-          cout << reflectedConeIntegral / (signalFakeIntegral+fakeFakeIntegral);
+          //reflectedConeIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kSignalMixedConePair][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Integral(lowIntegralBin, highIntegralBin, "width");
+
+          if(addMixedCone){
+            reflectedConeAddIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kReflectedConePair][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Integral(lowIntegralBin, highIntegralBin, "width");
+            reflectedConeSubtractIntegral = hEnergyEnergyCorrelator[iEnergyEnergyCorrelator][EECHistograms::kReflectedMixedConePair][iCentrality][iJetPt][iTrackPt][EECHistograms::knSubeventCombinations]->Integral(lowIntegralBin, highIntegralBin, "width");
+
+             // Print the number to the array:
+             cout << (reflectedConeIntegral - reflectedConeSubtractIntegral + reflectedConeAddIntegral) / (signalFakeIntegral + fakeFakeIntegral);
+          } else {
+
+             // Print the number to the array:
+             cout << reflectedConeIntegral / (signalFakeIntegral + fakeFakeIntegral);
+          }
           
           // Add the proper syntax
           if(iTrackPt < nTrackPtBinsEEC-1){

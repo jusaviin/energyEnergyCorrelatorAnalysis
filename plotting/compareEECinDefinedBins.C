@@ -1,6 +1,9 @@
 #include "EECHistogramManager.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "../src/EECHistograms.h"
+#include "AlgorithmLibrary.h"
+#include "SystematicUncertaintyOrganizer.h"
 
 /*
  * Macro for comparing final energy-energy correlators results
@@ -10,10 +13,11 @@ void compareEECinDefinedBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
-  fileName[1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root";
-  //fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith5Iterations_processed_2024-01-17.root";
-  //fileName[3] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith10Iterations_processed_2024-01-17.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_jet60trigger_processed_2024-03-26.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_jet60trigger_processed_2024-03-26.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix2_jet60trigger_processed_2024-01-23.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_allBackgrounds_jet60trigger_processed_2024-03-26.root";
+  //fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_twoMixedCones_notAllStats_processed_2024-03-23.root";
   //fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
 
   // pp to Pythia8 comparison files
@@ -22,10 +26,15 @@ void compareEECinDefinedBins(){
   // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
 
+  TString uncertaintyFileName = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root";
+  // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-08.root
+  // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root
+
+
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "pp data";
-  fileDescription[1] = "Pythia8 truth";
-  //fileDescription[2] = "5 iterations";
+  fileDescription[0] = "Mixed cone";
+  fileDescription[1] = "Reflected cone";
+  //fileDescription[2] = "Two mixed events";
   //fileDescription[3] = "10 iterations";
   //fileDescription[4] = "20 iterations";
   
@@ -45,6 +54,17 @@ void compareEECinDefinedBins(){
 
     card[iFile] = new EECCard(inputFile[iFile]);
   }
+
+  TFile* uncertaintyFile = TFile::Open(uncertaintyFileName);
+
+  if(uncertaintyFile == NULL){
+    cout << "Error! The file " << uncertaintyFileName.Data() << " does not exist!" << endl;
+    cout << "Maybe you forgot the data/ folder path?" << endl;
+    cout << "Will not execute the code" << endl;
+    return;
+  }
+
+  EECCard* uncertaintyCard = new EECCard(uncertaintyFile);
   
   // ====================================================
   //               Binning configuration
@@ -58,16 +78,16 @@ void compareEECinDefinedBins(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,10));
-  //comparedCentralityBin.push_back(std::make_pair(10,30));
-  //comparedCentralityBin.push_back(std::make_pair(30,50));
+  comparedCentralityBin.push_back(std::make_pair(10,30));
+  comparedCentralityBin.push_back(std::make_pair(30,50));
   //comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  //comparedJetPtBin.push_back(std::make_pair(140,160));
+  //comparedJetPtBin.push_back(std::make_pair(160,180));
+  //comparedJetPtBin.push_back(std::make_pair(180,200));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -75,8 +95,11 @@ void compareEECinDefinedBins(){
   //comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
-  comparedTrackPtBin.push_back(3.0);
+  //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
+
+  // Draw relative uncertaintyon the ratio plot
+  const bool includeRelativeUncertainty = false; 
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
@@ -88,10 +111,27 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
   int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
 
+  // Choose the pairing type if raw energy-energy correlator is drawn
+  // EECHistograms::kSameJetPair;
+  // EECHistograms::kSignalReflectedConePair;
+  // EECHistograms::kReflectedConePair;
+  // EECHistograms::kSignalMixedConePair;
+  // EECHistograms::kReflectedMixedConePair;
+  // EECHistograms::kMixedConePair;
+  int iPairingType = EECHistograms::kReflectedConePair;
+
   // If we are dealing with pp data, reset the centrality vector
   if(card[0]->GetDataType().Contains("pp")){
     comparedCentralityBin.clear();
     comparedCentralityBin.push_back(std::make_pair(-1,100));
+  }
+
+  // If we are dealing with MC, shift the centrality by 4% as is done in order to match background energy density
+  if(card[0]->GetDataType().Contains("MC")){
+    for(auto& centralityBin : comparedCentralityBin){
+      centralityBin.first += 4;
+      centralityBin.second += 4;
+    }
   }
 
   // ====================================================
@@ -100,11 +140,11 @@ void compareEECinDefinedBins(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_energyWeightSquared_iterationComparison";   // Comment given for this specific file
+  const char* saveComment = "_energyWeightSquared_backgroundComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
+  std::pair<double, double> ratioZoom = std::make_pair(0.7, 1.3);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -295,29 +335,38 @@ void compareEECinDefinedBins(){
     histograms[iFile]->LoadProcessedHistograms();
   }
 
+  // Create systematic uncertainty organizer to illustrate to draw the pp systematic uncertainties to plots
+  SystematicUncertaintyOrganizer* uncertaintyOrganizer = new SystematicUncertaintyOrganizer(uncertaintyFile);
+
   // Energy-energy correlator histograms
   TH1D* hEnergyEnergyCorrelator[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hEnergyEnergyCorrelatorRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hRelativeUncertainty[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   
   // Initialize the energy-energy correlator histogram arrays to NULL
-  for(int iFile = 0; iFile < nComparisonFiles; iFile++){
-    for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
-      for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-        for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+  for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+    for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+      for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+        hRelativeUncertainty[iCentrality][iJetPt][iTrackPt] = NULL;
+        for(int iFile = 0; iFile < nComparisonFiles; iFile++){
           hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
           hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-        } // Centrality loop
-      } // Track pT loop
-    } // Jet pT loop
-  } // File loop
+        } // File loop
+      } // Centrality loop
+    } // Track pT loop
+  } // Jet pT loop
+  
   
   // Helper histograms
   std::pair<double, double> drawingRange = std::make_pair(0.006, 0.39);
   double epsilon = 0.0001;
   int lowNormalizationBin, highNormalizationBin;
-  int iCentrality, iCentralityReference;
-  int iTrackPt, iTrackPtReference;
-  int iJetPt, iJetPtReference;
+  int iCentrality, iCentralityReference, iCentralityUncertainty;
+  int iTrackPt, iTrackPtReference, iTrackPtUncertainty;
+  int iJetPt, iJetPtReference, iJetPtUncertainty;
+
+  // Transformer to transform absolute uncertainties to relative ones
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
 
   // Get the histograms from the histogram manager and normalize the signal histograms to one
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
@@ -335,7 +384,7 @@ void compareEECinDefinedBins(){
 
           // Load the selected energy-energy correlator histogram
           if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
-            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType);
           } else {
             hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);
           }
@@ -345,6 +394,16 @@ void compareEECinDefinedBins(){
           highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
           hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+
+          // Uncertainty histograms
+          if(iFile == 0 && includeRelativeUncertainty){
+            iCentralityUncertainty = uncertaintyCard->FindBinIndexCentrality(centralityBin);
+            iJetPtUncertainty = uncertaintyCard->FindBinIndexJetPtEEC(jetPtBin);
+            iTrackPtUncertainty = uncertaintyCard->GetBinIndexTrackPtEEC(trackPtBin);
+
+            hRelativeUncertainty[iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyOrganizer->GetSystematicUncertainty(iCentralityUncertainty, iJetPtUncertainty, iTrackPtUncertainty)->Clone(Form("relativeUncertainty%d%d%d", iCentrality, iJetPt, iTrackPt));
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertainty[iCentrality][iJetPt][iTrackPt], true);
+          }
 
         } // Centrality loop
       } // Track pT loop
@@ -571,6 +630,13 @@ void compareEECinDefinedBins(){
     drawer->SetLogY(false);
           
     // Set the drawing ranges
+    if(includeRelativeUncertainty){
+      hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+      hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+      hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->SetFillColorAlpha(kBlack, 0.2);
+      hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->SetMarkerStyle(9);
+      hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin]->SetMarkerSize(0);
+    }
     hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);          
     hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
@@ -586,7 +652,11 @@ void compareEECinDefinedBins(){
       ratioName = Form("%.0f < jet p_{T} < %.0f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second);
     }
 
-    drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
+    if(includeRelativeUncertainty){
+      drawer->DrawHistogramToLowerPad(hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ", "e2");
+    } else {
+      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
+    }
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
         for(int iTrackPt : currentTrackPtIndices){
