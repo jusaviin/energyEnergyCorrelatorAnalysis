@@ -342,8 +342,8 @@ public:
   EECCard* GetCard() const;  // Getter for the JCard
   
   // Post-processing the energy-energy correlator histograms
-  void SubtractBackground(const int iSystematic);             // Subtract the background from the energy-energy correlator histograms
-  void SubtractBackgroundFromUnfolded(const int iSystematic); // Subtract the background from unfolded energy-energy correlator histograms
+  void SubtractBackground(int iMethod, const int iSystematic);             // Subtract the background from the energy-energy correlator histograms
+  void SubtractBackgroundFromUnfolded(int iMethod, const int iSystematic); // Subtract the background from unfolded energy-energy correlator histograms
   
 private:
   

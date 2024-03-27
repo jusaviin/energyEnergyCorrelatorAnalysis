@@ -660,3 +660,22 @@ void EECCard::WriteProcessHash(TDirectory* file){
   file->cd("../");
   
 }
+
+/*
+ * Write the information related to background subtraction
+ */
+void EECCard::WriteBackground(TDirectory* file){
+  
+  // Go to a directory to store the card parameters
+  if(!file->GetDirectory("JCard")) file->mkdir("JCard");
+  file->cd("JCard");
+
+  // Write the entries related to background subtraction
+  for(int iEntry = kBackgroundMethod; iEntry <= kBackgroundSystematic; iEntry++){
+    if(fCardEntries[iEntry])  fCardEntries[iEntry]->Write(fCardEntryNames[iEntry]);
+  }
+
+  // Return back to the main directory
+  file->cd("../");
+  
+}

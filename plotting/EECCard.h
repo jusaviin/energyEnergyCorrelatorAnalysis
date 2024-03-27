@@ -71,6 +71,8 @@ public:
     kLastUnfoldedTrackPtBin,      // Index of the last track pT bin that has been unfolded
     kFirstUnfoldedJetPtBin,       // Index of the first jet pT bin that has been unfolded
     kLastUnfoldedJetPtBin,        // Index of the last jet pT bin that has been unfolded
+    kBackgroundMethod,            // Index for the method used to perform background subtraction
+    kBackgroundSystematic,        // Index for the systematic uncertainty estimation for background subtraction
     knEntries};                   // Number of entries in the card
   
   // Enumeration for input files used in postprocessing
@@ -79,7 +81,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","SkipCovarianceMatrix","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin"};
+  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","SkipCovarianceMatrix","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin","BackgroundSubtractionMethod","BackgroundSubtractionSystematic"};
   const char* fFileNameType[knFileNames] = {"input", "response matrix"};
   const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
@@ -121,6 +123,7 @@ public:
   void Write(TDirectory* file);            // Write the contents of the card to a file
   void WriteProcessHash(TDirectory* file); // Write the git hash used for processing histograms to the file
   void WriteUnfoldInfo(TDirectory* file);  // Write the information about parameters used in unfolding energy-energy correlators
+  void WriteBackground(TDirectory* file);  // Write the information related to background subtraction
   void Print() const;                      // Print the contents of the card to the console
   
   int GetNCentralityBins() const; // Get the number of centrality bins
