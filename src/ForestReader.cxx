@@ -14,6 +14,7 @@ ForestReader::ForestReader() :
   fMatchJets(false),
   fReadTrackTree(true),
   fIsMiniAOD(false),
+  fMixingMode(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -85,8 +86,9 @@ ForestReader::ForestReader() :
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
  *   Int_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track tree from the forest. Optimizes speed if tracks are not needed
+ *   Bool_t mixingMode: Read only trees needed for mixed events
  */
-ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree) :
+ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode) :
   fDataType(0),
   fUseJetTrigger(useJetTrigger),
   fJetType(jetType),
@@ -94,6 +96,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fMatchJets(matchJets),
   fReadTrackTree(readTrackTree),
   fIsMiniAOD(false),
+  fMixingMode(mixingMode),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -154,6 +157,9 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   // Custom constructor
   
   SetDataType(dataType);
+
+  // We do not use trigger in mixed event mode, so disable jet trigger if mixing mode is used
+  if(fMixingMode) fUseJetTrigger = false;
   
 }
 
@@ -168,6 +174,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fMatchJets(in.fMatchJets),
   fReadTrackTree(in.fReadTrackTree),
   fIsMiniAOD(in.fIsMiniAOD),
+  fMixingMode(in.fMixingMode),
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
   fPtHatBranch(in.fPtHatBranch),
@@ -243,6 +250,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fMatchJets = in.fMatchJets;
   fReadTrackTree = in.fReadTrackTree;
   fIsMiniAOD = in.fIsMiniAOD;
+  fMixingMode = in.fMixingMode;
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
   fPtHatBranch = in.fPtHatBranch;
@@ -330,7 +338,7 @@ void ForestReader::SetDataType(Int_t dataType){
 
 // Getter for number of events in the tree
 Int_t ForestReader::GetNEvents() const{
-  return fJetPtBranch->GetEntries();
+  return fHiVzBranch->GetEntries();
 }
 
 // Getter for number of jets in an event

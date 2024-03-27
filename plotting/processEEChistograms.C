@@ -10,12 +10,18 @@
  *  Arguments:
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
+ *   const int iBackgroundMethod = Index defining the used background subtraction method
+ *                                 0: Mixed cone background subtraction
+ *                                 1: Reflected cone background subtraction
  *   const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
  *                           0: Nominal results, no systematic uncertainty estimation
  *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
  *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
+ *                           3: Lower scaling estimate for signal-to-background ratio after unfolding
+ *                           4: Higher scaling estimate for signal-to-background ratio after unfolding
+ *   
  */
-void processEEChistograms(TString fileName = "veryCoolData_processed.root", TString outputFileName = "", const int iSystematic = 0){
+void processEEChistograms(TString fileName, TString outputFileName, const int iBackgroundMethod, const int iSystematic = 0){
 
   // Print the file name to console
   cout << "Processing histograms from " << fileName.Data() << endl;
@@ -42,6 +48,8 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   // The git hash here will be replaced by the latest commit hash by processEnergyEnergyCorrelators.sh script
   const char* gitHash = "GITHASHHERE";
   card->AddProcessGitHash(gitHash);
+  card->AddOneDimensionalVector(EECCard::kBackgroundMethod, iBackgroundMethod);
+  card->AddOneDimensionalVector(EECCard::kBackgroundSystematic, iSystematic);
   
   // ============================ //
   //     EECHistogramManager    //
@@ -61,7 +69,7 @@ void processEEChistograms(TString fileName = "veryCoolData_processed.root", TStr
   histograms->LoadProcessedHistograms();
   
   // Subtract the background from the energy-energy correlator histograms
-  histograms->SubtractBackground(iSystematic);
+  histograms->SubtractBackground(iBackgroundMethod, iSystematic);
   
   // Add the processed histograms to the file
   histograms->WriteProcessed(outputFileName,fileWriteMode);

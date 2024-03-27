@@ -12,12 +12,18 @@
  *   TString fileName = File from which the histograms are read and to which the processed histograms are written
  *   TString outputFileName = If given, the processed histograms are written to this file. Otherwise the fileName file is updated.
  *   const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
+ *   const int iBackgroundMethod = Index defining the used background subtraction method
+ *                                 0: Mixed cone background subtraction
+ *                                 1: Reflected cone background subtraction
+ *   const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
  *                           0: Nominal results, no systematic uncertainty estimation
  *                           1: Systematic uncertainty derived from 2% centrality shifted simulation
  *                           2: Systematic uncertainty derived from 6% centrality shifted simulation
+ *                           3: Lower scaling estimate for signal-to-background ratio after unfolding
+ *                           4: Higher scaling estimate for signal-to-background ratio after unfolding
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  */
-void processUnfoldedEEChistograms(TString fileName, TString outputFileName, const int iSystematic, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){
+void processUnfoldedEEChistograms(TString fileName, TString outputFileName, const int iBackgroundMethod, const int iSystematic, const int iEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelator){
 
   // Print the file name to console
   cout << "Processing unfolded histograms from " << fileName.Data() << endl;
@@ -44,6 +50,8 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   // The git hash here will be replaced by the latest commit hash by processUnfoldedEnergyEnergyCorrelators.sh script
   const char* gitHash = "GITHASHHERE";
   card->AddProcessGitHash(gitHash);
+  card->AddOneDimensionalVector(EECCard::kBackgroundMethod, iBackgroundMethod);
+  card->AddOneDimensionalVector(EECCard::kBackgroundSystematic, iSystematic);
   
   // ============================ //
   //     EECHistogramManager    //
@@ -68,7 +76,7 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   histograms->LoadProcessedHistograms();
   
   // Subtract the background from the unfolded energy-energy correlator histograms
-  histograms->SubtractBackgroundFromUnfolded(iSystematic);
+  histograms->SubtractBackgroundFromUnfolded(iBackgroundMethod, iSystematic);
   
   // Save the processed histograms to the file
   histograms->WriteProcessedAfterUnfolding(outputFileName,fileWriteMode);

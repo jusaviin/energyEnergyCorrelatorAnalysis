@@ -173,13 +173,13 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   int firstStudiedCentralityBin = 0;
   int lastStudiedCentralityBin = nCentralityBins-1;
   
-  int firstStudiedTrackPtBinEEC = 3;
+  int firstStudiedTrackPtBinEEC = 1;
   int lastStudiedTrackPtBinEEC = 5;
 
   // Lower track pT bins can be included for higher energy weights:
-  if(iWeightExponent > 1){
-    firstStudiedTrackPtBinEEC = 1;
-  }
+  //if(iWeightExponent > 1){
+  //  firstStudiedTrackPtBinEEC = 1;
+  //}
 
   // Select explicitly the jet pT bins that we are going to unfold
   std::vector<std::pair<double,double>> unfoldedJetPtBins;

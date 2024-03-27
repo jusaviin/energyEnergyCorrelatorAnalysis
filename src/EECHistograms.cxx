@@ -414,6 +414,11 @@ void EECHistograms::CreateHistograms(){
   const Double_t minTrackPtEEC = trackPtBinsEEC[0];
   const Double_t maxTrackPtEEC = trackPtBinsEEC[nTrackPtBinsEEC];
 
+  // Create a set of energy-energy correlator histograms for each defined energy weight
+  const Int_t nEnergyWeightsEEC = fCard->GetN("WeightExponent");
+  const Double_t minEnergyWeightEEC = -0.5;
+  const Double_t maxEnergyWeightEEC = nEnergyWeightsEEC - 0.5;
+
   // DeltaR binning for track density
   const Int_t nDeltaRBinsTrackDensity = 80;
   const Double_t minDeltaRTrackDensity = 0;
@@ -473,7 +478,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   Double_t highBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   
-  const Int_t nAxesEnergyEnergyCorrelator = 6;
+  const Int_t nAxesEnergyEnergyCorrelator = 7;
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
@@ -483,12 +488,12 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderJetClosure[nAxesJetClosure];
   Double_t highBinBorderJetClosure[nAxesJetClosure];
 
-  const Int_t nAxesJetPtUnfoldDistribution = 3;
+  const Int_t nAxesJetPtUnfoldDistribution = 4;
   Int_t nBinsJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
   Double_t lowBinBorderJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
   Double_t highBinBorderJetPtUnfoldDistribution[nAxesJetPtUnfoldDistribution];
 
-  const Int_t nAxesJetPtUnfoldResponse = 4;
+  const Int_t nAxesJetPtUnfoldResponse = 5;
   Int_t nBinsJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
   Double_t lowBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
   Double_t highBinBorderJetPtUnfoldResponse[nAxesJetPtUnfoldResponse];
@@ -503,7 +508,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderParticleDeltaRResponseMatrix[nAxesParticleDeltaRResponseMatrix];
   Double_t highBinBorderParticleDeltaRResponseMatrix[nAxesParticleDeltaRResponseMatrix];
 
-  const Int_t nAxesParticlePtResponseMatrix = 6;
+  const Int_t nAxesParticlePtResponseMatrix = 7;
   Int_t nBinsParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t lowBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t highBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
@@ -789,6 +794,12 @@ void EECHistograms::CreateHistograms(){
   nBinsEnergyEnergyCorrelator[5] = nSubeventCombinationBins;       // nBins for subevent combinations (pythia-pythia, pythia-hydjet, hydjet-hydjet)
   lowBinBorderEnergyEnergyCorrelator[5] = minSubeventCombination;  // low bin border for subevent combinations
   highBinBorderEnergyEnergyCorrelator[5] = maxSubeventCombination; // high bin border for subevent combinations
+
+  // Axis 6 for the energy-energy correlator histogram: energy weight index
+  nBinsEnergyEnergyCorrelator[6] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderEnergyEnergyCorrelator[6] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderEnergyEnergyCorrelator[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
+
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
   fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();
@@ -883,6 +894,11 @@ void EECHistograms::CreateHistograms(){
   lowBinBorderJetPtUnfoldDistribution[2] = minCentrality;    // low bin border for centrality
   highBinBorderJetPtUnfoldDistribution[2] = maxCentrality;   // high bin border for centrality
 
+  // Axis 3 for the jet pT unfolding distribution histogram: energy weight index
+  nBinsJetPtUnfoldDistribution[3] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderJetPtUnfoldDistribution[3] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderJetPtUnfoldDistribution[3] = maxEnergyWeightEEC; // Index of the last defined energy weight
+
   // Create the histogram for reconstructed jet pT unfolding distributions
   fhUnfoldingMeasured = new THnSparseF("jetPtUnfoldingMeasured", "jetPtUnfoldingMeasured", nAxesJetPtUnfoldDistribution, nBinsJetPtUnfoldDistribution, lowBinBorderJetPtUnfoldDistribution, highBinBorderJetPtUnfoldDistribution); fhUnfoldingMeasured->Sumw2();
 
@@ -927,6 +943,11 @@ void EECHistograms::CreateHistograms(){
   nBinsJetPtUnfoldResponse[3] = nWideCentralityBins;     // nBins for centrality
   lowBinBorderJetPtUnfoldResponse[3] = minCentrality;    // low bin border for centrality
   highBinBorderJetPtUnfoldResponse[3] = maxCentrality;   // high bin border for centrality
+
+  // Axis 4 for the jet pT unfolding response histogram: energy weight index
+  nBinsJetPtUnfoldResponse[4] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderJetPtUnfoldResponse[4] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderJetPtUnfoldResponse[4] = maxEnergyWeightEEC; // Index of the last defined energy weight
 
   // Create the histogram for jet pT unfolding response
   fhUnfoldingResponse = new THnSparseF("jetPtUnfoldingResponse", "jetPtUnfoldingResponse", nAxesJetPtUnfoldResponse, nBinsJetPtUnfoldResponse, lowBinBorderJetPtUnfoldResponse, highBinBorderJetPtUnfoldResponse); fhUnfoldingResponse->Sumw2();
@@ -1091,6 +1112,11 @@ void EECHistograms::CreateHistograms(){
   nBinsParticlePtResponseMatrix[5] = nClosureRatioBins;        // nBins for closure ratio
   lowBinBorderParticlePtResponseMatrix[5] = minClosureRatio;   // low bin border for closure ratio
   highBinBorderParticlePtResponseMatrix[5] = maxClosureRatio;  // high bin border for closure ratio
+
+  // Axis 6 for the particle pT1*pT2 response matrix histogram: energy weight index
+  nBinsParticlePtResponseMatrix[6] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderParticlePtResponseMatrix[6] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderParticlePtResponseMatrix[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
 
   // Create the histogram for the response matrix between two particles
   fhParticlePtResponse = new THnSparseF("particlePtResponseMatrix", "particlePtResponseMatrix", nAxesParticlePtResponseMatrix, nBinsParticlePtResponseMatrix, lowBinBorderParticlePtResponseMatrix, highBinBorderParticlePtResponseMatrix); fhParticlePtResponse->Sumw2();

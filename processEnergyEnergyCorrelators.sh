@@ -2,9 +2,10 @@
 
 if [ "$#" -lt 1 ]; then
   echo "Usage of the script:"
-  echo "$0 fileName [-o outputFileName] [-u systematicUncertainty]"
+  echo "$0 fileName [-o outputFileName] [-b backgroundSubtraction] [-u systematicUncertainty]"
   echo "fileName = Name of the file for which energy-energy correlator histograms are processed"
   echo "-o outputFileName = If given, instead of updating the file fileName, a new file called outputFileName is created with the processed histograms"
+  echo "-b backgroundSubtraction = Index for background subtraction method. 0 = Mixed cone background. 1 = Reflected cone background. Default = 0."
   echo "-u systematicUncertainty = Index for systematic uncertainty. 0 = Nominal result, 1 = Background scale from 2% centrality shift, 2 = Background scale from 6% centrality shift"
   exit
 fi
@@ -13,9 +14,11 @@ FILENAME=$1    # Name of the files for processing
 shift # Shift the positional argument such that optional ones are properly seen afterwards
 
 # Read the optional arguments
-while getopts ":o:u:" opt; do
+while getopts ":o:b:u:" opt; do
 case $opt in
 o) OUTPUTFILE="$OPTARG"
+;;
+b) BACKGROUND="$OPTARG"
 ;;
 u) SYSTEMATIC="$OPTARG"
 ;;
@@ -27,6 +30,7 @@ done
 
 # Set default values to optional arguments if they are not given
 OUTPUTFILE=${OUTPUTFILE:-$FILENAME}
+BACKGROUND=${BACKGROUND:-0}
 SYSTEMATIC=${SYSTEMATIC:-0}
 
 # Find the git hash of the current commit
@@ -36,7 +40,7 @@ GITHASH=`git rev-parse HEAD`
 sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/processEEChistograms.C
 
 # Process the energy-energy correlator histograms
-root -l -b -q 'plotting/processEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${SYSTEMATIC}')'
+root -l -b -q 'plotting/processEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}','${BACKGROUND}'",'${SYSTEMATIC}')'
 
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/processEEChistograms.C

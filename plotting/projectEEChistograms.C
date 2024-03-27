@@ -10,8 +10,9 @@
  *   TString inputFileName = File from which the histograms are read
  *   const char* outputFileName = If we are producing output file, name of the output file
  *   int histogramSelection = If > 0, select a preset group of histograms. Intended to be used for easier production of output files.
+ *   double weightExponent = Value for weight exponent that is projected from the file
  */
-void projectEEChistograms(TString inputFileName = "veryCoolData.root", const char* outputFileName = "veryCoolData_processed.root", int histogramSelection = 2047){
+void projectEEChistograms(TString inputFileName = "veryCoolData.root", const char* outputFileName = "veryCoolData_processed.root", int histogramSelection = 2047, double weightExponent = 1){
 
   // Print the file name to console
   cout << "Projecting histograms from " << inputFileName.Data() << endl;
@@ -229,6 +230,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadJetPtOneDimensionalUnfoldingHistograms(loadJetPtOneDimensionalUnfoldingHistograms);
   histograms->SetLoadJetPtUnfoldingCovariance(loadCovarianceMatrixForUnfolding);
   histograms->SetJetFlavor(jetFlavor);
+  histograms->SetLoadedWeightExponent(weightExponent);
 
   // Set the binning information
   histograms->SetCentralityBins(readCentralityBinsFromFile,nCentralityBins,centralityBinBorders,true);

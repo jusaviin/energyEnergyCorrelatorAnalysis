@@ -30,7 +30,6 @@
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
 #include "SmearingProvider.h"
-#include "CovarianceHelper.h"
 
 class EECAnalyzer{
   
@@ -47,7 +46,7 @@ public:
   
   // Constructors and destructor
   EECAnalyzer(); // Default constructor
-  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard); // Custom constructor
+  EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard* newCard, Int_t runLocal, Int_t mixingListIndex); // Custom constructor
   EECAnalyzer(const EECAnalyzer& in); // Copy constructor
   virtual ~EECAnalyzer(); // Destructor
   EECAnalyzer& operator=(const EECAnalyzer& obj); // Equal sign operator
@@ -59,7 +58,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -67,6 +66,7 @@ public:
   void FillUnfoldingResponse(); // Fill the histograms needed for unfolding study
   void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
+  void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
@@ -89,11 +89,13 @@ public:
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
   Double_t TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const; // Transform the deltaR value to the unfolding axis
   Double_t SimpleSmearDeltaR(const Double_t deltaR); // Simple smearing for deltaR to see if it affects the final distributions
+
   
   // Private data members
   ForestReader* fJetReader;                      // Reader for jets in the event
   ForestReader* fRecoJetReader;                  // Reader for reconstructed jets in the event
   ForestReader* fTrackReader;                    // Reader for tracks in the event
+  ForestReader* fMixedEventReader;               // Reader for mixed events
   UnfoldingForestReader* fUnfoldingForestReader; // Reader for unfolding study
   std::vector<TString> fFileNames;               // Vector for all the files to loop over
   ConfigurationCard* fCard;                      // Configuration card for the analysis
@@ -109,13 +111,12 @@ public:
   JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
-  CovarianceHelper* fCovarianceHelper;           // Class to help find average EEC value in each analysis bin
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
   SmearingProvider* fEnergyWeightSmearer;        // Realistic smearing for energy weights from reco/gen ratios
   TRandom3* fRng;                                // Random number generator
 
   // Histograms to determine the covariance matrix
-  TH1D* fThisEventCorrelator[10];        // Energy-energy correlators calculated exclusively from this event
+  TH1D* fThisEventCorrelator[5][10];        // Energy-energy correlators calculated exclusively from this event
   
   // Analyzed data and forest types
   Int_t fDataType;                   // Analyzed data type
@@ -168,13 +169,22 @@ public:
   
   // Configuration for energy-energy correlators
   Double_t fJetRadius;       // Jet radius parameter
-  Int_t fWeightExponent;     // Exponent for the energy weight in energy-energy correlators
+  std::vector<Double_t> fWeightExponent;  // Exponents for the energy weight in energy-energy correlators
   Bool_t fSmearDeltaR;       // Flag for smearing DeltaR in energy-energy correlators
   Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
-  Bool_t fDoReflectedConeQA; // Fill the quality assurance histograms for eta-reflected cones
+  Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
   Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
+
+  // Reflected cone mixing
+  Int_t fLocalRun;                      // Flag for local vs. CRAB run
+  Int_t fMixingListIndex;               // Index of the used mixing file list
+  Int_t fMixingStartIndex;              // Event index from which event mixing is started
+  Int_t fRunningMixingIndex;            // Mixed event index 
+  Int_t fnEventsInMixingFile;           // Number of mixed events available
+  std::vector<Double_t> fMixedEventVz;  // vz values in mixed events
+  std::vector<Int_t> fMixedEventHiBin;  // HiBin values in mixed events
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

@@ -120,6 +120,7 @@ bool checkBool(string str) {
  *  argv[3] = .root file to which the histograms are written
  *  argv[4] = Index for the EOS location from where the input files are searched
  *  argv[5] = True: Search input files from local machine. False (default): Search input files from grid with xrootd
+ *  argc[6] = Index for the used mixing list for CRAB running
  */
 int main(int argc, char **argv) {
   
@@ -127,12 +128,13 @@ int main(int argc, char **argv) {
   if ( argc<5 ) {
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
     cout<<"+ Usage of the macro: " << endl;
-    cout<<"+  "<<argv[0]<<" [fileNameFile] [configurationCard] [outputFileName] [fileLocation] <runLocal>"<<endl;
+    cout<<"+  "<<argv[0]<<" [fileNameFile] [configurationCard] [outputFileName] [fileLocation] <runLocal> <mixingListIndex>"<<endl;
     cout<<"+  fileNameFile: Text file containing the list of files used in the analysis. For crab analysis a job id should be given here." <<endl;
     cout<<"+  configurationCard: Card file with binning and cut information for the analysis." <<endl;
     cout<<"+  outputFileName: .root file to which the histograms are written." <<endl;
     cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data." << endl;
     cout<<"+  runLocal: True: Search input files from local machine. False (default): Search input files from grid with xrootd." << endl;
+    cout<<"+  mixingListIndex: Mixing file list index for CRAB running (default = 1)" << endl;
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
     cout << endl << endl;
     exit(1);
@@ -154,6 +156,9 @@ int main(int argc, char **argv) {
   const char* cardName = argv[2];
   TString outputFileName = argv[3];
   const int fileSearchIndex = atoi(argv[4]);
+
+  int mixingListIndex = 1;
+  if(argc >= 7) mixingListIndex = atoi(argv[6]);
   
   // The git hash here will be replaced by the latest commit hash by makeEECAnalysisTar.sh script
   const char* gitHash = "GITHASHHERE";
@@ -176,7 +181,7 @@ int main(int argc, char **argv) {
   EECHistograms* histograms;
   
   // Run the analysis over the list of files
-  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard);
+  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard, runLocal, mixingListIndex);
   eecAnalysis->RunAnalysis();
   histograms = eecAnalysis->GetHistograms();
   

@@ -101,13 +101,20 @@ EECAnalyzer::EECAnalyzer() :
   fSkipCovarianceMatrix(false),
   fMcCorrelationType(0),
   fJetRadius(0.4),
-  fWeightExponent(2),
+  fWeightExponent(0),
   fSmearDeltaR(false),
   fSmearEnergyWeight(false),
   fDoReflectedCone(false),
-  fDoReflectedConeQA(false),
+  fDoMixedCone(false),
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
+  fLocalRun(0),
+  fMixingListIndex(1),
+  fMixingStartIndex(0),
+  fRunningMixingIndex(0),
+  fnEventsInMixingFile(0),
+  fMixedEventVz(0),
+  fMixedEventHiBin(0),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -127,6 +134,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetReader = NULL;
   fRecoJetReader = NULL;
   fTrackReader = NULL;
+  fMixedEventReader = NULL;
   
   // Create a corrector for track pair efficiency
   fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector();
@@ -134,22 +142,21 @@ EECAnalyzer::EECAnalyzer() :
   // Create a manager for jet energy resolution smearing in MC
   fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
 
-  // Create a helper class to find average values needed in covariance calculation
-  fCovarianceHelper = new CovarianceHelper();
-
   // Create smearing providers for DeltaR and energy weights
   fDeltaRSmearer = new SmearingProvider();
   fEnergyWeightSmearer = new SmearingProvider();
 
-  for(int iBin = 0; iBin < 10; iBin++){
-    fThisEventCorrelator[iBin] = NULL;
+  for(int oBin = 0; oBin < 5; oBin++){
+    for(int iBin = 0; iBin < 10; iBin++){
+      fThisEventCorrelator[oBin][iBin] = NULL;
+    }
   }
 }
 
 /*
  * Custom constructor
  */
-EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard) :
+EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard *newCard, Int_t runLocal, Int_t mixingListIndex) :
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
@@ -158,7 +165,9 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
-  fTotalEventWeight(1)
+  fTotalEventWeight(1),
+  fLocalRun(runLocal),
+  fMixingListIndex(mixingListIndex)
 {
   // Custom constructor
   fHistograms = new EECHistograms(fCard);
@@ -168,6 +177,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fJetReader = NULL;
   fRecoJetReader = NULL;
   fTrackReader = NULL;
+  fMixedEventReader = NULL;
   
   // Configurure the analyzer from input card
   ReadConfigurationFromCard();
@@ -202,15 +212,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(false, fJetUncertaintyMode-3);
     } else {
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
-    }
-
-    // Covariance helper for pp data
-    if(fWeightExponent == 1){
-      // Average energy-energy correlator values for nominal energy weight
-      //fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_pp_2023-12-19.root");
-    } else {
-      // Average energy-energy correlator values for squared energy weight
-      //fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_pp_energyWeightSquared_2023-12-19.root");
     }
 
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
@@ -264,15 +265,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
     }
 
-    // Covariance helper for PbPb data
-    if(fWeightExponent == 1){
-      // Average energy-energy correlator values for nominal energy weight
-      //fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_PbPb_2023-12-19.root");
-    } else {
-      // Average energy-energy correlator values for squared energy weight
-      //fCovarianceHelper = new CovarianceHelper("trackCorrectionTables/averageEECfileForCovariance_PbPb_energyWeightSquared_2023-12-19.root");
-    }
-
     // Smearing configuration for DeltaR and energy weight in energy-energy correlators
     if(fSmearDeltaR){
       const char* deltaRFileName = "PbPbMC2018_GenGen_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
@@ -297,7 +289,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     fMultiplicityWeightFunction = NULL;
     fTrackPairEfficiencyCorrector = NULL;
     fEnergyResolutionSmearingFinder = NULL;
-    fCovarianceHelper = NULL;
     fDeltaRSmearer = NULL;
     fEnergyWeightSmearer = NULL;
   }
@@ -315,8 +306,10 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   deltaRBins[nDeltaRBins] = fHistograms->GetDeltaRBinBorderHighEEC(nDeltaRBins);
 
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
-  for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-    fThisEventCorrelator[iTrackPt] = new TH1D(Form("thisEventCorrelator%d", iTrackPt), Form("thisEventCorrelator%d", iTrackPt), nDeltaRBins, deltaRBins);
+  for(auto iWeightExponent = 0; iWeightExponent < fWeightExponent.size(); iWeightExponent++){
+    for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+      fThisEventCorrelator[iWeightExponent][iTrackPt] = new TH1D(Form("thisEventCorrelator%d%d", iWeightExponent, iTrackPt), Form("thisEventCorrelator%d%d", iWeightExponent, iTrackPt), nDeltaRBins, deltaRBins);
+    }
   }
   
   //**********************************************************
@@ -336,6 +329,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetReader(in.fJetReader),
   fRecoJetReader(in.fRecoJetReader),
   fTrackReader(in.fTrackReader),
+  fMixedEventReader(in.fMixedEventReader),
   fFileNames(in.fFileNames),
   fCard(in.fCard),
   fHistograms(in.fHistograms),
@@ -388,9 +382,16 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSmearDeltaR(in.fSmearDeltaR),
   fSmearEnergyWeight(in.fSmearEnergyWeight),
   fDoReflectedCone(in.fDoReflectedCone),
-  fDoReflectedConeQA(in.fDoReflectedConeQA),
+  fDoMixedCone(in.fDoMixedCone),
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
+  fLocalRun(in.fLocalRun),
+  fMixingListIndex(in.fMixingListIndex),
+  fMixingStartIndex(in.fMixingStartIndex),
+  fRunningMixingIndex(in.fRunningMixingIndex),
+  fnEventsInMixingFile(in.fnEventsInMixingFile),
+  fMixedEventVz(in.fMixedEventVz),
+  fMixedEventHiBin(in.fMixedEventHiBin),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -404,8 +405,10 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
 {
   // Copy constructor
 
-  for(int iBin = 0; iBin < 10; iBin++){
-    fThisEventCorrelator[iBin] = in.fThisEventCorrelator[iBin];
+  for(int oBin = 0; oBin < 5; oBin++){
+    for(int iBin = 0; iBin < 10; iBin++){
+      fThisEventCorrelator[oBin][iBin] = in.fThisEventCorrelator[oBin][iBin];
+    }
   }
   
 }
@@ -421,6 +424,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetReader = in.fJetReader;
   fRecoJetReader = in.fRecoJetReader;
   fTrackReader = in.fTrackReader;
+  fMixedEventReader = in.fMixedEventReader;
   fFileNames = in.fFileNames;
   fCard = in.fCard;
   fHistograms = in.fHistograms;
@@ -473,9 +477,16 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSmearDeltaR = in.fSmearDeltaR;
   fSmearEnergyWeight = in.fSmearEnergyWeight;
   fDoReflectedCone = in.fDoReflectedCone;
-  fDoReflectedConeQA = in.fDoReflectedConeQA;
+  fDoMixedCone = in.fDoMixedCone;
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
+  fLocalRun = in.fLocalRun;
+  fMixingListIndex = in.fMixingListIndex;
+  fMixingStartIndex = in.fMixingStartIndex;
+  fRunningMixingIndex = in.fRunningMixingIndex;
+  fnEventsInMixingFile = in.fnEventsInMixingFile;
+  fMixedEventVz = in.fMixedEventVz;
+  fMixedEventHiBin = in.fMixedEventHiBin;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -487,8 +498,10 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fFillTrackParticleMatchingHistograms = in.fFillTrackParticleMatchingHistograms;
   fMultiplicityMode = in.fMultiplicityMode;
 
-  for(int iBin = 0; iBin < 10; iBin++){
-    fThisEventCorrelator[iBin] = in.fThisEventCorrelator[iBin];
+  for(int oBin = 0; oBin < 5; oBin++){
+    for(int iBin = 0; iBin < 10; iBin++){
+      fThisEventCorrelator[oBin][iBin] = in.fThisEventCorrelator[oBin][iBin];
+    }
   }
   
   return *this;
@@ -506,7 +519,6 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetUncertainty2018) delete fJetUncertainty2018;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
   if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
-  //if(fCovarianceHelper) delete fCovarianceHelper;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
   if(fCentralityWeightFunctionPeripheral) delete fCentralityWeightFunctionPeripheral;
   if(fMultiplicityWeightFunction) delete fMultiplicityWeightFunction;
@@ -516,12 +528,6 @@ EECAnalyzer::~EECAnalyzer(){
   if(fJetReader) delete fJetReader;
   if(fRecoJetReader) delete fRecoJetReader;
   if(fTrackReader && (fMcCorrelationType == kGenReco || fMcCorrelationType == kRecoGen)) delete fTrackReader;
-
-  /*for(int iBin = 0; iBin < 10; iBin++){
-    if(fThisEventCorrelator[iBin]) {
-      delete fThisEventCorrelator[iBin];
-    }
-  }*/
 }
 
 /*
@@ -624,14 +630,19 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //   Configuration for energy-energy correlators
   //************************************************
   fJetRadius = fCard->Get("JetRadius");
-  fWeightExponent = fCard->Get("WeightExponent");
   fSmearDeltaR = (fCard->Get("SmearDeltaR") == 1);
   fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
-  fDoReflectedConeQA = (fCard->Get("DoReflectedCone") >= 2);
+  fDoMixedCone = (fCard->Get("DoReflectedCone") >= 2);
   fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
   fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   fSkipCovarianceMatrix = (fCard->Get("SkipCovarianceMatrix") == 1);
+
+  const Int_t nWeightExponents = fCard->GetN("WeightExponent");
+  fWeightExponent.clear();
+  for(Int_t iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+    fWeightExponent.push_back(fCard->Get("WeightExponent", iWeightExponent));
+  }
   
   //************************************************
   //         Read which histograms to fill
@@ -741,12 +752,23 @@ void EECAnalyzer::RunAnalysis(){
   }
   Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1]; // Particle multiplicity within a jet cone, no tracking efficiency correction
   Double_t multiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];;        // Efficiency corrected particle multiplicity within a jet cone
+
+  // Event mixing variables
+  std::vector<TString> mixingFiles;      // List of mixing files
+  Int_t mixedEventIndex;                 // Current index for mixed event file
+  Bool_t allEventsWentThrough;           // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Double_t vzTolerance;                  // Difference in vz values that we allow between current and mixed events
+  Int_t hiBinTolerance;                  // Difference in hiBin values that we allow between current and mixed events
+  Int_t mixedEventFillIndex;             // Index used to fill mixed event track information into vectors
+  std::vector<Int_t> mixedEventIndices;  // Vector for holding the events we have already mixed with
+  Bool_t skipEvent;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates;             // Flag for checking duplicate events in the mixing list
   
   // Variables for energy-energy correlators
-  vector<double> selectedTrackPt[2];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet)
-  vector<double> relativeTrackEta[2];    // Track eta relative to the jet axis (same jet/reflected cone jet)
-  vector<double> relativeTrackPhi[2];    // Track phi relative to the jet axis (same jet/reflected cone jet)
-  vector<int> selectedTrackSubevent[2];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone jet)
+  vector<double> selectedTrackPt[4];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<double> relativeTrackEta[4];    // Track eta relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<double> relativeTrackPhi[4];    // Track phi relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<int> selectedTrackSubevent[4];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
@@ -768,7 +790,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
   const Int_t nFillReflectedConeQA = 2;
-  const Int_t nFillUnfoldingCovariance = 4;
+  const Int_t nFillUnfoldingCovariance = 5;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
@@ -822,6 +844,13 @@ void EECAnalyzer::RunAnalysis(){
     fTrackReader = fJetReader;
   }
 
+  // Select the reader for mixed events
+  if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen){
+    fMixedEventReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+  } else {
+    fMixedEventReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+  }
+
   if(fUseRecoJetsForReflectedCone){
     fRecoJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,false);
   }
@@ -829,7 +858,34 @@ void EECAnalyzer::RunAnalysis(){
   if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms){
     fUnfoldingForestReader = new UnfoldingForestReader(fDataType,fJetType,fJetAxis);
   }
-  
+
+  // Prepare mixed event files and a forest reader for reflected cone mixing
+  const char* fileListName[2][4] = {
+      {"none", Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex), "none", Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex)}, // Crab
+      {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
+        
+  // Read the mixing files only for PbPb data and MC
+  if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb){
+    std::string lineInFile;
+    std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType]);
+    while (std::getline(mixingFileStream,lineInFile)) {
+      mixingFiles.push_back(lineInFile);
+    }
+    fMixedEventReader->ReadForestFromFileList(mixingFiles);
+    fnEventsInMixingFile = fMixedEventReader->GetNEvents();
+
+    // Print the used mixing files
+    if(fDebugLevel > 0){
+      cout << "Mixing files: " << endl;
+      for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
+        cout << *mixIterator << endl;
+      }
+      cout << endl;
+    }
+
+    // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
+    PrepareMixingVectors();
+  } // Prepare event mixing for PbPb data and MC 
   
   //************************************************
   //       Main analysis loop over all files
@@ -1262,7 +1318,7 @@ void EECAnalyzer::RunAnalysis(){
         if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
-          for(int iPairingType = 0; iPairingType < 2; iPairingType++){
+          for(int iPairingType = 0; iPairingType < 4; iPairingType++){
             selectedTrackPt[iPairingType].clear();
             relativeTrackEta[iPairingType].clear();
             relativeTrackPhi[iPairingType].clear();
@@ -1384,8 +1440,12 @@ void EECAnalyzer::RunAnalysis(){
             
           } // Track loop
 
+          //******************************************
+          //           Reflected cone QA       
+          //******************************************
+
           // Fill the quality assuranve histograms for reflected cone
-          if(fDoReflectedConeQA){
+          if(fDoReflectedCone){
 
             // Select the proper reflected cone forest reader
             reflectedConeForestReader = fUseRecoJetsForReflectedCone ? fRecoJetReader : fJetReader;
@@ -1439,9 +1499,117 @@ void EECAnalyzer::RunAnalysis(){
             fillerReflectedConeQA[1] = centrality;
             fHistograms->fhJetNumberInReflectedCone->Fill(fillerReflectedConeQA, fTotalEventWeight);
 
-          }
+          } // Reflected cone QA if
 
           if(nJetsInReflectedCone > 0 && fCutJetsFromReflectedCone) continue; // Do not allow jets in the reflected cone
+
+          //***********************************************
+          //            Mixed cone background      
+          //***********************************************
+
+          // Estimate background from cones dropped to mixed events. This is done only for PbPb
+          if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
+
+            // Starting from the mixing start index, go over vz and hiBin vector values until a matching event is found
+            mixedEventIndex = fMixingStartIndex;
+            hiBinTolerance = 0;   // Starting tolerance for hiBin: match the bin value
+            vzTolerance = 0.5;    // Starting tolerance for vz position: 0.5 cm
+            allEventsWentThrough = false;
+            mixedEventFillIndex = 2; // First filled index is 2
+            checkForDuplicates = false; // We do not need to check for duplicate events if we have not gone through all event yet
+            mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+
+            // Find events to mix until we have found two matching events
+            while(mixedEventFillIndex < 4){
+
+              // By default, do not skip events
+              skipEvent = false;
+
+              // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
+              if(allEventsWentThrough){
+                if(fDebugLevel > 0){
+                  cout << "Could not find matching mixed events for event " << iEvent << endl;
+                  cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
+                }
+      
+                hiBinTolerance += 1;
+                vzTolerance += 0.5;
+                allEventsWentThrough = false;
+                checkForDuplicates = true;
+              }
+    
+              // Increment the counter for event index to be mixed with the current event
+              mixedEventIndex++;
+    
+              // If we are out of bounds from the event in data file, reset the counter
+              if(mixedEventIndex == fnEventsInMixingFile) {
+                mixedEventIndex = -1;
+                continue;
+              }
+
+              // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
+              if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+              // Do not mix with events used in the previous iteration over the file
+              if(checkForDuplicates){
+                for(Int_t iMixedEvent : mixedEventIndices) {
+                  if(iMixedEvent == mixedEventIndex) skipEvent = true;
+                }
+              }
+
+              // If we have already used the current mixed event, do not use the same event
+              if(skipEvent) continue;
+
+              // Match vz and hiBin between the current event and mixed event
+              if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
+              if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > hiBinTolerance + 1e-4) continue;
+
+              // If match vz and hiBin, then load the event from the mixed event tree and find particles from jet cone region
+              fMixedEventReader->GetEvent(mixedEventIndex);
+
+              nTracks = fMixedEventReader->GetNTracks();
+              for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+
+                // Check that all the track cuts are passed
+                if(!PassTrackCuts(fMixedEventReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
+
+                // Find the track kinematics
+                trackPt = fMixedEventReader->GetTrackPt(iTrack);
+                trackEta = fMixedEventReader->GetTrackEta(iTrack);
+                trackPhi = fMixedEventReader->GetTrackPhi(iTrack);
+                trackSubevent = fMixedEventReader->GetTrackSubevent(iTrack);
+
+                // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
+                deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
+                if(deltaRTrackJet < fJetRadius){
+                  relativeTrackPhi[mixedEventFillIndex].push_back(trackPhi-jetPhi);
+                  relativeTrackEta[mixedEventFillIndex].push_back(trackEta-jetEta);
+
+                  // Also remember track pT and subevent
+                  selectedTrackPt[mixedEventFillIndex].push_back(trackPt);
+                  selectedTrackSubevent[mixedEventFillIndex].push_back(trackSubevent);
+                } // Track is close to a jet
+              } // Mixed event track loop
+
+              // Mark that this event has already been used for mixing
+              mixedEventIndices.push_back(mixedEventIndex);
+
+              // Increment the index of event that we have found for mixing purposes
+              mixedEventFillIndex++;
+      
+            } // While loop for searching for a good event to mix with
+
+            // For the next event, start mixing the events from where we were left with in the previous event
+            //fMixingStartIndex = mixedEventIndex;
+
+            // For the next event, randomize the starting event again
+            fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+
+          } // Event mixing for PbPb data and MC
+
+          //************************
+          //      Jet cone Q/A      
+          //************************
           
           // Fill the multiplicity histograms within the jet and maximum track pT within the jet cone histograms
           if(fFillJetConeHistograms){
@@ -1478,6 +1646,10 @@ void EECAnalyzer::RunAnalysis(){
             fHistograms->fhMaxPtParticleInJet->Fill(fillerMaxParticlePtInJetCone,fTotalEventWeight);
             
           } // Fill multiplicity in jets and maximum track pT within the jet cone histograms
+
+          //************************************************
+          //        Fill energy-energy correlators    
+          //************************************************
           
           // Calculate the energy-energy correlator within this jet
           if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics){
@@ -1485,9 +1657,11 @@ void EECAnalyzer::RunAnalysis(){
             // Before calculating the energy-energy correlators, reset histograms for covariance matrix calculation
             // Covariance matrix calculation only for data, not needed in MC
             if(!fSkipCovarianceMatrix){
-              for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-                fThisEventCorrelator[iTrackPt]->Reset();
-              } // Track pT loop for covariance matrices
+              for(auto iWeightExponent = 0; iWeightExponent < fWeightExponent.size(); iWeightExponent++){
+                for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                  fThisEventCorrelator[iWeightExponent][iTrackPt]->Reset();
+                } // Track pT loop for covariance matrices
+              }
             }
 
             // Then calculate the energy-energy correlator for this jet
@@ -1497,29 +1671,32 @@ void EECAnalyzer::RunAnalysis(){
             // Covariance matrix calculation only for data, not needed in MC
             if(!fSkipCovarianceMatrix){
               fillerUnfoldingCovariance[3] = centrality; // Axis 3: Centrality
-              for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-                trackPt = fCard->Get("TrackPtBinEdgesEEC", iTrackPt) + 0.1;
-                fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
-                for(int iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
-                  deltaRBinContent1 = fThisEventCorrelator[iTrackPt]->GetBinContent(iDeltaRBin);
-                  transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt);
+              for(auto iWeightExponent = 0; iWeightExponent < fWeightExponent.size(); iWeightExponent++){
+                fillerUnfoldingCovariance[4] = iWeightExponent; // Axis 4: Weight exponent index
+                for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                  trackPt = fCard->Get("TrackPtBinEdgesEEC", iTrackPt) + 0.1;
+                  fillerUnfoldingCovariance[2] = trackPt;  // Axis 2: Track pT corresponding to bin
+                  for(Int_t iDeltaRBin = 1; iDeltaRBin <= nDeltaRBins; iDeltaRBin++){
+                    deltaRBinContent1 = fThisEventCorrelator[iWeightExponent][iTrackPt]->GetBinContent(iDeltaRBin);
+                    transformedDeltaR1 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(iDeltaRBin)+0.0001, jetPt);
 
-                  for(int jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
-                    deltaRBinContent2 = fThisEventCorrelator[iTrackPt]->GetBinContent(jDeltaRBin);
-                    transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt);
+                    for(Int_t jDeltaRBin = 1; jDeltaRBin <= nDeltaRBins; jDeltaRBin++){
+                      deltaRBinContent2 = fThisEventCorrelator[iWeightExponent][iTrackPt]->GetBinContent(jDeltaRBin);
+                      transformedDeltaR2 = TransformToUnfoldingAxis(fHistograms->GetDeltaRBinBorderLowEEC(jDeltaRBin)+0.0001, jetPt);
 
-                    // Calculate the covariance between the two bins
-                    eecCovariance = deltaRBinContent1 * deltaRBinContent2;
+                      // Calculate the covariance between the two bins
+                      eecCovariance = deltaRBinContent1 * deltaRBinContent2;
 
-                    // Fill the calculation result to correct bin
-                    fillerUnfoldingCovariance[0] = transformedDeltaR1; // Axis 0: Transformed deltaR axis
-                    fillerUnfoldingCovariance[1] = transformedDeltaR2; // Axis 1: Transformed deltaR axis
+                      // Fill the calculation result to correct bin
+                      fillerUnfoldingCovariance[0] = transformedDeltaR1; // Axis 0: Transformed deltaR axis
+                      fillerUnfoldingCovariance[1] = transformedDeltaR2; // Axis 1: Transformed deltaR axis
 
-                    fHistograms->fhJetPtUnfoldingCovariance->Fill(fillerUnfoldingCovariance, eecCovariance);
+                      fHistograms->fhJetPtUnfoldingCovariance->Fill(fillerUnfoldingCovariance, eecCovariance);
                     
-                  } // Inner DeltaR loop
-                } // Outer DeltaR loop
-              } // Track pT loop for covariance matrices
+                    } // Inner DeltaR loop
+                  } // Outer DeltaR loop
+                } // Track pT loop for covariance matrices
+              } // Weight exponent loop
             } // Fill covariance matrix histograms
           } // Fill energy-energy correlator histograms
           
@@ -1601,22 +1778,22 @@ void EECAnalyzer::RunAnalysis(){
 /*
  * Method for calculating the energy-energy correlators for tracks within the jets
  *
- *  const vector<double> selectedTrackPt[2] = pT array for tracks selected for the analysis
- *  const vector<double> relativeTrackEta[2] = relative eta array for tracks selected for the analysis
- *  const vector<double> relativeTrackPhi[2] = relative phi array for tracks selected for the analysis
- *  const vector<int> selectedTrackSubevent[2] = subevent array for tracks selected for the analysis
+ *  const vector<double> selectedTrackPt[4] = pT array for tracks selected for the analysis
+ *  const vector<double> relativeTrackEta[4] = relative eta array for tracks selected for the analysis
+ *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
+ *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
  *  const double jetPt = pT of the jet the tracks are close to
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[2], const vector<double> relativeTrackEta[2], const vector<double> relativeTrackPhi[2], const vector<int> selectedTrackSubevent[2], const double jetPt){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt){
   
   // Define a filler for THnSparse
-  Double_t fillerEnergyEnergyCorrelator[6];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerEnergyEnergyCorrelator[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
-  Double_t fillerParticlePtResponseMatrix[6];     // Filler for validating particle pT smearing
+  Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
   // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
-  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone};
-  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone};
+  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone};
+  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone};
   
   // Event information
   Double_t centrality = fTrackReader->GetCentrality();
@@ -1642,6 +1819,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Int_t subeventTrack2;    // Subevent index for the second track (0 = pythia, > 0 = hydjet)
   Int_t subeventCombination;      // Subevent combination type (0 = pythia-pythia, 1 = pythia-hydjet, 2 = hydjet-pythia, 3 = hydjet-hydjet)
   Int_t startIndex;        // First index when looping over the second tracks
+  Int_t weightIndex;       // Inxed in histogram axis where the weight exponent is saved
 
   // Variables for covariance matrix calculation
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC"); // Number of track pT bins
@@ -1662,8 +1840,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   // Loop over the pairing types (same jet/reflected cone jet)
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     
-    // Only do reflected cone pairing if specified in the configuration
-    if((iPairingType == EECHistograms::kSignalReflectedConePair || iPairingType == EECHistograms::kReflectedConePair) && !fDoReflectedCone) continue;
+    // Only do reflected and mixed cone pairings if specified in the configuration
+    if((iPairingType != EECHistograms::kSameJetPair) && !fDoReflectedCone) continue;
+    if((iPairingType > EECHistograms::kReflectedConePair) && !fDoMixedCone) continue;
     
     // Find the numbers of tracks for the track loops
     nTracks1 = selectedTrackPt[firstParticleType[iPairingType]].size();
@@ -1728,68 +1907,79 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
           trackDeltaR = smearedDeltaR;
         }
         
-        // Calculate the weights given to the energy-energy correlators
+        // Calculate the weights given to the energy-energy correlators for all defined weight values
         // Factor for smearing study: fRng->Gaus(1,0.0237) for PbPb fRng->Gaus(1,0.0244) for pp (weight = 1)
-        correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
 
-        // Realistic smearing for energy weight if selected
-        if(fSmearEnergyWeight){
-          smearedCorrelatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
-          fillerParticlePtResponseMatrix[0] = smearedCorrelatorWeight;
-          fillerParticlePtResponseMatrix[1] = correlatorWeight;
-          fillerParticlePtResponseMatrix[2] = jetPt;
-          fillerParticlePtResponseMatrix[3] = lowerTrackPt;
-          fillerParticlePtResponseMatrix[4] = centrality;
-          fillerParticlePtResponseMatrix[5] = smearedCorrelatorWeight / correlatorWeight;
-          fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight);
-          correlatorWeight = smearedCorrelatorWeight;
-        }
+        weightIndex = 0;
+        for(Double_t currentExponent : fWeightExponent){
 
-        // Find the pair efficiency correction for the track pair
-        std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+          correlatorWeight = TMath::Power(trackPt1*trackPt2, currentExponent);
 
-        // Fill the energy-energy correlator histograms
-        fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
-        fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 1: pT of the jet the tracks are near of
-        fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 2: Lower of the two track pT:s
-        fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 3: Event centrality
-        fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
-        fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
-        if(fFillEnergyEnergyCorrelators){
-          fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram
+          // Realistic smearing for energy weight if selected
+          if(fSmearEnergyWeight){
+            smearedCorrelatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+            fillerParticlePtResponseMatrix[0] = smearedCorrelatorWeight;
+            fillerParticlePtResponseMatrix[1] = correlatorWeight;
+            fillerParticlePtResponseMatrix[2] = jetPt;
+            fillerParticlePtResponseMatrix[3] = lowerTrackPt;
+            fillerParticlePtResponseMatrix[4] = centrality;
+            fillerParticlePtResponseMatrix[5] = smearedCorrelatorWeight / correlatorWeight;
+            fillerParticlePtResponseMatrix[6] = weightIndex;   // Axis 6: Inxed for the current energy-energy correlator weight
+            fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight);
+            correlatorWeight = smearedCorrelatorWeight;
+          }
 
-          // Fill also the histograms just from this jet to calculate covariances
-          // Covariance matrix calculation only for data, not needed in MC
-          if(!fSkipCovarianceMatrix){
-            for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-              if(lowerTrackPt >= fCard->Get("TrackPtBinEdgesEEC", iTrackPt)){
-                fThisEventCorrelator[iTrackPt]->Fill(trackDeltaR, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
-              }
-            } // Track pT loop for covariance matrices
-          } // Fill coveriance matrices
+          // Find the pair efficiency correction for the track pair
+          std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
 
-        }
-        if(fFillEnergyEnergyCorrelatorsSystematics) {
-          // For first systematic variation, increase the track efficiency corrections by the defined amount
-          fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 + trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 + trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
+          // Fill the energy-energy correlator histograms
+          fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
+          fillerEnergyEnergyCorrelator[1] = jetPt;                     // Axis 1: pT of the jet the tracks are near of
+          fillerEnergyEnergyCorrelator[2] = lowerTrackPt;              // Axis 2: Lower of the two track pT:s
+          fillerEnergyEnergyCorrelator[3] = centrality;                // Axis 3: Event centrality
+          fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
+          fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
+          fillerEnergyEnergyCorrelator[6] = weightIndex;               // Axis 6: Inxed for the current energy-energy correlator weight
 
-          // For second systematic variation, decrease the track efficiency corrections by the defined amount
-          fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 - trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 - trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight *  correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
+          if(fFillEnergyEnergyCorrelators){
+            fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram
 
-          // For the systematic uncertainties vary the track pair inefficiency either by twice the track efficiency uncertainty or by it's error, which one is bigger
-          trackPairInefficiency = 1.0 - (1.0 / trackPairEfficiencyCorrection);
-          trackPairInefficiencyVariation = (2*fTrackEfficiencyVariation*trackPairInefficiency > trackPairEfficiencyError) ? 2*fTrackEfficiencyVariation*trackPairInefficiency : trackPairEfficiencyError;
-          variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency + trackPairInefficiencyVariation));
+            // Fill also the histograms just from this jet to calculate covariances
+            // Covariance matrix calculation only for data, not needed in MC
+            if(!fSkipCovarianceMatrix){
+              for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                if(lowerTrackPt >= fCard->Get("TrackPtBinEdgesEEC", iTrackPt)){
+                  fThisEventCorrelator[weightIndex][iTrackPt]->Fill(trackDeltaR, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
+                }
+              } // Track pT loop for covariance matrices
+            } // Fill coveriance matrices
 
-          // Fill the histogram with decresed track pair efficiency
-          fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * jetPtWeight); 
+          } // Filling energy-energy correlators
 
-          // Next, vary the track pair inefficiency to the other direction
-          variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency - trackPairInefficiencyVariation));
+          if(fFillEnergyEnergyCorrelatorsSystematics){
+            // For first systematic variation, increase the track efficiency corrections by the defined amount
+            fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 + trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 + trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
 
-          // Fill the histogarm with increased track pair efficiency
-          fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * jetPtWeight);
-        } // Fill systematic uncertainty evaluation correlators 
+            // For second systematic variation, decrease the track efficiency corrections by the defined amount
+            fHistograms->fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, (trackEfficiencyCorrection1 - trackEfficiencyCorrection1*fTrackEfficiencyVariation) * (trackEfficiencyCorrection2 - trackEfficiencyCorrection2*fTrackEfficiencyVariation) * fTotalEventWeight *  correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);
+
+            // For the systematic uncertainties vary the track pair inefficiency either by twice the track efficiency uncertainty or by it's error, which one is bigger
+            trackPairInefficiency = 1.0 - (1.0 / trackPairEfficiencyCorrection);
+            trackPairInefficiencyVariation = (2*fTrackEfficiencyVariation*trackPairInefficiency > trackPairEfficiencyError) ? 2*fTrackEfficiencyVariation*trackPairInefficiency : trackPairEfficiencyError;
+            variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency + trackPairInefficiencyVariation));
+
+            // Fill the histogram with decresed track pair efficiency
+            fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * jetPtWeight); 
+
+            // Next, vary the track pair inefficiency to the other direction
+            variedTrackPairEfficiencyCorrection = 1.0 / (1.0 - (trackPairInefficiency - trackPairInefficiencyVariation));
+
+            // Fill the histogarm with increased track pair efficiency
+            fHistograms->fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * variedTrackPairEfficiencyCorrection * jetPtWeight);
+          } // Fill systematic uncertainty evaluation correlators
+
+          weightIndex++;
+        } // Loop over all defined weight exponents
       } // Inner track loop
     } // Outer track loop
   } // Loop over pairing types (same jet/reflected cone jet)
@@ -2070,8 +2260,9 @@ void EECAnalyzer::FillUnfoldingResponse(){
 void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt){
   
   // Define fillers for THnSparses
-  Double_t fillerDistribution[3]; // Axes: deltaR as a function of reco/gen jet pT, track pT cut, centrality
-  Double_t fillerResponse[4]; // Axes: deltaR as a function of reco jet pT, deltaR as a function of gen jet pT, track pT cut, centrality
+  Double_t fillerDistribution[4]; // Axes: deltaR as a function of reco/gen jet pT, track pT cut, centrality, energy weight
+  Double_t fillerResponse[5]; // Axes: deltaR as a function of reco jet pT, deltaR as a function of gen jet pT, track pT cut, centrality, energy weight
+  Int_t weightIndex;       // Inxed in histogram axis where the weight exponent is saved
   
   // Event information
   Double_t centrality = fUnfoldingForestReader->GetCentrality();
@@ -2135,47 +2326,55 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
         trackDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
       }
 
-      // Calculate the weights given to the energy-energy correlators
-      correlatorWeight = TMath::Power(trackPt1*trackPt2, fWeightExponent);
+      // Calculate the all the defined weights given to the energy-energy correlators
+      weightIndex = 0;
+      for(Double_t currentExponent : fWeightExponent){
 
-      // Realistic smearing for energy weight is selected
-      if(fSmearEnergyWeight){
-        correlatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
-      }
+        correlatorWeight = TMath::Power(trackPt1*trackPt2, currentExponent);
 
-      // Transform deltaR into deltaR as a function of reconstructed jet pT
-      unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt);
+        // Realistic smearing for energy weight is selected
+        if(fSmearEnergyWeight){
+          correlatorWeight = fEnergyWeightSmearer->GetSmearedValue(correlatorWeight, centrality, jetPt, lowerTrackPt);
+        }
 
-      // Transform deltaR into deltaR as a function of generator level jet pT
-      unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt);
+        // Transform deltaR into deltaR as a function of reconstructed jet pT
+        unfoldingDeltaRReconstructed = TransformToUnfoldingAxis(trackDeltaR, jetPt);
 
-      // If both reconstructed and generator level jet pT are given, fill the response matrix
-      if(jetPt >= fReconstructedJetMinimumPtCut && genPt >= fGeneratorJetMinimumPtCut){
-        fillerResponse[0] = unfoldingDeltaRReconstructed;
-        fillerResponse[1] = unfoldingDeltaRGeneratorLevel;
-        fillerResponse[2] = lowerTrackPt;
-        fillerResponse[3] = centrality;
-        fHistograms->fhUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * correlatorWeight * jetPtWeightReco * jetPtWeightGen);
-      }
+        // Transform deltaR into deltaR as a function of generator level jet pT
+        unfoldingDeltaRGeneratorLevel = TransformToUnfoldingAxis(trackDeltaR, genPt);
 
-      // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
-      if(jetPt >= fReconstructedJetMinimumPtCut){
-        fillerDistribution[0] = unfoldingDeltaRReconstructed;
-        fillerDistribution[1] = lowerTrackPt;
-        fillerDistribution[2] = centrality;
-        fHistograms->fhUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightReco);
-      }
+        // If both reconstructed and generator level jet pT are given, fill the response matrix
+        if(jetPt >= fReconstructedJetMinimumPtCut && genPt >= fGeneratorJetMinimumPtCut){
+          fillerResponse[0] = unfoldingDeltaRReconstructed;
+          fillerResponse[1] = unfoldingDeltaRGeneratorLevel;
+          fillerResponse[2] = lowerTrackPt;
+          fillerResponse[3] = centrality;
+          fillerResponse[4] = weightIndex;
+          fHistograms->fhUnfoldingResponse->Fill(fillerResponse, fTotalEventWeight * correlatorWeight * jetPtWeightReco * jetPtWeightGen);
+        }
 
-      // If the generator level jet pT is given, fill the generator level distribution for unfolding
-      if(genPt >= fGeneratorJetMinimumPtCut){
-        fillerDistribution[0] = unfoldingDeltaRGeneratorLevel;
-        fillerDistribution[1] = lowerTrackPt;
-        fillerDistribution[2] = centrality;
-        fHistograms->fhUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightGen);
-      }
+        // If the reconstructed jet pT is given, fill the reconstructed distribution for unfolding
+        if(jetPt >= fReconstructedJetMinimumPtCut){
+          fillerDistribution[0] = unfoldingDeltaRReconstructed;
+          fillerDistribution[1] = lowerTrackPt;
+          fillerDistribution[2] = centrality;
+          fillerDistribution[3] = weightIndex;
+          fHistograms->fhUnfoldingMeasured->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightReco);
+        }
 
-    }  // Inner track loop
-  }    // Outer track loop
+        // If the generator level jet pT is given, fill the generator level distribution for unfolding
+        if(genPt >= fGeneratorJetMinimumPtCut){
+          fillerDistribution[0] = unfoldingDeltaRGeneratorLevel;
+          fillerDistribution[1] = lowerTrackPt;
+          fillerDistribution[2] = centrality;
+          fillerDistribution[3] = weightIndex;
+          fHistograms->fhUnfoldingTruth->Fill(fillerDistribution, fTotalEventWeight * correlatorWeight * jetPtWeightGen);
+        }
+
+        weightIndex++;
+      } // Energy weight loop
+    } // Inner track loop
+  } // Outer track loop
 }
 
 /*
@@ -2248,6 +2447,7 @@ void EECAnalyzer::ConstructParticleResponses(){
   // Event variables
   Int_t hiBin = fUnfoldingForestReader->GetHiBin();
   Double_t centrality = fUnfoldingForestReader->GetCentrality();
+  Int_t weightIndex;
   
   // Variables for tracks that are matched
   vector<std::tuple<double,double,double,double,int,int>> selectedTrackInformation; 
@@ -2263,7 +2463,7 @@ void EECAnalyzer::ConstructParticleResponses(){
   // Filler for test
   double fillerParticleMatching[4];
   double fillerParticleDeltaRResponseMatrix[5];
-  double fillerParticlePtResponseMatrix[6];
+  double fillerParticlePtResponseMatrix[7];
 
   // Reconstructed jet loop
   nJets = fUnfoldingForestReader->GetNJets();
@@ -2471,19 +2671,24 @@ void EECAnalyzer::ConstructParticleResponses(){
         trackMomentumProduct = std::get<kTrackPt>(selectedTrackInformation.at(iTrack)) * std::get<kTrackPt>(selectedTrackInformation.at(jTrack));
         particleMomentumProduct = std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))) * std::get<kTrackPt>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack))));
 
-        // Use the selected weight exponent for the track momentum product
-        trackMomentumProduct = TMath::Power(trackMomentumProduct, fWeightExponent);
-        particleMomentumProduct = TMath::Power(particleMomentumProduct, fWeightExponent);
+        // Use the defined weight exponents for the track momentum product
+        weightIndex = 0;
+        for(Double_t currentExponent : fWeightExponent){
 
-        fillerParticlePtResponseMatrix[0] = trackMomentumProduct;
-        fillerParticlePtResponseMatrix[1] = particleMomentumProduct;
-        fillerParticlePtResponseMatrix[2] = jetPt;
-        fillerParticlePtResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
-        fillerParticlePtResponseMatrix[4] = centrality;
-        fillerParticlePtResponseMatrix[5] = trackMomentumProduct / particleMomentumProduct;
-        fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)) * trackPairEfficiencyCorrection);
+          trackMomentumProduct = TMath::Power(trackMomentumProduct, currentExponent);
+          particleMomentumProduct = TMath::Power(particleMomentumProduct, currentExponent);
 
+          fillerParticlePtResponseMatrix[0] = trackMomentumProduct;
+          fillerParticlePtResponseMatrix[1] = particleMomentumProduct;
+          fillerParticlePtResponseMatrix[2] = jetPt;
+          fillerParticlePtResponseMatrix[3] = std::get<kTrackPt>(selectedTrackInformation.at(jTrack));  // Since the vector is sorted, the smaller pT is at higher index
+          fillerParticlePtResponseMatrix[4] = centrality;
+          fillerParticlePtResponseMatrix[5] = trackMomentumProduct / particleMomentumProduct;
+          fillerParticlePtResponseMatrix[6] = weightIndex;
+          fHistograms->fhParticlePtResponse->Fill(fillerParticlePtResponseMatrix, fTotalEventWeight * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(iTrack)) * std::get<kTrackEfficiencyCorrection>(selectedTrackInformation.at(jTrack)) * trackPairEfficiencyCorrection);
 
+          weightIndex++;
+        } // Loop over defined weight exponents
       } // Inner track loop
     } // Outer track loop
 
@@ -3016,7 +3221,7 @@ Int_t EECAnalyzer::GetSubeventIndex(const Int_t subevent) const{
 /*
  * Get jet eta reflected around zero, avoiding overlapping jet cones
  *
- *  Argumensts:
+ *  Arguments:
  *   const Double_t eta = Eta of the jet
  *
  * return: Eta of a reflected jet axis
@@ -3264,4 +3469,32 @@ Double_t EECAnalyzer::SimpleSmearDeltaR(const Double_t deltaR){
 
   return deltaR;
 
+}
+
+/*
+ * In case we are doing mixing without the pool, prepare vectors for vz and hiBin from the mixing file for faster event matching
+ */
+void EECAnalyzer::PrepareMixingVectors(){
+  
+  // Print out debug message
+  if(fDebugLevel > 1) cout << "Preparing for poolless mixing" << endl;
+  
+  // Start reading the file from a random point
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);
+
+  // Read vz and hiBin from each event in event mixing file to memory.
+  // This way we avoid loading different mixed events in a loop several times
+  fMixedEventVz.clear();     // Clear the vectors for any possible
+  fMixedEventHiBin.clear();  // contents they might have
+  for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
+    fMixedEventReader->GetEvent(iMixedEvent);
+    if(PassEventCuts(fMixedEventReader,false)){
+      fMixedEventVz.push_back(fMixedEventReader->GetVz());
+      fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+    } else { // If event cuts not passed, input values such that events will never be mixed with these
+      fMixedEventVz.push_back(100);
+      fMixedEventHiBin.push_back(1000);
+    }
+  }
+  
 }

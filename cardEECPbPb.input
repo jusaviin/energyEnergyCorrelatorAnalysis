@@ -11,7 +11,7 @@ MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 TriggerSelection 2   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 5 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet80 || CaloJet100, 6 = CaloJet60 || CaloJet80 || CaloJet100 for sample filtered with CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 3 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -60,14 +60,14 @@ MultiplicityMode 0  # 0 = Weight MC centrality to match data. 1 = Weight multipl
 
 # Configuration for energy-energy correlators
 JetRadius 0.4       # Radius around jets used to calculate the correlations
-WeightExponent 0    # Exponent given for the energy weight in EECs
+WeightExponent 1 2  # Exponents given for the energy weight in EECs
 SmearDeltaR 0       # Flag for smearing DeltaR values in EECs
 SmearEnergyWeight 0 # Flag for smearing energy weights in EECs
 JetPtBinEdgesEEC 25 40 60 80 100 120 140 160 180 200 220 240 260 280 300 500 5020 # Jet pT bin edges for EEC
 TrackPtBinEdgesEEC 0.7 1 1.5 2 2.5 3 3.5 4 300 # Track pT bin edges for EEC
 
 # Configuration for unfolding response matrices
-SkipCovarianceMatrix 1 # 0 = Fill covariance matrix. 1 = Do not fill covariance matrix
+SkipCovarianceMatrix 0 # 0 = Fill covariance matrix. 1 = Do not fill covariance matrix
 MinJetPtUnfoldingReco 80  # Minimum jet pT for reconstructed jets in the response matrix
 MinJetPtUnfoldingTruth 60 # Minimum jet pT for generator level jets in the response matrix
 
@@ -77,7 +77,7 @@ TrackPtBinEdges     0.7 1 2 3 4 8 12 300                   # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
-DoReflectedCone 2  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Produce also QA histograms for reflected cone
+DoReflectedCone 2  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background
 AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug

@@ -75,9 +75,10 @@ HighForestReader::HighForestReader() :
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
  *   Bool_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
+ *   Bool_t mixingMode: Flag for mixed events more (false = regular mode, true = mixed event mode)
  */
-HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree) :
-  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree),
+HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode) :
+  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree,mixingMode),
   fHeavyIonTree(0),
   fJetTree(0),
   fHltTree(0),
@@ -303,55 +304,64 @@ void HighForestReader::Initialize(){
   // Connect the branches to the jet tree
   const char* jetAxis[2] = {"jt","WTA"};
   const char* branchName;
+
+  // Jet trees are not needed for mixed events
+  if(fMixingMode){
+
+    fnJets = 0;
+    fnMatchedJets = 0;
+
+  } else {
   
-  fJetTree->SetBranchStatus("*",0);
-  fJetTree->SetBranchStatus("jtpt",1);
-  fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
+    fJetTree->SetBranchStatus("*",0);
+    fJetTree->SetBranchStatus("jtpt",1);
+    fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
   
-  // If specified, select WTA axis for jet phi
-  branchName = Form("%sphi",jetAxis[fJetAxis]);
-  fJetTree->SetBranchStatus(branchName,1);
-  fJetTree->SetBranchAddress(branchName,&fJetPhiArray,&fJetPhiBranch);
-  
-  // If specified, select WTA axis for jet eta
-  branchName = Form("%seta",jetAxis[fJetAxis]);
-  fJetTree->SetBranchStatus(branchName,1);
-  fJetTree->SetBranchAddress(branchName,&fJetEtaArray,&fJetEtaBranch);
-  
-  fJetTree->SetBranchStatus("nref",1);
-  fJetTree->SetBranchAddress("nref",&fnJets,&fnJetsBranch);
-  fJetTree->SetBranchStatus("rawpt",1);
-  fJetTree->SetBranchAddress("rawpt",&fJetRawPtArray,&fJetRawPtBranch);
-  fJetTree->SetBranchStatus("trackMax",1);
-  fJetTree->SetBranchAddress("trackMax",&fJetMaxTrackPtArray,&fJetMaxTrackPtBranch);
-  
-  // If we are looking at Monte Carlo, connect the reference pT and parton arrays
-  if(fDataType > kPbPb){
-    fJetTree->SetBranchStatus("refpt",1);
-    fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
-    fJetTree->SetBranchStatus("refeta",1);
-    fJetTree->SetBranchAddress("refeta",&fJetRefEtaArray,&fJetRefEtaBranch);
-    fJetTree->SetBranchStatus("refphi",1);
-    fJetTree->SetBranchAddress("refphi",&fJetRefPhiArray,&fJetRefPhiBranch);
-    fJetTree->SetBranchStatus("refparton_flavorForB",1);
-    fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
-    fJetTree->SetBranchStatus("genpt",1);
-    fJetTree->SetBranchAddress("genpt",&fMatchedJetPtArray,&fJetMatchedPtBranch);
-    
     // If specified, select WTA axis for jet phi
-    fJetTree->SetBranchStatus("genphi",1);
-    fJetTree->SetBranchAddress("genphi",&fMatchedJetPhiArray,&fJetMatchedPhiBranch);
-    fJetTree->SetBranchStatus("WTAgenphi",1);
-    fJetTree->SetBranchAddress("WTAgenphi",&fMatchedJetWTAPhiArray,&fMatchedJetWTAPhiBranch);
-    
+    branchName = Form("%sphi",jetAxis[fJetAxis]);
+    fJetTree->SetBranchStatus(branchName,1);
+    fJetTree->SetBranchAddress(branchName,&fJetPhiArray,&fJetPhiBranch);
+  
     // If specified, select WTA axis for jet eta
-    fJetTree->SetBranchStatus("geneta",1);
-    fJetTree->SetBranchAddress("geneta",&fMatchedJetEtaArray,&fJetMatchedEtaBranch);
-    fJetTree->SetBranchStatus("WTAgeneta",1);
-    fJetTree->SetBranchAddress("WTAgeneta",&fMatchedJetWTAEtaArray,&fMatchedJetWTAEtaBranch);
+    branchName = Form("%seta",jetAxis[fJetAxis]);
+    fJetTree->SetBranchStatus(branchName,1);
+    fJetTree->SetBranchAddress(branchName,&fJetEtaArray,&fJetEtaBranch);
+  
+    fJetTree->SetBranchStatus("nref",1);
+    fJetTree->SetBranchAddress("nref",&fnJets,&fnJetsBranch);
+    fJetTree->SetBranchStatus("rawpt",1);
+    fJetTree->SetBranchAddress("rawpt",&fJetRawPtArray,&fJetRawPtBranch);
+    fJetTree->SetBranchStatus("trackMax",1);
+    fJetTree->SetBranchAddress("trackMax",&fJetMaxTrackPtArray,&fJetMaxTrackPtBranch);
+  
+    // If we are looking at Monte Carlo, connect the reference pT and parton arrays
+    if(fDataType > kPbPb){
+      fJetTree->SetBranchStatus("refpt",1);
+      fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
+      fJetTree->SetBranchStatus("refeta",1);
+      fJetTree->SetBranchAddress("refeta",&fJetRefEtaArray,&fJetRefEtaBranch);
+      fJetTree->SetBranchStatus("refphi",1);
+      fJetTree->SetBranchAddress("refphi",&fJetRefPhiArray,&fJetRefPhiBranch);
+      fJetTree->SetBranchStatus("refparton_flavorForB",1);
+      fJetTree->SetBranchAddress("refparton_flavorForB",&fJetRefFlavorArray,&fJetRefFlavorBranch);
+      fJetTree->SetBranchStatus("genpt",1);
+      fJetTree->SetBranchAddress("genpt",&fMatchedJetPtArray,&fJetMatchedPtBranch);
     
-    fJetTree->SetBranchStatus("ngen",1);
-    fJetTree->SetBranchAddress("ngen",&fnMatchedJets,&fnMatchedJetsBranch);
+      // If specified, select WTA axis for jet phi
+      fJetTree->SetBranchStatus("genphi",1);
+      fJetTree->SetBranchAddress("genphi",&fMatchedJetPhiArray,&fJetMatchedPhiBranch);
+      fJetTree->SetBranchStatus("WTAgenphi",1);
+      fJetTree->SetBranchAddress("WTAgenphi",&fMatchedJetWTAPhiArray,&fMatchedJetWTAPhiBranch);
+    
+      // If specified, select WTA axis for jet eta
+      fJetTree->SetBranchStatus("geneta",1);
+      fJetTree->SetBranchAddress("geneta",&fMatchedJetEtaArray,&fJetMatchedEtaBranch);
+      fJetTree->SetBranchStatus("WTAgeneta",1);
+      fJetTree->SetBranchAddress("WTAgeneta",&fMatchedJetWTAEtaArray,&fMatchedJetWTAEtaBranch);
+    
+      fJetTree->SetBranchStatus("ngen",1);
+      fJetTree->SetBranchAddress("ngen",&fnMatchedJets,&fnMatchedJetsBranch);
+    }
   }
   
   // Event selection summary
@@ -538,6 +548,9 @@ void HighForestReader::Initialize(){
       }
     }
   } // Reading track trees
+
+  // We need to load one event to initialize TChains properly. Not sure why, but this is how things seem to work
+  GetEvent(0);
   
 }
 
@@ -545,20 +558,30 @@ void HighForestReader::Initialize(){
  * Connect a new tree to the reader
  */
 void HighForestReader::ReadForestFromFile(TFile* inputFile){
-  
-  // When reading a forest, we need to check if it is AOD or MiniAOD forest as there are some differences
-  // The HiForest tree is renamed to HiForestInfo in MiniAODs, so we can determine the forest type from this.
+  std::vector<TString> fileList;
+  fileList.push_back(inputFile->GetName());
+  ReadForestFromFileList(fileList);
+}
+
+/*
+ * Connect a new tree to the reader
+ */
+void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
+
+  // Open one file to determine if we are dealing with miniAOD or regular AOD
+  TFile *inputFile = TFile::Open(fileList.at(0));
   TTree* miniAODcheck = (TTree*)inputFile->Get("HiForestInfo/HiForest");
   fIsMiniAOD = !(miniAODcheck == NULL);
-  
+  inputFile->Close();
+
   // Helper variable for finding the correct tree
   const char *treeName[4] = {"none","none","none","none"};
-  
+
   // Connect a trees from the file to the reader
-  fHeavyIonTree = (TTree*)inputFile->Get("hiEvtAnalyzer/HiTree");
-  fHltTree = (TTree*)inputFile->Get("hltanalysis/HltTree");
-  fSkimTree = (TTree*)inputFile->Get("skimanalysis/HltTree");
-  
+  fHeavyIonTree = new TChain("hiEvtAnalyzer/HiTree");
+  if(fUseJetTrigger) fHltTree = new TChain("hltanalysis/HltTree");
+  fSkimTree = new TChain("skimanalysis/HltTree");
+
   // The jet tree has different name in different datasets
   if(fDataType == kPp || fDataType == kPpMC){
     treeName[0] = "ak4CaloJetAnalyzer/t"; // Tree for calo jets
@@ -569,24 +592,27 @@ void HighForestReader::ReadForestFromFile(TFile* inputFile){
     treeName[2] = "akPu4PFJetAnalyzer/t";       // Tree for puPF jets
     treeName[3] = "akFlowPuCs4PFJetAnalyzer/t"; // Tree for flow subtracted csPF jets
   }
-  fJetTree = (TTree*)inputFile->Get(treeName[fJetType]);
+
+  if(!fMixingMode) fJetTree = new TChain(treeName[fJetType]);
+
   if(fReadTrackTree){
     if(fIsMiniAOD && (fDataType == kPbPb || fDataType == kPbPbMC)){
-      fTrackTree = (TTree*)inputFile->Get("PbPbTracks/trackTree");
+      fTrackTree = new TChain("PbPbTracks/trackTree");
     } else {
-      fTrackTree = (TTree*)inputFile->Get("ppTrack/trackTree");
+      fTrackTree = new TChain("ppTrack/trackTree");
     }
   }
   
+  for(std::vector<TString>::iterator listIterator = fileList.begin(); listIterator != fileList.end(); listIterator++){
+    fHeavyIonTree->Add(*listIterator);
+    fSkimTree->Add(*listIterator);
+    if(fUseJetTrigger) fHltTree->Add(*listIterator);
+    if(!fMixingMode) fJetTree->Add(*listIterator);
+    if(fReadTrackTree) fTrackTree->Add(*listIterator);
+  }
+  
+  // Connect branches to trees
   Initialize();
-}
-
-/*
- * Connect a new tree to the reader
- */
-void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
-  TFile *inputFile = TFile::Open(fileList.at(0));
-  ReadForestFromFile(inputFile);
 }
 
 /*
@@ -605,7 +631,7 @@ void HighForestReader::BurnForest(){
  */
 void HighForestReader::GetEvent(Int_t nEvent){
   fHeavyIonTree->GetEntry(nEvent);
-  fJetTree->GetEntry(nEvent);
+  if(!fMixingMode) fJetTree->GetEntry(nEvent);
   if(fUseJetTrigger) fHltTree->GetEntry(nEvent);
   fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) {

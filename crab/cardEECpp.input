@@ -77,7 +77,7 @@ TrackPtBinEdges     0.7 1 2 3 4 8 12 300                # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
-DoReflectedCone 0  # 0 = No background estimation, 1 = Estimate background using reflected cone
+DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background
 AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug

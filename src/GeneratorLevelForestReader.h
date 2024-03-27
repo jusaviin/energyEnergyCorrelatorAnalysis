@@ -23,7 +23,7 @@ public:
   
   // Constructors and destructors
   GeneratorLevelForestReader();                                                 // Default constructor
-  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true);    // Custom constructor
+  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false);    // Custom constructor
   GeneratorLevelForestReader(const GeneratorLevelForestReader& in);             // Copy constructor
   virtual ~GeneratorLevelForestReader();                                        // Destructor
   GeneratorLevelForestReader& operator=(const GeneratorLevelForestReader& obj); // Equal sign operator
@@ -78,11 +78,11 @@ private:
   Int_t GetMatchingIndex(Int_t iJet) const; // Get the mathing reconstructed jet index for the given generator level jet
 
   // Trees in the forest
-  TTree* fHeavyIonTree;    // Tree for heavy ion event information
-  TTree* fJetTree;         // Tree for jet information
-  TTree* fHltTree;         // Tree for HLT information
-  TTree* fSkimTree;        // Tree for event selection information
-  TTree* fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
+  TChain* fHeavyIonTree;    // Tree for heavy ion event information
+  TChain* fJetTree;         // Tree for jet information
+  TChain* fHltTree;         // Tree for HLT information
+  TChain* fSkimTree;        // Tree for event selection information
+  TChain* fTrackTree;       // Tree for GenParticles: HiGenParticleAna/hi
   
   // Leaves for jet tree
   Float_t fJetPtArray[fnMaxJet] = {0};         // pT:s of all the jets in an event

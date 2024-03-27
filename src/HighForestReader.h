@@ -24,7 +24,7 @@ public:
   
   // Constructors and destructors
   HighForestReader();                                              // Default constructor
-  HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true); // Custom constructor
+  HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false); // Custom constructor
   HighForestReader(const HighForestReader& in);                    // Copy constructor
   virtual ~HighForestReader();                                     // Destructor
   HighForestReader& operator=(const HighForestReader& obj);        // Equal sign operator
@@ -81,11 +81,11 @@ private:
   Int_t GetMatchingIndex(Int_t iJet) const; // Get the matching generator level jet index for the given reconstructed jet
 
   // Trees in the forest
-  TTree* fHeavyIonTree;    // Tree for heavy ion event information
-  TTree* fJetTree;         // Tree for jet information
-  TTree* fHltTree;         // Tree for high level trigger information
-  TTree* fSkimTree;        // Tree for event selection information
-  TTree* fTrackTree;       // Tree for tracks  PbPb: anaTrack/trackTree pp: ppTrack/trackTree GenParticles: HiGenParticleAna/hi
+  TChain* fHeavyIonTree;    // Tree for heavy ion event information
+  TChain* fJetTree;         // Tree for jet information
+  TChain* fHltTree;         // Tree for high level trigger information
+  TChain* fSkimTree;        // Tree for event selection information
+  TChain* fTrackTree;       // Tree for tracks.  miniAOD: ppTrack/trackTree. AOD: PbPbTracks/trackTree
   
   // Non-common branches for all types of trees
   TBranch* fnJetsBranch;         // Branch for number of jets in an event
