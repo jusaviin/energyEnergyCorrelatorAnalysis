@@ -763,6 +763,7 @@ void EECHistogramManager::StabilizeBackground(){
         // Do the stabilization only for background+background contributions, which are for sure not dependent of jet pT
         for(int iPairingType = EECHistograms::kReflectedConePair; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
           if(iPairingType == EECHistograms::kSignalMixedConePair) continue;
+          if(iPairingType == EECHistograms::kSignalSecondMixedConePair) continue;
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
 
             // Subevent binning is only relevant for PbPb MC. Skip this for all other systems
