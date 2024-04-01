@@ -627,6 +627,38 @@ void HighForestReader::BurnForest(){
 }
 
 /*
+ * Check if there are problems in the file list
+ */
+bool HighForestReader::CheckFileProblems(){
+
+  // Loop over all the files that are in TChains and check they are doing fine
+  TObjArray *fileElements = fHeavyIonTree->GetListOfFiles();
+  for (TObject *op: *fileElements) {
+    auto chainElement = static_cast<TChainElement *>(op);
+    TFile *testFile = TFile::Open(chainElement->GetTitle());
+
+    // Check that the file is still open
+    if(!testFile->IsOpen()) {
+      std::cout << "The file " << testFile->GetName() << " is not open anymore!" << std::endl;
+      return true;
+    }
+
+    // Check that the file did not turn into a zombie
+    if(testFile->IsZombie()){
+      std::cout << "The file " << testFile->GetName() << " turned into a zombie!" << std::endl;
+      return true;
+    } 
+
+    // If everything is fine with the file, we can close the test file
+    testFile->Close();
+  }
+
+  // If no problems are found from any of the files, return false
+  return false;
+
+}
+
+/*
  * Load an event to memory
  */
 void HighForestReader::GetEvent(Int_t nEvent){

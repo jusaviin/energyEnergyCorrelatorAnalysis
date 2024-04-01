@@ -845,10 +845,12 @@ void EECAnalyzer::RunAnalysis(){
   }
 
   // Select the reader for mixed events
-  if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen){
-    fMixedEventReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
-  } else {
-    fMixedEventReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+  if(fDoMixedCone){
+    if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen){
+      fMixedEventReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+    } else {
+      fMixedEventReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+    }
   }
 
   if(fUseRecoJetsForReflectedCone){
@@ -865,14 +867,41 @@ void EECAnalyzer::RunAnalysis(){
       {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
         
   // Read the mixing files only for PbPb data and MC
-  if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb){
+  if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
     std::string lineInFile;
     std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType]);
     while (std::getline(mixingFileStream,lineInFile)) {
       mixingFiles.push_back(lineInFile);
     }
+
+    // Check that all the mixing files we are supposed to read exist and can be opened
+    for(auto currentFile : mixingFiles){
+      TFile* testFile = TFile::Open(currentFile);
+
+      // Check that the file exists
+      if(!testFile){
+        cout << "Error! Could not find the file: " << currentFile.Data() << endl;
+        assert(0);
+      }
+
+      // Check that the file is open
+      if(!testFile->IsOpen()){
+        cout << "Error! Could not open the file: " << currentFile.Data() << endl;
+        assert(0);
+      }
+    
+      // Check that the file is not zombie
+      if(testFile->IsZombie()){
+        cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
+        assert(0);
+      }
+
+      // Close the test file after the test 
+      testFile->Close();
+    }
+
+    // If everything is fine, we can read the mixing information from the minimum bias files
     fMixedEventReader->ReadForestFromFileList(mixingFiles);
-    fnEventsInMixingFile = fMixedEventReader->GetNEvents();
 
     // Print the used mixing files
     if(fDebugLevel > 0){
@@ -884,6 +913,7 @@ void EECAnalyzer::RunAnalysis(){
     }
 
     // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
+    fnEventsInMixingFile = fMixedEventReader->GetNEvents();
     PrepareMixingVectors();
   } // Prepare event mixing for PbPb data and MC 
   
@@ -953,6 +983,14 @@ void EECAnalyzer::RunAnalysis(){
       if(!inputFile->IsOpen() || inputFile->IsZombie()){
         cout << "Error! Lost access to the file: " << currentFile.Data() << endl;
         assert(0);
+      }
+
+      // Do the same check for all mixing files if we are mixing
+      if(fDoMixedCone){
+        if(fMixedEventReader->CheckFileProblems()){
+          cout << "Error! Lost access to mixing files!" << endl;
+          assert(0);
+        }
       }
 
       // Reset the flags that show if high pT jets are found in the events

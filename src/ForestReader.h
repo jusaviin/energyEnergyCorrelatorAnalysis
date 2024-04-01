@@ -20,6 +20,8 @@
 #include <TChain.h>
 #include <TBranch.h>
 #include <TFile.h>
+#include <TChainElement.h>
+#include <TObjArray.h>
 
 using namespace std;
 
@@ -43,6 +45,7 @@ public:
   virtual void ReadForestFromFile(TFile *inputFile) = 0;   // Read the forest from a file
   virtual void ReadForestFromFileList(std::vector<TString> fileList) = 0;   // Read the forest from a file list
   virtual void BurnForest() = 0;                           // Burn the forest
+  virtual bool CheckFileProblems() = 0;                    // Check if there are problems in the file list
   
   // Getters for leaves in heavy ion tree
   Float_t GetVz() const;              // Getter for vertex z position

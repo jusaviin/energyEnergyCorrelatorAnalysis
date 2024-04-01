@@ -34,6 +34,7 @@ public:
   void ReadForestFromFileList(std::vector<TString> fileList);  // Read the forest from a file list
   void BurnForest();                           // Burn the forest  
   void GetEvent(Int_t nEvent);                 // Get the nEventh event from the file
+  bool CheckFileProblems();                    // Check if there are problems in the file list
   
   // Getters for leaves in jet tree
   Float_t GetJetPt(Int_t iJet) const;         // Getter for jet pT
