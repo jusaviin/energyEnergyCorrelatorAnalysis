@@ -774,6 +774,7 @@ void EECAnalyzer::RunAnalysis(){
   
   // File name helper variables
   TString currentFile;
+  TFile *testFile;
   
   // Histograms that should be filled
   Int_t filledHistograms = fCard->Get("FilledHistograms");
@@ -876,7 +877,7 @@ void EECAnalyzer::RunAnalysis(){
 
     // Check that all the mixing files we are supposed to read exist and can be opened
     for(auto currentFile : mixingFiles){
-      TFile* testFile = TFile::Open(currentFile);
+      testFile = TFile::Open(currentFile);
 
       // Check that the file exists
       if(!testFile){
@@ -986,12 +987,12 @@ void EECAnalyzer::RunAnalysis(){
       }
 
       // Do the same check for all mixing files if we are mixing
-      if(fDoMixedCone){
-        if(fMixedEventReader->CheckFileProblems()){
-          cout << "Error! Lost access to mixing files!" << endl;
-          assert(0);
-        }
-      }
+      //if(fDoMixedCone){
+      //  if(fMixedEventReader->CheckFileProblems()){
+      //    cout << "Error! Lost access to mixing files!" << endl;
+      //    assert(0);
+      //  }
+      //}
 
       // Reset the flags that show if high pT jets are found in the events
       jetOver80Found = false;
