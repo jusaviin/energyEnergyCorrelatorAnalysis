@@ -40,7 +40,7 @@ GITHASH=`git rev-parse HEAD`
 sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/processEEChistograms.C
 
 # Process the energy-energy correlator histograms
-root -l -b -q 'plotting/processEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}','${BACKGROUND}'",'${SYSTEMATIC}')'
+root -l -b -q 'plotting/processEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${BACKGROUND}','${SYSTEMATIC}')'
 
 # Put the placeholder string back to the histogram projection file
 sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/processEEChistograms.C
