@@ -11,7 +11,7 @@
 void compareDifferentEECpairings(){
   
   // Studied file
-  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_onlyMixedConeBackground_processed_2024-03-20.root";
+  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
 
   // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_processed_2024-03-13.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedCone_midRapidity_processed_2024-03-15.root
@@ -60,7 +60,7 @@ void compareDifferentEECpairings(){
   //comparedTrackPtBin.push_back(3.0);
 
   // Enumeration for different pairing types
-  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kCompiledBackground, kCompiledBackgroundTruthLevel, knPairingTypes};
+  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kCompiledBackground, kCompiledBackgroundTruthLevel, knPairingTypes};
   enum enumSubeventType{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations, kAllBackground, knSubeventTypes};
 
   // Indices that go into pairing here:
@@ -71,6 +71,10 @@ void compareDifferentEECpairings(){
   //   EECHistograms::kSignalMixedConePair
   //   EECHistograms::kReflectedMixedConePair
   //   EECHistograms::kMixedConePair
+  //   EECHistograms::kSignalSecondMixedConePair
+  //   EECHistograms::kReflectedSecondMixedConePair
+  //   EECHistograms::kMixedMixedConePair
+  //   EECHistograms::kSecondMixedConePair
   // Second index = Subevent pairing index
   //   EECHistograms::kPythiaPythia
   //   EECHistograms::kPythiaHydjet
@@ -78,17 +82,18 @@ void compareDifferentEECpairings(){
   //   EECHistograms::kHydjetHydjet
   //   EECHistograms::knSubeventCombinations (accept any subevent combination)
   std::vector<std::pair<int,int>> comparedEnergyEnergyCorrelatorPairings;
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSameJetPair, kAllBackground));
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kReflectedConePair, knSubeventCombinations));
+  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackgroundTruthLevel, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, knSubeventCombinations));
   //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kReflectedConePair, kHydjetHydjet));
   //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, kHydjetHydjet));
 
   // Option to manually provide legend text for the compared distributions
   const bool useManualLegend = true;
   std::vector<TString> manualLegend;
-  manualLegend.push_back("True background");
-  manualLegend.push_back("Compiled background");
-  //manualLegend.push_back("Mixed cone 2");
+  manualLegend.push_back("Reflected cone");
+  manualLegend.push_back("Mixed cone");
+  //manualLegend.push_back("Compiled background");
 
   // Flag for normalizing distributions to one over studied deltaR range
   bool normalizeDistributions = false;

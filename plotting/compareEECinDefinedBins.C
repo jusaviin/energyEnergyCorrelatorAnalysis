@@ -13,12 +13,19 @@ void compareEECinDefinedBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_jet60trigger_processed_2024-03-26.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_jet60trigger_processed_2024-03-26.root";
-  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix2_jet60trigger_processed_2024-01-23.root";
-  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_allBackgrounds_jet60trigger_processed_2024-03-26.root";
-  //fileName[2] = "data/eecAnalysis_akFlowJet_energyWeightSquared_twoMixedCones_notAllStats_processed_2024-03-23.root";
-  //fileName[4] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWith20Iterations_processed_2024-01-17.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  
+  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackgroundWithNoScale_includeSystematics_processed_2024-03-31.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
+  // 
+  //fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
+  //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
+  //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
+  //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
 
   // pp to Pythia8 comparison files
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root
@@ -32,9 +39,10 @@ void compareEECinDefinedBins(){
 
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Mixed cone";
+  fileDescription[0] = "Reflected cone (no scale)";
   fileDescription[1] = "Reflected cone";
-  //fileDescription[2] = "Two mixed events";
+  fileDescription[2] = "Mixed cone";
+  //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
   //fileDescription[4] = "20 iterations";
   
@@ -80,7 +88,7 @@ void compareEECinDefinedBins(){
   comparedCentralityBin.push_back(std::make_pair(0,10));
   comparedCentralityBin.push_back(std::make_pair(10,30));
   comparedCentralityBin.push_back(std::make_pair(30,50));
-  //comparedCentralityBin.push_back(std::make_pair(50,90));
+  comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
@@ -93,7 +101,7 @@ void compareEECinDefinedBins(){
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(1.5);
-  comparedTrackPtBin.push_back(2.0);
+  //comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
   //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
@@ -109,7 +117,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -118,7 +126,7 @@ void compareEECinDefinedBins(){
   // EECHistograms::kSignalMixedConePair;
   // EECHistograms::kReflectedMixedConePair;
   // EECHistograms::kMixedConePair;
-  int iPairingType = EECHistograms::kReflectedConePair;
+  int iPairingType = EECHistograms::kSameJetPair;
 
   // If we are dealing with pp data, reset the centrality vector
   if(card[0]->GetDataType().Contains("pp")){
@@ -140,7 +148,7 @@ void compareEECinDefinedBins(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_energyWeightSquared_backgroundComparison";   // Comment given for this specific file
+  const char* saveComment = "_nominalEnergyWeight_backgroundComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
@@ -393,7 +401,7 @@ void compareEECinDefinedBins(){
           lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
           highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          //hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
 
           // Uncertainty histograms
           if(iFile == 0 && includeRelativeUncertainty){
