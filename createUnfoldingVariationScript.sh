@@ -79,9 +79,9 @@ OPTIONS+=("-u 1" "-u 2" "-u 3" "-u 4" "-u 5" "-u 8" "-u 9")
 BACKGROUNDOPTIONS+=("-u 0" "-u 0" "-u 0" "-u 0" "-u 0" "-u 0" "-u 0")
 
 if $ISPBPBDATA; then
-  VARIATIONS+=("unfoldingWith2pCentShift" "unfoldingWith6pCentShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty2pShift" "unfoldingWithNominalSmear_backgroundScaleUncertainty6pShift" "unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding" "unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding")
-  OPTIONS+=("-u 6" "-u 7" "-u 0" "-u 0" "-u 0" "-u 0")
-  BACKGROUNDOPTIONS+=("-u 1" "-u 2" "-u 1" "-u 2" "-u 3" "-u 4")
+  VARIATIONS+=("unfoldingWith2pCentShift" "unfoldingWith6pCentShift" "unfoldingWithNominalSmear_reflectedConeBackground" "unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding" "unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding")
+  OPTIONS+=("-u 6" "-u 7" "-u 0" "-u 0" "-u 0")
+  BACKGROUNDOPTIONS+=("-u 1" "-u 2" "-b 1" "-u 3" "-u 4")
 else
   VARIATIONS+=("unfoldingWithNominalSmear_backgroundSubtractionSystematics")
   OPTIONS+=("-u 0")
