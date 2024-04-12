@@ -13,15 +13,14 @@ void compareEECinDefinedBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
   
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackgroundWithNoScale_includeSystematics_processed_2024-03-31.root";
-  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
-  // 
-  //fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
@@ -39,9 +38,9 @@ void compareEECinDefinedBins(){
 
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Reflected cone (no scale)";
-  fileDescription[1] = "Reflected cone";
-  fileDescription[2] = "Mixed cone";
+  fileDescription[0] = "Reflected cone subtracted";
+  fileDescription[1] = "Mixed cone subtracted";
+  //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
   //fileDescription[4] = "20 iterations";
@@ -117,7 +116,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -401,7 +400,7 @@ void compareEECinDefinedBins(){
           lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
           highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          //hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
 
           // Uncertainty histograms
           if(iFile == 0 && includeRelativeUncertainty){

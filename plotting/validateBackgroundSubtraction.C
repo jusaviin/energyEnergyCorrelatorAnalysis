@@ -9,7 +9,7 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_someJobsMissing_processed_2024-04-01.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedEventBackground_someJobsMissing_processed_2024-04-01.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
@@ -47,7 +47,7 @@ void validateBackgroundSubtraction(){
   int lastDrawnCentralityBin = nCentralityBins-1;
   
   int firstDrawnJetPtBinEEC = 5;
-  int lastDrawnJetPtBinEEC = 8; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 1;
   int lastDrawnTrackPtBinEEC = 1;
@@ -74,14 +74,14 @@ void validateBackgroundSubtraction(){
   const bool logEEC = true;
   
   // Axis zooming
-  std::pair<double,double> ratioZoom = std::make_pair(0.7, 1.3);
+  std::pair<double,double> ratioZoom = std::make_pair(0.8, 1.2);
 
   // Extra tag for the plots
   const bool simulationTag = false;
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_energyWeightSquared_newBackground";   // Comment given for this specific file
+  const char* saveComment = "_energyWeightSquared_mixedEventBackground";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms

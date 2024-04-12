@@ -11,14 +11,16 @@
 void compareDifferentEECpairings(){
   
   // Studied file
-  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
+  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_someJobsMissing_processed_2024-04-01.root";
 
-  // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_processed_2024-03-13.root
-  // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedCone_midRapidity_processed_2024-03-15.root
+  // eecAnalysis_akFlowJet_energyWeightSquared_allBackgrounds_includeSystematics_processed_2024-03-31.root
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_allBackgrounds_includeSystematics_processed_2024-03-31.root
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_allBackgrounds_noJetsInMidrapidity_lowStats_processed_2024-04-10.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_mixedCone_forwardRapidity_processed_2024-03-15.root
   // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_mixedConeBackground_processed_2024-03-15.root
   // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_onlyMixedConeBackground_processed_2024-03-15.root
-  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_nominalSmear_onlyMixedConeBackground_processed_2024-03-20.root
+  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_allBackgrounds_noJetsInMidrapidity_mostStats_processed_2024-04-10.root
+  // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_noJetsInMidrapidity_mostStats_processed_2024-04-10.root
   
   // Open the files and check that they exist
   TFile* inputFile = TFile::Open(fileName);
@@ -50,9 +52,9 @@ void compareDifferentEECpairings(){
   
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  //comparedJetPtBin.push_back(std::make_pair(140,160));
+  //comparedJetPtBin.push_back(std::make_pair(160,180));
+  //comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -82,24 +84,29 @@ void compareDifferentEECpairings(){
   //   EECHistograms::kHydjetHydjet
   //   EECHistograms::knSubeventCombinations (accept any subevent combination)
   std::vector<std::pair<int,int>> comparedEnergyEnergyCorrelatorPairings;
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kReflectedConePair, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSameJetPair, kAllBackground));
   //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackgroundTruthLevel, knSubeventCombinations));
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kReflectedConePair, kHydjetHydjet));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, kHydjetHydjet));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSignalReflectedConePair, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
+  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSecondMixedConePair, knSubeventCombinations));
+
+  // Choose legen position for the plots
+  enum enumLegendPosition{kBottomLeft, kBottomRight};
+  const int legendPosition = kBottomRight;
 
   // Option to manually provide legend text for the compared distributions
   const bool useManualLegend = true;
   std::vector<TString> manualLegend;
-  manualLegend.push_back("Reflected cone");
-  manualLegend.push_back("Mixed cone");
-  //manualLegend.push_back("Compiled background");
+  manualLegend.push_back("True background");
+  manualLegend.push_back("Reflected cone estimate");
+  manualLegend.push_back("Mixed cone estimate");
+
 
   // Flag for normalizing distributions to one over studied deltaR range
-  bool normalizeDistributions = false;
+  bool normalizeDistributions = true;
 
   // Compare integrals of the distributions
-  const bool compareIntegrals = true;
+  const bool compareIntegrals = false;
 
   // It makes no sense to normalize distributions to 1 if you want to compare their integrals...
   if(compareIntegrals) normalizeDistributions = false;
@@ -118,7 +125,7 @@ void compareDifferentEECpairings(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  TString saveComment = "";   // Comment given for this specific file
+  TString saveComment = "_backgroundShapeComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   int weightExponent = card->GetWeightExponent();
@@ -258,13 +265,13 @@ void compareDifferentEECpairings(){
             iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
 
             // Start by taking the signal-reflected cone pairs, which is the regular background estimate
-            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second] = (TH1D*) hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalReflectedConePair][knSubeventCombinations]->Clone(Form("compiledBackground%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second] = (TH1D*) hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalMixedConePair][knSubeventCombinations]->Clone(Form("compiledBackground%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
 
             // Subtract from the background fake-fake contribution between cones, since this is badly modeled
-            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kReflectedMixedConePair][knSubeventCombinations], -1);
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedMixedConePair][knSubeventCombinations], -1);
 
             // Add the real fake+fake contribution back to the background estimate
-            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kReflectedConePair][knSubeventCombinations]);
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedConePair][knSubeventCombinations]);
 
           } // Track pT loop
         } // Jet pT loop
@@ -347,6 +354,18 @@ void compareDifferentEECpairings(){
   int styleIndex, legendIndex;
   bool firstLoop, secondLoop;
 
+  double legendX1 = 0.18;
+  double legendY1 = 0.04;
+  double legendX2 = 0.45;
+  double legendY2 = 0.58;
+
+  if(legendPosition == kBottomRight){
+    legendX1 = 0.58;
+    legendY1 = 0.02;
+    legendX2 = 0.85;
+    legendY2 = 0.52;
+  }
+
   // Automatic zoom helper veriables
   double minimumCandidate, maximumCandidate;
 
@@ -368,7 +387,7 @@ void compareDifferentEECpairings(){
         drawer->SetLogY(true);
 
         // Create the legend and add jet and track pT information to it
-        TLegend* legend = new TLegend(0.18,0.04,0.45,0.58);
+        TLegend* legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
 
         legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second), "");
