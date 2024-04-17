@@ -46,7 +46,7 @@ AlgorithmLibrary::~AlgorithmLibrary()
  *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
  *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
  */
-std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax){
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax){
   
   // Use the whole histogram as a search range
   std::pair<double,double> searchRange = std::make_pair(1, histogram->GetNbinsX());
@@ -61,7 +61,7 @@ std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, 
  *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
  *             std::pair<double,double> searchRange = Range from which the minimum and maximum values are searched
  */
-std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D *histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
   
   // As initial guess, take the given minimum and maximum values
   std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
@@ -151,7 +151,7 @@ TH1D* AlgorithmLibrary::RebinAsymmetric(TH1D* histogramInNeedOfRebinning, const 
  * Rebin a two-dimensional histogram
  *
  *  Arguments:
- *   TH2D *histogramInNeedOfRebinning = The two dimensional histogram that is going to be rebinned
+ *   TH2D* histogramInNeedOfRebinning = The two dimensional histogram that is going to be rebinned
  *   const int nBinsX = Number of bins after rebinning in the x-axis
  *   const double* binBordersX = Bin borders for rebinning for the x-axis
  *   const int nBinsY = Number of bins after rebinning in the y-axis
@@ -161,7 +161,7 @@ TH1D* AlgorithmLibrary::RebinAsymmetric(TH1D* histogramInNeedOfRebinning, const 
  *
  *   return: Rebinned histogram
  */
-TH2D* AlgorithmLibrary::RebinHistogram(TH2D *histogramInNeedOfRebinning, const int nBinsX, const double* binBordersX, const int nBinsY, const double* binBordersY, const bool undoBinArea, const bool normalizeBinArea){
+TH2D* AlgorithmLibrary::RebinHistogram(TH2D* histogramInNeedOfRebinning, const int nBinsX, const double* binBordersX, const int nBinsY, const double* binBordersY, const bool undoBinArea, const bool normalizeBinArea){
 
   // First, check that the new bin boundaries are also bin boundaries in the original histogram
   bool binsGood = CheckBinBoundaries(nBinsX, binBordersX, histogramInNeedOfRebinning->GetXaxis());
@@ -241,12 +241,12 @@ TH2D* AlgorithmLibrary::RebinHistogram(TH2D *histogramInNeedOfRebinning, const i
  *
  *  Arguments:
  *   const int nCheckedBins = Number of new bins to be checked
- *   const double *checkedBins = Bin boundaries to be checked
- *   const TAxis *originalAxis = Original axis against with the new bins are checked
+ *   const double* checkedBins = Bin boundaries to be checked
+ *   const TAxis* originalAxis = Original axis against with the new bins are checked
  *
  *   return: True, if all the new bin boundaries can be found from the original axis. False if not.
  */
-bool AlgorithmLibrary::CheckBinBoundaries(const int nCheckedBins, const double *checkedBins, const TAxis *originalAxis){
+bool AlgorithmLibrary::CheckBinBoundaries(const int nCheckedBins, const double* checkedBins, const TAxis* originalAxis){
   
   // Flag, if the current bin is a bin boundary in the histogram to be rebinned
   bool binOK = false;
@@ -274,7 +274,7 @@ bool AlgorithmLibrary::CheckBinBoundaries(const int nCheckedBins, const double *
 }
 
 // Normalize all the columns of a 2-D histogram to a given value
-void AlgorithmLibrary::NormalizeMatrix(TH2D *histogramInNeedOfNormalization, const double value, const int direction){
+void AlgorithmLibrary::NormalizeMatrix(TH2D* histogramInNeedOfNormalization, const double value, const int direction){
   
   if(direction == 1){
     NormalizeColumns(histogramInNeedOfNormalization, value);
@@ -285,7 +285,7 @@ void AlgorithmLibrary::NormalizeMatrix(TH2D *histogramInNeedOfNormalization, con
 }
 
 // Normalize all the columns of a 2-D histogram to a given value
-void AlgorithmLibrary::NormalizeColumns(TH2D *histogramInNeedOfNormalization, const double value){
+void AlgorithmLibrary::NormalizeColumns(TH2D* histogramInNeedOfNormalization, const double value){
   
   // Helper variables
   double binContent;
@@ -323,7 +323,7 @@ void AlgorithmLibrary::NormalizeColumns(TH2D *histogramInNeedOfNormalization, co
 }
 
 // Normalize all the rows of a 2-D histogram to a given value
-void AlgorithmLibrary::NormalizeRows(TH2D *histogramInNeedOfNormalization, const double value){
+void AlgorithmLibrary::NormalizeRows(TH2D* histogramInNeedOfNormalization, const double value){
   
   // Helper variables
   double binContent;
@@ -364,11 +364,11 @@ void AlgorithmLibrary::NormalizeRows(TH2D *histogramInNeedOfNormalization, const
  * Method for rotating a two dimensional histogram. Assumes constant bin size.
  *
  *  Arguments:
- *   TH2D *originalHistogram = Histogram to be rotated
+ *   TH2D* originalHistogram = Histogram to be rotated
  *
  *   return: Histogram where x and y axes have been switched
  */
-TH2D* AlgorithmLibrary::RotateHistogram(TH2D *originalHistogram){
+TH2D* AlgorithmLibrary::RotateHistogram(TH2D* originalHistogram){
   
   // Find the binning information
   double nBinsX = originalHistogram->GetNbinsX();
