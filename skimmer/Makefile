@@ -1,4 +1,4 @@
-PROGRAM       = skimmer
+PROGRAM       = megaSkimmer
 
 version       = skimming
 CXX           = g++
@@ -22,7 +22,7 @@ all:            $(PROGRAM)
 
 $(PROGRAM):     $(PROGRAM).cxx
 		@echo "Linking $(PROGRAM) ..."
-		$(CXX) -lEG -lPhysics -L$(PWD) $(PROGRAM).cxx $(CXXFLAGS) $(LDFLAGS) -o $(PROGRAM)
+		$(CXX) -lEG -L$(PWD) $(PROGRAM).cxx $(CXXFLAGS) $(LDFLAGS) -o $(PROGRAM)
 		@echo "done"
 
 %.cxx:
