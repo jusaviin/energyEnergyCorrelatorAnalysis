@@ -37,9 +37,10 @@ GeneratorLevelForestReader::GeneratorLevelForestReader() :
  *   Int_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  *   Bool_t mixingMode: Flag for mixed events more (false = regular mode, true = mixed event mode)
+ *   Bool_t megaSkimMode: Assume that the file contains only the information strictly necessary for event mixing
  */
-GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode) :
-  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree,mixingMode),
+GeneratorLevelForestReader::GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode, Bool_t megaSkimMode) :
+  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree,mixingMode,megaSkimMode),
   fHeavyIonTree(0),
   fJetTree(0),
   fHltTree(0),
@@ -257,53 +258,65 @@ void GeneratorLevelForestReader::Initialize(){
   }
   
   // Connect the branches to the skim tree (different for pp and PbPb Monte Carlo)
-  fSkimTree->SetBranchStatus("*",0);
-  if(fDataType == kPpMC){ // pp MC
-    fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
-    fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
-    fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
-    fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
-    
-    if(fIsMiniAOD){
-      fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
-    } else {
-      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-    }
-    
-    fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
-    fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
-  } else { // PbPb MC
-    
-    // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
-    fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
-    fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
-    
-    if(fIsMiniAOD){
-      
-      fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
-      
-      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-      fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
-      fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
-      
-    } else {
-      
-      // Cut on noise on HCAL
-      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-      
-      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-      fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
-      fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
-      
-    }
+  if(fMegaSkimMode){
 
-    // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
-    fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
-    fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+    // In mega skim mode all the event selections are already done. Set all flags to 1.
+    fPrimaryVertexFilterBit = 1;
+    fBeamScrapingFilterBit = 1;
+    fHBHENoiseFilterBit = 1;
+    fHfCoincidenceFilterBit = 1;
+    fClusterCompatibilityFilterBit = 1;
+
+  } else {
+
+    fSkimTree->SetBranchStatus("*",0);
+    if(fDataType == kPpMC){ // pp MC
+      fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
+      fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+      fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
+      fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
     
-    fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
+      if(fIsMiniAOD){
+        fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
+      } else {
+        fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+        fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      }
+    
+      fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
+      fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
+    } else { // PbPb MC
+    
+      // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
+      fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
+      fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+    
+      if(fIsMiniAOD){
+      
+        fHBHENoiseFilterBit = 1; // This filter bit is not available in MiniAODs
+      
+        // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+        fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
+        fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+      } else {
+      
+        // Cut on noise on HCAL
+        fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+        fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      
+        // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+        fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
+        fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+      }
+
+      // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
+      fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
+      fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+    
+      fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
+    }
   }
   
   // Connect the branches to the track tree
@@ -351,8 +364,8 @@ void GeneratorLevelForestReader::ReadForestFromFileList(std::vector<TString> fil
 
   // Connect a trees from the file to the reader
   fHeavyIonTree = new TChain("hiEvtAnalyzer/HiTree");
-  fHltTree = new TChain("hltanalysis/HltTree");
-  fSkimTree = new TChain("skimanalysis/HltTree");
+  if(fUseJetTrigger) fHltTree = new TChain("hltanalysis/HltTree");
+  if(!fMegaSkimMode) fSkimTree = new TChain("skimanalysis/HltTree");
 
   // The jet tree has different name in different datasets
   if(fDataType == kPp || fDataType == kPpMC){
@@ -365,7 +378,7 @@ void GeneratorLevelForestReader::ReadForestFromFileList(std::vector<TString> fil
     treeName[3] = "akFlowPuCs4PFJetAnalyzer/t"; // Tree for flow subtracted csPF jets
   }
 
-  fJetTree = new TChain(treeName[fJetType]);
+  if(!fMixingMode) fJetTree = new TChain(treeName[fJetType]);
 
   // The track tree is different than in other types of forests
   if(fReadTrackTree) fTrackTree = new TChain("HiGenParticleAna/hi");
@@ -426,7 +439,7 @@ void GeneratorLevelForestReader::GetEvent(Int_t nEvent){
   fHeavyIonTree->GetEntry(nEvent);
   if(!fMixingMode) fJetTree->GetEntry(nEvent);
   if(fUseJetTrigger) fHltTree->GetEntry(nEvent);
-  fSkimTree->GetEntry(nEvent);
+  if(!fMegaSkimMode) fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) {
     fTrackTree->GetEntry(nEvent);
     

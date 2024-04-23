@@ -76,9 +76,10 @@ HighForestReader::HighForestReader() :
  *   Bool_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track trees from the forest. Optimizes speed if tracks are not needed
  *   Bool_t mixingMode: Flag for mixed events more (false = regular mode, true = mixed event mode)
+ *   Bool_t megaSkimMode: Assume that the file contains only the information strictly necessary for event mixing
  */
-HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode) :
-  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree,mixingMode),
+HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode, Bool_t megaSkimMode) :
+  ForestReader(dataType,useJetTrigger,jetType,jetAxis,matchJets,readTrackTree,mixingMode,megaSkimMode),
   fHeavyIonTree(0),
   fJetTree(0),
   fHltTree(0),
@@ -415,50 +416,62 @@ void HighForestReader::Initialize(){
   }
   
   // Connect the branches to the skim tree (different for pp and PbPb data and Monte Carlo)
-  fSkimTree->SetBranchStatus("*",0);
-  // pprimaryVertexFilter && phfCoincFilter2Th4 && pclusterCompatibilityFilter
-  if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
-    fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
-    fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
-    fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
-    fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
-    if(fIsMiniAOD){
+  if(fMegaSkimMode){
+
+    // In mega skim mode all the event selections are already done. Set all flags to 1.
+    fPrimaryVertexFilterBit = 1;
+    fBeamScrapingFilterBit = 1;
+    fHBHENoiseFilterBit = 1;
+    fHfCoincidenceFilterBit = 1;
+    fClusterCompatibilityFilterBit = 1;
+
+  } else {
+
+    fSkimTree->SetBranchStatus("*",0);
+    // pprimaryVertexFilter && phfCoincFilter2Th4 && pclusterCompatibilityFilter
+    if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
+      fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
+      fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+      fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
+      fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
+      if(fIsMiniAOD){
       fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the MiniAOD forests.
-    } else {
+      } else {
       fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
       fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      }
+      fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
+      fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
+    } else { // PbPb data or MC
+    
+      // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
+      fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
+      fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+    
+      // Cut on noise on HCAL
+      if(fIsMiniAOD){
+        fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the MiniAOD forests.
+      
+        // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+        fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
+        fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      
+      } else {
+        //fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+        //fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+        fHBHENoiseFilterBit = 1; // For testing purpose, set this to 1
+      
+        // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
+        fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
+        fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      }
+    
+      // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
+      fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
+      fSkimTree->SetBranchAddress("pclusterCompatibilityFilter",&fClusterCompatibilityFilterBit,&fClusterCompatibilityBranch);
+    
+      fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
     }
-    fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
-    fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
-  } else { // PbPb data or MC
-    
-    // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
-    fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
-    fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
-    
-    // Cut on noise on HCAL
-    if(fIsMiniAOD){
-      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the MiniAOD forests.
-      
-      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-      fSkimTree->SetBranchStatus("pphfCoincFilter2Th4",1);
-      fSkimTree->SetBranchAddress("pphfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
-      
-    } else {
-      //fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
-      //fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
-      fHBHENoiseFilterBit = 1; // For testing purpose, set this to 1
-      
-      // Have at least two HF towers on each side of the detector with an energy deposit of 4 GeV
-      fSkimTree->SetBranchStatus("phfCoincFilter2Th4",1);
-      fSkimTree->SetBranchAddress("phfCoincFilter2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
-    }
-    
-    // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
-    fSkimTree->SetBranchStatus("pclusterCompatibilityFilter",1);
-    fSkimTree->SetBranchAddress("pclusterCompatibilityFilter",&fClusterCompatibilityFilterBit,&fClusterCompatibilityBranch);
-    
-    fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
   }
   
   // Connect the branches to the track tree
@@ -504,47 +517,51 @@ void HighForestReader::Initialize(){
       
       fTrackTree->SetBranchStatus("trkPt",1);
       fTrackTree->SetBranchAddress("trkPt",&fTrackPtArray,&fTrackPtBranch);
-      fTrackTree->SetBranchStatus("trkPtError",1);
-      fTrackTree->SetBranchAddress("trkPtError",&fTrackPtErrorArray,&fTrackPtErrorBranch);
       fTrackTree->SetBranchStatus("trkPhi",1);
       fTrackTree->SetBranchAddress("trkPhi",&fTrackPhiArray,&fTrackPhiBranch);
       fTrackTree->SetBranchStatus("trkEta",1);
       fTrackTree->SetBranchAddress("trkEta",&fTrackEtaArray,&fTrackEtaBranch);
       fTrackTree->SetBranchStatus("nTrk",1);
       fTrackTree->SetBranchAddress("nTrk",&fnTracks,&fnTracksBranch);
-      fTrackTree->SetBranchStatus("highPurity",1);
-      fTrackTree->SetBranchAddress("highPurity",&fHighPurityTrackArray,&fHighPurityTrackBranch);
-      fTrackTree->SetBranchStatus("trkDz1",1);
-      fTrackTree->SetBranchAddress("trkDz1",&fTrackVertexDistanceZArray,&fTrackVertexDistanceZBranch);
-      fTrackTree->SetBranchStatus("trkDzError1",1);
-      fTrackTree->SetBranchAddress("trkDzError1",&fTrackVertexDistanceZErrorArray,&fTrackVertexDistanceZErrorBranch);
-      fTrackTree->SetBranchStatus("trkDxy1",1);
-      fTrackTree->SetBranchAddress("trkDxy1",&fTrackVertexDistanceXYArray,&fTrackVertexDistanceXYBranch);
-      fTrackTree->SetBranchStatus("trkDxyError1",1);
-      fTrackTree->SetBranchAddress("trkDxyError1",&fTrackVertexDistanceXYErrorArray,&fTrackVertexDistanceXYErrorBranch);
-      fTrackTree->SetBranchStatus("trkChi2",1);
-      fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
-      fTrackTree->SetBranchStatus("trkNdof",1);
-      fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
-      fTrackTree->SetBranchStatus("trkNlayer",1);
-      fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
-      fTrackTree->SetBranchStatus("trkNHit",1);
-      fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
-      fTrackTree->SetBranchStatus("pfEcal",1);
-      fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
-      fTrackTree->SetBranchStatus("pfHcal",1);
-      fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
+
+      // In mega skim mode, only basic track kinematics are available
+      if(!fMegaSkimMode){
+        fTrackTree->SetBranchStatus("trkPtError",1);
+        fTrackTree->SetBranchAddress("trkPtError",&fTrackPtErrorArray,&fTrackPtErrorBranch);
+        fTrackTree->SetBranchStatus("highPurity",1);
+        fTrackTree->SetBranchAddress("highPurity",&fHighPurityTrackArray,&fHighPurityTrackBranch);
+        fTrackTree->SetBranchStatus("trkDz1",1);
+        fTrackTree->SetBranchAddress("trkDz1",&fTrackVertexDistanceZArray,&fTrackVertexDistanceZBranch);
+        fTrackTree->SetBranchStatus("trkDzError1",1);
+        fTrackTree->SetBranchAddress("trkDzError1",&fTrackVertexDistanceZErrorArray,&fTrackVertexDistanceZErrorBranch);
+        fTrackTree->SetBranchStatus("trkDxy1",1);
+        fTrackTree->SetBranchAddress("trkDxy1",&fTrackVertexDistanceXYArray,&fTrackVertexDistanceXYBranch);
+        fTrackTree->SetBranchStatus("trkDxyError1",1);
+        fTrackTree->SetBranchAddress("trkDxyError1",&fTrackVertexDistanceXYErrorArray,&fTrackVertexDistanceXYErrorBranch);
+        fTrackTree->SetBranchStatus("trkChi2",1);
+        fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
+        fTrackTree->SetBranchStatus("trkNdof",1);
+        fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
+        fTrackTree->SetBranchStatus("trkNlayer",1);
+        fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
+        fTrackTree->SetBranchStatus("trkNHit",1);
+        fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
+        fTrackTree->SetBranchStatus("pfEcal",1);
+        fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
+        fTrackTree->SetBranchStatus("pfHcal",1);
+        fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
       
-      // Additional information for track cuts
-      fTrackTree->SetBranchStatus("trkAlgo",1);
-      fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
-      fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
-      fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
+        // Additional information for track cuts
+        fTrackTree->SetBranchStatus("trkAlgo",1);
+        fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
+        fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
+        fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
       
-      // Track MVA only in PbPb trees
-      if(fDataType == kPbPb || fDataType == kPbPbMC){
-        fTrackTree->SetBranchStatus("trkMVA",1);
-        fTrackTree->SetBranchAddress("trkMVA",&fTrackMVAArray,&fTrackMVABranch);
+        // Track MVA only in PbPb trees
+        if(fDataType == kPbPb || fDataType == kPbPbMC){
+          fTrackTree->SetBranchStatus("trkMVA",1);
+          fTrackTree->SetBranchAddress("trkMVA",&fTrackMVAArray,&fTrackMVABranch);
+        }
       }
     }
   } // Reading track trees
@@ -580,7 +597,7 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
   // Connect a trees from the file to the reader
   fHeavyIonTree = new TChain("hiEvtAnalyzer/HiTree");
   if(fUseJetTrigger) fHltTree = new TChain("hltanalysis/HltTree");
-  fSkimTree = new TChain("skimanalysis/HltTree");
+  if(!fMegaSkimMode) fSkimTree = new TChain("skimanalysis/HltTree"); // Mega skims have all event selection built-in
 
   // The jet tree has different name in different datasets
   if(fDataType == kPp || fDataType == kPpMC){
@@ -605,7 +622,7 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
   
   for(std::vector<TString>::iterator listIterator = fileList.begin(); listIterator != fileList.end(); listIterator++){
     fHeavyIonTree->Add(*listIterator);
-    fSkimTree->Add(*listIterator);
+    if(!fMegaSkimMode) fSkimTree->Add(*listIterator);
     if(fUseJetTrigger) fHltTree->Add(*listIterator);
     if(!fMixingMode) fJetTree->Add(*listIterator);
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
@@ -665,7 +682,7 @@ void HighForestReader::GetEvent(Int_t nEvent){
   fHeavyIonTree->GetEntry(nEvent);
   if(!fMixingMode) fJetTree->GetEntry(nEvent);
   if(fUseJetTrigger) fHltTree->GetEntry(nEvent);
-  fSkimTree->GetEntry(nEvent);
+  if(!fMegaSkimMode) fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) {
     fTrackTree->GetEntry(nEvent);
     

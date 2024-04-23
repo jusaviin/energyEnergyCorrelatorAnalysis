@@ -174,6 +174,7 @@ public:
   Bool_t fSmearEnergyWeight; // Flag for smearing energy weight in energy-energy correlators
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
+  Bool_t fMegaSkimMode;      // Use mega skimmed mixing files, that contain bare minimum information for mixing
   Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 

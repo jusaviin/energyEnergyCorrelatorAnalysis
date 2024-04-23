@@ -106,6 +106,7 @@ EECAnalyzer::EECAnalyzer() :
   fSmearEnergyWeight(false),
   fDoReflectedCone(false),
   fDoMixedCone(false),
+  fMegaSkimMode(false),
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
   fLocalRun(0),
@@ -383,6 +384,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fSmearEnergyWeight(in.fSmearEnergyWeight),
   fDoReflectedCone(in.fDoReflectedCone),
   fDoMixedCone(in.fDoMixedCone),
+  fMegaSkimMode(in.fMegaSkimMode),
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fLocalRun(in.fLocalRun),
@@ -478,6 +480,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fSmearEnergyWeight = in.fSmearEnergyWeight;
   fDoReflectedCone = in.fDoReflectedCone;
   fDoMixedCone = in.fDoMixedCone;
+  fMegaSkimMode = in.fMegaSkimMode;
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fLocalRun = in.fLocalRun;
@@ -634,6 +637,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
   fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
   fDoMixedCone = (fCard->Get("DoReflectedCone") >= 2);
+  fMegaSkimMode = (fCard->Get("DoReflectedCone") == 3);
   fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
   fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   fSkipCovarianceMatrix = (fCard->Get("SkipCovarianceMatrix") == 1);
@@ -848,9 +852,9 @@ void EECAnalyzer::RunAnalysis(){
   // Select the reader for mixed events
   if(fDoMixedCone){
     if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen){
-      fMixedEventReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+      fMixedEventReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true,fMegaSkimMode);
     } else {
-      fMixedEventReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true);
+      fMixedEventReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true,fMegaSkimMode);
     }
   }
 
@@ -863,14 +867,36 @@ void EECAnalyzer::RunAnalysis(){
   }
 
   // Prepare mixed event files and a forest reader for reflected cone mixing
-  const char* fileListName[2][4] = {
-      {"none", Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex), "none", Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex)}, // Crab
-      {"none", "mixingFileList/mixingFilesPbPb.txt", "none", "mixingFileList/mixingFilesPbPbMC.txt"}}; // Local test
+  const char* fileListName[2][4][2];
+
+  // CRAB running, regular mixing forest
+  fileListName[0][0][0] = "none";  // No mixing for pp
+  fileListName[0][1][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
+  fileListName[0][2][0] = "none";  // No mixing for pp MC
+  fileListName[0][3][0] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+
+  // Local test, regular mixing forest
+  fileListName[1][0][0] = "none";  // No mixing for pp
+  fileListName[1][1][0] = "mixingFileList/mixingFilesPbPb.txt"; // PbPb data for local test
+  fileListName[1][2][0] = "none";  // No mixing for pp MC
+  fileListName[1][3][0] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
+
+  // CRAB running, mega skimmed mixing forest
+  fileListName[0][0][1] = "none";  // No mixing for pp
+  fileListName[0][1][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
+  fileListName[0][2][1] = "none";  // No mixing for pp MC
+  fileListName[0][3][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+
+  // Local test, mega skimmed mixing forest
+  fileListName[1][0][1] = "none";  // No mixing for pp
+  fileListName[1][1][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
+  fileListName[1][2][1] = "none";  // No mixing for pp MC
+  fileListName[1][3][1] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
         
   // Read the mixing files only for PbPb data and MC
   if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
     std::string lineInFile;
-    std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType]);
+    std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType][fMegaSkimMode]);
     while (std::getline(mixingFileStream,lineInFile)) {
       mixingFiles.push_back(lineInFile);
     }
@@ -1609,8 +1635,10 @@ void EECAnalyzer::RunAnalysis(){
               nTracks = fMixedEventReader->GetNTracks();
               for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
 
-                // Check that all the track cuts are passed
-                if(!PassTrackCuts(fMixedEventReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
+                // Check that all the track cuts are passed. In mega skim mode, only tracks passing the cuts are saved, so no need to check the track cuts again here.
+                if(!fMegaSkimMode){
+                  if(!PassTrackCuts(fMixedEventReader,iTrack,fHistograms->fhTrackCuts,true)) continue;
+                }
 
                 // Find the track kinematics
                 trackPt = fMixedEventReader->GetTrackPt(iTrack);
@@ -3527,7 +3555,11 @@ void EECAnalyzer::PrepareMixingVectors(){
   fMixedEventHiBin.clear();  // contents they might have
   for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
     fMixedEventReader->GetEvent(iMixedEvent);
-    if(PassEventCuts(fMixedEventReader,false)){
+    if(fMegaSkimMode){
+      // Event selection is already applied in mega skim mode. No need to check it again here.
+      fMixedEventVz.push_back(fMixedEventReader->GetVz());
+      fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+    } else if(PassEventCuts(fMixedEventReader,false)){
       fMixedEventVz.push_back(fMixedEventReader->GetVz());
       fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
     } else { // If event cuts not passed, input values such that events will never be mixed with these

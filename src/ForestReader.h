@@ -34,7 +34,7 @@ public:
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
-  ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false); // Custom constructor
+  ForestReader(Int_t dataType, Int_t readMode, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false, Bool_t megaSkimMode = false); // Custom constructor
   ForestReader(const ForestReader& in);                    // Copy constructor
   virtual ~ForestReader();                                 // Destructor
   ForestReader& operator=(const ForestReader& obj);        // Equal sign operator
@@ -123,6 +123,7 @@ protected:
   Bool_t fReadTrackTree;  // Read the track trees from the forest
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
   Bool_t fMixingMode;     // Flag for mixed event mode (false = regular events, true = mixed events)
+  Bool_t fMegaSkimMode;   // Flag for mega skim mode (false = regular micing files, true = mega skimmed mixing files)
   
   // Branches for heavy ion tree
   TBranch* fHiVzBranch;                   // Branch for vertex z-position

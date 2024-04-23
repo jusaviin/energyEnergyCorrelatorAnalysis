@@ -23,7 +23,7 @@ public:
   
   // Constructors and destructors
   GeneratorLevelForestReader();                                                 // Default constructor
-  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false);    // Custom constructor
+  GeneratorLevelForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree = true, Bool_t mixingMode = false, Bool_t megaSkimMode = false);    // Custom constructor
   GeneratorLevelForestReader(const GeneratorLevelForestReader& in);             // Copy constructor
   virtual ~GeneratorLevelForestReader();                                        // Destructor
   GeneratorLevelForestReader& operator=(const GeneratorLevelForestReader& obj); // Equal sign operator

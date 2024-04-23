@@ -15,6 +15,7 @@ ForestReader::ForestReader() :
   fReadTrackTree(true),
   fIsMiniAOD(false),
   fMixingMode(false),
+  fMegaSkimMode(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -87,8 +88,9 @@ ForestReader::ForestReader() :
  *   Int_t matchJets: non-0 = Do matching for reco and gen jets. 0 = Do not require matching
  *   Bool_t readTrackTree: Read the track tree from the forest. Optimizes speed if tracks are not needed
  *   Bool_t mixingMode: Read only trees needed for mixed events
+ *   Bool_t megaSkimMode: Assume that the file contains only the information strictly necessary for event mixing
  */
-ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode) :
+ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode, Bool_t megaSkimMode) :
   fDataType(0),
   fUseJetTrigger(useJetTrigger),
   fJetType(jetType),
@@ -97,6 +99,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fReadTrackTree(readTrackTree),
   fIsMiniAOD(false),
   fMixingMode(mixingMode),
+  fMegaSkimMode(megaSkimMode),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
@@ -175,6 +178,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fReadTrackTree(in.fReadTrackTree),
   fIsMiniAOD(in.fIsMiniAOD),
   fMixingMode(in.fMixingMode),
+  fMegaSkimMode(in.fMegaSkimMode),
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
   fPtHatBranch(in.fPtHatBranch),
@@ -251,6 +255,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fReadTrackTree = in.fReadTrackTree;
   fIsMiniAOD = in.fIsMiniAOD;
   fMixingMode = in.fMixingMode;
+  fMegaSkimMode = in.fMegaSkimMode;
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
   fPtHatBranch = in.fPtHatBranch;
