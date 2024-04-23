@@ -891,7 +891,7 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[1][0][1] = "none";  // No mixing for pp
   fileListName[1][1][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
   fileListName[1][2][1] = "none";  // No mixing for pp MC
-  fileListName[1][3][1] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
+  fileListName[1][3][1] = "mixingFileList/mixingFilesPbPbMC_megaSkim.txt";  // PbPb MC for local test
         
   // Read the mixing files only for PbPb data and MC
   if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){

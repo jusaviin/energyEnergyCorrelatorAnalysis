@@ -328,10 +328,14 @@ void GeneratorLevelForestReader::Initialize(){
     fTrackTree->SetBranchAddress("phi",&fTrackPhiArray,&fTrackPhiBranch);
     fTrackTree->SetBranchStatus("eta",1);
     fTrackTree->SetBranchAddress("eta",&fTrackEtaArray,&fTrackEtaBranch);
-    fTrackTree->SetBranchStatus("chg",1);
-    fTrackTree->SetBranchAddress("chg",&fTrackChargeArray,&fTrackPtErrorBranch);  // Reuse a branch from ForestReader that is not otherwise needed here
     fTrackTree->SetBranchStatus("sube",1);
     fTrackTree->SetBranchAddress("sube",&fTrackSubeventArray,&fTrackChi2Branch);  // Reuse a branch from ForestReader that is not otherwise needed here
+
+    // The track charge is not available in mega skims
+    if(!fMegaSkimMode){
+      fTrackTree->SetBranchStatus("chg",1);
+      fTrackTree->SetBranchAddress("chg",&fTrackChargeArray,&fTrackPtErrorBranch);  // Reuse a branch from ForestReader that is not otherwise needed here
+    }
   } // Reading track trees
 
   // We need to load one event to initialize TChains properly. Not sure why, but this is how things seem to work
@@ -385,9 +389,9 @@ void GeneratorLevelForestReader::ReadForestFromFileList(std::vector<TString> fil
   
   for(std::vector<TString>::iterator listIterator = fileList.begin(); listIterator != fileList.end(); listIterator++){
     fHeavyIonTree->Add(*listIterator);
-    fSkimTree->Add(*listIterator);
-    fHltTree->Add(*listIterator);
-    fJetTree->Add(*listIterator);
+    if(!fMegaSkimMode) fSkimTree->Add(*listIterator);
+    if(fUseJetTrigger) fHltTree->Add(*listIterator);
+    if(!fMegaSkimMode) fJetTree->Add(*listIterator);
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
   }
   
