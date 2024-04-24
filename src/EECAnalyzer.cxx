@@ -869,6 +869,18 @@ void EECAnalyzer::RunAnalysis(){
   // Prepare mixed event files and a forest reader for reflected cone mixing
   const char* fileListName[2][4][2];
 
+  // Transform the CRAB job index into a accepted range of mixing job indices
+  if(fMixingListIndex < 0){
+    fMixingListIndex = fMixingListIndex * -1;
+    if(fDataType == ForestReader::kPbPbMC){
+      // There are four copies of mixing file list for PbPb MC
+      fMixingListIndex = (fMixingListIndex % 4) + 1;
+    } else if (fDataType == ForestReader::kPbPb){
+      // There are eight copies of the mixing file list for PbPb data
+      fMixingListIndex = (fMixingListIndex % 8) + 1;
+    }
+  }
+
   // CRAB running, regular mixing forest
   fileListName[0][0][0] = "none";  // No mixing for pp
   fileListName[0][1][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB

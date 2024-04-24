@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     cout<<"+  outputFileName: .root file to which the histograms are written." <<endl;
     cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data." << endl;
     cout<<"+  runLocal: True: Search input files from local machine. False (default): Search input files from grid with xrootd." << endl;
-    cout<<"+  mixingListIndex: Mixing file list index for CRAB running (default = 1)" << endl;
+    cout<<"+  mixingListIndex: Mixing file list index for CRAB running. If -1, used list is determined from CRAB job ID (default = -1)" << endl;
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
     cout << endl << endl;
     exit(1);
@@ -146,10 +146,13 @@ int main(int argc, char **argv) {
   
   // Find the file list name depending on if we run locally or on crab
   TString fileNameFile;
+  int crabJobId;
   if(runLocal){
     fileNameFile = argv[1];
+    crabJobId = 1;
   } else {
-    fileNameFile = Form("job_input_file_list_%d.txt",atoi(argv[1]));
+    crabJobId = atoi(argv[1]);
+    fileNameFile = Form("job_input_file_list_%d.txt",crabJobId);
   }
   
   // Read the other command line arguments
@@ -157,8 +160,11 @@ int main(int argc, char **argv) {
   TString outputFileName = argv[3];
   const int fileSearchIndex = atoi(argv[4]);
 
-  int mixingListIndex = 1;
+  int mixingListIndex = -1;
   if(argc >= 7) mixingListIndex = atoi(argv[6]);
+
+  // Set the mixing list ID to negative crab job ID value to signal that we are using CRAB job ID to determine the mixing list.
+  if(mixingListIndex == -1) mixingListIndex = crabJobId * -1;
   
   // The git hash here will be replaced by the latest commit hash by makeEECAnalysisTar.sh script
   const char* gitHash = "GITHASHHERE";
