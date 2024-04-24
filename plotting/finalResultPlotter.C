@@ -55,24 +55,22 @@ void finalResultPlotter(){
 
   // Input files
   TString inputFileName[kNDataTypes][nWeightExponents];
-  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
+  inputFileName[kPbPb][0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_fixedCovarianceMatrix_processed_2024-04-18.root";
+  inputFileName[kPbPb][1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_fixedCovarianceMatrix_processed_2024-04-18.root";
+  inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_addLowPtBins_processed_2024-04-18.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
-  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-08.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root";
-  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-03-07.root";
+  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-04-18.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_mixedConeBackground_noMCnonClosure_2024-04-18.root";
+  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-04-18.root";
   uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-03-07.root";
 
   TString shiftedPtFileName[nWeightExponents];
   shiftedPtFileName[0] = "data/ppData_pfJets_wtaAxis_shiftedJetPtBins_nominalEnergyWeight_jet60or80trigger_unfoldWithShiftedResponse_processed_2024-02-19.root";
   shiftedPtFileName[1] = "data/ppData_pfJets_wtaAxis_shiftedJetPtBins_energyWeightSquared_jet60or80trigger_unfoldWithShiftedResponse_processed_2024-02-19.root";
 
-  // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
-  // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root
-  // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
-  // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_unfoldingWithNominalSmear_processed_2024-01-17.root
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root
+  // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root
   // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
   // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
@@ -162,10 +160,10 @@ void finalResultPlotter(){
 
   // Choose which plots to draw
   bool drawIndividualPlotsAllCentralities = false;
-  bool drawBigCanvasDistributions = false;
+  bool drawBigCanvasDistributions = true;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
 
   bool drawVerticalLines = false; // Draw illustrative vertical lines
@@ -257,16 +255,18 @@ void finalResultPlotter(){
     } // Data type loop
 
     // Create a new histogram manager for histograms with shifted pT
-    shiftedPtHistograms[iWeightExponent] = new EECHistogramManager(shiftedPtFile[iWeightExponent], shiftedPtCard[iWeightExponent]);
+    if(drawShiftedPtRatio){
+      shiftedPtHistograms[iWeightExponent] = new EECHistogramManager(shiftedPtFile[iWeightExponent], shiftedPtCard[iWeightExponent]);
   
-    // Load all unfolded energy-energy correlators
-    shiftedPtHistograms[iWeightExponent]->SetLoadEnergyEnergyCorrelators(true);
-    shiftedPtHistograms[iWeightExponent]->SetCentralityBinRange(0, shiftedPtCard[iWeightExponent]->GetNCentralityBins());
-    shiftedPtHistograms[iWeightExponent]->SetTrackPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNTrackPtBinsEEC());
-    shiftedPtHistograms[iWeightExponent]->SetJetPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNJetPtBinsEEC());
+      // Load all unfolded energy-energy correlators
+      shiftedPtHistograms[iWeightExponent]->SetLoadEnergyEnergyCorrelators(true);
+      shiftedPtHistograms[iWeightExponent]->SetCentralityBinRange(0, shiftedPtCard[iWeightExponent]->GetNCentralityBins());
+      shiftedPtHistograms[iWeightExponent]->SetTrackPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNTrackPtBinsEEC());
+      shiftedPtHistograms[iWeightExponent]->SetJetPtBinRangeEEC(0, shiftedPtCard[iWeightExponent]->GetNJetPtBinsEEC());
 
-    // Load the histograms from the file
-    shiftedPtHistograms[iWeightExponent]->LoadProcessedHistograms();
+      // Load the histograms from the file
+      shiftedPtHistograms[iWeightExponent]->LoadProcessedHistograms();
+    }
 
   } // Weight exponent loop
  
@@ -368,7 +368,7 @@ void finalResultPlotter(){
       iJetPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
       iJetPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
       iJetPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexJetPtEEC(currentJetPtBin);
-      iJetPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexJetPtEEC(shiftedJetPtBin);
+      if(drawShiftedPtRatio) iJetPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexJetPtEEC(shiftedJetPtBin);
 
       // Before the main track pT loop, loop over all raw energy-energy correlators to have the information available to scale the tracking related uncertainties in double ratios.
       for(int iTrackPt = firstDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt <= lastDrawnTrackPtBinEEC[iWeightExponent]; iTrackPt++){
@@ -389,7 +389,7 @@ void finalResultPlotter(){
         iTrackPtMatchedPp = card[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
         iTrackPtMatchedPbPbUncertainty = uncertaintyCard[kPbPb][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
         iTrackPtMatchedPpUncertainty = uncertaintyCard[kPp][iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
-        iTrackPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
+        if(drawShiftedPtRatio) iTrackPtMatchedShifted = shiftedPtCard[iWeightExponent]->FindBinIndexTrackPtEEC(card[kPbPb][iWeightExponent]->GetBinBordersTrackPtEEC(iTrackPt));
 
         // Read the pp histograms that do not have centrality binning
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt] = histograms[kPp][iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedPp, iTrackPtMatchedPp, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
@@ -419,7 +419,9 @@ void finalResultPlotter(){
         }
 
         // Read the histograms with shifted pT spectrum
-        energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt] = shiftedPtHistograms[iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedShifted, iTrackPtMatchedShifted, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+        if(drawShiftedPtRatio){
+          energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt] = shiftedPtHistograms[iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatchedShifted, iTrackPtMatchedShifted, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+        }
 
 
         for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
@@ -474,10 +476,12 @@ void finalResultPlotter(){
         systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10));
 
         // Shifted pT to regular pT ratios
-        energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        if(drawShiftedPtRatio){
+          energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
 
-        energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("shiftedPtRatio%d%d%d", iWeightExponent, iJetPt, iTrackPt));
-        energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
+          energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalShiftedPt[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("shiftedPtRatio%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+          energyEnergyCorrelatorShiftedPtRatio[iWeightExponent][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
+        }
 
         for(int iCentrality = firstDrawnCentralityBin[iWeightExponent]; iCentrality <= lastDrawnCentralityBin[iWeightExponent]; iCentrality++){
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][referenceTrackPtBin]->Integral(lowAnalysisBin, highAnalysisBin, "width"));

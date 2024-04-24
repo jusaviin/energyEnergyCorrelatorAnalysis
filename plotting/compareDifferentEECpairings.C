@@ -11,7 +11,7 @@
 void compareDifferentEECpairings(){
   
   // Studied file
-  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_someJobsMissing_processed_2024-04-01.root";
+  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_semiOkStats_processed_2024-04-12.root";
 
   // eecAnalysis_akFlowJet_energyWeightSquared_allBackgrounds_includeSystematics_processed_2024-03-31.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_allBackgrounds_includeSystematics_processed_2024-03-31.root
@@ -21,6 +21,10 @@ void compareDifferentEECpairings(){
   // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_nominalSmear_onlyMixedConeBackground_processed_2024-03-15.root
   // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_allBackgrounds_noJetsInMidrapidity_mostStats_processed_2024-04-10.root
   // PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_noJetsInMidrapidity_mostStats_processed_2024-04-10.root
+
+  // data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_someJobsMissing_processed_2024-04-01.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_matchMultiplicity_lowStats_processed_2024-04-12.root
+  // data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_allBackgrounds_matchMultiplicity_lowStats_processed_2024-04-12.root
   
   // Open the files and check that they exist
   TFile* inputFile = TFile::Open(fileName);
@@ -85,25 +89,25 @@ void compareDifferentEECpairings(){
   //   EECHistograms::knSubeventCombinations (accept any subevent combination)
   std::vector<std::pair<int,int>> comparedEnergyEnergyCorrelatorPairings;
   comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSameJetPair, kAllBackground));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackgroundTruthLevel, knSubeventCombinations));
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSignalReflectedConePair, knSubeventCombinations));
   comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
+  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, knSubeventCombinations));
   //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSecondMixedConePair, knSubeventCombinations));
-
+  
   // Choose legen position for the plots
-  enum enumLegendPosition{kBottomLeft, kBottomRight};
+  enum enumLegendPosition{kBottomLeft, kBottomRight, kTopLeft};
   const int legendPosition = kBottomRight;
 
   // Option to manually provide legend text for the compared distributions
   const bool useManualLegend = true;
   std::vector<TString> manualLegend;
   manualLegend.push_back("True background");
-  manualLegend.push_back("Reflected cone estimate");
-  manualLegend.push_back("Mixed cone estimate");
+  manualLegend.push_back("Mixed cone, nGen matched");
+  //manualLegend.push_back("Mixed cone pair 1");
+  //manualLegend.push_back("Mixed cone pair 2");
 
 
   // Flag for normalizing distributions to one over studied deltaR range
-  bool normalizeDistributions = true;
+  bool normalizeDistributions = false;
 
   // Compare integrals of the distributions
   const bool compareIntegrals = false;
@@ -124,8 +128,8 @@ void compareDifferentEECpairings(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  TString saveComment = "_backgroundShapeComparison";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  TString saveComment = "_mixedBackgroundGenMatched";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   int weightExponent = card->GetWeightExponent();
@@ -136,8 +140,9 @@ void compareDifferentEECpairings(){
   }
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.8, 1.2);
+  std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
+  const bool logRatio = false;
   const bool automaticZoom = true;
 
   // Sanity check for input. Ensure that all the selected bins actually exist in the input file.
@@ -364,6 +369,11 @@ void compareDifferentEECpairings(){
     legendY1 = 0.02;
     legendX2 = 0.85;
     legendY2 = 0.52;
+  } else if (legendPosition == kTopLeft){
+    legendX1 = 0.16;
+    legendY1 = 0.43;
+    legendX2 = 0.43;
+    legendY2 = 0.95;
   }
 
   // Automatic zoom helper veriables
@@ -408,7 +418,7 @@ void compareDifferentEECpairings(){
 
         // Automatic zooming for the drawn histograms
         if(automaticZoom){
-          eecZoom.first = 10000;
+          eecZoom.first = 1e12;
           eecZoom.second = 0;
           for(auto pairingType : comparedEnergyEnergyCorrelatorPairings){
             hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
@@ -446,8 +456,8 @@ void compareDifferentEECpairings(){
         // Draw the legends to the upper pad
         legend->Draw();
           
-        // Linear scale for the ratio
-        drawer->SetLogY(false);
+        // Set linear scale for ratio, unless specifically asked to be logarithmic
+        if(!logRatio) drawer->SetLogY(false);
 
         // Draw the histograms
         drawer->SetGridY(true);

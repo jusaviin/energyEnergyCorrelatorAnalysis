@@ -136,7 +136,7 @@ void SystematicUncertaintyOrganizer::ReadInputFile(TFile* inputFile){
   // For all the uncertainty sources that are not defined in the file, set the uncertainty to zero //
   // ============================================================================================= //
 
-  // First, find at least one histogram that is is not NULL
+  // First, find at least one histogram that is not NULL
   TH1D* exampleHistogram;
   bool exampleFound = false;
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin && !exampleFound; iCentrality++){

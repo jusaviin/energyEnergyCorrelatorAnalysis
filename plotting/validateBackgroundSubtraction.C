@@ -9,7 +9,7 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedEventBackground_someJobsMissing_processed_2024-04-01.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_semiOkStats_processed_2024-04-12.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
@@ -80,8 +80,8 @@ void validateBackgroundSubtraction(){
   const bool simulationTag = false;
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_energyWeightSquared_mixedEventBackground";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_nominalEnergyWeight_mixedEventBackgroundGenMatched";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
   // Create and setup a new histogram managers to project and handle the histograms

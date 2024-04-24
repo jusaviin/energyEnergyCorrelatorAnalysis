@@ -33,7 +33,7 @@ void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
  * Arguments:
  *  const int weightExponent = Exponents for the energy weight in energy-energy correlators. Currently 1 and 2 are implemented.
  */
-void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
+void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
 
   // First, do a sanity check for the weight exponents. Currently only 1 and 2 are implemented.
   if(weightExponent < 1 || weightExponent > 2){
@@ -48,15 +48,15 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   // ==================================================================
 
   // Nominal results
-  TString nominalResultFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root"};
+  TString nominalResultFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root"};
   TFile* nominalResultFile = TFile::Open(nominalResultFileName[weightExponent-1]);
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
   loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
-  TString jetEnergyResolutionSmearDownFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearDown_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearDown_processed_2024-01-17.root"};
-  TString jetEnergyResolutionSmearUpFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearUp_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearUp_processed_2024-01-17.root"};
+  TString jetEnergyResolutionSmearDownFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithUncertaintySmearDown_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearDown_processed_2024-01-17.root"};
+  TString jetEnergyResolutionSmearUpFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithUncertaintySmearUp_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearUp_processed_2024-01-17.root"};
   TFile* jetEnergyResolutionFile[2];
   jetEnergyResolutionFile[0] = TFile::Open(jetEnergyResolutionSmearDownFileName[weightExponent-1]);
   jetEnergyResolutionFile[1] = TFile::Open(jetEnergyResolutionSmearUpFileName[weightExponent-1]);
@@ -69,8 +69,8 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   }
   
   // Results unfolded with a response matrix smeared with jet energy scale
-  TString jetEnergyScaleMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithMinusJetEnergyScale_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithMinusJetEnergyScale_processed_2024-01-17.root"};
-  TString jetEnergyScalePlusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithPlusJetEnergyScale_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithPlusJetEnergyScale_processed_2024-01-17.root"};
+  TString jetEnergyScaleMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithMinusJetEnergyScale_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithMinusJetEnergyScale_processed_2024-01-17.root"};
+  TString jetEnergyScalePlusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithPlusJetEnergyScale_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithPlusJetEnergyScale_processed_2024-01-17.root"};
   TFile* jetEnergyScaleFile[2];
   jetEnergyScaleFile[0] = TFile::Open(jetEnergyScaleMinusFileName[weightExponent-1]);
   jetEnergyScaleFile[1] = TFile::Open(jetEnergyScalePlusFileName[weightExponent-1]);
@@ -83,15 +83,15 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   }
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
-  TString jetPtPriorFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithModifiedPrior_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithModifiedPrior_processed_2024-01-17.root"};
+  TString jetPtPriorFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithModifiedPrior_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithModifiedPrior_processed_2024-01-17.root"};
   TFile* jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
   loadRelevantHistograms(jetPtPriorHistogramManager);
 
   // Results unfolded with a different number of iterations compared to nominal results
-  TString unfoldingIterationsMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith3Iterations_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith3Iterations_processed_2024-01-17.root"};
-  TString unfoldingIterationsPlusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith5Iterations_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith5Iterations_processed_2024-01-17.root"};
+  TString unfoldingIterationsMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith3Iterations_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith3Iterations_processed_2024-01-17.root"};
+  TString unfoldingIterationsPlusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith5Iterations_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith5Iterations_processed_2024-01-17.root"};
   TFile* unfoldingIterationsFile[2];
   unfoldingIterationsFile[0] = TFile::Open(unfoldingIterationsMinusFileName[weightExponent-1]);
   unfoldingIterationsFile[1] = TFile::Open(unfoldingIterationsPlusFileName[weightExponent-1]);
@@ -104,15 +104,15 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   }
 
   // Results where background scaling factor is determined from peripheral Pythia+Hydjet instead of not subtracting background
-  TString backgroundSubtractionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2024-01-17.root"};
+  TString backgroundSubtractionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_backgroundSubtractionSystematics_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_backgroundSubtractionSystematics_processed_2024-01-17.root"};
   TFile* backgroundSubtractionFile = TFile::Open(backgroundSubtractionFileName[weightExponent-1]);
   EECCard* backgroundSubtractionCard = new EECCard(backgroundSubtractionFile);
   EECHistogramManager* backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
   loadRelevantHistograms(backgroundSubtractionHistogramManager);
 
   // Result with different track selections
-  TString looseTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root"};
-  TString tightTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_tightTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_tightTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root"};
+  TString looseTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root"};
+  TString tightTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_tightTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_tightTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root"};
   TFile* trackSelectionFile[2];
   trackSelectionFile[0] = TFile::Open(looseTrackSelectionFileName[weightExponent-1]);
   trackSelectionFile[1] = TFile::Open(tightTrackSelectionFileName[weightExponent-1]);
@@ -126,7 +126,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
 
 
   // Results with varied single and pair track efficiency
-  TString trackEfficiencyFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_trackSystematics_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_trackSystematics_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root"};
+  TString trackEfficiencyFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_trackSystematics_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_trackSystematics_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root"};
   TFile* trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
@@ -155,13 +155,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   // Only draw example plots from selected subset of bins
   vector<int> drawnJetPtBins = {5,6,7,8};
   vector<int> drawnTrackPtBins = {1,3,5};
-
-  if(weightExponent == 1){
-    drawnTrackPtBins.clear();
-    drawnTrackPtBins.push_back(3);
-    drawnTrackPtBins.push_back(4);
-    drawnTrackPtBins.push_back(5);
-  }
   
   const bool printUncertainties = false;
   
@@ -174,7 +167,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_includeMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   //TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
@@ -194,7 +187,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 2){
     plotExample[iUncertainty] = false;
   }
   //plotExample[SystematicUncertaintyOrganizer::kUnfoldingIterations] = true;
-  //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
+  skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================

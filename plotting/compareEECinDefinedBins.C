@@ -13,14 +13,14 @@ void compareEECinDefinedBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
   
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackgroundWithNoScale_includeSystematics_processed_2024-03-31.root";
   //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_fixedCovarianceMatrix_processed_2024-04-18.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
@@ -38,8 +38,8 @@ void compareEECinDefinedBins(){
 
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Reflected cone subtracted";
-  fileDescription[1] = "Mixed cone subtracted";
+  fileDescription[0] = "Mixed cone";
+  fileDescription[1] = "Reflected cone";
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -92,17 +92,17 @@ void compareEECinDefinedBins(){
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  //comparedJetPtBin.push_back(std::make_pair(140,160));
-  //comparedJetPtBin.push_back(std::make_pair(160,180));
-  //comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(1.5);
-  //comparedTrackPtBin.push_back(2.0);
+  comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
-  //comparedTrackPtBin.push_back(3.0);
+  comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Draw relative uncertaintyon the ratio plot
