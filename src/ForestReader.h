@@ -99,13 +99,20 @@ public:
   virtual Int_t GetNHitsTrack(Int_t iTrack) const = 0;                   // Getter for number of hits for the track
   virtual Float_t GetTrackEnergyEcal(Int_t iTrack) const = 0;            // Getter for track energy in ECal
   virtual Float_t GetTrackEnergyHcal(Int_t iTrack) const = 0;            // Getter for track energy in HCal
-  virtual Int_t GetTrackCharge(Int_t iTrack) const = 0;                  // Getter for track charge (only for generator level tracks)
+  virtual Int_t GetTrackCharge(Int_t iTrack) const = 0;                  // Getter for track charge
   virtual Int_t GetTrackSubevent(Int_t iTrack) const = 0;                // Getter for track subevent index (only for generator level tracks)
   virtual Int_t GetTrackMCStatus(Int_t iTrack) const = 0;                // Getter for track MC status (only for generator level tracks)
   
   virtual Int_t GetTrackAlgorithm(Int_t iTrack) const;                   // Getter for track algorithm
   virtual Int_t GetTrackOriginalAlgorithm(Int_t iTrack) const;           // Getter for track original algorithm
   virtual Float_t GetTrackMVA(Int_t iTrack) const;                       // Getter for track MVA
+
+  virtual Int_t GetNParticles() const = 0;                               // Getter for number of generator level particles
+  virtual Float_t GetParticlePt(Int_t iParticle) const = 0;              // Getter for generator level particle pT
+  virtual Float_t GetParticlePhi(Int_t iParticle) const = 0;             // Getter for generator level particle phi
+  virtual Float_t GetParticleEta(Int_t iParticle) const = 0;             // Getter for generator level particle eta
+  virtual Int_t GetParticleCharge(Int_t iParticle) const = 0;            // Getter for generator level particle charge
+  virtual Int_t GetParticleSubevent(Int_t iParticle) const = 0;          // Getter for generator level particle subevent index
   
   // Setter for data type
   void SetDataType(Int_t dataType); // Setter for data type

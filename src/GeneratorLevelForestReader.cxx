@@ -509,6 +509,36 @@ Int_t GeneratorLevelForestReader::GetTrackMCStatus(Int_t iTrack) const{
   return 1;
 }
 
+// Getter for the number of generator level particles. Same as nTracks for generator level forest reader
+Int_t GeneratorLevelForestReader::GetNParticles() const{
+  return fnTracks;
+}
+
+// Getter for generator level particle pT. Same as regular track pT for generator level forest
+Float_t GeneratorLevelForestReader::GetParticlePt(Int_t iParticle) const{
+  return GetTrackPt(iParticle);
+} 
+
+// Getter for generator level particle phi. Same as regular track phi for generator level forest
+Float_t GeneratorLevelForestReader::GetParticlePhi(Int_t iParticle) const{
+  return GetTrackPhi(iParticle);
+} 
+
+// Getter for generator level particle eta. Same as regular track eta for generator level forest
+Float_t GeneratorLevelForestReader::GetParticleEta(Int_t iParticle) const{
+  return GetTrackEta(iParticle);
+} 
+
+// Getter for generator level particle charge       
+Int_t GeneratorLevelForestReader::GetParticleCharge(Int_t iParticle) const{
+  return GetTrackCharge(iParticle);
+}
+
+// Getter for generator level particle subevent index. Same as regular subevent index for generator level forest
+Int_t GeneratorLevelForestReader::GetParticleSubevent(Int_t iParticle) const{
+  return GetTrackSubevent(iParticle);
+}
+
 // Getter for track pT error (not relevant for generator tracks)
 Float_t GeneratorLevelForestReader::GetTrackPtError(Int_t iTrack) const{
   return 0; // Setting all errors to 0 always passes the track quality cut

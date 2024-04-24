@@ -4,7 +4,7 @@
 DataType 3  # 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = LocalTest
 
 # Select correlation type for Monte Carlo runs (Jet-Track)
-McCorrelationType 3 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
+McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconstructed jets. 2 = Anti-match jets
 
 # Select if you want to use the jet trigger

@@ -71,6 +71,7 @@ public:
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
   Bool_t PassTrackCuts(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a track passes all the track cuts
+  Bool_t PassGenParticleSelection(ForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassGenParticleSelection(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
@@ -82,6 +83,7 @@ public:
   Double_t GetSmearingFactor(Double_t jetPt, Double_t jetEta, const Double_t centrality); // Getter for jet pT smearing factor
   Int_t GetCentralityBin(const Double_t centrality) const; // Getter for centrality bin
   Double_t GetMultiplicity(); // Get the track multiplicity in the current event
+  Int_t GetGenMultiplicity(ForestReader* trackReader, const Int_t subeventIndex, const Bool_t isMegaSkim); // Get the generator level multiplicity
   Double_t GetCentralityFromMultiplicity(const Double_t multiplicity) const; // Get the analysis centrality bin corresponding to the given multiplicity
   Double_t GetDeltaR(const Double_t eta1, const Double_t phi1, const Double_t eta2, const Double_t phi2) const; // Get deltaR between two objects
   Int_t GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent combination type from two track subevents
@@ -186,6 +188,7 @@ public:
   Int_t fnEventsInMixingFile;           // Number of mixed events available
   std::vector<Double_t> fMixedEventVz;  // vz values in mixed events
   std::vector<Int_t> fMixedEventHiBin;  // HiBin values in mixed events
+  std::vector<Int_t> fMixedEventMultiplicity; // Multiplicity in the mixed event
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

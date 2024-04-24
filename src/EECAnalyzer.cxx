@@ -116,6 +116,7 @@ EECAnalyzer::EECAnalyzer() :
   fnEventsInMixingFile(0),
   fMixedEventVz(0),
   fMixedEventHiBin(0),
+  fMixedEventMultiplicity(0),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -394,6 +395,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fnEventsInMixingFile(in.fnEventsInMixingFile),
   fMixedEventVz(in.fMixedEventVz),
   fMixedEventHiBin(in.fMixedEventHiBin),
+  fMixedEventMultiplicity(in.fMixedEventMultiplicity),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -490,6 +492,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fnEventsInMixingFile = in.fnEventsInMixingFile;
   fMixedEventVz = in.fMixedEventVz;
   fMixedEventHiBin = in.fMixedEventHiBin;
+  fMixedEventMultiplicity = in.fMixedEventMultiplicity;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -763,6 +766,9 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t allEventsWentThrough;           // Flag telling if we have gone through all the events in mixing file without finding a matching event
   Double_t vzTolerance;                  // Difference in vz values that we allow between current and mixed events
   Int_t hiBinTolerance;                  // Difference in hiBin values that we allow between current and mixed events
+  Int_t lowMultiplicityTolerance;        // Multiplicity tolerance for events with low multiplicity
+  Double_t multiplicityTolerance;        // Difference in multiplicity values that we allow between current and mixed events
+  Int_t currentMultiplicity;             // Multiplicity in the current event
   Int_t mixedEventFillIndex;             // Index used to fill mixed event track information into vectors
   std::vector<Int_t> mixedEventIndices;  // Vector for holding the events we have already mixed with
   Bool_t skipEvent;                      // Flag for skipping unwanted miked events
@@ -1587,9 +1593,15 @@ void EECAnalyzer::RunAnalysis(){
           // Estimate background from cones dropped to mixed events. This is done only for PbPb
           if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
 
+            if(fDataType == ForestReader::kPbPbMC){
+              currentMultiplicity = GetGenMultiplicity(fTrackReader, kSubeventNonZero, false);
+            }
+
             // Starting from the mixing start index, go over vz and hiBin vector values until a matching event is found
             mixedEventIndex = fMixingStartIndex;
             hiBinTolerance = 0;   // Starting tolerance for hiBin: match the bin value
+            lowMultiplicityTolerance = 1;   // Starting tolerance for low multiplicity: 1 
+            multiplicityTolerance = 0.01;   // Starting tolerance for multiplicity in percentage: 1%
             vzTolerance = 0.5;    // Starting tolerance for vz position: 0.5 cm
             allEventsWentThrough = false;
             mixedEventFillIndex = 2; // First filled index is 2
@@ -1606,9 +1618,15 @@ void EECAnalyzer::RunAnalysis(){
               if(allEventsWentThrough){
                 if(fDebugLevel > 0){
                   cout << "Could not find matching mixed events for event " << iEvent << endl;
-                  cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
+                  if(fDataType == ForestReader::kPbPb){
+                    cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
+                  } else {
+                    cout << "Increasing vz tolerance by 0.5 and multiplicity tolerance by 0.01" << endl;
+                  }
                 }
       
+                multiplicityTolerance += 0.01;
+                lowMultiplicityTolerance++;
                 hiBinTolerance += 1;
                 vzTolerance += 0.5;
                 allEventsWentThrough = false;
@@ -1637,9 +1655,20 @@ void EECAnalyzer::RunAnalysis(){
               // If we have already used the current mixed event, do not use the same event
               if(skipEvent) continue;
 
-              // Match vz and hiBin between the current event and mixed event
+              // Match vz between the current event and mixed event
               if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
-              if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > hiBinTolerance + 1e-4) continue;
+
+              // For data, match the hiBin between the current event and mixed event.
+              // For MC, match hydjet multiplicity instead
+              if(fDataType == ForestReader::kPbPb){
+                if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > hiBinTolerance + 1e-4) continue;
+              } else {
+                if(currentMultiplicity > 100){
+                  if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > (currentMultiplicity * multiplicityTolerance)) continue;
+                } else {
+                  if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > lowMultiplicityTolerance) continue;
+                }
+              }
 
               // If match vz and hiBin, then load the event from the mixed event tree and find particles from jet cone region
               fMixedEventReader->GetEvent(mixedEventIndex);
@@ -3069,6 +3098,38 @@ Bool_t EECAnalyzer::PassTrackCuts(UnfoldingForestReader* trackReader, const Int_
  * Check if a track passes the generator level particle selection criteria
  *
  *  Arguments:
+ *   ForestReader *trackReader = ForestReader from which the generator level particles are read
+ *   const Int_t iTrack = Index of the checked track in reader
+ *
+ *   return: True if all track cuts are passed, false otherwise
+ */
+Bool_t EECAnalyzer::PassGenParticleSelection(ForestReader* trackReader, const Int_t iTrack){
+
+  // Cuts specific to generator level MC tracks
+  if(trackReader->GetParticleCharge(iTrack) == 0) return false;  // Require that the track is charged
+
+  if(!PassSubeventCut(trackReader->GetParticleSubevent(iTrack))) return false;  // Require desired subevent
+
+  Double_t trackPt = trackReader->GetParticlePt(iTrack);
+
+  // Cut for track pT
+  if(trackPt <= fTrackMinPtCut) return false;       // Minimum track pT cut
+  if(trackPt >= fTrackMaxPtCut) return false;       // Maximum track pT cut
+
+  Double_t trackEta = trackReader->GetParticleEta(iTrack);
+
+  // Cut for track eta
+  if(TMath::Abs(trackEta) >= fTrackEtaCut) return false;          // Eta cut
+
+  // If passed all checks, return true
+  return true;
+
+}
+
+/*
+ * Check if a track passes the generator level particle selection criteria
+ *
+ *  Arguments:
  *   UnfoldingForestReader *trackReader = UnfoldingForestReader from which the generator level particles are read
  *   const Int_t iTrack = Index of the checked track in reader
  *
@@ -3197,6 +3258,58 @@ Double_t EECAnalyzer::GetMultiplicity(){
   
   return trackMultiplicity;
   
+}
+
+/*
+ * Get the generator level multiplicity
+ *
+ * Argument:
+ *  ForestReader* trackReader = Reader used to determine the multiplicity
+ *  const Int_t subeventIndex = Subevents used to calculate the multiplicity
+ *  const bool inMegaSkim = Multiplicity is asked for a mega skimmed file
+ */
+Int_t EECAnalyzer::GetGenMultiplicity(ForestReader* trackReader, const Int_t subeventIndex, const Bool_t isMegaSkim){
+
+  // Find the number of particles
+  Int_t nParticles = trackReader->GetNParticles();
+  Int_t particleMultiplicity = 0;
+
+  // Select the desired subevent cut, that might be different from general selection
+  Int_t originalCut = fSubeventCut;
+  if(subeventIndex >= 0){
+    fSubeventCut = subeventIndex;
+  }
+
+  // Loop over all particles in the event
+  for(Int_t iParticle = 0; iParticle < nParticles; iParticle++){
+
+    if(isMegaSkim){
+
+      // For mega skims, the kinematic selection is already done. We just need to pass the subevent cut
+      if(!PassSubeventCut(trackReader->GetParticleSubevent(iParticle))) continue;
+
+      // If we pass, increment the counter!
+      particleMultiplicity++;
+
+    } else {
+  
+      // Check that we are in the kinematic region of interest
+      if(!PassGenParticleSelection(trackReader, iParticle)) continue;
+
+      // If we are, increment the counter!
+      particleMultiplicity++;
+
+    }
+
+  } // Particle loop
+
+  // Set the subevent cut back to original value
+  fSubeventCut = originalCut;
+
+  // Return the determined multiplicity
+  return particleMultiplicity;
+
+
 }
 
 /*
@@ -3563,21 +3676,44 @@ void EECAnalyzer::PrepareMixingVectors(){
 
   // Read vz and hiBin from each event in event mixing file to memory.
   // This way we avoid loading different mixed events in a loop several times
-  fMixedEventVz.clear();     // Clear the vectors for any possible
-  fMixedEventHiBin.clear();  // contents they might have
-  for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-    fMixedEventReader->GetEvent(iMixedEvent);
-    if(fMegaSkimMode){
-      // Event selection is already applied in mega skim mode. No need to check it again here.
-      fMixedEventVz.push_back(fMixedEventReader->GetVz());
-      fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
-    } else if(PassEventCuts(fMixedEventReader,false)){
-      fMixedEventVz.push_back(fMixedEventReader->GetVz());
-      fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
-    } else { // If event cuts not passed, input values such that events will never be mixed with these
-      fMixedEventVz.push_back(100);
-      fMixedEventHiBin.push_back(1000);
-    }
+  fMixedEventVz.clear();     // Clear the vectors for any 
+  fMixedEventHiBin.clear();  // possible contents they 
+  fMixedEventMultiplicity.clear(); // might have
+
+  // For data, fill the vz and hiBin arrays
+  if(fDataType == ForestReader::kPbPb){
+    for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
+      fMixedEventReader->GetEvent(iMixedEvent);
+      if(fMegaSkimMode){
+        // Event selection is already applied in mega skim mode. No need to check it again here.
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+      } else if(PassEventCuts(fMixedEventReader,false)){
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+      } else { // If event cuts not passed, input values such that events will never be mixed with these
+        fMixedEventVz.push_back(100);
+        fMixedEventHiBin.push_back(1000);
+      }
+    } // Loop over all mixed events
+  }
+
+  // For MC, fill the vz and generator level particle multiplicity arrays for more accurate event matching
+  if(fDataType == ForestReader::kPbPbMC){
+    for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
+      fMixedEventReader->GetEvent(iMixedEvent);
+      if(fMegaSkimMode){
+        // Event selection is already applied in mega skim mode. No need to check it again here.
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventMultiplicity.push_back(GetGenMultiplicity(fMixedEventReader, kSubeventAny, true));
+      } else if(PassEventCuts(fMixedEventReader,false)){
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventMultiplicity.push_back(GetGenMultiplicity(fMixedEventReader, kSubeventAny, false));
+      } else { // If event cuts not passed, input values such that events will never be mixed with these
+        fMixedEventVz.push_back(100);
+        fMixedEventMultiplicity.push_back(-10);
+      }
+    } // Loop over all mixed events
   }
   
 }

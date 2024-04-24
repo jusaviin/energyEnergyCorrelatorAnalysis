@@ -67,6 +67,14 @@ public:
   Int_t GetTrackAlgorithm(Int_t iTrack) const;               // Getter for track algorithm
   Int_t GetTrackOriginalAlgorithm(Int_t iTrack) const;       // Getter for track original algorithm
   Float_t GetTrackMVA(Int_t iTrack) const;                   // Getter for track MVA
+
+  // Getters for universally generator level quantities
+  Int_t GetNParticles() const;                               // Getter for number of generator level particles
+  Float_t GetParticlePt(Int_t iParticle) const;              // Getter for generator level particle pT
+  Float_t GetParticlePhi(Int_t iParticle) const;             // Getter for generator level particle phi
+  Float_t GetParticleEta(Int_t iParticle) const;             // Getter for generator level particle eta
+  Int_t GetParticleCharge(Int_t iParticle) const;            // Getter for generator level particle charge
+  Int_t GetParticleSubevent(Int_t iParticle) const;          // Getter for generator level particle subevent index
   
   // Check if generator level jet has a matching reconstructed jet
   Bool_t HasMatchingJet(Int_t iJet) const;      // Check if generator level jet has a matching reconstructed jet
@@ -87,6 +95,7 @@ private:
   TChain* fHltTree;         // Tree for high level trigger information
   TChain* fSkimTree;        // Tree for event selection information
   TChain* fTrackTree;       // Tree for tracks.  miniAOD: ppTrack/trackTree. AOD: PbPbTracks/trackTree
+  TChain* fParticleTree;    // Tree for generator level particles. Needed for event mixing in MC
   
   // Non-common branches for all types of trees
   TBranch* fnJetsBranch;         // Branch for number of jets in an event
@@ -98,6 +107,12 @@ private:
   TBranch* fTrackAlgorithmBranch;         // Branch for track algorithm
   TBranch* fTrackOriginalAlgorithmBranch; // Branch for track original algorithm
   TBranch* fTrackMVABranch;               // Branch for track MVA
+
+  TBranch* fParticlePtBranch;             // Branch for particle pT:s
+  TBranch* fParticleEtaBranch;            // Branch for particle phis
+  TBranch* fParticlePhiBranch;            // Branch for particle etas
+  TBranch* fParticleChargeBranch;         // Branch for particle charges
+  TBranch* fParticleSubeventBranch;       // Branch for particle subevent indices (0 = PYTHIA, (>0) = HYDJET)
   
   // Leaves for jet tree
   Float_t fJetPtArray[fnMaxJet] = {0};            // pT:s of all the jets in an event
@@ -151,6 +166,13 @@ private:
   vector<char>* fnHitsTrackVector;                  // Vector for number of hits for the track
   vector<float>* fTrackEnergyEcalVector;            // Vector for track energy in ECal
   vector<float>* fTrackEnergyHcalVector;            // Vector for track energy in HCal
+
+  // Leaves for the generator level particle tree
+  vector<float>* fParticlePtVector;       // Vector for particle pT:s
+  vector<float>* fParticlePhiVector;      // Vector for particle phis
+  vector<float>* fParticleEtaVector;      // Vector for particle etas
+  vector<int>* fParticleChargeVector;     // Vector for particle charges
+  vector<int>* fParticleSubeventVector;   // Vector for particle subevent indices (0 = PYTHIA, (>0) = HYDJET)
 
 };
 

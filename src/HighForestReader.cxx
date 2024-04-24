@@ -13,6 +13,7 @@ HighForestReader::HighForestReader() :
   fHltTree(0),
   fSkimTree(0),
   fTrackTree(0),
+  fParticleTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
   fMatchedJetWTAEtaBranch(0),
@@ -20,6 +21,11 @@ HighForestReader::HighForestReader() :
   fTrackAlgorithmBranch(0),
   fTrackOriginalAlgorithmBranch(0),
   fTrackMVABranch(0),
+  fParticlePtBranch(0),
+  fParticleEtaBranch(0),
+  fParticlePhiBranch(0),
+  fParticleChargeBranch(0),
+  fParticleSubeventBranch(0),
   fJetPtArray(),
   fJetPhiArray(),
   fJetEtaArray(),
@@ -55,7 +61,12 @@ HighForestReader::HighForestReader() :
   fnHitsTrackerLayerVector(0),
   fnHitsTrackVector(0),
   fTrackEnergyEcalVector(0),
-  fTrackEnergyHcalVector(0)
+  fTrackEnergyHcalVector(0),
+  fParticlePtVector(0),
+  fParticlePhiVector(0),
+  fParticleEtaVector(0),
+  fParticleChargeVector(0),
+  fParticleSubeventVector(0)
 {
   // Default constructor
   
@@ -85,6 +96,7 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fHltTree(0),
   fSkimTree(0),
   fTrackTree(0),
+  fParticleTree(0),
   fnJetsBranch(0),
   fnTracksBranch(0),
   fMatchedJetWTAEtaBranch(0),
@@ -92,6 +104,11 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fTrackAlgorithmBranch(0),
   fTrackOriginalAlgorithmBranch(0),
   fTrackMVABranch(0),
+  fParticlePtBranch(0),
+  fParticleEtaBranch(0),
+  fParticlePhiBranch(0),
+  fParticleChargeBranch(0),
+  fParticleSubeventBranch(0),
   fJetPtArray(),
   fJetPhiArray(),
   fJetEtaArray(),
@@ -126,7 +143,12 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fnHitsTrackerLayerVector(0),
   fnHitsTrackVector(0),
   fTrackEnergyEcalVector(0),
-  fTrackEnergyHcalVector(0)
+  fTrackEnergyHcalVector(0),
+  fParticlePtVector(0),
+  fParticlePhiVector(0),
+  fParticleEtaVector(0),
+  fParticleChargeVector(0),
+  fParticleSubeventVector(0)
 {
   // Custom constructor
   
@@ -147,6 +169,7 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fHltTree(in.fHltTree),
   fSkimTree(in.fSkimTree),
   fTrackTree(in.fTrackTree),
+  fParticleTree(in.fParticleTree),
   fnJetsBranch(in.fnJetsBranch),
   fnTracksBranch(in.fnTracksBranch),
   fMatchedJetWTAEtaBranch(in.fMatchedJetWTAEtaBranch),
@@ -154,6 +177,11 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fTrackAlgorithmBranch(in.fTrackAlgorithmBranch),
   fTrackOriginalAlgorithmBranch(in.fTrackOriginalAlgorithmBranch),
   fTrackMVABranch(in.fTrackMVABranch),
+  fParticlePtBranch(in.fParticlePtBranch),
+  fParticleEtaBranch(in.fParticleEtaBranch),
+  fParticlePhiBranch(in.fParticlePhiBranch),
+  fParticleChargeBranch(in.fParticleChargeBranch),
+  fParticleSubeventBranch(in.fParticleSubeventBranch),
   fTrackPtVector(in.fTrackPtVector),
   fTrackPhiVector(in.fTrackPhiVector),
   fTrackEtaVector(in.fTrackEtaVector),
@@ -166,7 +194,12 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fnHitsTrackerLayerVector(in.fnHitsTrackerLayerVector),
   fnHitsTrackVector(in.fnHitsTrackVector),
   fTrackEnergyEcalVector(in.fTrackEnergyEcalVector),
-  fTrackEnergyHcalVector(in.fTrackEnergyHcalVector)
+  fTrackEnergyHcalVector(in.fTrackEnergyHcalVector),
+  fParticlePtVector(in.fParticlePtVector),
+  fParticlePhiVector(in.fParticlePhiVector),
+  fParticleEtaVector(in.fParticleEtaVector),
+  fParticleChargeVector(in.fParticleChargeVector),
+  fParticleSubeventVector(in.fParticleSubeventVector)
 {
   // Copy constructor
   for(Int_t i = 0; i < fnMaxJet; i++){
@@ -214,6 +247,7 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fHltTree = in.fHltTree;
   fSkimTree = in.fSkimTree;
   fTrackTree = in.fTrackTree;
+  fParticleTree = in.fParticleTree;
   fnJetsBranch = in.fnJetsBranch;
   fnTracksBranch = in.fnTracksBranch;
   fMatchedJetWTAEtaBranch = in.fMatchedJetWTAEtaBranch;
@@ -221,6 +255,11 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fTrackAlgorithmBranch = in.fTrackAlgorithmBranch;
   fTrackOriginalAlgorithmBranch = in.fTrackOriginalAlgorithmBranch;
   fTrackMVABranch = in.fTrackMVABranch;
+  fParticlePtBranch = in.fParticlePtBranch;
+  fParticleEtaBranch = in.fParticleEtaBranch;
+  fParticlePhiBranch = in.fParticlePhiBranch;
+  fParticleChargeBranch = in.fParticleChargeBranch;
+  fParticleSubeventBranch = in.fParticleSubeventBranch;
   
   for(Int_t i = 0; i < fnMaxJet; i++){
     fJetPtArray[i] = in.fJetPtArray[i];
@@ -265,6 +304,12 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fnHitsTrackVector = in.fnHitsTrackVector;
   fTrackEnergyEcalVector = in.fTrackEnergyEcalVector;
   fTrackEnergyHcalVector = in.fTrackEnergyHcalVector;
+
+  fParticlePtVector = in.fParticlePtVector;
+  fParticlePhiVector = in.fParticlePhiVector;
+  fParticleEtaVector = in.fParticleEtaVector;
+  fParticleChargeVector = in.fParticleChargeVector;
+  fParticleSubeventVector = in.fParticleSubeventVector;
   
   return *this;
 }
@@ -566,6 +611,27 @@ void HighForestReader::Initialize(){
     }
   } // Reading track trees
 
+  // Generator level particles needed only is we do mixing, and we are working on Monte Carlo simulations
+  if(fDataType == kPbPbMC){
+
+    fParticleTree->SetBranchStatus("*",0);
+    fParticleTree->SetBranchStatus("pt",1);
+    fParticleTree->SetBranchAddress("pt",&fParticlePtVector,&fParticlePtBranch);
+    fParticleTree->SetBranchStatus("phi",1);
+    fParticleTree->SetBranchAddress("phi",&fParticlePhiVector,&fParticlePhiBranch);
+    fParticleTree->SetBranchStatus("eta",1);
+    fParticleTree->SetBranchAddress("eta",&fParticleEtaVector,&fParticleEtaBranch);
+    fParticleTree->SetBranchStatus("sube",1);
+    fParticleTree->SetBranchAddress("sube",&fParticleSubeventVector,&fParticleSubeventBranch);
+
+    // The track charge is not available in mega skims
+    if(!fMegaSkimMode){
+      fParticleTree->SetBranchStatus("chg",1);
+      fParticleTree->SetBranchAddress("chg",&fParticleChargeVector,&fParticleChargeBranch);
+    }
+
+  }
+
   // We need to load one event to initialize TChains properly. Not sure why, but this is how things seem to work
   GetEvent(0);
   
@@ -619,6 +685,10 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
       fTrackTree = new TChain("ppTrack/trackTree");
     }
   }
+
+  if(fDataType == kPbPbMC){
+    fParticleTree = new TChain("HiGenParticleAna/hi");
+  }
   
   for(std::vector<TString>::iterator listIterator = fileList.begin(); listIterator != fileList.end(); listIterator++){
     fHeavyIonTree->Add(*listIterator);
@@ -626,6 +696,9 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
     if(fUseJetTrigger) fHltTree->Add(*listIterator);
     if(!fMixingMode) fJetTree->Add(*listIterator);
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
+    if(fDataType == kPbPbMC){
+      fParticleTree->Add(*listIterator);
+    }
   }
   
   // Connect branches to trees
@@ -641,6 +714,7 @@ void HighForestReader::BurnForest(){
   fSkimTree->Delete();
   fJetTree->Delete();
   fTrackTree->Delete();
+  fParticleTree->Delete();
 }
 
 /*
@@ -690,6 +764,9 @@ void HighForestReader::GetEvent(Int_t nEvent){
     if(fIsMiniAOD){
       fnTracks = fTrackPtVector->size();
     }
+  }
+  if(fDataType == kPbPbMC){
+    fParticleTree->GetEntry(nEvent);
   }
 }
 
@@ -845,6 +922,36 @@ Int_t HighForestReader::GetTrackOriginalAlgorithm(Int_t iTrack) const{
 Float_t HighForestReader::GetTrackMVA(Int_t iTrack) const{
   if(fIsMiniAOD) return 1; // Does not exist in MiniAOD forest
   return fTrackMVAArray[iTrack];
+}
+
+// Getter for the number of generator level particles
+Int_t HighForestReader::GetNParticles() const{
+  return fParticlePtVector->size();
+}
+
+// Getter for generator level particle pT
+Float_t HighForestReader::GetParticlePt(Int_t iParticle) const{
+  return fParticlePtVector->at(iParticle);
+} 
+
+// Getter for generator level particle phi
+Float_t HighForestReader::GetParticlePhi(Int_t iParticle) const{
+  return fParticlePhiVector->at(iParticle);
+} 
+
+// Getter for generator level particle eta
+Float_t HighForestReader::GetParticleEta(Int_t iParticle) const{
+  return fParticleEtaVector->at(iParticle);
+} 
+
+// Getter for generator level particle charge       
+Int_t HighForestReader::GetParticleCharge(Int_t iParticle) const{
+  return fParticleChargeVector->at(iParticle);
+}
+
+// Getter for generator level particle subevent index
+Int_t HighForestReader::GetParticleSubevent(Int_t iParticle) const{
+  return fParticleSubeventVector->at(iParticle);
 }
 
 // Check if generator level jet has a matching reconstructed jet

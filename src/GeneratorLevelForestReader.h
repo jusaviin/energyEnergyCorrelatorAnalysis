@@ -64,6 +64,14 @@ public:
   Int_t GetNHitsTrack(Int_t iTrack) const;                   // Getter for number of hits for the track
   Float_t GetTrackEnergyEcal(Int_t iTrack) const;            // Getter for track energy in ECal
   Float_t GetTrackEnergyHcal(Int_t iTrack) const;            // Getter for track energy in HCal
+
+  // Getters for universally generator level quantities
+  Int_t GetNParticles() const;                               // Getter for number of generator level particles
+  Float_t GetParticlePt(Int_t iParticle) const;              // Getter for generator level particle pT
+  Float_t GetParticlePhi(Int_t iParticle) const;             // Getter for generator level particle phi
+  Float_t GetParticleEta(Int_t iParticle) const;             // Getter for generator level particle eta
+  Int_t GetParticleCharge(Int_t iParticle) const;            // Getter for generator level particle charge
+  Int_t GetParticleSubevent(Int_t iParticle) const;          // Getter for generator level particle subevent index
   
   // Check if generator level jet has a matching reconstructed jet
   Bool_t HasMatchingJet(Int_t iJet) const;  // Check if generator level jet has a matching reconstructed jet
