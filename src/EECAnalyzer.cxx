@@ -885,7 +885,7 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[0][0][1] = "none";  // No mixing for pp
   fileListName[0][1][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
   fileListName[0][2][1] = "none";  // No mixing for pp MC
-  fileListName[0][3][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+  fileListName[0][3][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetMegaSkims_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
 
   // Local test, mega skimmed mixing forest
   fileListName[1][0][1] = "none";  // No mixing for pp
