@@ -878,11 +878,11 @@ void EECAnalyzer::RunAnalysis(){
   // Transform the CRAB job index into a accepted range of mixing job indices
   if(fMixingListIndex < 0){
     fMixingListIndex = fMixingListIndex * -1;
-    if(fDataType == ForestReader::kPbPbMC){
-      // There are four copies of mixing file list for PbPb MC
+    if(fDataType == ForestReader::kPbPbMC && !fMegaSkimMode){
+      // There are four copies of non-mega skimmed mixing file list for PbPb MC
       fMixingListIndex = (fMixingListIndex % 4) + 1;
-    } else if (fDataType == ForestReader::kPbPb){
-      // There are eight copies of the mixing file list for PbPb data
+    } else {
+      // There are eight copies all other mixing file lists
       fMixingListIndex = (fMixingListIndex % 8) + 1;
     }
   }

@@ -1,0 +1,3 @@
+root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_1_copy4.root
+root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_2_copy4.root
+root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_3_copy4.root
