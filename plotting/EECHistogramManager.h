@@ -134,6 +134,7 @@ public:
   void LoadHistograms();          // Load the histograms from the inputfile
   void Write(const char* fileName, const char* fileOption);          // Write all the loaded histograms into a file
   void WriteProcessed(const char* fileName, const char* fileOption); // Write the processed histograms into a file
+  void WriteCombinedMixedConeHistograms(const char* fileName, const char* fileOption); // Write the mixed cone histograms after combining them
   void WriteUnfoldedEnergyEnergyCorrelators(const char* fileName, const char* fileOption); // Write the unfolded energy-energy correlators to a file
   void WriteProcessedAfterUnfolding(const char* fileName, const char* fileOption); // Write the processed energy-energy correlators after unfolding into a file
   void WriteCovarianceMatrixAfterUnfolding(const char* fileName, const char* fileOption); // Write the unfolded covariance matrices into a file
@@ -204,6 +205,9 @@ public:
   // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
   void SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt);
   void SetUnfoldedCoverianceMatrix(const TH2D* unfoldedCovarianceMatrix, const int iCentrality, const int iTrackPt);
+
+  // Combine mixed cone histograms from other histogram manager to those in this histogram manager
+  void CombineMixedConeBackgrounds(EECHistogramManager* anotherManager);
 
   // Getters for number of bins in histograms
   int GetNCentralityBins() const;          // Getter for the number of centrality bins

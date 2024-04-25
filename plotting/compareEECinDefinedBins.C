@@ -11,7 +11,7 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 2;
+  const int nComparisonFiles = 3;
   TString fileName[nComparisonFiles];
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
   
@@ -19,8 +19,9 @@ void compareEECinDefinedBins(){
   //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_fixedCovarianceMatrix_processed_2024-04-18.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root";
+  fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_moreMixing_megaSkim_processed_2024-04-23.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
@@ -38,8 +39,9 @@ void compareEECinDefinedBins(){
 
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Mixed cone";
-  fileDescription[1] = "Reflected cone";
+  fileDescription[0] = "Combined mixing";
+  fileDescription[1] = "Regular mixing";
+  fileDescription[2] = "Mega skimmed mix";
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -102,7 +104,7 @@ void compareEECinDefinedBins(){
   //comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
-  comparedTrackPtBin.push_back(3.0);
+  //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Draw relative uncertaintyon the ratio plot
@@ -151,7 +153,7 @@ void compareEECinDefinedBins(){
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.7, 1.3);
+  std::pair<double, double> ratioZoom = std::make_pair(0.95, 1.05);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 

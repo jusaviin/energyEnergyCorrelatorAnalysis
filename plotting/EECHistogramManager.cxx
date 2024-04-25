@@ -687,6 +687,7 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
   std::pair<double,double> centralityBinBorders;
   std::pair<double,double> jetPtBinBorders;
   double trackPtLowBorder;  // We only care about the lower border in track pT bins
+  TH1D* trueFakeBackground; // Properly estimated fake-fake background
 
   // Loop over the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
@@ -710,8 +711,19 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
           
           // Mixed event background subtraction method. In this method, jet cone is placed on the location of the original jet in minimum bias mixed events. This way detector performance stays the same. Particles from original jet cone are paired with particles in the mixed event cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we generate another mixed event, subtract the pairing between two different mixed events, and add back pairings from a single mixed event. This gives the most accurate estimation of the background.
           if(iMethod == 0){
+
+            // Since pairing signal particles with mixed cone particles should give the same results regardless if we use the first or second mixed cones to do the pairing, average these two in order to suppress fluctuations
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalSecondMixedConePair][EECHistograms::knSubeventCombinations]);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(0.5);
+
+            // Since mixed cone pairs in two used mixed events both have the same information, get the average of them to suppress fluctuations in the background
+            trueFakeBackground = (TH1D*)fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("trueFakeBackground_%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt));
+            trueFakeBackground->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSecondMixedConePair][EECHistograms::knSubeventCombinations]);
+            trueFakeBackground->Scale(0.5);
+
+            // Add the true fake background and subtract the fake fake background
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(trueFakeBackground);
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
           }
 
@@ -786,6 +798,70 @@ void EECHistogramManager::StabilizeBackground(){
       } // Track pT loop
     } // Centrality loop
   } // Energy-energy correlator type loop
+}
+
+/*
+ * Combine mixed cone histograms from other histogram manager to those in this histogram manager
+ *
+ *  Arguments:
+ *   EECHistogramManager* anotherManager = Histogram manager from which the combined mixed cone histograms are found
+ *
+ */
+void EECHistogramManager::CombineMixedConeBackgrounds(EECHistogramManager* anotherManager){
+
+  // Matching bins from the other histogram manager
+  int matchingCentralityBin;
+  int matchingTrackPtBin;
+  int matchingJetPtBin;
+
+  // We need EECCard related to the other histogram manager to be sure we match the kinematic bins
+  EECCard *anotherCard = anotherManager->GetCard();
+
+  // Loop over the energy-energy correlator histograms
+  for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
+
+    // Only combine the selected types of histograms
+    if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;
+
+    // Loop over all the kinematic bins and find matching bins from the other histogram manager
+    for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+
+      // Find matching centrality bin. Throw an error if none is found
+      matchingCentralityBin = anotherCard->FindBinIndexCentrality(fCard->GetBinBordersCentrality(iCentrality));
+      if(matchingCentralityBin == -1){
+        throw std::invalid_argument(Form("EECHistogramManager::ERROR When combining mixed cone histograms, did not find matching centrality bin for %.0f-%.0f!", fCard->GetBinBordersCentrality(iCentrality).first, fCard->GetBinBordersCentrality(iCentrality).second));
+      } 
+
+      for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+
+        // Find matching centrality bin. Throw an error if none is found
+        matchingTrackPtBin = anotherCard->GetBinIndexTrackPtEEC(fCard->GetLowBinBorderTrackPtEEC(iTrackPt));
+        if(matchingTrackPtBin == -1){
+          throw std::invalid_argument(Form("EECHistogramManager::ERROR When combining mixed cone histograms, did not find matching track bin for %.1f!", fCard->GetLowBinBorderTrackPtEEC(iTrackPt)));
+        } 
+
+        for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+          // Find matching jet pT bin. Throw an error if none is found.
+          matchingJetPtBin = anotherCard->FindBinIndexJetPtEEC(fCard->GetBinBordersJetPtEEC(iJetPt));
+          if(matchingJetPtBin == -1){
+            throw std::invalid_argument(Form("EECHistogramManager::ERROR When combining mixed cone histograms, did not find matching jet pT bin for %.0f-%.0f!", fCard->GetBinBordersJetPtEEC(iJetPt).first, fCard->GetBinBordersJetPtEEC(iJetPt).second));
+          }
+
+          // Loop over all the mixed event related pairing types
+          for(int iPairingType = EECHistograms::kSignalMixedConePair; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+
+            // Combining histograms with this method assumes that both histograms have similar number of events
+            // More complicated weighting system is needed if the histograms have different numbers of events.
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Add(anotherManager->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, matchingCentralityBin, matchingJetPtBin, matchingTrackPtBin, iPairingType));
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Scale(0.5);
+
+          } // Pairing type loop
+        } // Jet pT loop
+      } // Track pT loop
+    } // Centrality loop
+  } // Energy-energy correlator type loop
+
 }
 
 /*
@@ -3401,6 +3477,28 @@ void EECHistogramManager::WriteProcessed(const char* fileName, const char* fileO
   // Delete the outputFile object
   delete outputFile;
   
+}
+
+/*
+ * Write the mixed cone histograms after combining them
+ *
+ *  const char* fileName = Name of the file to which the histograms are written
+ *  const char* fileOption = Option given to the file when it is loaded
+ */
+void EECHistogramManager::WriteCombinedMixedConeHistograms(const char* fileName, const char* fileOption){
+
+  // Create the output file
+  TFile* outputFile = new TFile(fileName,fileOption);
+
+  // Write the energy-energy correlator histograms to the output file
+  WriteEnergyEnergyCorrelatorHistograms();
+
+  // Close the file after everything is written
+  outputFile->Close();
+  
+  // Delete the outputFile object
+  delete outputFile;
+
 }
 
 /*
