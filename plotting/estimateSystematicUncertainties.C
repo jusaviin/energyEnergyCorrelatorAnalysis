@@ -7,6 +7,7 @@
 #include <algorithm>
 
 // Function definitions. Implementations after the main macro.
+TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs, const int ignoreIndex);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
@@ -41,6 +42,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   }
 
   // Before mixing can be generated for different track selections, use the relative uncertainties done with respect to reflected cone
+  // TODO: We need to use premade file also for tracking efficiencies. There it is crucial that the background is exactly the same, and does not affect the results. Use the obtained relative uncertainties also for these.
   const bool temporaryLackOfMixingFixForTrackSelection = true;
   
   // ==================================================================
@@ -49,6 +51,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   // Nominal results
   TString nominalResultFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root"};
+  //TString nominalResultFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root"}; // Result files for track selection uncertainties
   TFile* nominalResultFile = TFile::Open(nominalResultFileName[weightExponent-1]);
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
@@ -201,7 +204,6 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     plotExample[iUncertainty] = false;
   }
   skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
-  //plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -489,6 +491,9 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   // Legends given to drawns graphs
   TString legendNames[2];
+
+  // Option to ignore some of the differences as unreasonable
+  int ignoreIndex = -1;
   
   // ================================================= //
   //   Uncertainty coming from jet energy resolution   //
@@ -537,10 +542,12 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
-              if(iCentrality == 0){
+              if(iCentrality == 0 && weightExponent == 2){
                 ratioZoom = std::make_pair(0.3,1.7);
-              } else if (iCentrality == 1){
+              } else if (iCentrality == 1 && weightExponent == 2){
                 ratioZoom = std::make_pair(0.6,1.4);
+              } else if (iCentrality == 0 && weightExponent == 1){
+                ratioZoom = std::make_pair(0.75,1.25);
               } else {
                 ratioZoom = std::make_pair(0.8,1.2);
               }
@@ -672,8 +679,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
-              if(iCentrality == 0){
-                ratioZoom = std::make_pair(0.85,1.15);
+              if(iCentrality == 0 || (iCentrality == 1 && weightExponent == 2)){
+                ratioZoom = std::make_pair(0.8,1.2);
               } else {
                 ratioZoom = std::make_pair(0.9,1.1);
               }
@@ -707,7 +714,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
               if(iCentrality == 0 && weightExponent == 2){
-                ratioZoom = std::make_pair(0.78,1.22);
+                ratioZoom = std::make_pair(0.75,1.25);
               } else if(iCentrality == 0 && weightExponent == 1){
                 ratioZoom = std::make_pair(0.88,1.12);
               } else {
@@ -828,7 +835,13 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kCentralityShift] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+          if(weightExponent == 1 && iCentrality == 3 && iTrackPt == 1 && iJetPt == 5){
+            ignoreIndex = 0;
+          } else {
+            ignoreIndex = -1;
+          }
+
+          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kCentralityShift] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, ignoreIndex);
 
           // Draw example plots on how the uncertainty is obtained
           if(plotExample[SystematicUncertaintyOrganizer::kCentralityShift] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
@@ -1002,11 +1015,12 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
  *  TH1D* nominalResult = Histogram containing nominal results
  *  TH1D* variedResult = Histograms containing varied results for systematic uncertainty estimation
  *  const int nVariations = Number of variations used to estimate the systematic uncertainties
+ *  const int ignoreIndex = If some of the variations is deemed bad, ignore that in the error calculation
  *
  *  return: Histogram where the error bars in each point correspond to estimated systematic uncertainty
  *
  */
-TH1D* findTheDifference(TH1D *nominalResult, TH1D *variedResult[], const int nVariations){
+TH1D* findTheDifference(TH1D *nominalResult, TH1D *variedResult[], const int nVariations, const int ignoreIndex){
   
   // Create an uncertainty histogram from the nominal results
   TH1D* uncertaintyHistogram = (TH1D*) nominalResult->Clone(Form("uncertaintyFor%s", variedResult[0]->GetName()));
@@ -1016,10 +1030,11 @@ TH1D* findTheDifference(TH1D *nominalResult, TH1D *variedResult[], const int nVa
   for(int iBin = 1; iBin <= nominalResult->GetNbinsX(); iBin++){
     biggestDifference = 0;
     for(int iVariation = 0; iVariation < nVariations; iVariation++){
+      if(iVariation == ignoreIndex) continue;
       currentDifference = TMath::Abs(nominalResult->GetBinContent(iBin) - variedResult[iVariation]->GetBinContent(iBin));
       if(currentDifference > biggestDifference) biggestDifference = currentDifference;
     }
-    uncertaintyHistogram->SetBinError(iBin, currentDifference);
+    uncertaintyHistogram->SetBinError(iBin, biggestDifference);
   } // Histogram bin loop
   
   // Return the histogram where the errors represent the systematic uncertainties
@@ -1028,7 +1043,23 @@ TH1D* findTheDifference(TH1D *nominalResult, TH1D *variedResult[], const int nVa
 }
 
 /*
- * Function for finding the realtive and absolute difference of points in two graphs
+ * Function for finding the relative and absolute difference of points in two graphs
+ *
+ *  TH1D* nominalResult = Histogram containing nominal results
+ *  TH1D* variedResult = Histogram containing varied results for systematic uncertainty estimation
+ *  const int nVariations = Number of variations used to estimate the systematic uncertainties
+ *
+ *  return: Histogram where the error bars in each point correspond to estimated systematic uncertainty
+ *
+ */
+TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nVariations){
+  
+  return findTheDifference(nominalResult, variedResult, nVariations, -1);
+  
+}
+
+/*
+ * Function for finding the relative and absolute difference of points in two graphs
  *
  *  TH1D* nominalResult = Histogram containing nominal results
  *  TH1D* variedResult = Histogram containing varied results for systematic uncertainty estimation
@@ -1040,7 +1071,7 @@ TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult){
   
   // Enclose the single graph to an array and use the difference finder for graph array
   TH1D* comparisonArray[1] = {variedResult};
-  return findTheDifference(nominalResult, comparisonArray, 1);
+  return findTheDifference(nominalResult, comparisonArray, 1, -1);
   
 }
 
