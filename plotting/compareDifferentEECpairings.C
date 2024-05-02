@@ -11,7 +11,10 @@
 void compareDifferentEECpairings(){
   
   // Studied file
-  TString fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_semiOkStats_processed_2024-04-12.root";
+  TString fileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root";
+
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root
+  // eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root
 
   // eecAnalysis_akFlowJet_energyWeightSquared_allBackgrounds_includeSystematics_processed_2024-03-31.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_allBackgrounds_includeSystematics_processed_2024-03-31.root
@@ -56,17 +59,17 @@ void compareDifferentEECpairings(){
   
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  //comparedJetPtBin.push_back(std::make_pair(140,160));
-  //comparedJetPtBin.push_back(std::make_pair(160,180));
-  //comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
-  comparedTrackPtBin.push_back(1.0);
+  //comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(2.0);
-  //comparedTrackPtBin.push_back(3.0);
+  comparedTrackPtBin.push_back(3.0);
 
   // Enumeration for different pairing types
-  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kCompiledBackground, kCompiledBackgroundTruthLevel, knPairingTypes};
+  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kCompiledBackground, kCompiledBackgroundTruthLevel, kCombinedSignalMixedConePair, kCombinedMixedConePair, knPairingTypes};
   enum enumSubeventType{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations, kAllBackground, knSubeventTypes};
 
   // Indices that go into pairing here:
@@ -88,22 +91,22 @@ void compareDifferentEECpairings(){
   //   EECHistograms::kHydjetHydjet
   //   EECHistograms::knSubeventCombinations (accept any subevent combination)
   std::vector<std::pair<int,int>> comparedEnergyEnergyCorrelatorPairings;
-  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSameJetPair, kAllBackground));
   comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedConePair, knSubeventCombinations));
-  //comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kSecondMixedConePair, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCombinedSignalMixedConePair, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedMixedConePair, knSubeventCombinations));
+  comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCombinedMixedConePair, knSubeventCombinations));
   
   // Choose legen position for the plots
   enum enumLegendPosition{kBottomLeft, kBottomRight, kTopLeft};
-  const int legendPosition = kBottomRight;
+  const int legendPosition = kTopLeft;
 
   // Option to manually provide legend text for the compared distributions
   const bool useManualLegend = true;
   std::vector<TString> manualLegend;
-  manualLegend.push_back("True background");
-  manualLegend.push_back("Mixed cone, nGen matched");
-  //manualLegend.push_back("Mixed cone pair 1");
-  //manualLegend.push_back("Mixed cone pair 2");
+  manualLegend.push_back("Compiled background");
+  manualLegend.push_back("Signal+mixed cone pair");
+  manualLegend.push_back("Mixed1+mixed2 cone pair");
+  manualLegend.push_back("Mixed1+mixed1 cone pair");
 
 
   // Flag for normalizing distributions to one over studied deltaR range
@@ -128,8 +131,8 @@ void compareDifferentEECpairings(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
-  TString saveComment = "_mixedBackgroundGenMatched";   // Comment given for this specific file
+  const bool saveFigures = false;  // Save figures
+  TString saveComment = "_mixedBackgroundComponents";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   int weightExponent = card->GetWeightExponent();
@@ -140,9 +143,9 @@ void compareDifferentEECpairings(){
   }
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);
+  std::pair<double, double> ratioZoom = std::make_pair(0.00008, 2);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
-  const bool logRatio = false;
+  const bool logRatio = true;
   const bool automaticZoom = true;
 
   // Sanity check for input. Ensure that all the selected bins actually exist in the input file.
@@ -211,6 +214,7 @@ void compareDifferentEECpairings(){
   double epsilon = 0.0001;
   int lowNormalizationBin, highNormalizationBin;
   int iCentrality, iJetPt, iTrackPt;
+  TH1D* helperHistogram;
 
   // Because we might define also derived histograms, we first need to load all possible pairing types and subevent combinations
   for(auto centralityBin : comparedCentralityBin){
@@ -269,11 +273,20 @@ void compareDifferentEECpairings(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
 
-            // Start by taking the signal-reflected cone pairs, which is the regular background estimate
+            // Start by taking the signal-mixed cone pairs, which is the basis of the background estimate
             hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second] = (TH1D*) hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalMixedConePair][knSubeventCombinations]->Clone(Form("compiledBackground%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
+
+            // Add the other signal-mixed cone component and normalize to keep the correct scaling
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalSecondMixedConePair][knSubeventCombinations]);
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Scale(0.5);
 
             // Subtract from the background fake-fake contribution between cones, since this is badly modeled
             hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedMixedConePair][knSubeventCombinations], -1);
+
+            // To improve statistics for the mixed cone only component, tae average of the two equivalent components
+            helperHistogram = (TH1D*)hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedConePair][knSubeventCombinations]->Clone(Form("temporaryBackground%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
+            helperHistogram->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSecondMixedConePair][knSubeventCombinations]);
+            helperHistogram->Scale(0.5);
 
             // Add the real fake+fake contribution back to the background estimate
             hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedConePair][knSubeventCombinations]);
@@ -307,6 +320,52 @@ void compareDifferentEECpairings(){
         } // Jet pT loop
       } // Centrality loop
     } // Adding together all background related subevents
+
+    // Combine the two signal-mixed event components into one amalgamation
+    if(pairingType.first == kCombinedSignalMixedConePair){
+      for(auto centralityBin : comparedCentralityBin){
+        iCentrality = card->FindBinIndexCentrality(centralityBin);
+        for(auto jetPtBin : comparedJetPtBin){
+          iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
+          for(auto trackPtBin : comparedTrackPtBin){
+            iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+
+            // Start by taking the signal-mixed cone pairs
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second] = (TH1D*) hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalMixedConePair][knSubeventCombinations]->Clone(Form("combineSignalMixed%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
+
+            // Add the signal-mixed cone pairs from the other mixed event
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSignalSecondMixedConePair][knSubeventCombinations]);
+
+            // Take the average of these two to keep the scaling
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Scale(0.5);
+
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Combining the two signal-mixed event components
+
+    // Combine the two mixed event one components into one amalgamation
+    if(pairingType.first == kCombinedMixedConePair){
+      for(auto centralityBin : comparedCentralityBin){
+        iCentrality = card->FindBinIndexCentrality(centralityBin);
+        for(auto jetPtBin : comparedJetPtBin){
+          iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
+          for(auto trackPtBin : comparedTrackPtBin){
+            iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+
+            // Start by taking the signal-mixed cone pairs
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second] = (TH1D*) hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kMixedConePair][knSubeventCombinations]->Clone(Form("combineMixedOnly%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, pairingType.first, pairingType.second));
+
+            // Add the signal-mixed cone pairs from the other mixed event
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Add(hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][kSecondMixedConePair][knSubeventCombinations]);
+
+            // Take the average of these two to keep the scaling
+            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->Scale(0.5);
+
+          } // Track pT loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Combining the two mixed event only components
 
   }
 
@@ -377,7 +436,8 @@ void compareDifferentEECpairings(){
   }
 
   // Automatic zoom helper veriables
-  double minimumCandidate, maximumCandidate;
+  double binContent;
+  int firstBin, lastBin;
 
   for(auto centralityBin : comparedCentralityBin){
     iCentrality = card->FindBinIndexCentrality(centralityBin);
@@ -421,11 +481,17 @@ void compareDifferentEECpairings(){
           eecZoom.first = 1e12;
           eecZoom.second = 0;
           for(auto pairingType : comparedEnergyEnergyCorrelatorPairings){
-            hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
-            minimumCandidate = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetMinimum();
-            maximumCandidate = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetMaximum();
-            if(minimumCandidate < eecZoom.first) eecZoom.first = minimumCandidate;
-            if(maximumCandidate > eecZoom.second) eecZoom.second = maximumCandidate;
+            firstBin = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->FindBin(drawingRange.first);
+            lastBin = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetXaxis()->FindBin(drawingRange.second);
+            for(int iBin = firstBin; iBin <= lastBin; iBin++){
+              binContent = hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt][pairingType.first][pairingType.second]->GetBinContent(iBin);
+              if(binContent < eecZoom.first){
+                if(binContent > 0){
+                  eecZoom.first = binContent;
+                }
+              } 
+              if(binContent > eecZoom.second) eecZoom.second = binContent;
+            } // Bin loop
           } // File loop
           eecZoom.first = eecZoom.first / 2.0;
           eecZoom.second = eecZoom.second * 2.0;
@@ -460,7 +526,7 @@ void compareDifferentEECpairings(){
         if(!logRatio) drawer->SetLogY(false);
 
         // Draw the histograms
-        drawer->SetGridY(true);
+        drawer->SetGridY(false);
 
         firstLoop = true;
         secondLoop = false;
