@@ -43,8 +43,8 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fUncertaintyColor[kTrackPairEfficiency] = kCyan;
   fUncertaintyColor[kBackgroundSubtraction] = kViolet-6;
   fUncertaintyColor[kSignalToBackgroundRatio] = kYellow+1;
-  fUncertaintyColor[kCentralityShift] = kOrange+7;
-  fUncertaintyColor[kMonteCarloNonClosure] = kSpring;
+  fUncertaintyColor[kCentralityShift] = kSpring;
+  fUncertaintyColor[kMonteCarloNonClosure] = kOrange+7;
   fUncertaintyColor[kAll] = kBlack;
 
   // Define which sources are relevant for pp
@@ -58,7 +58,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[0][kBackgroundSubtraction] = true;
   fIsRelevant[0][kSignalToBackgroundRatio] = false;
   fIsRelevant[0][kCentralityShift] = false;
-  fIsRelevant[0][kMonteCarloNonClosure] = true;
+  fIsRelevant[0][kMonteCarloNonClosure] = false;
   fIsRelevant[0][kAll] = true;
 
   // Define which sources are relevant for PbPb
@@ -72,7 +72,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[1][kBackgroundSubtraction] = true;
   fIsRelevant[1][kSignalToBackgroundRatio] = true;
   fIsRelevant[1][kCentralityShift] = true;
-  fIsRelevant[1][kMonteCarloNonClosure] = true;
+  fIsRelevant[1][kMonteCarloNonClosure] = false;
   fIsRelevant[1][kAll] = true;
 }
 

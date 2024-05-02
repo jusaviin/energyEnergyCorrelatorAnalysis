@@ -34,14 +34,17 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-05-02.root";
+  // systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-05-02.root
+  // systematicUncertainties_PbPb_energyWeightSquared_mixedConeBackground_noMCnonClosure_2024-05-02.root
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-06.root
-  // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-02-23.root
-  // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-02-23.root
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-03-07.root";
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root";
+  // systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root
+  // systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root
   // systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-29.root
   // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-29.root
+
   TFile* uncertaintyFile[kNDataTypes];
   EECCard* uncertaintyCard[kNDataTypes];
   for(int iFile = 0; iFile < kNDataTypes; iFile++){
@@ -84,8 +87,8 @@ void relativeUncertaintyPlotter(){
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
-  const bool saveFigures = false;
-  TString saveComment = "_optimizedUnfoldingBins";
+  const bool saveFigures = true;
+  TString saveComment = "_mixedConeWithBugFix";
 
   // Add a name describing the energy weight in the files
   if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
@@ -99,7 +102,7 @@ void relativeUncertaintyPlotter(){
   std::pair<double, double> relativeZoom[nCentralityBins+1][nTrackPtBinsEEC];
 
   for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
-    relativeZoom[nCentralityBins][iTrackPt] = std::make_pair(0, 0.06); // Y-axis zoom for pp
+    relativeZoom[nCentralityBins][iTrackPt] = std::make_pair(0, 0.08); // Y-axis zoom for pp
     relativeZoom[0][iTrackPt] = std::make_pair(0, 0.26);   // Y-axis zoom for 0-10% PbPb with nominal energy weight
     relativeZoom[1][iTrackPt] = std::make_pair(0, 0.16);   // Y-axis zoom for 10-30% PbPb with nominal energy weight
     relativeZoom[2][iTrackPt] = std::make_pair(0, 0.1);  // Y-axis zoom for 30-50% PbPb with nominal energy weight
@@ -107,7 +110,7 @@ void relativeUncertaintyPlotter(){
 
     // Different zooming options for PbPb uncertainties with the energy weight squared
     if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
-      relativeZoom[0][iTrackPt] = std::make_pair(0, 0.5);   // Y-axis zoom for 0-10% PbPb with energy weight squared
+      relativeZoom[0][iTrackPt] = std::make_pair(0, 0.6);   // Y-axis zoom for 0-10% PbPb with energy weight squared
       relativeZoom[1][iTrackPt] = std::make_pair(0, 0.3);   // Y-axis zoom for 10-30% PbPb with energy weight squared
       relativeZoom[2][iTrackPt] = std::make_pair(0, 0.18);  // Y-axis zoom for 30-50% PbPb with energy weight squared
       relativeZoom[3][iTrackPt] = std::make_pair(0, 0.15);  // Y-axis zoom for 50-90% PbPb with energy weight squared
