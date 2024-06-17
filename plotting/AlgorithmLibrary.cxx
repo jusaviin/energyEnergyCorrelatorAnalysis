@@ -491,7 +491,7 @@ void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram,
 }
 
 /*
- * Get a const char* with today's date
+ * Get a TString with today's date
  */
 TString AlgorithmLibrary::GetToday(){
 
@@ -515,5 +515,120 @@ TString AlgorithmLibrary::GetToday(){
 
   // Return the string as TString
   return date_str;
+
+}
+
+/*
+ * Get a vector of graphs that extract the data points from a .dat file
+ * The file is expected to have the following format:
+ * First line of the file defined the meaning of each columns
+ * The first column has the x-axis points
+ * The other columns are the y-axis points for different curves
+ * The other rows give different points for the curves
+ *
+ * TString fileName = Name of the .dat file from which the data is read
+ *
+ * return: Structure that gives a vector of graphs, and a label associated to each graph
+ */
+std::vector<std::pair<TString, TGraph*>> AlgorithmLibrary::GetGraphsFromDatFile(TString fileName){
+  
+  // Set up the file names file for reading
+  std::ifstream file_stream(fileName);
+  std::string line;
+  std::vector<TString> lineVector;
+  lineVector.clear();
+
+  // Open the file names file for reading
+  if( file_stream.is_open() ) {
+    
+    // Loop over the lines in the file
+    while( !file_stream.eof() ) {
+      getline(file_stream, line);
+      TString lineString(line);
+      
+      // Put all non-empty lines to file names vector
+      if( lineString.CompareTo("", TString::kExact) != 0 ) {
+        lineVector.push_back(lineString);
+      } // Empty line if
+      
+    } // Loop over lines in the file
+    
+  // If cannot read the file, give error and end program
+  } else {
+    std::cout << "Error, could not open " << fileName.Data() << " for reading" << std::endl;
+    return std::vector<std::pair<TString,TGraph*>>();
+  }
+
+  // Find the number of predictions and points within prediction from the input
+  TObjArray* parameterArray = lineVector.at(0).Tokenize(" ");  // Tokenize the string from every ' ' character
+  const int numberOfPredictions = parameterArray->GetEntries()-1;
+  const int numberOfPoints = lineVector.size()-1;
+
+  // Create arrays to hold the information about the predictions
+  double deltaRPoints[numberOfPoints];
+  double eecPredictions[numberOfPredictions][numberOfPoints];
+  TString predictionLabel[numberOfPredictions];
+
+  // Loop over the input and collect the information into arrays
+  int numberOfParameters;
+  TObjString* currentParameterObject;
+  TString currentParameter;
+  for(int iLine = 0; iLine < lineVector.size(); iLine++){
+    parameterArray = lineVector.at(iLine).Tokenize(" ");
+    numberOfParameters = parameterArray->GetEntries();
+    for(int iParameter = 0; iParameter < numberOfParameters; iParameter++){   // Loop over all the files in the array
+      currentParameterObject = (TObjString*)parameterArray->At(iParameter);
+      currentParameter = currentParameterObject->String();
+
+      // The first line is special, as it gives labels for each following line
+      if(iLine == 0){
+
+        // Ship the first parameter in the first line. This would give the x-axis label
+        if(iParameter > 0){
+          predictionLabel[iParameter-1] = currentParameter;
+        }
+
+      // The following lines give the data that we want to gather to the graphs
+      } else {
+       
+        // The first column is the deltaR value, other columns show points for EECs
+        if(iParameter == 0){
+          deltaRPoints[iLine-1] = atof(currentParameter);
+        } else {
+          eecPredictions[iParameter-1][iLine-1] = atof(currentParameter);
+        }
+      }
+    } // For loop
+  }
+
+  // Make graphs out of the information arrays and put them into a vector
+  std::vector<std::pair<TString, TGraph*>> graphedPrediction;
+  for(int iPrediction = 0; iPrediction < numberOfPredictions; iPrediction++){
+    graphedPrediction.push_back(std::make_pair(predictionLabel[iPrediction], new TGraph(numberOfPoints, deltaRPoints, eecPredictions[iPrediction])));
+  }
+
+  // Return the vector of predictions
+  return graphedPrediction;
+
+}
+
+/*
+ * Create a histogram contents of a graph. Linear interpolation between graph points are used
+ */
+TH1D* AlgorithmLibrary::Histogrammify(TGraph* gSource, TH1D* hBinning){
+
+  // Read the binning for the histogram from the example histogram
+  TH1D* histogrammifiedGraph = (TH1D*) hBinning->Clone(Form("histogrammified%s", gSource->GetName()));
+  histogrammifiedGraph->Reset();
+
+  // For each of the histogram bins, evaluate the graph content using linear interpolation
+  double binCenter;
+  for(int iBin = 1; iBin <= hBinning->GetNbinsX(); iBin++){
+    binCenter = histogrammifiedGraph->GetBinCenter(iBin);
+    histogrammifiedGraph->SetBinContent(iBin, gSource->Eval(binCenter));
+  }
+
+  // Return the histogrammified graph
+  return histogrammifiedGraph;
 
 }

@@ -8,6 +8,8 @@
 
 // C++ includes
 #include <iostream>
+#include <fstream>    // File stream for input/output to/from files
+#include <assert.h>   // Standard c++ debugging tool. Terminates the program if expression given evaluates to 0.
 #include <tuple>
 #include <chrono>
 #include <ctime>
@@ -21,6 +23,9 @@
 #include <TF2.h>
 #include <TMath.h>
 #include <TAxis.h>
+#include <TGraph.h>
+#include <TObjArray.h>
+#include <TObjString.h>
 
 class AlgorithmLibrary{
   
@@ -43,6 +48,8 @@ public:
   void TransformToAbsoluteUncertainty(TH1D* transformedHistogram, TH1D* absoluteScaleHistogram, const bool centerAtOne = false);
   void SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel);
   TString GetToday(); // Getter for today's date
+  std::vector<std::pair<TString, TGraph*>>  GetGraphsFromDatFile(TString fileName);
+  TH1D* Histogrammify(TGraph* gSource, TH1D* binningHistogram);
   
 private:
   
