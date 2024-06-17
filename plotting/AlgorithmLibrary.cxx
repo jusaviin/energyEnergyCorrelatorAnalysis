@@ -598,8 +598,8 @@ std::vector<std::pair<TString, TGraph*>> AlgorithmLibrary::GetGraphsFromDatFile(
           eecPredictions[iParameter-1][iLine-1] = atof(currentParameter);
         }
       }
-    } // For loop
-  }
+    } // Parameter loop loop
+  } // Line loop
 
   // Make graphs out of the information arrays and put them into a vector
   std::vector<std::pair<TString, TGraph*>> graphedPrediction;
@@ -626,6 +626,48 @@ TH1D* AlgorithmLibrary::Histogrammify(TGraph* gSource, TH1D* hBinning){
   for(int iBin = 1; iBin <= hBinning->GetNbinsX(); iBin++){
     binCenter = histogrammifiedGraph->GetBinCenter(iBin);
     histogrammifiedGraph->SetBinContent(iBin, gSource->Eval(binCenter));
+  }
+
+  // Return the histogrammified graph
+  return histogrammifiedGraph;
+
+}
+
+/*
+ * Create a histogram contents of a TGraphErrors. Linear interpolation between graph points are used.
+ * Errors in the y-axis are taken into account in the created histogram. Errors in the x-axis are ignored.
+ */
+TH1D* AlgorithmLibrary::HistogrammifyWithErrors(TGraphErrors* gSource, TH1D* hBinning){
+
+  // Create graph with upper and lower uncertainty bands such that they can be nicely interpolated
+  TGraph* upperErrorGraph = (TGraph*) gSource->Clone("upperErrorGraph");
+  TGraph* lowerErrorGraph = (TGraph*) gSource->Clone("lowerErrorGraph");
+
+  // Shift the points in the upper and lower error graphs up and down by the error of the point
+  double yValue, yError;
+  for(int iPoint = 0; iPoint < gSource->GetN(); iPoint++){
+    yValue = gSource->GetPointY(iPoint);
+    yError = gSource->GetErrorY(iPoint);
+    upperErrorGraph->SetPointY(iPoint, yValue+yError);
+    lowerErrorGraph->SetPointY(iPoint, yValue-yError);
+  }
+
+  // Histogrammify all graphs
+  TH1D* histogrammifiedGraph = Histogrammify(gSource, hBinning);
+  TH1D* histogrammifiedUpperErrorGraph = Histogrammify(upperErrorGraph, hBinning);
+  TH1D* histogrammifiedLowerErrorGraph = Histogrammify(lowerErrorGraph, hBinning);
+
+  // For each of the histogram bins, set the bin error to be the largest between upper and lower errors
+  // They should be the same by construction, but do this to be safe
+  double binContent, upperbinContent, lowerBinContent;
+  double binError;
+  for(int iBin = 1; iBin <= hBinning->GetNbinsX(); iBin++){
+    binContent = histogrammifiedGraph->GetBinContent(iBin);
+    upperbinContent = histogrammifiedUpperErrorGraph->GetBinContent(iBin);
+    lowerBinContent = histogrammifiedLowerErrorGraph->GetBinContent(iBin);
+    binError = upperbinContent - binContent;
+    if(binContent - lowerBinContent > binError) binError = binContent - lowerBinContent;
+    histogrammifiedGraph->SetBinError(iBin, binError);
   }
 
   // Return the histogrammified graph

@@ -24,6 +24,7 @@
 #include <TMath.h>
 #include <TAxis.h>
 #include <TGraph.h>
+#include <TGraphErrors.h>
 #include <TObjArray.h>
 #include <TObjString.h>
 
@@ -49,7 +50,8 @@ public:
   void SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel);
   TString GetToday(); // Getter for today's date
   std::vector<std::pair<TString, TGraph*>>  GetGraphsFromDatFile(TString fileName);
-  TH1D* Histogrammify(TGraph* gSource, TH1D* binningHistogram);
+  TH1D* Histogrammify(TGraph* gSource, TH1D* hBinning);
+  TH1D* HistogrammifyWithErrors(TGraphErrors* gSource, TH1D* hBinning);
   
 private:
   
