@@ -11,7 +11,7 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = true;
+  bool isPbPbData = false;
   const int nSplits = isPbPbData ? 2 : 3;
   const int weightExponent = 2;
 
@@ -26,11 +26,17 @@ void fullAnalysisClosure(){
   TString fileName[kNDistributionTypes][nSplits][2];
 
   if(isPbPbData){
-    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part2_processed_2024-03-05.root";
-    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part1_processed_2024-03-05.root";
+    fileName[kMeasured][0][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_part2_processed_2024-04-26.root";
+    fileName[kMeasured][1][0] = "data/PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_part1_processed_2024-04-26.root";
+    // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part1_processed_2024-03-05.root
+    // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part2_processed_2024-03-05.root
 
-    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part2_processed_2024-03-05.root";
-    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part1_processed_2024-03-05.root";
+    fileName[kMeasured][0][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedConeBackground_matchMultiplicity_part2_processed_2024-04-26.root";
+    fileName[kMeasured][1][1] = "data/PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedConeBackground_matchMultiplicity_part1_processed_2024-04-26.root";
+    // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part1_processed_2024-03-05.root
+    // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_backgroundScalingFromMC_part2_processed_2024-03-05.root
+    // PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedConeBackground_matchMultiplicity_part1_processed_2024-04-26.root"
+    // PbPbMC2018_RecoReco_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedConeBackground_matchMultiplicity_part2_processed_2024-04-26.root"
 
     fileName[kTruth][0][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-16.root";
     fileName[kTruth][1][0] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_part1_processed_2024-01-16.root";
@@ -39,29 +45,33 @@ void fullAnalysisClosure(){
     fileName[kTruth][1][1] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_part1_processed_2024-01-18.root";
 
   } else {
-    fileName[kMeasured][0][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_part2_processed_2024-01-18.root";
-    fileName[kMeasured][1][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_part1_processed_2024-01-18.root";
-    fileName[kMeasured][2][0] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root";
+    fileName[kMeasured][0][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_lowUnfoldingBins_part2_processed_2024-06-25.root";
+    fileName[kMeasured][1][0] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_lowUnfoldingBins_part1_processed_2024-06-25.root";
+    fileName[kMeasured][2][0] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_nominalEnergyWeight_officialSimulation_nominalSmear_processed_2024-06-24.root";
+    // data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root
 
     fileName[kMeasured][0][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_part2_processed_2024-01-18.root";
     fileName[kMeasured][1][1] = "data/ppMC2017_RecoReco_Pythia8_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_part1_processed_2024-01-18.root";
-    fileName[kMeasured][2][1] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root";
+    fileName[kMeasured][2][1] = "data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_energyWeightSquared_officialSimulation_nominalSmear_processed_2024-06-24.root";
+    // data/ppMC2017_RecoReco_Herwig_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root
 
     fileName[kTruth][0][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_part2_processed_2024-01-11.root";
     fileName[kTruth][1][0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_part1_processed_2024-01-11.root";
-    fileName[kTruth][2][0] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root";
+    fileName[kTruth][2][0] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_nominalEnergyWeight_officialSimulation_nominalSmear_processed_2024-06-24.root";
+    // data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root
 
     fileName[kTruth][0][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_part2_processed_2024-01-10.root";
     fileName[kTruth][1][1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_part1_processed_2024-01-10.root";
-    fileName[kTruth][2][1] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root";
+    fileName[kTruth][2][1] = "data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_energyWeightSquared_officialSimulation_nominalSmear_processed_2024-06-24.root";
+    // data/ppMC2017_GenGen_Herwig_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_nominalSmear_processed_2024-01-22.root
   }
 
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
   TString uncertaintyFileName[2][2] = {
     // Uncertainty files for pT1*pT2 weight
-    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-02-23.root"},
+    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-02-23.root"},
     // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
-    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-01-29.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-02-23.root"}
+    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-02-23.root"}
   };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
@@ -159,9 +169,9 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
+  const bool saveFigures = true;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString saveComment = Form("%s_PythiaHydjet", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
+  TString saveComment = Form("%s_Pythia_UpdatedHerwig", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Save output file for Monte Carlo non-closure uncertainty
