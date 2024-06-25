@@ -143,6 +143,7 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
   // Histogram for chi2 change between two iterations
   TH1D* hChi2map[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
   TH1D* hPvalue[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
+  int bestIteration[nCentralityBins][nJetPtBins][nTrackPtBinsEEC];
 
   // Initialize all the histograms to null
   for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
@@ -150,6 +151,7 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
       for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
         hChi2map[iCentrality][iJetPt][iTrackPt] = NULL;
         hPvalue[iCentrality][iJetPt][iTrackPt] = NULL;
+        bestIteration[iCentrality][iJetPt][iTrackPt] = 0;
         
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
           energyEnergyCorrelatorUnfolded[iCentrality][iJetPt][iTrackPt][iIteration] = NULL;
@@ -210,12 +212,15 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
   double chiSquare;
   int ndf = lastNormalizationBin - firstNormalizationBin + 1;
   double pValue;
+  bool bestIterationFound = false;
   for(auto centralityBin : comparedCentralityBin){
     iCentrality = dataCard->FindBinIndexCentrality(centralityBin);
     for(auto jetPtBin : comparedJetPtBin){
       iJetPt = dataCard->FindBinIndexJetPtEEC(jetPtBin);
       for(auto trackPtBin : comparedTrackPtBin){
         iTrackPt = dataCard->GetBinIndexTrackPtEEC(trackPtBin);
+
+        bestIterationFound = false;
         for(int iIteration = 0; iIteration < nIterations; iIteration++){
 
           chiSquare = energyEnergyCorrelatorIterationRatio[iCentrality][iJetPt][iTrackPt][iIteration]->Chisquare(testFunction, "R");
@@ -223,6 +228,13 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
 
           pValue = TMath::Prob(chiSquare, ndf);
           hPvalue[iCentrality][iJetPt][iTrackPt]->SetBinContent(iIteration+1,pValue);
+
+          if(!bestIterationFound){
+            if(pValue > 0.05){
+              bestIterationFound = true;
+              bestIteration[iCentrality][iJetPt][iTrackPt] = iIteration+1;
+            }
+          }
 
         } // Iteration loop
       } // Track pT loop
@@ -247,6 +259,10 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
   TLine* zeroLine = new TLine(0.5, 0, nIterations+0.5, 0);
   zeroLine->SetLineColor(kBlack);
   zeroLine->SetLineStyle(2);
+
+  TLine* lineDrawer = new TLine();
+  lineDrawer->SetLineStyle(2);
+  lineDrawer->SetLineColor(kRed);
 
   if(drawChi2Histograms){
 
@@ -299,6 +315,9 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
 
   if(drawPvalueHistograms){
 
+    double yZoomMin = -0.02;
+    double yZoomMax = 1.02;
+
     for(auto centralityBin : comparedCentralityBin){
       
       if(iSystem == kPp){
@@ -323,19 +342,20 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
           compactTrackPtString.ReplaceAll(".","v");
 
           // Create a legend for the plot
-          legend = new TLegend(0.53, 0.25, 0.83, 0.6);
+          legend = new TLegend(0.53, 0.25, 0.83, 0.7);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, centralityString.Data(), "");
           legend->AddEntry((TObject*)0, jetPtString.Data(), "");
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          legend->AddEntry((TObject*)0, Form("Iterations: %d", bestIteration[iCentrality][iJetPt][iTrackPt]), "");
           
           // Set a nice style for the histogram
           hPvalue[iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
           hPvalue[iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
 
           // Set a nice drawing range
-          hPvalue[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(-0.02, 1.02);
+          hPvalue[iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(yZoomMin, yZoomMax);
 
           // Draw the histograms to the upper canvas
           drawer->DrawHistogram(hPvalue[iCentrality][iJetPt][iTrackPt], "Iteration", "P-value", " ", "p");
@@ -344,6 +364,9 @@ void determineNumberOfIterationsFromData(int iSystem = 0, int weightExponent = 2
           veryGoodLine->Draw();
           oneLine->Draw();
           zeroLine->Draw();
+
+          // Draw line to illustrate the best iteration from this p-value plot
+          lineDrawer->DrawLine(bestIteration[iCentrality][iJetPt][iTrackPt], yZoomMin, bestIteration[iCentrality][iJetPt][iTrackPt], yZoomMax);
 
           // Draw the legend to the upper pad
           legend->Draw();
