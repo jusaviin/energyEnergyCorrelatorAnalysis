@@ -45,6 +45,7 @@ public:
   void NormalizeColumns(TH2D* histogramInNeedOfNormalization, const double value = 1);  // Normalize all the columns of a 2-D histogram to a given value
   void NormalizeRows(TH2D* histogramInNeedOfNormalization, const double value = 1);  // Normalize all the rows of a 2-D histogram to a given value
   TH2D* RotateHistogram(TH2D* originalHistogram); // Rotate two dimensional histogram 90 degrees
+  void RemoveUncertainties(TH1* histogramInNeedForAccuracy, const double epsilon = 1e-10); // Remove uncertainties from a histogram
   void TransformToRelativeUncertainty(TH1D* transformedHistogram, const bool centerAtOne = false);
   void TransformToAbsoluteUncertainty(TH1D* transformedHistogram, TH1D* absoluteScaleHistogram, const bool centerAtOne = false);
   void SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel);

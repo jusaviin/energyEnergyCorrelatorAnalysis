@@ -399,6 +399,23 @@ TH2D* AlgorithmLibrary::RotateHistogram(TH2D* originalHistogram){
   
 }
 
+/* Remove uncertainties from a histogram by making them negligibly small.
+ *
+ *  TH1* histogramInNeedForAccuracy = Histogram from which the uncertainties are removed
+ *  const double epsilon = Small uncertainty with which the original uncertianty is replaced with
+ */
+void AlgorithmLibrary::RemoveUncertainties(TH1* histogramInNeedForAccuracy, const double epsilon){
+
+  double negligibleUncertainty;
+  double currentValue;
+  for(int iBin = 1; iBin <= histogramInNeedForAccuracy->GetNbinsX(); iBin++){
+    currentValue = histogramInNeedForAccuracy->GetBinContent(iBin);
+    negligibleUncertainty = currentValue * epsilon;
+    histogramInNeedForAccuracy->SetBinError(iBin, negligibleUncertainty);
+  }
+
+}
+
 /*
  * Transform histogram to another one that shows the relative uncertainty of the original histogram in each bin
  *

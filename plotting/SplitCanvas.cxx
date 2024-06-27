@@ -37,10 +37,10 @@ SplitCanvas::SplitCanvas(TString canvasName, TString canvasTitle, double width, 
  *  int nDivisionsVertical = Number of divisions in y-direction
  */
 void SplitCanvas::DivideNeatly(int nDivisionsHorizontal, int nDivisionsVertical) {
-  if(nDivisionsHorizontal == 2 && nDivisionsVertical == 2){
-    DivideNeatly2x2();
-    return;
-  }
+  //if(nDivisionsHorizontal == 2 && nDivisionsVertical == 2){
+  //  DivideNeatly2x2();
+  //  return;
+  //}
 
   // Remember the original margin, and then set the margin to zero
   double marginLeft = this->GetLeftMargin();

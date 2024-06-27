@@ -36,6 +36,7 @@ void modelComparison(){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
   enum enumSystematicUncertaintyType{kUncorrelatedUncertainty, kCorrelatedUncertainty, kCorrelatedUncertaintyShapeUp, kCorrelatedUncertaintyShapeDown, knSystematicUncertaintyTypes};
+  enum enumrelativeUncertaintyType{kRelativeUncertaintyStatisticalUp, kRelativeUncertaintyStatisticalDown, kRelativeUncertaintySystematic, knRelativeUncertaintyTypes};
 
   // ============= //
   // Configuration //
@@ -119,9 +120,9 @@ void modelComparison(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  drawnCentralityBin.push_back(std::make_pair(10,30));
-  drawnCentralityBin.push_back(std::make_pair(30,50));
-  drawnCentralityBin.push_back(std::make_pair(50,90));
+  //drawnCentralityBin.push_back(std::make_pair(10,30));
+  //drawnCentralityBin.push_back(std::make_pair(30,50));
+  //drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
@@ -138,12 +139,10 @@ void modelComparison(){
 
   // Choose which plots to draw
   bool drawDistributionDataToTheoryComparison = true;
-  bool drawRatioDataToTheoryComparison = true;
-
-  bool drawVerticalLines = false; // Draw illustrative vertical lines
+  bool drawRatioDataToTheoryComparison = false;
 
   // Save the final plots
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
   TString saveComment =  "_noSystemticsForData";
@@ -153,6 +152,7 @@ void modelComparison(){
   // Ratio zoom settings
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
   std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
+  std::pair<double, double> pbpbToPpRatioZoom = std::make_pair(0.2, 1.8);
   
   // Marker colors and styles
   int markerStylePbPb[] = {kFullSquare, kFullCircle, kFullCross, kFullFourTrianglesPlus};
@@ -208,6 +208,11 @@ void modelComparison(){
   TH1D* systematicUncertaintyForPp[nWeightExponents][knSystematicUncertaintyTypes][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* systematicUncertaintyPbPbToPpRatio[nWeightExponents][knSystematicUncertaintyTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
+  // Histograms for relative uncertainties
+  TH1D* hRelativeUncertaintyPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC][knRelativeUncertaintyTypes];
+  TH1D* hRelativeUncertaintyPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][knRelativeUncertaintyTypes];
+  TH1D* hRelativeUncertaintyPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][knRelativeUncertaintyTypes];
+
   // Energy-energy correlators for Hybrid model
   TGraphErrors* energyEnergyCorrelatorHybridModelPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TGraphErrors* energyEnergyCorrelatorHybridModelPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
@@ -226,6 +231,10 @@ void modelComparison(){
         energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
 
+        for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+          hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][iUncertainty] = NULL;
+        }
+
         for(int iUncertainty = 0; iUncertainty < knSystematicUncertaintyTypes; iUncertainty++){
           systematicUncertaintyForPp[iWeightExponent][iUncertainty][iJetPt][iTrackPt] = NULL;
         } // Uncertainty type loop
@@ -240,6 +249,11 @@ void modelComparison(){
           energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
+            hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
+          }
 
           for(int iUncertainty = 0; iUncertainty < knSystematicUncertaintyTypes; iUncertainty++){
             systematicUncertaintyForPbPb[iWeightExponent][iUncertainty][iCentrality][iJetPt][iTrackPt] = NULL;
@@ -274,6 +288,11 @@ void modelComparison(){
   TH1D* uncertaintyTrackPairEfficiency;
   TH1D* uncertaintyMCnonclosure;
   TH1D* uncertaintySignalToBackgroundRatio;
+
+  // Create a prime transformer for all your histogram manipulation needs
+  AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
+  double binError;
+  double otherBinError;
 
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     for(auto jetPtBin : drawnJetPtBin){
@@ -313,6 +332,23 @@ void modelComparison(){
         systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp][iWeightExponent]->GetUncorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
         systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt] = uncertainties[kPp][iWeightExponent]->GetCorrelatedSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
 
+        // For relative uncertainties, read the total systematic uncertainties for pp collisions and clone the signal distribution
+        hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintySystematic] = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+        hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp] = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyUpPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+        hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown] = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyDownPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+
+        // Transform the uncertainties into relative uncertainties
+        for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+          optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][iUncertainty], true);
+        }
+
+        // Move the statistical uncertainty bin contents up and down by the uncertainties
+        for(int iBin = 1; iBin <= hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetNbinsX(); iBin++){
+          binError = hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetBinError(iBin);
+          hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->SetBinContent(iBin, 1 + binError);
+          hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
+        }
+
         // Read the relevant systematic uncertainties for double ratio from pp
         uncertaintyBackgroundSubtraction = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
         uncertaintyTrackPairEfficiency = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
@@ -328,6 +364,23 @@ void modelComparison(){
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = histograms[kPbPb][iWeightExponent]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
           systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb][iWeightExponent]->GetUncorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
           systematicUncertaintyForPbPb[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb][iWeightExponent]->GetCorrelatedSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty);
+
+          // For relative uncertainties, read the total systematic uncertainties for PbPb collisions and clone the signal distribution
+          hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic] = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty);
+          hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyUpPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyDownPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+
+          // Transform the uncertainties into relative uncertainties
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty], true);
+          }
+
+          // Move the statistical uncertainty bin contents up and down by the uncertainties
+          for(int iBin = 1; iBin <= hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetNbinsX(); iBin++){
+            binError = hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetBinError(iBin);
+            hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->SetBinContent(iBin, 1 + binError);
+            hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
+          }
 
           // Read the relevant systematic uncertainties for double ratio from PbPb
           uncertaintyBackgroundSubtraction = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
@@ -407,12 +460,49 @@ void modelComparison(){
     } // Jet pT loop
   } // Weight exponent loop
 
-  // Create an object for shaking histograms out from graphs
-  AlgorithmLibrary* graphShaker = new AlgorithmLibrary();
+  // Create histograms for relative data uncertainties for PbPb to pp ratio
+  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+    for(auto jetPtBin : drawnJetPtBin){
+      iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+      for(auto trackPtBin : drawnTrackPtBin){
+        iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
+        for(auto centralityBin : drawnCentralityBin){
+          iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+
+          // For relative systematic uncertainty, add the correlated and uncorrelated systematic uncertainties in quadrature
+          hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic] = (TH1D*) systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeSystematicUncertaintyForPbPbToPpRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+
+          for(int iBin = 1; iBin <= hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetNbinsX(); iBin++){
+            binError = hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetBinError(iBin);
+            otherBinError = systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinError(iBin);
+            hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetBinError(iBin, TMath::Sqrt(binError*binError + otherBinError*otherBinError));
+          }
+
+          // Relative statistical uncertainties we can directly get from the ratio
+          hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp] = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyUpForPbPbToPpRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown] = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeStatisticalUncertaintyDownForPbPbToPpRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+
+          // Transform the uncertainties into relative uncertainties
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty], true);
+          }
+
+          // Move the statistical uncertainty bin contents up and down by the uncertainties
+          for(int iBin = 1; iBin <= hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetNbinsX(); iBin++){
+            binError = hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->GetBinError(iBin);
+            hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->SetBinContent(iBin, 1 + binError);
+            hRelativeUncertaintyPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
+          }
+
+        } // Centrality loop
+      } // Track pT loop
+    } // Jet pT loop
+  } // Weight exponent loop
 
   // Then read the histograms for the hybrid model
   HybridModelHistogramManager* hybridHistograms = new HybridModelHistogramManager(hybridModelFolder);
   double weightExponentHybrid;
+  TH1D* errorlessData;
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     weightExponentHybrid = iWeightExponent+1;
     for(auto jetPtBin : drawnJetPtBin){
@@ -425,11 +515,13 @@ void modelComparison(){
           energyEnergyCorrelatorHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake] = hybridHistograms->GetEnergyEnergyCorrelatorPp(jetPtBin, trackPtBin, weightExponentHybrid, iWake);
 
           // Create a histogrammified version of the TGraphErrors
-          histogrammifiedHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake] = graphShaker->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
+          histogrammifiedHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake] = optimusPrimeTheTransformer->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
 
           // Now we can take a ratio between hybrid model prediction and data
           hybridModelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt][iWake] = (TH1D*) histogrammifiedHybridModelPp[iWeightExponent][iJetPt][iTrackPt][iWake]->Clone(Form("hybridModelRatioToDataPp%d%d%d%d", iWeightExponent, iJetPt, iTrackPt, iWake));
-          hybridModelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt][iWake]->Divide(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
+          errorlessData = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("errorlessHybrid%d%d%d%d", iWeightExponent, iJetPt, iTrackPt, iWake));
+          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+          hybridModelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt][iWake]->Divide(errorlessData);
 
           for(auto centralityBin : drawnCentralityBin){
             iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
@@ -439,15 +531,22 @@ void modelComparison(){
             energyEnergyCorrelatorHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = hybridHistograms->GetEnergyEnergyCorrelatorPbPbToPpRatio(centralityBin, jetPtBin, trackPtBin, weightExponentHybrid, iWake);
 
             // Create a histogrammified versions of the TGraphErrors
-            histogrammifiedHybridModelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = graphShaker->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
-            histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = graphShaker->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+            histogrammifiedHybridModelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = optimusPrimeTheTransformer->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+            histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = optimusPrimeTheTransformer->HistogrammifyWithErrors(energyEnergyCorrelatorHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake], energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
 
             // Now we can take a ratio between hybrid model prediction and data
             hybridModelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = (TH1D*) histogrammifiedHybridModelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Clone(Form("hybridModelRatioToDataPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iWake));
-            hybridModelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Divide(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+            errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessHybridPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iWake));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            hybridModelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Divide(errorlessData);
 
             hybridModelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = (TH1D*) histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Clone(Form("hybridModelRatioToDataPbPbToPpRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iWake));
-            hybridModelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Divide(energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+            errorlessData = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessHybridRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iWake));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            hybridModelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Divide(errorlessData);
+
+
+            //hybridModelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake]->Divide(energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
         
           } // Centrality loop
         } // Wake loop
@@ -525,16 +624,26 @@ void modelComparison(){
         legend->AddEntry((TObject*)0, trackPtString.Data(), "");
         legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
-        // Set the drawing style for pp histogram
+        // Set the drawing style for pp data and uncertainty histograms
         energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
         energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
 
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetFillColorAlpha(kBlack, 0.4);
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetLineColor(kBlack);
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
+
+        systematicUncertaintyForPp[weightExponent-1][kCorrelatedUncertainty][iJetPt][iTrackPt]->SetFillColorAlpha(kBlack, 0.4);
+
         // Set the x-axis drawing range
-        energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
 
         // Draw the data correlator to upper canves
-        drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "p");
-        legend->AddEntry(energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt], "pp data", "p");
+        drawer->DrawHistogramToUpperPad(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
+        systematicUncertaintyForPp[weightExponent-1][kCorrelatedUncertainty][iJetPt][iTrackPt]->Draw("same,e3");
+        energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,p");
+
+        legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp data", "lpf");
 
         // Compare the prediction with and without wake
         for(int iWake = 0; iWake < 2; iWake++){
@@ -562,8 +671,8 @@ void modelComparison(){
         drawer->SetLogY(false);
 
         // Set the axis drawing ranges for ratio
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
         // Set the style for histograms
         for(int iWake = 0; iWake < 2; iWake++){
@@ -573,11 +682,39 @@ void modelComparison(){
           hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
         }
 
-        drawer->SetGridY(true);
-        drawer->DrawHistogramToLowerPad(hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
-        for(int iWake = 1; iWake < 2; iWake++){
-          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][iWake]->Draw("same,e3");
+        // Set the style for uncertainty bands for systematic and statistical uncertainties from data
+        for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+          hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
+          hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][iUncertainty]->SetLineStyle(9);
+          hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][iUncertainty]->SetMarkerStyle(kFullCircle);
+          hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][iUncertainty]->SetMarkerSize(0);
         }
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetFillColorAlpha(kBlack, 0.4);
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetLineWidth(0);
+
+        // Create a new legend to show the different data uncertainty bands
+        legend = new TLegend(0.3, 0.82, 0.8, 0.92);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+        legend->SetNColumns(2);
+
+        drawer->SetGridY(true);
+
+        // Draw the error bars from data
+        drawer->DrawHistogramToLowerPad(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->Draw("same,HIST,C");
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->Draw("same,HIST,C");
+
+        // Add the different uncertainties to the legend
+        legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
+        legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
+
+        // Draw the ratio with respect to hybrid model
+        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("same,e3");
+
+        // Draw the legend to the lower pad
+        legend->Draw();
+
+        // Reset grid settings
         drawer->SetGridY(false);
 
         // If a plot name is given, save the plot in a file
@@ -609,13 +746,32 @@ void modelComparison(){
           // Set the drawing style for PbPb histogram
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+          energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+
+          // Set drawing style for systematic uncertainties
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kBlack, 0.4);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
+
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kGray+3, 0.4);
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kBlue+4, 0.4);
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
 
           // Set the x-axis drawing range
-          energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
 
-          // Draw the data correlator to upper canves
-          drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "p");
-          legend->AddEntry(energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "PbPb data", "p");
+          // Draw the systematic uncertainties to the upper canvas
+          drawer->DrawHistogramToUpperPad(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyForPbPb[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+
+          // Draw the data points to the same canvas and add the histogram to the legend
+          energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+          legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "PbPb data", "lpf");
 
           // Compare the prediction with and without wake
           for(int iWake = 0; iWake < 2; iWake++){
@@ -643,8 +799,8 @@ void modelComparison(){
           drawer->SetLogY(false);
 
           // Set the axis drawing ranges for ratio
-          hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-          hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
           // Set the style for histograms
           for(int iWake = 0; iWake < 2; iWake++){
@@ -654,11 +810,42 @@ void modelComparison(){
             hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
           }
 
+          // Set the style for uncertainty bands for systematic and statistical uncertainties from data
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
+            hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineStyle(9);
+            hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetMarkerStyle(kFullCircle);
+            hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetMarkerSize(0);
+          }
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetFillColorAlpha(kBlack, 0.4);
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetLineWidth(0);
+
+
           drawer->SetGridY(true);
-          drawer->DrawHistogramToLowerPad(hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][0], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
-          for(int iWake = 1; iWake < 2; iWake++){
+
+          // Create a new legend to show the different data uncertainty bands
+          legend = new TLegend(0.3, 0.82, 0.8, 0.92);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+          legend->SetNColumns(2);
+
+          // Draw the error bars from the data
+          drawer->DrawHistogramToLowerPad(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->Draw("same,HIST,C");
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->Draw("same,HIST,C");
+
+          // Add the different uncertainties to the legend
+          legend->AddEntry(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
+          legend->AddEntry(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
+
+          // Draw the ratio to model predictions
+          for(int iWake = 0; iWake < 2; iWake++){
             hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
           }
+
+          // Draw the legend to the lower pad
+          legend->Draw();
+
+          // Reset grid settings
           drawer->SetGridY(false);
 
           // If a plot name is given, save the plot in a file
@@ -696,8 +883,8 @@ void modelComparison(){
           // Create a new canvas for the plot
           drawer->CreateSplitCanvas();
 
-          // Use logarithmic axis for EEC
-          drawer->SetLogY(true);
+          // No logarithmic drawing for ratio
+          drawer->SetLogY(false);
 
           // Setup the legend for plots
           legend = new TLegend(0.23, 0.05, 0.53, 0.6);
@@ -707,16 +894,36 @@ void modelComparison(){
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
-          // Set the drawing style for pp histogram
+          // Set the drawing style for PbPb to pp ratio histograms
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+          energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+
+          // Set drawing style for systematic uncertainties
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kBlack, 0.4);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetLineColor(kBlack);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kBlack);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
+
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kGray+3, 0.4);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(kBlue+4, 0.4);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(9);
 
           // Set the x-axis drawing range
-          energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(pbpbToPpRatioZoom.first, pbpbToPpRatioZoom.second);
 
-          // Draw the pp correlator to upper canves
-          drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "p");
-          legend->AddEntry(energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "Data", "p");
+          // Draw first the systematic uncertainties to the upper canves
+          drawer->DrawHistogramToUpperPad(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "e2");
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
+
+          // Then draw the PbPb to pp ratio and add a legend for it
+          energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+          legend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "Data", "lpf");
 
           // Draw the hybrid predictions with and without wake to the same plot
           for(int iWake = 0; iWake < 2; iWake++){
@@ -746,9 +953,14 @@ void modelComparison(){
           // Linear scale for the ratio
           drawer->SetLogY(false);
 
+          // Create a new legend to show the different data uncertainty bands
+          legend = new TLegend(0.3, 0.82, 0.8, 0.92);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+          legend->SetNColumns(2);
+
           // Set the axis drawing ranges
-          hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][0]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-          hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
           // Set the style for histograms
           for(int iWake = 0; iWake < 2; iWake++){
@@ -758,11 +970,37 @@ void modelComparison(){
             hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
           }
 
+          // Set the style for uncertainty bands for systematic and statistical uncertainties from data
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
+            hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineStyle(9);
+            hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetMarkerStyle(kFullCircle);
+            hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetMarkerSize(0);
+          }
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetFillColorAlpha(kBlack, 0.4);
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetLineWidth(0);
+
+
           drawer->SetGridY(true);
-          drawer->DrawHistogramToLowerPad(hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][0], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
-          for(int iWake = 1; iWake < 2; iWake++){
+
+          // Draw the error bars from the data
+          drawer->DrawHistogramToLowerPad(hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp]->Draw("same,HIST,C");
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->Draw("same,HIST,C");
+
+          // Add the different uncertainties to the legend
+          legend->AddEntry(hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
+          legend->AddEntry(hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
+
+          // Draw the hybrid model predictions to the same canvas
+          for(int iWake = 0; iWake < 2; iWake++){
             hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
           }
+
+          // Draw the legend to the lower pad
+          legend->Draw();
+
+          // Reset grid style
           drawer->SetGridY(false);
 
           // If a plot name is given, save the plot in a file
