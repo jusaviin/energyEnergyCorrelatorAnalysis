@@ -20,12 +20,14 @@
 class HybridModelHistogramManager {
  
 public:
+
+  // Enumeration for different wake configurations
+  enum enumTrackHistograms{kNoWake, kPositiveWake, kFullWake, kWakeConfigurations};
   
   // Dimensions for histogram arrays
   static const int kCentralityBins = 4;       // Number of centrality bins for which the predictions are available
   static const int kTrackPtBins = 3;          // Number of track pT bins for which the predictions are available
   static const int kJetPtBins = 4;            // Number of jet pT bins for which the predictions are available
-  static const int kWakeConfigurations = 2;   // Number of wake configurations in the model
   static const int kEnergyWeights = 2;        // Number of energy weights for which the predictions are available
   
 private:
@@ -34,8 +36,10 @@ private:
   const char* fCentralityName[kCentralityBins] = {"010", "1030", "3050", "5070"}; // String telling which centrality bin a file corresponds to
   const char* fTrackPtName[kTrackPtBins] = {"iC_0", "iC_1", "iC_2"}; // String telling which track pT cut a file corresponds to
   const char* fJetPtName[kJetPtBins] = {"pTbin_0", "pTbin_1", "pTbin_2", "pTbin_3"}; // String telling which jet pT cut a file corresponds to
-  const char* fWakeName[kWakeConfigurations] = {"WantWake_0", "WantWake_1"};
-  const char* fEnergyWeightName[kWakeConfigurations] = {"iN_0", "iN_1"};
+  const char* fWakeName[kWakeConfigurations] = {"WantWake_0_IgnoreNeg_1", "WantWake_1_IgnoreNeg_1", "WantWake_1_IgnoreNeg_0"};
+  const char* fEnergyWeightName[kEnergyWeights] = {"iN_0", "iN_1"};
+  const char* fSubtractionName[kWakeConfigurations] = {"NoElastic", "NoElastic", "NegaSub_Rsub0p2_NoElastic"};
+  const char* fWakeLegendName[kWakeConfigurations] = {"Hybrid, no wake", "Hybrid, pos. wake", "Hybrid, full wake"};
   
   // Bin borders for different binning variables
   std::pair<int,int> fCentralityBinBorders[kCentralityBins] = {std::make_pair(0,10), std::make_pair(10,30), std::make_pair(30,50), std::make_pair(50,70)};
@@ -59,6 +63,9 @@ public:
   TGraphErrors* GetEnergyEnergyCorrelatorPbPb(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight, int iWake) const;
   TGraphErrors* GetEnergyEnergyCorrelatorPbPbToPpRatio(const int iCentrality, const int iJetPt, const int iTrackPt, const int iEnergyWeight, const int iWake) const;
   TGraphErrors* GetEnergyEnergyCorrelatorPbPbToPpRatio(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight, int iWake) const;
+
+  // Getter for a nice legend name for the wake configuration
+  const char* GetWakeName(const int iWake) const;
   
 private:
 

@@ -80,7 +80,7 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
           for(int iWake = 0; iWake < kWakeConfigurations; iWake++){
 
             // Read the desired file from the input directory
-            currentFile = Form("%s/HYBRID_Hadrons_NoElastic_5020_inc_pthat50_%s_%s_IgnoreNeg_1_%s_%s_%s_EEC.dat", inputDirectory.Data(), fCentralityName[iCentrality], fWakeName[iWake], fJetPtName[iJetPt], fTrackPtName[iTrackPt], fEnergyWeightName[iEnergyWeight]);
+            currentFile = Form("%s/HYBRID_Hadrons_%s_5020_inc_pthat50_%s_%s_%s_%s_%s_EEC.dat", inputDirectory.Data(), fSubtractionName[iWake], fCentralityName[iCentrality], fWakeName[iWake], fJetPtName[iJetPt], fTrackPtName[iTrackPt], fEnergyWeightName[iEnergyWeight]);
 
             // Read all the lines from the current input file
             std::ifstream file_stream(currentFile);
@@ -318,4 +318,10 @@ int HybridModelHistogramManager::FindEnergyWeightIndex(double energyWeight) cons
 
   // If matching bin is not found, return a negative number
   return -1;
+}
+
+// Getter for a nice legend name for the wake configuration
+const char* HybridModelHistogramManager::GetWakeName(const int iWake) const{
+  if(iWake < 0 || iWake >= kWakeConfigurations) return "NonSense";
+  return fWakeLegendName[iWake];
 }
