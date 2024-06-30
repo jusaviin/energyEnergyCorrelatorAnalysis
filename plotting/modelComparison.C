@@ -153,8 +153,8 @@ void modelComparison(int weightExponent = 1){
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  drawnJetPtBin.push_back(std::make_pair(140,160));
-  drawnJetPtBin.push_back(std::make_pair(160,180));
+  //drawnJetPtBin.push_back(std::make_pair(140,160));
+  //drawnJetPtBin.push_back(std::make_pair(160,180));
   drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
@@ -169,9 +169,12 @@ void modelComparison(int weightExponent = 1){
   std::pair<int, int> trackPtBinsForDoubleRatio = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.first), card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.second));
 
   // Choose which plots to draw
-  bool drawDistributionDataToTheoryComparison = false;
+  bool drawDistributionDataToTheoryComparison = true;
   bool drawRatioDataToTheoryComparison = false;
-  bool drawDoubleRatioDataToTheoryComparison = true;
+  bool drawDoubleRatioDataToTheoryComparison = false;
+
+  // Flag for adding preliminary tag to the figures
+  bool addPreliminaryTag = true;
 
   // Save the final plots
   const bool saveFigures = true;
@@ -182,9 +185,8 @@ void modelComparison(int weightExponent = 1){
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
   // Ratio zoom settings
-  std::pair<double, double> ppDistributionZoom = std::make_pair(0.08, 60);
+  std::pair<double, double> distributionZoom[nWeightExponents] = {std::make_pair(0.12, 25), std::make_pair(0.04, 60)};
   std::pair<double, double> ratioZoomPpDistribution = std::make_pair(0.71, 1.29);
-  std::pair<double, double> pbpbDistributionZoom = std::make_pair(0.04, 60);
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
   std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
   std::pair<double, double> pbpbToPpRatioZoom = std::make_pair(0.2, 1.8);
@@ -907,7 +909,7 @@ void modelComparison(int weightExponent = 1){
 
         // Set the x-axis drawing range
         systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ppDistributionZoom.first, ppDistributionZoom.second);
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(distributionZoom[weightExponent-1].first, distributionZoom[weightExponent-1].second);
 
         // Draw the data correlator to upper canves
         drawer->DrawHistogramToUpperPad(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
@@ -1068,7 +1070,7 @@ void modelComparison(int weightExponent = 1){
 
           // Set the axis drawing ranges
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
-          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(pbpbDistributionZoom.first, pbpbDistributionZoom.second);
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(distributionZoom[weightExponent-1].first, distributionZoom[weightExponent-1].second);
 
           // Draw the systematic uncertainties to the upper canvas
           drawer->DrawHistogramToUpperPad(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
@@ -1103,8 +1105,19 @@ void modelComparison(int weightExponent = 1){
 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
-          mrLatexer->SetTextSize(0.08);
-          mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
+
+          if(addPreliminaryTag){
+            mrLatexer->SetTextSize(0.08);
+            mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
+
+            mrLatexer->SetTextFont(42);
+            mrLatexer->SetTextSize(0.055);
+            mrLatexer->DrawLatexNDC(0.158, 0.41, "Preliminary");
+          } else {
+            mrLatexer->SetTextSize(0.08);
+            mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
+          }
+          
 
           mrLatexer->SetTextFont(42);
           mrLatexer->SetTextSize(0.055);
@@ -1272,8 +1285,18 @@ void modelComparison(int weightExponent = 1){
 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
-          mrLatexer->SetTextSize(0.08);
-          mrLatexer->DrawLatexNDC(0.33, 0.76, "CMS");
+
+          if(addPreliminaryTag){
+            mrLatexer->SetTextSize(0.08);
+            mrLatexer->DrawLatexNDC(0.335, 0.785, "CMS");
+
+            mrLatexer->SetTextFont(42);
+            mrLatexer->SetTextSize(0.05);
+            mrLatexer->DrawLatexNDC(0.315, 0.735, "Preliminary");
+          } else {
+            mrLatexer->SetTextSize(0.08);
+            mrLatexer->DrawLatexNDC(0.33, 0.78, "CMS");
+          }
 
           mrLatexer->SetTextFont(42);
           mrLatexer->SetTextSize(0.055);
@@ -1347,7 +1370,8 @@ void modelComparison(int weightExponent = 1){
   if(drawDoubleRatioDataToTheoryComparison){
 
     // Need a slightly smaller title offset for y-axis for these plots
-    drawer->SetTitleOffsetY(1.6);
+    drawer->SetTitleOffsetY(1.65);
+    drawer->SetLeftMargin(0.15);
 
     for(auto centralityBin : drawnCentralityBin){
       iCentrality = card[kPbPb][weightExponent-1]->FindBinIndexCentrality(centralityBin);
@@ -1427,16 +1451,33 @@ void modelComparison(int weightExponent = 1){
         oneLine->Draw();
 
         // Draw latex messages to the plots
-        mrLatexer->SetTextFont(62);
-        mrLatexer->SetTextSize(0.08);
-        mrLatexer->DrawLatexNDC(0.2, 0.73, "CMS");
+        if(addPreliminaryTag){
+          mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.08);
+          mrLatexer->DrawLatexNDC(0.213, 0.77, "CMS");
 
-        mrLatexer->SetTextFont(42);
-        mrLatexer->SetTextSize(0.055);
-        mrLatexer->DrawLatexNDC(0.33, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-        mrLatexer->DrawLatexNDC(0.33, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-        mrLatexer->DrawLatexNDC(0.73, 0.79, "anti-k_{T} R = 0.4");
-        mrLatexer->DrawLatexNDC(0.73, 0.71, "|#eta_{jet}| < 1.6");
+          mrLatexer->SetTextFont(42);
+          mrLatexer->SetTextSize(0.055);
+          mrLatexer->DrawLatexNDC(0.19, 0.71, "Preliminary");
+
+          mrLatexer->SetTextFont(42);
+          mrLatexer->SetTextSize(0.055);
+          mrLatexer->DrawLatexNDC(0.345, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
+          mrLatexer->DrawLatexNDC(0.345, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+          mrLatexer->DrawLatexNDC(0.745, 0.79, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.745, 0.71, "|#eta_{jet}| < 1.6");
+        } else {
+          mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.08);
+          mrLatexer->DrawLatexNDC(0.19, 0.73, "CMS");
+
+          mrLatexer->SetTextFont(42);
+          mrLatexer->SetTextSize(0.055);
+          mrLatexer->DrawLatexNDC(0.31, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
+          mrLatexer->DrawLatexNDC(0.31, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+          mrLatexer->DrawLatexNDC(0.73, 0.79, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.73, 0.71, "|#eta_{jet}| < 1.6");
+        }
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
