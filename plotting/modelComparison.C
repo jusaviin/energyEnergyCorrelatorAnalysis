@@ -155,7 +155,7 @@ void modelComparison(int weightExponent = 1){
   drawnJetPtBin.push_back(std::make_pair(120,140));
   //drawnJetPtBin.push_back(std::make_pair(140,160));
   //drawnJetPtBin.push_back(std::make_pair(160,180));
-  drawnJetPtBin.push_back(std::make_pair(180,200));
+  //drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
@@ -169,9 +169,9 @@ void modelComparison(int weightExponent = 1){
   std::pair<int, int> trackPtBinsForDoubleRatio = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.first), card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.second));
 
   // Choose which plots to draw
-  bool drawDistributionDataToTheoryComparison = true;
+  bool drawDistributionDataToTheoryComparison = false;
   bool drawRatioDataToTheoryComparison = false;
-  bool drawDoubleRatioDataToTheoryComparison = false;
+  bool drawDoubleRatioDataToTheoryComparison = true;
 
   // Flag for adding preliminary tag to the figures
   bool addPreliminaryTag = true;
@@ -180,7 +180,7 @@ void modelComparison(int weightExponent = 1){
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
-  TString saveComment =  "_updatedStyle";
+  TString saveComment =  "_preliminaryTag";
   TString figureFormat = "pdf";
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
@@ -189,7 +189,7 @@ void modelComparison(int weightExponent = 1){
   std::pair<double, double> ratioZoomPpDistribution = std::make_pair(0.71, 1.29);
   std::pair<double, double> ratioZoom = std::make_pair(0.4, 1.6);
   std::pair<double, double> analysisDeltaR = std::make_pair(0.008, 0.39); // DeltaR span in which the analysis is done
-  std::pair<double, double> pbpbToPpRatioZoom = std::make_pair(0.2, 1.8);
+  std::pair<double, double> pbpbToPpRatioZoom = std::make_pair(0.16, 1.84);
   std::pair<double, double> doubleRatioZoom = std::make_pair(0.5, 1.5);
   
   // Marker colors and styles
@@ -822,12 +822,25 @@ void modelComparison(int weightExponent = 1){
 
   JDrawer* drawer = new JDrawer();
   drawer->SetDefaultAppearanceSplitCanvas();
-  drawer->SetRelativeCanvasSize(1.1,1.1);
-  drawer->SetLeftMargin(0.14);
-  drawer->SetTopMargin(0.07);
-  drawer->SetTitleOffsetY(1.7);
-  drawer->SetTitleOffsetX(1.0);
-  drawer->SetLogX(true); // Logarithmic deltaR axis
+  drawer->SetRelativeCanvasSize(1.1,1.05);
+  drawer->SetLeftMargin(0.16);
+  drawer->SetRightMargin(0.01);
+  drawer->SetTopMargin(0.08);
+  drawer->SetBottomMargin(0.09);
+
+  // For published plots, apparently all the text needs to be bigger than default in JDrawer:
+  drawer->SetTitleSizeX(40);
+  drawer->SetTitleSizeY(35);
+  drawer->SetLabelSizeX(25);
+  drawer->SetLabelSizeY(25);
+
+  // The offsets for titles and labels
+  drawer->SetTitleOffsetY(1.25);
+  drawer->SetTitleOffsetX(0.6);
+  drawer->SetLabelOffsetY(0.006);
+
+  // Logarithmic deltaR axis
+  drawer->SetLogX(true); 
 
   TString centralityString;
   TString compactCentralityString;
@@ -848,6 +861,10 @@ void modelComparison(int weightExponent = 1){
   double bottomRowScale, bottomPadMargin, leftPadMargin;
   double leftMarginAdder, bottomMarginAdder;
   double thisPadScale;
+
+  // Legend text size for easy tuning
+  double legendTextUpperCanvasSize = 0.07;
+  double legendTextLowerCanvasSize = 0.1;
 
   // Normalization and style for theory predictions
   int color[9] = {kRed, kBlue, kGreen+3, kMagenta, kCyan, kOrange+7, kViolet-3, kPink-3, kOrange-3};
@@ -890,11 +907,10 @@ void modelComparison(int weightExponent = 1){
         drawer->SetLogY(true);
 
         // Setup the legend for plots
-        legend = new TLegend(0.23, 0.05, 0.53, 0.6);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
-        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+        legend = new TLegend(0.2, 0.05, 0.5, 0.6);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+        legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
         // Set the drawing style for pp data and uncertainty histograms
         energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -958,14 +974,37 @@ void modelComparison(int weightExponent = 1){
 
         // Draw latex messages to the plots
         mrLatexer->SetTextFont(62);
-        mrLatexer->SetTextSize(0.08);
-        mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
+        mrLatexer->SetTextSize(0.1);
+        mrLatexer->DrawLatexNDC(0.16, 0.9, "CMS");
 
+        if(addPreliminaryTag){
+          mrLatexer->SetTextFont(52);
+          mrLatexer->SetTextSize(0.075);
+          mrLatexer->DrawLatexNDC(0.28, 0.9, "Preliminary");
+        }
+
+        // Luminosity
         mrLatexer->SetTextFont(42);
-        mrLatexer->SetTextSize(0.055);
-        mrLatexer->DrawLatexNDC(0.595, 0.79, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-        mrLatexer->DrawLatexNDC(0.73, 0.71, "anti-k_{T} R = 0.4");
-        mrLatexer->DrawLatexNDC(0.788, 0.63, "|#eta_{jet}| < 1.6");
+        mrLatexer->SetTextSize(0.065);
+        mrLatexer->DrawLatexNDC(0.655, 0.9, "302 pb^{-1} pp (5.02 TeV)");
+
+        // Binning
+        mrLatexer->SetTextFont(62);
+        mrLatexer->SetTextSize(0.07);
+        mrLatexer->DrawLatexNDC(0.58, 0.76, jetPtString.Data());
+        mrLatexer->DrawLatexNDC(0.712, 0.665, "anti-k_{T} R = 0.4");
+        mrLatexer->DrawLatexNDC(0.795, 0.575, "|#eta_{jet}| < 1.6");
+
+
+
+        //mrLatexer->SetTextFont(42);
+        //mrLatexer->SetTextSize(0.055);
+        //mrLatexer->DrawLatexNDC(0.595, 0.79, "302 pb^{-1} pp (5.02 TeV)");
+        //mrLatexer->DrawLatexNDC(0.73, 0.71, "anti-k_{T} R = 0.4");
+        //mrLatexer->DrawLatexNDC(0.788, 0.63, "|#eta_{jet}| < 1.6");
+
+       // mainTitle->DrawLatexNDC(0.33, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
+       // mainTitle->DrawLatexNDC(0.33, 0.88, "302 pb^{-1} pp (5.02 TeV)");
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
@@ -998,8 +1037,8 @@ void modelComparison(int weightExponent = 1){
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetLineWidth(0);
 
         // Create a new legend to show the different data uncertainty bands
-        legend = new TLegend(0.3, 0.85, 0.8, 0.95);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+        legend = new TLegend(0.25, 0.86, 0.95, 0.96);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
         legend->SetNColumns(2);
 
         // Draw the error bars from data
@@ -1043,12 +1082,11 @@ void modelComparison(int weightExponent = 1){
           drawer->SetLogY(true);
 
           // Setup the legend for plots
-          legend = new TLegend(0.23, 0.05, 0.53, 0.6);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+          legend = new TLegend(0.21, 0.05, 0.51, 0.6);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, centralityString.Data(), "");
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
-          legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          //legend->AddEntry((TObject*)0, jetPtString.Data(), "");
+          legend->AddEntry((TObject*)0, Form("%s, %s", trackPtString.Data(), energyWeightLegend[weightExponent-1].Data()), "");
 
           // Set the drawing style for PbPb histogram
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -1105,25 +1143,26 @@ void modelComparison(int weightExponent = 1){
 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.1);
+          mrLatexer->DrawLatexNDC(0.16, 0.9, "CMS");
 
           if(addPreliminaryTag){
-            mrLatexer->SetTextSize(0.08);
-            mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
-
-            mrLatexer->SetTextFont(42);
-            mrLatexer->SetTextSize(0.055);
-            mrLatexer->DrawLatexNDC(0.158, 0.41, "Preliminary");
-          } else {
-            mrLatexer->SetTextSize(0.08);
-            mrLatexer->DrawLatexNDC(0.18, 0.47, "CMS");
+            mrLatexer->SetTextFont(52);
+            mrLatexer->SetTextSize(0.075);
+            mrLatexer->DrawLatexNDC(0.28, 0.9, "Preliminary");
           }
           
-
+          // Luminosity
           mrLatexer->SetTextFont(42);
-          mrLatexer->SetTextSize(0.055);
-          mrLatexer->DrawLatexNDC(0.53, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-          mrLatexer->DrawLatexNDC(0.73, 0.71, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.788, 0.63, "|#eta_{jet}| < 1.6");
+          mrLatexer->SetTextSize(0.065);
+          mrLatexer->DrawLatexNDC(0.6, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV)");
+
+          // Binning
+          mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.07);
+          mrLatexer->DrawLatexNDC(0.58, 0.76, jetPtString.Data());
+          mrLatexer->DrawLatexNDC(0.712, 0.665, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.795, 0.575, "|#eta_{jet}| < 1.6");
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
@@ -1152,8 +1191,8 @@ void modelComparison(int weightExponent = 1){
 
 
           // Create a new legend to show the different data uncertainty bands
-          legend = new TLegend(0.3, 0.82, 0.8, 0.92);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+          legend = new TLegend(0.25, 0.86, 0.95, 0.96);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
           legend->SetNColumns(2);
 
           // Draw the error bars from the data
@@ -1215,16 +1254,15 @@ void modelComparison(int weightExponent = 1){
           drawer->SetLogY(false);
 
           // Setup the legend for plots
-          legend = new TLegend(0.11, 0.03, 0.41, 0.38);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+          legend = new TLegend(0.54, 0.03, 0.84, 0.28);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, centralityString.Data(), "");
-          legend->AddEntry((TObject*)0, jetPtString.Data(), "");
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
           // Make another legend to which all the different histograms are collected.
-          anotherLegend = new TLegend(0.46, 0.03, 0.76, 0.28);
-          anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(0.05); anotherLegend->SetTextFont(62);
+          anotherLegend = new TLegend(0.19, 0.03, 0.49, 0.28);
+          anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
 
           // Set the drawing style for PbPb to pp ratio histograms
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -1285,32 +1323,33 @@ void modelComparison(int weightExponent = 1){
 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.09);
+          mrLatexer->DrawLatexNDC(0.19, 0.765, "CMS");
 
           if(addPreliminaryTag){
-            mrLatexer->SetTextSize(0.08);
-            mrLatexer->DrawLatexNDC(0.335, 0.785, "CMS");
-
-            mrLatexer->SetTextFont(42);
-            mrLatexer->SetTextSize(0.05);
-            mrLatexer->DrawLatexNDC(0.315, 0.735, "Preliminary");
-          } else {
-            mrLatexer->SetTextSize(0.08);
-            mrLatexer->DrawLatexNDC(0.33, 0.78, "CMS");
+            mrLatexer->SetTextFont(52);
+            mrLatexer->SetTextSize(0.065);
+            mrLatexer->DrawLatexNDC(0.3, 0.765, "Preliminary");
           }
 
+          // Luminosity
           mrLatexer->SetTextFont(42);
-          mrLatexer->SetTextSize(0.055);
-          mrLatexer->DrawLatexNDC(0.463, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-          mrLatexer->DrawLatexNDC(0.528, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          mrLatexer->DrawLatexNDC(0.656, 0.63, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.708, 0.55, "|#eta_{jet}| < 1.6");
+          mrLatexer->SetTextSize(0.06);
+          mrLatexer->DrawLatexNDC(0.18, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+ 
+          // Binning
+          mrLatexer->SetTextFont(62);
+          mrLatexer->SetTextSize(0.07);
+          mrLatexer->DrawLatexNDC(0.51, 0.765, jetPtString.Data());
+          mrLatexer->DrawLatexNDC(0.642, 0.67, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.725, 0.58, "|#eta_{jet}| < 1.6");
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
 
           // Create a new legend to show the different data uncertainty bands
-          legend = new TLegend(0.3, 0.85, 0.8, 0.95);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+          legend = new TLegend(0.25, 0.86, 0.92, 0.96);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
           legend->SetNColumns(2);
 
           // Set the axis drawing ranges
@@ -1369,9 +1408,9 @@ void modelComparison(int weightExponent = 1){
   // Draw the data/theory comparison for double ratios
   if(drawDoubleRatioDataToTheoryComparison){
 
-    // Need a slightly smaller title offset for y-axis for these plots
+    // We need to increase left margin for double ratio plots such that the title fits to screen
     drawer->SetTitleOffsetY(1.65);
-    drawer->SetLeftMargin(0.15);
+    drawer->SetLeftMargin(0.22);
 
     for(auto centralityBin : drawnCentralityBin){
       iCentrality = card[kPbPb][weightExponent-1]->FindBinIndexCentrality(centralityBin);
@@ -1392,15 +1431,14 @@ void modelComparison(int weightExponent = 1){
         drawer->SetLogY(false);
 
         // Setup the legend for plots
-        legend = new TLegend(0.15, 0.05, 0.45, 0.3);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
+        legend = new TLegend(0.6, 0.05, 0.9, 0.2);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, centralityString.Data(), "");
-        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
         legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
         // Make another legend to which all the different histograms are collected.
-        anotherLegend = new TLegend(0.5, 0.05, 0.8, 0.3);
-        anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(0.05); anotherLegend->SetTextFont(62);
+        anotherLegend = new TLegend(0.25, 0.05, 0.55, 0.3);
+        anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
 
         // Set the drawing style for double ratio histograms from data
         energyEnergyCorrelatorDoubleRatio[weightExponent-1][iCentrality][iJetPt]->SetMarkerStyle(kFullSquare);
@@ -1451,40 +1489,34 @@ void modelComparison(int weightExponent = 1){
         oneLine->Draw();
 
         // Draw latex messages to the plots
+        mrLatexer->SetTextFont(62);
+        mrLatexer->SetTextSize(0.09);
+        mrLatexer->DrawLatexNDC(0.26, 0.765, "CMS");
+
         if(addPreliminaryTag){
-          mrLatexer->SetTextFont(62);
-          mrLatexer->SetTextSize(0.08);
-          mrLatexer->DrawLatexNDC(0.213, 0.77, "CMS");
-
-          mrLatexer->SetTextFont(42);
-          mrLatexer->SetTextSize(0.055);
-          mrLatexer->DrawLatexNDC(0.19, 0.71, "Preliminary");
-
-          mrLatexer->SetTextFont(42);
-          mrLatexer->SetTextSize(0.055);
-          mrLatexer->DrawLatexNDC(0.345, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-          mrLatexer->DrawLatexNDC(0.345, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          mrLatexer->DrawLatexNDC(0.745, 0.79, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.745, 0.71, "|#eta_{jet}| < 1.6");
-        } else {
-          mrLatexer->SetTextFont(62);
-          mrLatexer->SetTextSize(0.08);
-          mrLatexer->DrawLatexNDC(0.19, 0.73, "CMS");
-
-          mrLatexer->SetTextFont(42);
-          mrLatexer->SetTextSize(0.055);
-          mrLatexer->DrawLatexNDC(0.31, 0.79, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-          mrLatexer->DrawLatexNDC(0.31, 0.71, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          mrLatexer->DrawLatexNDC(0.73, 0.79, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.73, 0.71, "|#eta_{jet}| < 1.6");
+          mrLatexer->SetTextFont(52);
+          mrLatexer->SetTextSize(0.065);
+          mrLatexer->DrawLatexNDC(0.37, 0.765, "Preliminary");
         }
+
+        // Luminosity
+        mrLatexer->SetTextFont(42);
+        mrLatexer->SetTextSize(0.06);
+        mrLatexer->DrawLatexNDC(0.22, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+
+        // Binning
+        mrLatexer->SetTextFont(62);
+        mrLatexer->SetTextSize(0.07);
+        mrLatexer->DrawLatexNDC(0.58, 0.765, jetPtString.Data());
+        mrLatexer->DrawLatexNDC(0.712, 0.67, "anti-k_{T} R = 0.4");
+        mrLatexer->DrawLatexNDC(0.795, 0.58, "|#eta_{jet}| < 1.6");
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
 
         // Create a new legend to show the different data uncertainty bands
-        legend = new TLegend(0.3, 0.85, 0.8, 0.95);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.06); legend->SetTextFont(62);
+        legend = new TLegend(0.25, 0.85, 0.95, 0.95);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
         legend->SetNColumns(2);
 
         // Set the axis drawing ranges
