@@ -284,7 +284,7 @@ int HybridModelHistogramManager::FindCentralityBinIndex(std::pair<int,int> centr
 
 // Get a jet pT bin index from a given jet pT bin borders
 int HybridModelHistogramManager::FindJetPtBinIndex(std::pair<int,int> jetPtBin) const{
-  for(int iJetPt = 0; iJetPt < kCentralityBins; iJetPt++){
+  for(int iJetPt = 0; iJetPt < kJetPtBins; iJetPt++){
     if(jetPtBin.first == fJetPtBinBorders[iJetPt].first){
       if(jetPtBin.second == fJetPtBinBorders[iJetPt].second){
         return iJetPt;
