@@ -147,15 +147,15 @@ void modelComparison(int weightExponent = 1){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  //drawnCentralityBin.push_back(std::make_pair(10,30));
-  //drawnCentralityBin.push_back(std::make_pair(30,50));
-  //drawnCentralityBin.push_back(std::make_pair(50,90));
+  drawnCentralityBin.push_back(std::make_pair(10,30));
+  drawnCentralityBin.push_back(std::make_pair(30,50));
+  drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  //drawnJetPtBin.push_back(std::make_pair(140,160));
-  //drawnJetPtBin.push_back(std::make_pair(160,180));
-  //drawnJetPtBin.push_back(std::make_pair(180,200));
+  drawnJetPtBin.push_back(std::make_pair(140,160));
+  drawnJetPtBin.push_back(std::make_pair(160,180));
+  drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
@@ -995,17 +995,6 @@ void modelComparison(int weightExponent = 1){
         mrLatexer->DrawLatexNDC(0.712, 0.665, "anti-k_{T} R = 0.4");
         mrLatexer->DrawLatexNDC(0.795, 0.575, "|#eta_{jet}| < 1.6");
 
-
-
-        //mrLatexer->SetTextFont(42);
-        //mrLatexer->SetTextSize(0.055);
-        //mrLatexer->DrawLatexNDC(0.595, 0.79, "302 pb^{-1} pp (5.02 TeV)");
-        //mrLatexer->DrawLatexNDC(0.73, 0.71, "anti-k_{T} R = 0.4");
-        //mrLatexer->DrawLatexNDC(0.788, 0.63, "|#eta_{jet}| < 1.6");
-
-       // mainTitle->DrawLatexNDC(0.33, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
-       // mainTitle->DrawLatexNDC(0.33, 0.88, "302 pb^{-1} pp (5.02 TeV)");
-
         // Linear scale for the ratio
         drawer->SetLogY(false);
 
@@ -1335,7 +1324,7 @@ void modelComparison(int weightExponent = 1){
           // Luminosity
           mrLatexer->SetTextFont(42);
           mrLatexer->SetTextSize(0.06);
-          mrLatexer->DrawLatexNDC(0.18, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+          mrLatexer->DrawLatexNDC(0.3, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + 302 pb^{-1} pp (5.02 TeV)");
  
           // Binning
           mrLatexer->SetTextFont(62);
@@ -1502,7 +1491,7 @@ void modelComparison(int weightExponent = 1){
         // Luminosity
         mrLatexer->SetTextFont(42);
         mrLatexer->SetTextSize(0.06);
-        mrLatexer->DrawLatexNDC(0.22, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+        mrLatexer->DrawLatexNDC(0.3, 0.9, "1.70 nb^{-1} PbPb (5.02 TeV) + 302 pb^{-1} pp (5.02 TeV)");
 
         // Binning
         mrLatexer->SetTextFont(62);
