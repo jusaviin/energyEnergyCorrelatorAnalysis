@@ -170,8 +170,8 @@ void modelComparison(int weightExponent = 1){
 
   // Choose which plots to draw
   bool drawDistributionDataToTheoryComparison = false;
-  bool drawRatioDataToTheoryComparison = false;
-  bool drawDoubleRatioDataToTheoryComparison = true;
+  bool drawRatioDataToTheoryComparison = true;
+  bool drawDoubleRatioDataToTheoryComparison = false;
 
   // Flag for adding preliminary tag to the figures
   bool addPreliminaryTag = true;
@@ -1073,9 +1073,8 @@ void modelComparison(int weightExponent = 1){
           // Setup the legend for plots
           legend = new TLegend(0.21, 0.05, 0.51, 0.6);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
-          legend->AddEntry((TObject*)0, centralityString.Data(), "");
-          //legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-          legend->AddEntry((TObject*)0, Form("%s, %s", trackPtString.Data(), energyWeightLegend[weightExponent-1].Data()), "");
+          legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          legend->AddEntry((TObject*)0, trackPtString.Data(), "");
 
           // Set the drawing style for PbPb histogram
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -1106,7 +1105,7 @@ void modelComparison(int weightExponent = 1){
 
           // Draw the data points to the same canvas and add the histogram to the legend
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
-          legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "PbPb data", "lpf");
+          legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], centralityString.Data(), "lpf");
 
           // Compare the prediction with and without wake
           for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
@@ -1243,14 +1242,13 @@ void modelComparison(int weightExponent = 1){
           drawer->SetLogY(false);
 
           // Setup the legend for plots
-          legend = new TLegend(0.54, 0.03, 0.84, 0.28);
+          legend = new TLegend(0.54, 0.03, 0.84, 0.21);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
-          legend->AddEntry((TObject*)0, centralityString.Data(), "");
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
           // Make another legend to which all the different histograms are collected.
-          anotherLegend = new TLegend(0.19, 0.03, 0.49, 0.28);
+          anotherLegend = new TLegend(0.19, 0.03, 0.49, 0.3);
           anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
 
           // Set the drawing style for PbPb to pp ratio histograms
@@ -1282,7 +1280,7 @@ void modelComparison(int weightExponent = 1){
 
           // Then draw the PbPb to pp ratio and add a legend for it
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
-          anotherLegend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "Data", "lpf");
+          anotherLegend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("%s / pp", centralityString.Data()), "lpf");
 
           // Draw the hybrid predictions with and without wake to the same plot
           for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
