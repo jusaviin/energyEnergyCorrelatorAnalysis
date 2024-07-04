@@ -4,6 +4,7 @@
 #include "JDrawer.h"
 #include "AlgorithmLibrary.h"
 #include "HybridModelHistogramManager.h"
+#include "HolguinHistogramManager.h"
 
 /*
  * Determine up and down uncertainty bands for shape correlated uncertainties
@@ -76,6 +77,7 @@ void modelComparison(int weightExponent = 1){
 
   // String pointing to the folder where the hybrid model predictions are located
   TString hybridModelFolder = "theoryComparison/hybridModel/data";
+  TString holguinDataFolder = "theoryComparison/holguin";
   
   TFile* inputFile[kNDataTypes][nWeightExponents];
   TFile* uncertaintyFile[kNDataTypes][nWeightExponents];
@@ -147,9 +149,9 @@ void modelComparison(int weightExponent = 1){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  drawnCentralityBin.push_back(std::make_pair(10,30));
-  drawnCentralityBin.push_back(std::make_pair(30,50));
-  drawnCentralityBin.push_back(std::make_pair(50,90));
+  //drawnCentralityBin.push_back(std::make_pair(10,30));
+  //drawnCentralityBin.push_back(std::make_pair(30,50));
+  //drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
@@ -164,13 +166,26 @@ void modelComparison(int weightExponent = 1){
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
+  // Define which k-values to study for Holguin predictions
+  std::vector<double> holguinKValue;
+  holguinKValue.push_back(0.1);
+  holguinKValue.push_back(0.3);
+  holguinKValue.push_back(0.5);
+
+  // Index for the selected theory predictions
+  // 0 = Hybrid model with different wake configuration
+  // 1 = Holguin perturbative calculations with different k-values
+  int theoryComparisonIndex = 1; 
+  TString theorySaveName[2] = {"hybridModel, holguin"};
+
+
   // Binning for double ratio plots
   std::pair<double, double> trackPtCutsForDoubleDatio = std::make_pair(1.0, 2.0);
   std::pair<int, int> trackPtBinsForDoubleRatio = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.first), card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.second));
 
   // Choose which plots to draw
-  bool drawDistributionDataToTheoryComparison = false;
-  bool drawRatioDataToTheoryComparison = true;
+  bool drawDistributionDataToTheoryComparison = true;
+  bool drawRatioDataToTheoryComparison = false;
   bool drawDoubleRatioDataToTheoryComparison = false;
 
   // Flag for adding preliminary tag to the figures
@@ -294,10 +309,17 @@ void modelComparison(int weightExponent = 1){
   TH1D* hybridModelToDataRatioPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HybridModelHistogramManager::kWakeConfigurations];
   TH1D* hybridModelToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HybridModelHistogramManager::kWakeConfigurations];
 
+   // Double ratio histograms for the Hybrid model
   TH1D* histogrammifiedHybridModelDoubleRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][HybridModelHistogramManager::kWakeConfigurations];
   TH1D* hybridModelToDataRatioDoubleRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][HybridModelHistogramManager::kWakeConfigurations];
 
-  // Double ratio histograms fot the hybrid model
+  // Energy-energy correlators for perturbative calculations by Holguin et. al.
+  TGraph* energyEnergyCorrelatorHolguinPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
+  TGraph* energyEnergyCorrelatorHolguinPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
+  TH1D* histogrammifiedHolguinPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
+  TH1D* histogrammifiedHolguinPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
+  TH1D* holguinToDataRatioPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
+  TH1D* holguinToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][HolguinHistogramManager::kMaxKValues];
 
   // Initialize histograms to NULL
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -368,6 +390,15 @@ void modelComparison(int weightExponent = 1){
             hybridModelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = NULL;
             hybridModelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iWake] = NULL;
           } // Wake type loop
+
+          for(int iKValue = 0; iKValue < HolguinHistogramManager::kMaxKValues; iKValue++){
+            energyEnergyCorrelatorHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+            energyEnergyCorrelatorHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+            histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+            histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+            holguinToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+            holguinToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = NULL;
+          }
 
         } // Centrality loop
       } // Track pT loop
@@ -816,6 +847,72 @@ void modelComparison(int weightExponent = 1){
     } // Centrality loop
   } // Weight exponent loop
 
+  // Helper veriables for normalizing the perturbative calculation
+  double normalizationRegionDeltaRLow, normalizationRegionDeltaRHigh;
+  double dataIntegralDistribution, theoryIntegralDistribution;
+  double dataIntegralRatio, theoryIntegralRatio;
+  int lowNormalizationBin = 13;
+  int highNormalizationBin = 19;
+
+  // Next, read the predictions from the perturbative calculation by Holguin et. al.
+  HolguinHistogramManager* holguinHistograms = new HolguinHistogramManager(holguinDataFolder);
+  int iKValue;
+  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+    for(auto jetPtBin : drawnJetPtBin){
+      iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+      for(auto trackPtBin : drawnTrackPtBin){
+        iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
+        for(auto myKValue : holguinKValue){
+          iKValue = holguinHistograms->FindKValueIndex(myKValue);
+          if(iKValue < 0) continue;
+          for(auto centralityBin : drawnCentralityBin){
+            iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+
+            // Load the PbPb and ratio histograms
+            energyEnergyCorrelatorHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = holguinHistograms->GetEnergyEnergyCorrelatorPbPb(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1, myKValue);
+            energyEnergyCorrelatorHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = holguinHistograms->GetEnergyEnergyCorrelatorPbPbToPpRatio(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1, myKValue);
+
+            // There are only a few bins for which predictions exist. Before continuing, check if the histograms are NULL
+            if(energyEnergyCorrelatorHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] == NULL) continue;
+
+            // Create a histogrammified versions of the TGraphs
+            histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = optimusPrimeTheTransformer->Histogrammify(energyEnergyCorrelatorHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue], energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+            histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = optimusPrimeTheTransformer->Histogrammify(energyEnergyCorrelatorHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue], energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]);
+
+            // The absolute normalization for these theory predictions needs to be obtained from data
+            // This is done by matching the integral in region 0.0419615 < DeltaR < 0.125882
+
+            // Calculate the integrals in the data
+            dataIntegralDistribution = energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+            dataIntegralRatio = energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+
+            // Calculate the integrals for the histogrammified distributions
+            theoryIntegralDistribution = histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+            theoryIntegralRatio = histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+
+            // With these numbers, we can normalize the perturbative calculations
+            energyEnergyCorrelatorHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralDistribution/theoryIntegralDistribution);
+            histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralDistribution/theoryIntegralDistribution);
+            energyEnergyCorrelatorHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralRatio/theoryIntegralRatio);
+            histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralRatio/theoryIntegralRatio);
+
+            // Now we can take a ratio between hybrid model prediction and data
+            holguinToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = (TH1D*) histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Clone(Form("holguinRatioToDataPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
+            errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessHolguinPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            holguinToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Divide(errorlessData);
+
+            holguinToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = (TH1D*) histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Clone(Form("holguinRatioToDataPbPbToPpRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
+            errorlessData = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessHolguinRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            holguinToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Divide(errorlessData);
+        
+          } // Centrality loop
+        } // Wake loop
+      } // Track pT loop
+    } // Jet pT loop
+  } // Weight exponent loop
+
   // ========================================= //
   //   Draw the histograms in separate plots   //
   // ========================================= //
@@ -1107,23 +1204,50 @@ void modelComparison(int weightExponent = 1){
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
           legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], centralityString.Data(), "lpf");
 
-          // Compare the prediction with and without wake
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
+          // Choose a set of theory predictions to draw to the figure
+          if(theoryComparisonIndex == 0){
+            // Theory comparison index 0, Hybrid model with different wake settings
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake] == NULL) continue;
+            // Compare the prediction with and without wake
+            for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
 
-            // Give some nice styles for the predictions
-            energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
-            energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
-            energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-            energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              // There are some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake] == NULL) continue;
 
-            // Draw the prediction to the same canvas as the data
-            energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
 
-            // Add a legend for the theory prediction
-            legend->AddEntry(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake], hybridHistograms->GetWakeName(iWake), "f");
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
+
+              // Add a legend for the theory prediction
+              legend->AddEntry(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake], hybridHistograms->GetWakeName(iWake), "f");
+            }
+          } else if(theoryComparisonIndex == 1){
+            // Theory comparison index 1, perturbative calculations from Holguin et. al. with different k-values
+
+            // Compare the prediction with and without wake
+            for(auto myKValue : holguinKValue){
+              iKValue = holguinHistograms->FindKValueIndex(myKValue);
+
+              // There are some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] == NULL) continue;
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[iKValue]);
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[iKValue]);
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetFillColorAlpha(color[iKValue], 0.4);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              legend->AddEntry(energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], Form("Holguin, k=%.1f", myKValue), "pl");
+            }
           }
 
           // Draw the legend to the upper pad
@@ -1159,14 +1283,6 @@ void modelComparison(int weightExponent = 1){
           hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
-          // Set the style for histograms
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
-            hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
-            hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-            hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
-            hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
-          }
-
           // Set the style for uncertainty bands for systematic and statistical uncertainties from data
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
             hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
@@ -1192,9 +1308,27 @@ void modelComparison(int weightExponent = 1){
           legend->AddEntry(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
           legend->AddEntry(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
 
-          // Draw the ratio to model predictions
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
-            hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
+          // Choose a set of theory predictions to draw to the figure
+          if(theoryComparisonIndex == 0){
+            // Theory comparison index 0, Hybrid model with different wake settings
+            for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
+            }
+          } else if(theoryComparisonIndex == 1){
+            // Theory comparison index 1, perturbative calculations from Holguin et. al. with different k-values
+            for(auto myKValue : holguinKValue){
+              iKValue = holguinHistograms->FindKValueIndex(myKValue);
+              if(holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] == NULL) continue;
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[iKValue]);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineWidth(3);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[iKValue]);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
+            }
           }
 
           // Draw the legend to the lower pad
@@ -1205,7 +1339,7 @@ void modelComparison(int weightExponent = 1){
 
           // If a plot name is given, save the plot in a file
           if(saveFigures) {
-            gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_hybridModelDistribution%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+            gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_%sDistribution%s%s%s%s.%s", theorySaveName[theoryComparisonIndex].Data(), saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
           }
 
         } // Track pT loop
@@ -1282,23 +1416,48 @@ void modelComparison(int weightExponent = 1){
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
           anotherLegend->AddEntry(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("%s / pp", centralityString.Data()), "lpf");
 
-          // Draw the hybrid predictions with and without wake to the same plot
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
+          // Choose a set of theory predictions to draw to the figure
+          if(theoryComparisonIndex == 0){
+            // Theory comparison index 0, Hybrid model with different wake settings
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake] == NULL) continue;
+            for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
 
-            // Give some nice styles for the predictions
-            energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
-            energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
-            energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-            energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              // There are some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake] == NULL) continue;
 
-            // Draw the prediction to the same canvas as the data
-            energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
 
-            // Add a legend for the theory prediction
-            anotherLegend->AddEntry(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake], hybridHistograms->GetWakeName(iWake), "f");
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake], hybridHistograms->GetWakeName(iWake), "f");
+            }
+          } else if (theoryComparisonIndex == 1){
+            // Theory comparison index 1, perturbative calculations from Holguin et. al. with different k-values
+
+            for(auto myKValue : holguinKValue){
+              iKValue = holguinHistograms->FindKValueIndex(myKValue);
+
+              // There are some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] == NULL) continue;
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[iKValue]);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[iKValue]);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], Form("Holguin, k=%.1f", myKValue), "pl");
+            }
+
           }
 
           // Draw the legends to the upper pad
@@ -1343,14 +1502,6 @@ void modelComparison(int weightExponent = 1){
           hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
 
-          // Set the style for histograms
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
-            hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iPrediction]);
-            hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-            hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
-            hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
-          }
-
           // Set the style for uncertainty bands for systematic and statistical uncertainties from data
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
             hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
@@ -1371,9 +1522,27 @@ void modelComparison(int weightExponent = 1){
           legend->AddEntry(hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
           legend->AddEntry(hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
 
-          // Draw the hybrid model predictions to the same canvas
-          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
-            hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
+          // Choose a set of theory predictions to draw to the figure
+          if(theoryComparisonIndex == 0){
+            // Theory comparison index 0, Hybrid model with different wake settings
+            for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iPrediction]);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
+            }
+          } else if (theoryComparisonIndex == 1){
+            // Theory comparison index 1, perturbative calculations from Holguin et. al. with different k-values
+            for(auto myKValue : holguinKValue){
+              iKValue = holguinHistograms->FindKValueIndex(myKValue);
+              if(holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] == NULL) continue;
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[iKValue]);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineWidth(3);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[iKValue]);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
+            }
           }
 
           // Draw the legend to the lower pad
@@ -1384,7 +1553,7 @@ void modelComparison(int weightExponent = 1){
 
           // If a plot name is given, save the plot in a file
           if(saveFigures) {
-            gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_hybridModelRatio%s%s%s%s.%s", saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+            gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_%sRatio%s%s%s%s.%s", theorySaveName[theoryComparisonIndex].Data(), saveComment.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
           }
 
         } // Track pT loop
