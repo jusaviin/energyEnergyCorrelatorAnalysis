@@ -41,7 +41,7 @@ void finalResultPlotter(){
   // ============= //
 
   // Select the weight exponent that is used for the figures
-  int weightExponent = 2;
+  int weightExponent = 1;
 
   // Check that the selected weight exponent is reasonable
   if(weightExponent < 1 || weightExponent > 2){
@@ -170,10 +170,13 @@ void finalResultPlotter(){
   bool drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
 
   // Supplementary plots
-  bool drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
+  bool drawSupplementaryEECJetPt = true; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
   bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
-  bool drawSupplementaryEECRatioWeightExponent = true; // Draw PbPb/pp ratios from all weight exponents to the same figure
+  bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
+
+  // Configuration for supplementary plots
+  double supplementaryLegendTextSize = 0.045;
 
   // Preliminary tag
   bool addPreliminaryTag = true;
@@ -213,7 +216,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_initialStyle";
+  TString saveComment =  "_preliminaryTag";
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
@@ -1227,7 +1230,7 @@ void finalResultPlotter(){
       if(addPreliminaryTag){
         mainTitle->DrawLatexNDC(0.29, 0.93, "CMS");
 
-        mainTitle->SetTextFont(42);
+        mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.05);
         mainTitle->DrawLatexNDC(0.27, 0.88, "Preliminary");
       } else {
@@ -1451,7 +1454,7 @@ void finalResultPlotter(){
         mainTitle->SetTextSize(0.05);
         mainTitle->DrawLatexNDC(0.08, 0.945, "CMS");
 
-        mainTitle->SetTextFont(42);
+        mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.035);
         mainTitle->DrawLatexNDC(0.06, 0.91, "Preliminary");
       } else {
@@ -1642,7 +1645,7 @@ void finalResultPlotter(){
         mainTitle->SetTextSize(0.05);
         mainTitle->DrawLatexNDC(0.08, 0.945, "CMS");
 
-        mainTitle->SetTextFont(42);
+        mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.035);
         mainTitle->DrawLatexNDC(0.06, 0.91, "Preliminary");
       } else {
@@ -2064,8 +2067,8 @@ void finalResultPlotter(){
       // ===================================== //
 
       // Create a TCanvas for each centrality+track pT bin
-      theGreatCanvasOfJetPt = new SplitCanvas(Form("theGreatCanvasOfJetPtPp%d", iTrackPt), "", 1100, 1200);
-      theGreatCanvasOfJetPt->SetMargin(0.15, 0.01, 0.15, 0.15);
+      theGreatCanvasOfJetPt = new SplitCanvas(Form("theGreatCanvasOfJetPtPp%d", iTrackPt), "", 1100, 1100);
+      theGreatCanvasOfJetPt->SetMargin(0.15, 0.01, 0.15, 0.07);
       theGreatCanvasOfJetPt->cd();
 
       gPad->SetLogy();
@@ -2134,7 +2137,7 @@ void finalResultPlotter(){
 
       // Make a legend for the jet pT bins
       legend = new TLegend(0.18, 0.18, 0.43, 0.46);
-      legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.046); legend->SetTextFont(62);
+      legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
       // Draw the data points on top of the error bands
       for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++){
@@ -2145,31 +2148,26 @@ void finalResultPlotter(){
       legend->Draw();
 
       mainTitle->SetTextFont(62);
-      mainTitle->SetTextSize(0.08);
+      mainTitle->SetTextSize(0.055);
+      mainTitle->DrawLatexNDC(0.15, 0.95, "CMS");
 
       if(addPreliminaryTag){
-        mainTitle->DrawLatexNDC(0.035, 0.93, "CMS");
-
-        mainTitle->SetTextFont(42);
-        mainTitle->SetTextSize(0.05);
-        mainTitle->DrawLatexNDC(0.005, 0.88, "Preliminary");
-      } else {
-        mainTitle->DrawLatexNDC(0.02, 0.89, "CMS");
+        mainTitle->SetTextFont(52);
+        mainTitle->SetTextSize(0.04);
+        mainTitle->DrawLatexNDC(0.27, 0.95, "Preliminary");
       }
 
       mainTitle->SetTextFont(42);
-      mainTitle->SetTextSize(0.055);
+      mainTitle->SetTextSize(0.04);
+      mainTitle->DrawLatexNDC(0.626, 0.95, "302 pb^{-1} pp (5.02 TeV)");
 
-      if(addPreliminaryTag){
-        mainTitle->DrawLatexNDC(0.3, 0.91, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-      } else {
-        mainTitle->DrawLatexNDC(0.3, 0.9, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-      }
+      mainTitle->SetTextFont(62);
+      mainTitle->SetTextSize(supplementaryLegendTextSize);
+      mainTitle->DrawLatexNDC(0.8, 0.85, Form("pp, n=%d", weightExponent));
+      mainTitle->DrawLatexNDC(0.726, 0.78, trackPtString.Data());
 
-      mainTitle->DrawLatexNDC(0.787, 0.78, Form("pp, n=%d", weightExponent));
-      mainTitle->DrawLatexNDC(0.692, 0.71, trackPtString.Data());
-      mainTitle->DrawLatexNDC(0.63, 0.63, "anti-k_{T} R = 0.4");
-      mainTitle->DrawLatexNDC(0.74, 0.56, "|#eta_{jet}| < 1.6");
+      mainTitle->DrawLatexNDC(0.19, 0.56, "anti-k_{T} R = 0.4");
+      mainTitle->DrawLatexNDC(0.19, 0.49, "|#eta_{jet}| < 1.6");
 
       // Save the figures to file
       if(saveFigures){
@@ -2188,8 +2186,8 @@ void finalResultPlotter(){
       
 
         // Create a TCanvas for each centrality+track pT bin
-        theGreatCanvasOfJetPt = new SplitCanvas(Form("theGreatCanvasOfJetPt%d%d", iCentrality, iTrackPt), "", 1100, 1200);
-        theGreatCanvasOfJetPt->SetMargin(0.15, 0.01, 0.15, 0.15);
+        theGreatCanvasOfJetPt = new SplitCanvas(Form("theGreatCanvasOfJetPt%d%d", iCentrality, iTrackPt), "", 1100, 1100);
+        theGreatCanvasOfJetPt->SetMargin(0.15, 0.01, 0.15, 0.07);
         theGreatCanvasOfJetPt->cd();
 
         gPad->SetLogy();
@@ -2260,7 +2258,7 @@ void finalResultPlotter(){
 
         // Make a legend for the jet pT bins
         legend = new TLegend(0.18, 0.18, 0.43, 0.46);
-        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.046); legend->SetTextFont(62);
+        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
         // Draw the data points on top of the error bands
         for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++){
@@ -2272,35 +2270,30 @@ void finalResultPlotter(){
         legend->Draw();
 
         mainTitle->SetTextFont(62);
-        mainTitle->SetTextSize(0.08);
+        mainTitle->SetTextSize(0.055);
+        mainTitle->DrawLatexNDC(0.15, 0.95, "CMS");
 
         if(addPreliminaryTag){
-          mainTitle->DrawLatexNDC(0.035, 0.93, "CMS");
-
-          mainTitle->SetTextFont(42);
-          mainTitle->SetTextSize(0.05);
-          mainTitle->DrawLatexNDC(0.005, 0.88, "Preliminary");
-        } else {
-          mainTitle->DrawLatexNDC(0.02, 0.89, "CMS");
+          mainTitle->SetTextFont(52);
+          mainTitle->SetTextSize(0.04);
+          mainTitle->DrawLatexNDC(0.27, 0.95, "Preliminary");
         }
 
         mainTitle->SetTextFont(42);
-        mainTitle->SetTextSize(0.055);
+        mainTitle->SetTextSize(0.04);
+        mainTitle->DrawLatexNDC(0.568, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
 
-        if(addPreliminaryTag){
-          mainTitle->DrawLatexNDC(0.27, 0.91, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-        } else {
-          mainTitle->DrawLatexNDC(0.24, 0.9, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-        }
-
+        mainTitle->SetTextFont(62);
+        mainTitle->SetTextSize(supplementaryLegendTextSize);
         if(iCentrality == 0){
-          mainTitle->DrawLatexNDC(0.54, 0.78, Form("%s, n=%d", centralityString.Data(), weightExponent));
+          mainTitle->DrawLatexNDC(0.618, 0.85, Form("%s, n=%d", centralityString.Data(), weightExponent));
         } else {
-          mainTitle->DrawLatexNDC(0.511, 0.78, Form("%s, n=%d", centralityString.Data(), weightExponent));
+          mainTitle->DrawLatexNDC(0.594, 0.85, Form("%s, n=%d", centralityString.Data(), weightExponent));
         }
-        mainTitle->DrawLatexNDC(0.672, 0.71, trackPtString.Data());
-        mainTitle->DrawLatexNDC(0.61, 0.63, "anti-k_{T} R = 0.4");
-        mainTitle->DrawLatexNDC(0.72, 0.56, "|#eta_{jet}| < 1.6");
+        mainTitle->DrawLatexNDC(0.726, 0.78, trackPtString.Data());
+
+        mainTitle->DrawLatexNDC(0.19, 0.56, "anti-k_{T} R = 0.4");
+        mainTitle->DrawLatexNDC(0.19, 0.49, "|#eta_{jet}| < 1.6");
 
 
         // Save the figures to file
@@ -2335,8 +2328,8 @@ void finalResultPlotter(){
         for(int iDrawingStyle = 0; iDrawingStyle < nDrawingStyles; iDrawingStyle++){
 
           // Create a TCanvas for each centrality+track pT bin
-          theGreatCanvasOfCentrality = new SplitCanvas(Form("theGreatCanvasOfCentrality%d%d%d", iTrackPt, iJetPt, iDrawingStyle), "", 1100, 1200);
-          theGreatCanvasOfCentrality->SetMargin(0.15, 0.01, 0.15, 0.15);
+          theGreatCanvasOfCentrality = new SplitCanvas(Form("theGreatCanvasOfCentrality%d%d%d", iTrackPt, iJetPt, iDrawingStyle), "", 1100, 1100);
+          theGreatCanvasOfCentrality->SetMargin(0.15, 0.01, 0.15, 0.07);
           theGreatCanvasOfCentrality->cd();
 
           gPad->SetLogy();
@@ -2491,8 +2484,8 @@ void finalResultPlotter(){
           }
 
           // Make a legend for the jet pT bins
-          legend = new TLegend(0.18, 0.18, 0.43, 0.46);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.046); legend->SetTextFont(62);
+          legend = new TLegend(0.18, 0.18, 0.47, 0.52);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
           // Add legends from each distribution
           for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
@@ -2510,58 +2503,52 @@ void finalResultPlotter(){
 
           // The pp text needs to be hidden for drawing styles 0-3
           if(iDrawingStyle < 4){
-            box->DrawBox(0.008, 0.5, 0.02, 0.7); // Hide the pp text
+            box->DrawBox(0.008, 0.49, 0.015, 0.7); // Hide the pp text
           }
 
           // The 50-90% text needs to be drawn for styles 3 and 6
           if(iDrawingStyle != 3 && iDrawingStyle !=6){
-            box->DrawBox(0.008, 0.7, 0.043, 0.9); // Hide the 50-90% text
+            box->DrawBox(0.008, 0.7, 0.041, 0.92); // Hide the 50-90% text
           }
           
           // The 30-50% text needs to be drawn for styles 2 and 6
           if(iDrawingStyle != 2 && iDrawingStyle != 6){
-            box->DrawBox(0.008, 0.9, 0.043, 1.3); // Hide the 30-50% text
+            box->DrawBox(0.008, 0.92, 0.041, 1.33); // Hide the 30-50% text
           }
           
           // The 10-30% text needs to be drawn for styles 1 and 6
           if(iDrawingStyle != 1 && iDrawingStyle != 6){
-            box->DrawBox(0.008, 1.3, 0.043, 1.75); // Hide the 10-30% text
+            box->DrawBox(0.008, 1.33, 0.041, 1.88); // Hide the 10-30% text
           }
 
           // The 0-10% text needs to be drawn for styles 0, 5 and 6
           if(iDrawingStyle > 0 && iDrawingStyle < 5){
-            box->DrawBox(0.008, 1.75, 0.04, 2.4); // Hide the 0-10% text
+            box->DrawBox(0.008, 1.88, 0.04, 2.75); // Hide the 0-10% text
           }
 
           // Add some interesting information to the plot
           mainTitle->SetTextFont(62);
-          mainTitle->SetTextSize(0.08);
+          mainTitle->SetTextSize(0.06);
+          mainTitle->DrawLatexNDC(0.185, 0.55, "CMS");
 
           if(addPreliminaryTag){
-            mainTitle->DrawLatexNDC(0.035, 0.93, "CMS");
-
-            mainTitle->SetTextFont(42);
-            mainTitle->SetTextSize(0.05);
-            mainTitle->DrawLatexNDC(0.005, 0.88, "Preliminary");
-          } else {
-            mainTitle->DrawLatexNDC(0.02, 0.89, "CMS");
+            mainTitle->SetTextFont(52);
+            mainTitle->SetTextSize(0.045);
+            mainTitle->DrawLatexNDC(0.315, 0.55, "Preliminary");
           }
 
           mainTitle->SetTextFont(42);
-          mainTitle->SetTextSize(0.055);
+          mainTitle->SetTextSize(0.04);
+          mainTitle->DrawLatexNDC(0.165, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV) + 302 pb^{-1} pp (5.02 TeV)");
 
-          if(addPreliminaryTag){
-            mainTitle->DrawLatexNDC(0.27, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.27, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          } else {
-            mainTitle->DrawLatexNDC(0.24, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.24, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          }
+          mainTitle->SetTextFont(62);
+          mainTitle->SetTextSize(supplementaryLegendTextSize);
 
-          mainTitle->DrawLatexNDC(0.435, 0.78, jetPtString.Data());
-          mainTitle->DrawLatexNDC(0.58, 0.71, Form("%s, n=%d", trackPtString.Data(), weightExponent));
-          mainTitle->DrawLatexNDC(0.63, 0.63, "anti-k_{T} R = 0.4");
-          mainTitle->DrawLatexNDC(0.74, 0.56, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.522, 0.85, jetPtString.Data());
+          mainTitle->DrawLatexNDC(0.675, 0.78, "anti-k_{T} R = 0.4");
+          mainTitle->DrawLatexNDC(0.765, 0.71, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.726, 0.64, trackPtString.Data());
+          mainTitle->DrawLatexNDC(0.87, 0.57, Form("n=%d", weightExponent));
 
           // Save the figures to file
           if(saveFigures){
@@ -2596,8 +2583,8 @@ void finalResultPlotter(){
         // Draw a canvas for each component separately for conference purposes
         for(int iDrawingStyle = 0; iDrawingStyle < nDrawingStylesRatio; iDrawingStyle++){
 
-          theGreatCanvasOfCentralityRatio = new SplitCanvas(Form("theGreatCanvasOfCentralityRatio%d%d%d", iTrackPt, iJetPt, iDrawingStyle), "", 1300, 1200);
-          theGreatCanvasOfCentralityRatio->SetMargin(0.18, 0.01, 0.15, 0.15);
+          theGreatCanvasOfCentralityRatio = new SplitCanvas(Form("theGreatCanvasOfCentralityRatio%d%d%d", iTrackPt, iJetPt, iDrawingStyle), "", 1300, 1100);
+          theGreatCanvasOfCentralityRatio->SetMargin(0.18, 0.01, 0.15, 0.07);
           theGreatCanvasOfCentralityRatio->cd();
 
           gPad->SetLogy(false);
@@ -2686,8 +2673,8 @@ void finalResultPlotter(){
           }
 
           // Make a legend for the jet pT bins
-          legend = new TLegend(0.22, 0.18, 0.48, 0.41);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.046); legend->SetTextFont(62);
+          legend = new TLegend(0.22, 0.18, 0.54, 0.45);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
           // Add legends from each distribution
           for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
@@ -2722,38 +2709,31 @@ void finalResultPlotter(){
 
           // The 0-10% text needs to be drawn for styles 0 and 4
           if(iDrawingStyle != 0 && iDrawingStyle != 4){
-            box->DrawBox(0.008, 0.68, 0.04, 0.80); // Hide the 0-10% text
+            box->DrawBox(0.008, 0.68, 0.04, 0.81); // Hide the 0-10% text
           }
 
           // Add some interesting information to the plot
           mainTitle->SetTextFont(62);
-          mainTitle->SetTextSize(0.08);
+          mainTitle->SetTextSize(0.06);
+          mainTitle->DrawLatexNDC(0.2, 0.86, "CMS");
 
           if(addPreliminaryTag){
-            mainTitle->DrawLatexNDC(0.065, 0.93, "CMS");
-
-            mainTitle->SetTextFont(42);
-            mainTitle->SetTextSize(0.05);
-            mainTitle->DrawLatexNDC(0.035, 0.88, "Preliminary");
-          } else {
-            mainTitle->DrawLatexNDC(0.02, 0.89, "CMS");
+            mainTitle->SetTextFont(52);
+            mainTitle->SetTextSize(0.045);
+            mainTitle->DrawLatexNDC(0.31, 0.86, "Preliminary");
           }
 
           mainTitle->SetTextFont(42);
-          mainTitle->SetTextSize(0.055);
+          mainTitle->SetTextSize(0.04);
+          mainTitle->DrawLatexNDC(0.29, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV) + 302 pb^{-1} pp (5.02 TeV)");
 
-          if(addPreliminaryTag){
-            mainTitle->DrawLatexNDC(0.3, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.3, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          } else {
-            mainTitle->DrawLatexNDC(0.24, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.24, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
-          }
+          mainTitle->SetTextFont(62);
+          mainTitle->SetTextSize(supplementaryLegendTextSize);
 
-          mainTitle->DrawLatexNDC(0.34, 0.78, jetPtString.Data());
-          mainTitle->DrawLatexNDC(0.465, 0.71, Form("%s, n=%d", trackPtString.Data(), weightExponent));
-          mainTitle->DrawLatexNDC(0.51, 0.63, "anti-k_{T} R = 0.4");
-          mainTitle->DrawLatexNDC(0.61, 0.56, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.53, 0.86, jetPtString.Data());
+          mainTitle->DrawLatexNDC(0.657, 0.79, "anti-k_{T} R = 0.4");
+          mainTitle->DrawLatexNDC(0.735, 0.72, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.621, 0.65, Form("%s, n=%d", trackPtString.Data(), weightExponent));
 
           // Save the figures to file
           if(saveFigures){
@@ -2789,8 +2769,8 @@ void finalResultPlotter(){
           compactCentralityString = Form("_C=%.0f-%.0f", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality));
 
           // Create a TCanvas for each centrality+jet pT+track pT bin
-          theGreatCanvasOfRatioWeightExponentEdition = new SplitCanvas(Form("theGreatCanvasOfWeightExponentRatio%d%d%d", iTrackPt, iJetPt, iCentrality), "", 1300, 1200);
-          theGreatCanvasOfRatioWeightExponentEdition->SetMargin(0.18, 0.01, 0.15, 0.15);
+          theGreatCanvasOfRatioWeightExponentEdition = new SplitCanvas(Form("theGreatCanvasOfWeightExponentRatio%d%d%d", iTrackPt, iJetPt, iCentrality), "", 1300, 1100);
+          theGreatCanvasOfRatioWeightExponentEdition->SetMargin(0.18, 0.01, 0.15, 0.07);
           theGreatCanvasOfRatioWeightExponentEdition->cd();
 
           gPad->SetLogy(false);
@@ -2867,8 +2847,8 @@ void finalResultPlotter(){
           }
 
           // Make a legend for the jet pT bins
-          legend = new TLegend(0.22, 0.2, 0.48, 0.32);
-          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.046); legend->SetTextFont(62);
+          legend = new TLegend(0.22, 0.2, 0.48, 0.34);
+          legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
           // Add legends from each distribution
           for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -2883,12 +2863,37 @@ void finalResultPlotter(){
 
           // Add some interesting information to the plot
           mainTitle->SetTextFont(62);
+          mainTitle->SetTextSize(0.06);
+          mainTitle->DrawLatexNDC(0.2, 0.86, "CMS");
+
+          if(addPreliminaryTag){
+            mainTitle->SetTextFont(52);
+            mainTitle->SetTextSize(0.045);
+            mainTitle->DrawLatexNDC(0.31, 0.86, "Preliminary");
+          }
+
+          mainTitle->SetTextFont(42);
+          mainTitle->SetTextSize(0.04);
+          mainTitle->DrawLatexNDC(0.29, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV) + 302 pb^{-1} pp (5.02 TeV)");
+
+          mainTitle->SetTextFont(62);
+          mainTitle->SetTextSize(supplementaryLegendTextSize);
+
+          mainTitle->DrawLatexNDC(0.53, 0.86, jetPtString.Data());
+          mainTitle->DrawLatexNDC(0.657, 0.79, "anti-k_{T} R = 0.4");
+          mainTitle->DrawLatexNDC(0.735, 0.72, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.701, 0.65, trackPtString.Data());
+
+          mainTitle->DrawLatexNDC(0.22, 0.38, Form("#frac{%s}{pp}", centralityString.Data()));
+
+          // Add some interesting information to the plot
+          /*mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(0.08);
 
           if(addPreliminaryTag){
             mainTitle->DrawLatexNDC(0.065, 0.93, "CMS");
 
-            mainTitle->SetTextFont(42);
+            mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.05);
             mainTitle->DrawLatexNDC(0.035, 0.88, "Preliminary");
           } else {
@@ -2899,11 +2904,11 @@ void finalResultPlotter(){
           mainTitle->SetTextSize(0.055);
 
           if(addPreliminaryTag){
-            mainTitle->DrawLatexNDC(0.3, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.3, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+            mainTitle->DrawLatexNDC(0.33, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
+            mainTitle->DrawLatexNDC(0.33, 0.88, "302 pb^{-1} pp (5.02 TeV)");
           } else {
-            mainTitle->DrawLatexNDC(0.24, 0.95, "PbPb #sqrt{s_{NN}} = 5.02 TeV, 1.70 nb^{-1}");
-            mainTitle->DrawLatexNDC(0.24, 0.88, "pp #sqrt{s} = 5.02 TeV, 302 pb^{-1}");
+            mainTitle->DrawLatexNDC(0.24, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
+            mainTitle->DrawLatexNDC(0.24, 0.88, "302 pb^{-1} pp (5.02 TeV)");
           }
 
           mainTitle->DrawLatexNDC(0.34, 0.78, jetPtString.Data());
@@ -2911,7 +2916,8 @@ void finalResultPlotter(){
           mainTitle->DrawLatexNDC(0.51, 0.63, "anti-k_{T} R = 0.4");
           mainTitle->DrawLatexNDC(0.61, 0.56, "|#eta_{jet}| < 1.6");
 
-          mainTitle->DrawLatexNDC(0.22, 0.36, Form("#frac{%s}{pp}", centralityString.Data()));
+          
+          */
 
           // Save the figures to file
           if(saveFigures){
