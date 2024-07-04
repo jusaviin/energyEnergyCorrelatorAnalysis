@@ -2148,13 +2148,16 @@ void finalResultPlotter(){
       legend->Draw();
 
       mainTitle->SetTextFont(62);
-      mainTitle->SetTextSize(0.055);
-      mainTitle->DrawLatexNDC(0.15, 0.95, "CMS");
+      mainTitle->SetTextSize(0.06);
 
       if(addPreliminaryTag){
+        mainTitle->DrawLatexNDC(0.61, 0.85, "CMS");
+
         mainTitle->SetTextFont(52);
-        mainTitle->SetTextSize(0.04);
-        mainTitle->DrawLatexNDC(0.27, 0.95, "Preliminary");
+        mainTitle->SetTextSize(0.045);
+        mainTitle->DrawLatexNDC(0.745, 0.85, "Preliminary");
+      } else {
+        mainTitle->DrawLatexNDC(0.78, 0.85, "CMS");
       }
 
       mainTitle->SetTextFont(42);
@@ -2163,8 +2166,8 @@ void finalResultPlotter(){
 
       mainTitle->SetTextFont(62);
       mainTitle->SetTextSize(supplementaryLegendTextSize);
-      mainTitle->DrawLatexNDC(0.8, 0.85, Form("pp, n=%d", weightExponent));
-      mainTitle->DrawLatexNDC(0.726, 0.78, trackPtString.Data());
+      mainTitle->DrawLatexNDC(0.81, 0.78, Form("pp, n=%d", weightExponent));
+      mainTitle->DrawLatexNDC(0.736, 0.71, trackPtString.Data());
 
       mainTitle->DrawLatexNDC(0.19, 0.56, "anti-k_{T} R = 0.4");
       mainTitle->DrawLatexNDC(0.19, 0.49, "|#eta_{jet}| < 1.6");
@@ -2270,13 +2273,16 @@ void finalResultPlotter(){
         legend->Draw();
 
         mainTitle->SetTextFont(62);
-        mainTitle->SetTextSize(0.055);
-        mainTitle->DrawLatexNDC(0.15, 0.95, "CMS");
+        mainTitle->SetTextSize(0.06);
 
         if(addPreliminaryTag){
+          mainTitle->DrawLatexNDC(0.61, 0.85, "CMS");
+
           mainTitle->SetTextFont(52);
-          mainTitle->SetTextSize(0.04);
-          mainTitle->DrawLatexNDC(0.27, 0.95, "Preliminary");
+          mainTitle->SetTextSize(0.045);
+          mainTitle->DrawLatexNDC(0.745, 0.85, "Preliminary");
+        } else {
+          mainTitle->DrawLatexNDC(0.78, 0.85, "CMS");
         }
 
         mainTitle->SetTextFont(42);
@@ -2286,11 +2292,11 @@ void finalResultPlotter(){
         mainTitle->SetTextFont(62);
         mainTitle->SetTextSize(supplementaryLegendTextSize);
         if(iCentrality == 0){
-          mainTitle->DrawLatexNDC(0.618, 0.85, Form("%s, n=%d", centralityString.Data(), weightExponent));
+          mainTitle->DrawLatexNDC(0.628, 0.78, Form("%s, n=%d", centralityString.Data(), weightExponent));
         } else {
-          mainTitle->DrawLatexNDC(0.594, 0.85, Form("%s, n=%d", centralityString.Data(), weightExponent));
+          mainTitle->DrawLatexNDC(0.604, 0.78, Form("%s, n=%d", centralityString.Data(), weightExponent));
         }
-        mainTitle->DrawLatexNDC(0.726, 0.78, trackPtString.Data());
+        mainTitle->DrawLatexNDC(0.736, 0.71, trackPtString.Data());
 
         mainTitle->DrawLatexNDC(0.19, 0.56, "anti-k_{T} R = 0.4");
         mainTitle->DrawLatexNDC(0.19, 0.49, "|#eta_{jet}| < 1.6");
