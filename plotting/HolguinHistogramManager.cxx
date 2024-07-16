@@ -328,7 +328,7 @@ int HolguinHistogramManager::FindEnergyWeightIndex(double energyWeight) const{
   return -1;
 }
 
-// Get an energy weight bin index from a given energy weight value
+// Get an k-value index from a given k-value
 int HolguinHistogramManager::FindKValueIndex(double valueOfK) const{
   for(int iKValue = 0; iKValue < fnKValues; iKValue++){
     if(TMath::Abs(valueOfK - fKValueVector.at(iKValue)) < 0.0001){
