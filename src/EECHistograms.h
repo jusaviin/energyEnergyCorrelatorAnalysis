@@ -73,6 +73,9 @@ public:
   THnSparseF* fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus; // Histogram for energy-energy correlator with track pair efficiency correction decreased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhJetPtClosure; // Jet pT closure histograms. Also information for response matrix. [gen pT][reco pT][centrality][q/g][reco/gen]
 
+  // Histograms for jet shapes, to be used in selection bias scaling studies
+  THnSparseF* fhJetShape;  // Histogram for jet shape
+
   // Quality assurance histograms for the reflected cone
   THnSparseF* fhJetNumberInReflectedCone;  // Number of jets above 25 GeV found in reflected cone
   THnSparseF* fhJetPtInReflectedCone;      // pT of the jets found in reflected cone

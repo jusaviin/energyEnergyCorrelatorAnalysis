@@ -1775,6 +1775,9 @@ void EECAnalyzer::RunAnalysis(){
             // Then calculate the energy-energy correlator for this jet
             CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
 
+            // Calculate also jet shape
+            CalculateJetShape(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
+
             // After that is done, add the contents from this event to the total coveriance matrix
             // Covariance matrix calculation only for data, not needed in MC
             if(!fSkipCovarianceMatrix){
@@ -1899,8 +1902,8 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
-  // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
-  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone};
+  // Indices for different pairing types
+  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone};
   Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone};
   
   // Event information
@@ -2091,6 +2094,98 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       } // Inner track loop
     } // Outer track loop
   } // Loop over pairing types (same jet/reflected cone jet)
+  
+}
+
+/*
+ * Method for calculating jet shapes for tracks within the jets
+ *
+ *  const vector<double> selectedTrackPt[4] = pT array for tracks selected for the analysis
+ *  const vector<double> relativeTrackEta[4] = relative eta array for tracks selected for the analysis
+ *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
+ *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
+ *  const double jetPt = pT of the jet the tracks are close to
+ */
+void EECAnalyzer::CalculateJetShape(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt){
+  
+  // Define a filler for THnSparse
+  Double_t fillerJetShape[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  
+  // Indices for different pairing types
+  Int_t particleType[3];
+  particleType[0] = EECHistograms::kSignalCone;
+  particleType[1] = EECHistograms::kReflectedCone;
+  particleType[2] = EECHistograms::kMixedCone;
+  
+  // Event information
+  Double_t centrality = fTrackReader->GetCentrality();
+  Int_t hiBin = fTrackReader->GetHiBin();
+  if(fMultiplicityMode) centrality = GetCentralityFromMultiplicity(GetMultiplicity());
+  
+  // Variables for tracks
+  Double_t trackPt;       // Track pT
+  Double_t trackEta;      // Track eta
+  Double_t trackPhi;      // Track phi
+  Double_t trackDeltaR;    // DeltaR between the two tracks
+  Double_t trackEfficiencyCorrection;    // Track efficiency correction
+  Int_t subeventTrack;    // Subevent index for the track (0 = pythia, > 0 = hydjet)
+  Int_t weightIndex;       // Inxed in histogram axis where the weight exponent is saved
+  Int_t nTracks; // Total number of tracks
+  Double_t correlatorWeight;  // Energy weighting for jet shape
+  
+  // For MC: weight according to jet pT
+  Double_t jetPtWeight = GetJetPtWeight(jetPt);
+  
+  // Loop over the pairing types (same jet/reflected cone jet)
+  for(int iParticleType = 0; iParticleType < 3; iParticleType++){
+    
+    // Only do reflected and mixed cone pairings if specified in the configuration
+    if((particleType[iParticleType] == EECHistograms::kReflectedCone) && !fDoReflectedCone) continue;
+    if((particleType[iParticleType] == EECHistograms::kMixedCone) && !fDoMixedCone) continue;
+    
+    // Find the numbers of tracks for the track loops
+    nTracks = selectedTrackPt[particleType[iParticleType]].size();
+    
+    // Loop over all the tracks in the jet cone
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
+      
+      // Get the kinematics for the track
+      trackPt = selectedTrackPt[particleType[iParticleType]].at(iTrack);
+      trackPhi = relativeTrackPhi[particleType[iParticleType]].at(iTrack);
+      trackEta = relativeTrackEta[particleType[iParticleType]].at(iTrack);
+      
+      // Get the efficiency correction for the track
+      trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+      
+      // Find the track subevent (only relevant for simulation)
+      subeventTrack = selectedTrackSubevent[particleType[iParticleType]].at(iTrack);
+              
+      // Find the deltaR between the jet and the track
+      // Remember that we are working in a relativ ecoordinate system where the jet is at (0,0)
+      trackDeltaR = GetDeltaR(trackEta, trackPhi, 0, 0);
+
+      weightIndex = 0;
+      for(Double_t currentExponent : fWeightExponent){
+
+        correlatorWeight = TMath::Power(trackPt, currentExponent);
+        
+        // Fill the jet shape histograms
+        fillerJetShape[0] = trackDeltaR;                  // Axis 0: DeltaR between jet and track
+        fillerJetShape[1] = jetPt;                        // Axis 1: pT of the jet the tracks are near of
+        fillerJetShape[2] = trackPt;                      // Axis 2: Track pT
+        fillerJetShape[3] = centrality;                   // Axis 3: Event centrality
+        fillerJetShape[4] = particleType[iParticleType];  // Axis 4: Track type (signal, reflected, mixed)
+        fillerJetShape[5] = subeventTrack;                // Axis 5: Subevent (pythia/hydjet)
+        fillerJetShape[6] = weightIndex;                  // Axis 6: Inxed for the current energy-energy correlator weight
+
+        if(fFillEnergyEnergyCorrelators){
+          fHistograms->fhJetShape->Fill(fillerJetShape, trackEfficiencyCorrection * fTotalEventWeight * correlatorWeight * jetPtWeight);  // Fill the jet shape histogram
+        } // Filling the jet shape histograms
+
+        weightIndex++;
+      } // Loop over all defined weight exponents
+    } // Track loop
+  } // Loop over particle types (signal, reflected, mixed)
   
 }
 

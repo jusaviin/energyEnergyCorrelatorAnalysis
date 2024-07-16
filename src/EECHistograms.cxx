@@ -41,6 +41,7 @@ EECHistograms::EECHistograms() :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(0), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(0),
   fhJetPtClosure(0),
+  fhJetShape(0),
   fhJetNumberInReflectedCone(0),
   fhJetPtInReflectedCone(0),
   fhUnfoldingMeasured(0),
@@ -91,6 +92,7 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(0), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(0),  
   fhJetPtClosure(0),
+  fhJetShape(0),
   fhJetNumberInReflectedCone(0),
   fhJetPtInReflectedCone(0),
   fhUnfoldingMeasured(0),
@@ -141,6 +143,7 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus(in.fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus), 
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus(in.fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus),
   fhJetPtClosure(in.fhJetPtClosure),
+  fhJetShape(in.fhJetShape),
   fhJetNumberInReflectedCone(in.fhJetNumberInReflectedCone),
   fhJetPtInReflectedCone(in.fhJetPtInReflectedCone),
   fhUnfoldingMeasured(in.fhUnfoldingMeasured),
@@ -195,6 +198,7 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus = in.fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus = in.fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus;
   fhJetPtClosure = in.fhJetPtClosure;
+  fhJetShape = in.fhJetShape;
   fhJetNumberInReflectedCone = in.fhJetNumberInReflectedCone;
   fhJetPtInReflectedCone = in.fhJetPtInReflectedCone;
   fhUnfoldingMeasured = in.fhUnfoldingMeasured;
@@ -245,6 +249,7 @@ EECHistograms::~EECHistograms(){
   delete fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus;
   delete fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus;
   delete fhJetPtClosure;
+  delete fhJetShape;
   delete fhJetNumberInReflectedCone;
   delete fhJetPtInReflectedCone;
   delete fhUnfoldingMeasured;
@@ -807,6 +812,10 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus = new THnSparseF("energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorEfficiencyVariationMinus", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Sumw2();
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus = new THnSparseF("energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Sumw2();
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus = new THnSparseF("energyEnergyCorrelatorPairEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationMinus", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Sumw2();
+
+  // Create also jet shape histogram with the same binning
+  // There are extra bins that are not needed for jet shapes, but for a quick test this does not matter
+  fhJetShape = new THnSparseF("jetShape", "jetShape", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhJetShape->Sumw2();
   
   
   // Set custom bin borders for histograms
@@ -815,24 +824,28 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus->SetBinEdges(0,deltaRBinsEEC);          // DeltaR bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->SetBinEdges(0,deltaRBinsEEC);       // DeltaR bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->SetBinEdges(0,deltaRBinsEEC);      // DeltaR bins
+  fhJetShape->SetBinEdges(0,deltaRBinsEEC);                                                // DeltaR bins
   
   fhEnergyEnergyCorrelator->SetBinEdges(1,jetPtBinsEEC);                                   // Jet pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(1,jetPtBinsEEC);            // Jet pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus->SetBinEdges(1,jetPtBinsEEC);           // Jet pT bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->SetBinEdges(1,jetPtBinsEEC);        // Jet pT bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->SetBinEdges(1,jetPtBinsEEC);       // Jet pT bins
+  fhJetShape->SetBinEdges(1,jetPtBinsEEC);                                                 // Jet pT bins
   
   fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                                 // Track pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(2,trackPtBinsEEC);          // Track pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus->SetBinEdges(2,trackPtBinsEEC);         // Track pT bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->SetBinEdges(2,trackPtBinsEEC);      // Track pT bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->SetBinEdges(2,trackPtBinsEEC);     // Track pT bins
+  fhJetShape->SetBinEdges(2,trackPtBinsEEC);                                               // Track pT bins
   
   fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                             // Centrality bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(3,wideCentralityBins);      // Centrality bins
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus->SetBinEdges(3,wideCentralityBins);     // Centrality bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->SetBinEdges(3,wideCentralityBins);  // Centrality bins
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->SetBinEdges(3,wideCentralityBins); // Centrality bins
+  fhJetShape->SetBinEdges(3,wideCentralityBins);                                           // Centrality bins
   
   // ======== THnSparses for jet pT closures ========
   
@@ -1198,6 +1211,7 @@ void EECHistograms::Write() const{
   fhEnergyEnergyCorrelatorPairEfficiencyVariationPlus->Write();
   fhEnergyEnergyCorrelatorPairEfficiencyVariationMinus->Write();
   fhJetPtClosure->Write();
+  fhJetShape->Write();
   fhJetNumberInReflectedCone->Write();
   fhJetPtInReflectedCone->Write();
   fhUnfoldingMeasured->Write();
