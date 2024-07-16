@@ -167,8 +167,8 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  //TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
-  TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  //TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
   // SystematicUncertaintyOrganizer::kJetEnergyResolution
@@ -186,7 +186,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
+  //plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
   skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================

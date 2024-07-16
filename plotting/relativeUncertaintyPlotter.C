@@ -34,9 +34,9 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-05-02.root";
-  // systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-05-02.root
-  // systematicUncertainties_PbPb_energyWeightSquared_mixedConeBackground_noMCnonClosure_2024-05-02.root
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root";
+  // systematicUncertainties_PbPb_nominalEnergyWeight_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root
+  // systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-06.root
   uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root";
@@ -75,20 +75,20 @@ void relativeUncertaintyPlotter(){
   
   // The final results are available for all the bins that are unfolded
   int firstDrawnCentralityBin = uncertaintyCard[kPbPb]->GetFirstUnfoldedCentralityBin();
-  int lastDrawnCentralityBin = uncertaintyCard[kPbPb]->GetLastUnfoldedCentralityBin();
+  int lastDrawnCentralityBin = uncertaintyCard[kPbPb]->GetFirstUnfoldedCentralityBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedCentralityBin();
   
   int firstDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedJetPtBin();
-  int lastDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin();
+  int lastDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedJetPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin();
   
   int firstDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin();
-  int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
+  int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
 
   //firstDrawnTrackPtBinEEC = 3;
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
   const bool saveFigures = true;
-  TString saveComment = "_mixedConeWithBugFix";
+  TString saveComment = "_combinedMixedCone";
 
   // Add a name describing the energy weight in the files
   if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){

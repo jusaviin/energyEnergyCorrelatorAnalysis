@@ -11,21 +11,22 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 3;
+  const int nComparisonFiles = 1;
   TString fileName[nComparisonFiles];
-  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
+  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
   
-  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackgroundWithNoScale_includeSystematics_processed_2024-03-31.root";
-  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_includeSystematics_processed_2024-03-31.root";
-  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedEventBackground_includeSystematics_processed_2024-03-31.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_fixedCovarianceMatrix_processed_2024-05-28.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_updatedBackgroundSubtraction_processed_2024-02-23.root";
-  fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root";
-  fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_moreMixing_megaSkim_processed_2024-04-23.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root";
+  //fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_moreMixing_megaSkim_processed_2024-04-23.root";
   //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
   //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
-  //fileName[0] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_reflectedConeBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
-  //fileName[1] = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_mixedEventBackground_finalResultFormat_someJobsMissing_processed_2024-04-01.root";
+  //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root";
+  //fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-04-17.root";
+  //fileName[2] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-04-17.root";
 
   // pp to Pythia8 comparison files
   // ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root
@@ -39,9 +40,8 @@ void compareEECinDefinedBins(){
 
 
   TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "Combined mixing";
-  fileDescription[1] = "Regular mixing";
-  fileDescription[2] = "Mega skimmed mix";
+  fileDescription[0] = "PbPb data";
+  //fileDescription[1] = "Same data?";
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -87,9 +87,9 @@ void compareEECinDefinedBins(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,10));
-  comparedCentralityBin.push_back(std::make_pair(10,30));
-  comparedCentralityBin.push_back(std::make_pair(30,50));
-  comparedCentralityBin.push_back(std::make_pair(50,90));
+  //comparedCentralityBin.push_back(std::make_pair(10,30));
+  //comparedCentralityBin.push_back(std::make_pair(30,50));
+  //comparedCentralityBin.push_back(std::make_pair(50,90));
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
@@ -97,12 +97,12 @@ void compareEECinDefinedBins(){
   comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
-  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(1.5);
-  comparedTrackPtBin.push_back(2.0);
+  //comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(2.5);
   //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
@@ -118,7 +118,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -127,7 +127,11 @@ void compareEECinDefinedBins(){
   // EECHistograms::kSignalMixedConePair;
   // EECHistograms::kReflectedMixedConePair;
   // EECHistograms::kMixedConePair;
-  int iPairingType = EECHistograms::kSameJetPair;
+  // EECHistograms::kSignalSecondMixedConePair; 
+  // EECHistograms::kReflectedSecondMixedConePair; 
+  // EECHistograms::kMixedMixedConePair; 
+  // EECHistograms::kSecondMixedConePair;
+  int iPairingType = EECHistograms::kSignalReflectedConePair;
 
   // If we are dealing with pp data, reset the centrality vector
   if(card[0]->GetDataType().Contains("pp")){
@@ -136,12 +140,12 @@ void compareEECinDefinedBins(){
   }
 
   // If we are dealing with MC, shift the centrality by 4% as is done in order to match background energy density
-  if(card[0]->GetDataType().Contains("MC")){
-    for(auto& centralityBin : comparedCentralityBin){
-      centralityBin.first += 4;
-      centralityBin.second += 4;
-    }
-  }
+  //if(card[0]->GetDataType().Contains("MC")){
+  //  for(auto& centralityBin : comparedCentralityBin){
+  //    centralityBin.first += 4;
+  //    centralityBin.second += 4;
+  //  }
+  //}
 
   // ====================================================
   //                Drawing configuration
@@ -153,7 +157,7 @@ void compareEECinDefinedBins(){
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.95, 1.05);
+  std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -164,6 +168,13 @@ void compareEECinDefinedBins(){
 
       // Sanity check for centrality bins
       for(auto centralityBin : comparedCentralityBin){
+
+        // For MC, shift the centrality bin borders
+        if(card[iFile]->GetDataType().Contains("MC")){
+          centralityBin.first += 4;
+          centralityBin.second += 4;
+        }
+
         if(card[iFile]->FindBinIndexCentrality(centralityBin) < card[iFile]->GetFirstUnfoldedCentralityBin() || card[iFile]->FindBinIndexCentrality(centralityBin) > card[iFile]->GetLastUnfoldedCentralityBin()){
           cout << "ERROR! Centrality bin " << centralityBin.first << "-" << centralityBin.second << " does not exist in file " << fileName[iFile].Data() << endl;
           cout << "Please only choose centrality bins that are included in the input files." << endl;
@@ -373,6 +384,8 @@ void compareEECinDefinedBins(){
   int iCentrality, iCentralityReference, iCentralityUncertainty;
   int iTrackPt, iTrackPtReference, iTrackPtUncertainty;
   int iJetPt, iJetPtReference, iJetPtUncertainty;
+  std::pair<double,double> referenceCentralityBin;
+
 
   // Transformer to transform absolute uncertainties to relative ones
   AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
@@ -383,13 +396,24 @@ void compareEECinDefinedBins(){
       for(auto trackPtBin : comparedTrackPtBin){
         for(auto centralityBin : comparedCentralityBin){
 
+          // For MC, shift the centrality bin borders
+          referenceCentralityBin = centralityBin;
+          if(card[0]->GetDataType().Contains("MC")){
+            referenceCentralityBin.first += 4;
+            referenceCentralityBin.second += 4;
+          }
+          if(card[iFile]->GetDataType().Contains("MC")){
+            centralityBin.first += 4;
+            centralityBin.second += 4;
+          }
+
           // Find the proper binning and express it in term of the bins in the first file
           iJetPt = card[iFile]->FindBinIndexJetPtEEC(jetPtBin);
           iTrackPt = card[iFile]->GetBinIndexTrackPtEEC(trackPtBin);
           iCentrality = card[iFile]->FindBinIndexCentrality(centralityBin);
           iJetPtReference = card[0]->FindBinIndexJetPtEEC(jetPtBin);
           iTrackPtReference = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
-          iCentralityReference = card[0]->FindBinIndexCentrality(centralityBin);
+          iCentralityReference = card[0]->FindBinIndexCentrality(referenceCentralityBin);
 
           // Load the selected energy-energy correlator histogram
           if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
@@ -428,8 +452,20 @@ void compareEECinDefinedBins(){
         iTrackPt = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
         iTrackPtReference = individualTrackPt ? iTrackPt : card[0]->GetBinIndexTrackPtEEC(comparedTrackPtBin.at(0));
         for(auto centralityBin : comparedCentralityBin){
+
+          if(card[0]->GetDataType().Contains("MC")){
+            centralityBin.first += 4;
+            centralityBin.second += 4;
+          }
+
+          referenceCentralityBin = comparedCentralityBin.at(0);
+          if(card[0]->GetDataType().Contains("MC")){
+            referenceCentralityBin.first += 4;
+            referenceCentralityBin.second += 4;
+          }
+
           iCentrality = card[0]->FindBinIndexCentrality(centralityBin);
-          iCentralityReference = individualCentrality ? iCentrality : card[0]->FindBinIndexCentrality(comparedCentralityBin.at(0));
+          iCentralityReference = individualCentrality ? iCentrality : card[0]->FindBinIndexCentrality(referenceCentralityBin);
 
           hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecRatio%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
           hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Divide(hEnergyEnergyCorrelator[0][iCentralityReference][iJetPtReference][iTrackPtReference]);
@@ -485,6 +521,11 @@ void compareEECinDefinedBins(){
     // Find the indices for each drawn bin
     currentCentralityIndices.clear();
     for(auto centralityBin : std::get<kCentrality>(plottedBin)){
+
+      if(card[0]->GetDataType().Contains("MC")){
+        centralityBin.first += 4;
+        centralityBin.second += 4;
+      }
       currentCentralityIndices.push_back(card[0]->FindBinIndexCentrality(centralityBin));
     }
 

@@ -170,8 +170,8 @@ void finalResultPlotter(){
   bool drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
 
   // Supplementary plots
-  bool drawSupplementaryEECJetPt = true; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
-  bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
+  bool drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
+  bool drawSupplementaryEECCentrality = true; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
   bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
 
@@ -180,6 +180,9 @@ void finalResultPlotter(){
 
   // Preliminary tag
   bool addPreliminaryTag = true;
+
+  // Simplified drawing style for physics briefing
+  bool physicsBriefingStyle = false;
 
   bool drawVerticalLines = false; // Draw illustrative vertical lines
   bool drawShiftedPtRatio = false;
@@ -216,7 +219,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_preliminaryTag";
+  TString saveComment =  "_physicsBriefingStyle2";
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
@@ -1166,12 +1169,12 @@ void finalResultPlotter(){
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetTitleOffset(1);
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetTitleSize(0.09);
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetLabelOffset(0.01);
-        systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetLabelSize(0.07);
+        systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetLabelSize(0.06);
 
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetTitleOffset(1.2);
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetTitleSize(0.08);
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetLabelOffset(0.01);
-        systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetLabelSize(0.07);
+        systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetLabelSize(0.06);
 
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetTitle(Form("#frac{PbPb/pp (p_{T}^{ch} > %.0f GeV)}{PbPb/pp (p_{T}^{ch} > %.0f GeV)}", card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio.second), card[kPbPb][weightExponent-1]->GetLowBinBorderTrackPtEEC(trackPtBinsForDoubleRatio.first)));
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->CenterTitle();
@@ -1297,12 +1300,12 @@ void finalResultPlotter(){
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
-          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.13 * thisPadScale);
 
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
-          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.13 * thisPadScale);
 
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("EEC");
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
@@ -1379,8 +1382,8 @@ void finalResultPlotter(){
 
           // Add the jet pT binning to the top row legend
           if(iCentrality == firstDrawnCentralityBin[0]){
-            legend = new TLegend(0.05 + leftMarginAdder/1.1, 0.85, 0.5 / (1 - leftMarginAdder), 0.95);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend = new TLegend(0.01 + leftMarginAdder/1.1, 0.85, 0.5 / (1 - leftMarginAdder), 0.95);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, Form("%s", jetPtString.Data()), "");
             legend->Draw();
 
@@ -1389,7 +1392,7 @@ void finalResultPlotter(){
           // Add the centrality bin information to the leftmost column
           if(iJetPt == firstDrawnJetPtBinEEC[0]){
             legend = new TLegend(0.19, 0.085 + bottomMarginAdder*1.05, 0.7, 0.2 / (thisPadScale*0.78) + bottomMarginAdder*0.1 + 0.05);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, Form("PbPb %.0f-%.0f%%", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "");
             legend->Draw();
           }
@@ -1397,7 +1400,7 @@ void finalResultPlotter(){
           // Add information about the nominal weight PbPb histogram to selected pad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+1 && iCentrality == firstDrawnCentralityBin[0]+1){
             legend = new TLegend(0.4, 0.83, 0.8, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "PbPb, n=1", "lpf");
             legend->Draw();
           }
@@ -1405,7 +1408,7 @@ void finalResultPlotter(){
           // Add information about the squared weight PbPb histogram to selected pad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+2 && iCentrality == firstDrawnCentralityBin[0]+1){
             legend = new TLegend(0.4, 0.83, 0.8, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyForPbPb[1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "PbPb, n=2", "lpf");
             legend->Draw();
           }
@@ -1413,7 +1416,7 @@ void finalResultPlotter(){
           // Add information about the nominal weight PbPb histogram to selected pad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+1 && iCentrality == firstDrawnCentralityBin[0]+2){
             legend = new TLegend(0.4, 0.83, 0.8, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyForPp[0][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp, n=1", "lpf");
             legend->Draw();
           }
@@ -1421,7 +1424,7 @@ void finalResultPlotter(){
           // Add information about the squared weight PbPb histogram to selected pad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+2 && iCentrality == firstDrawnCentralityBin[0]+2){
             legend = new TLegend(0.4, 0.83, 0.8, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyForPp[1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp, n=2", "lpf");
             legend->Draw();
           }
@@ -1524,12 +1527,12 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleSize(0.2 * thisPadScale);
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelOffset(0.01);
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetLabelSize(0.13 * thisPadScale);
 
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleOffset(0.5 / thisPadScale);
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitleSize(0.2 * thisPadScale);
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelOffset(0.01 / thisPadScale);
-          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.12 * thisPadScale);
+          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetLabelSize(0.13 * thisPadScale);
 
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTitle("#frac{PbPb}{pp}");
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->CenterTitle();
@@ -1586,8 +1589,8 @@ void finalResultPlotter(){
 
           // Add the jet pT binning to the top row legend
           if(iCentrality == firstDrawnCentralityBin[0]){
-            legend = new TLegend(0.05 + leftMarginAdder/1.1, 0.83, 0.5 / (1 - leftMarginAdder), 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend = new TLegend(0.01 + leftMarginAdder/1.1, 0.83, 0.5 / (1 - leftMarginAdder), 0.93);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, Form("%s", jetPtString.Data()), "");
             legend->Draw();
 
@@ -1596,7 +1599,7 @@ void finalResultPlotter(){
           // Add the centrality bin information to the leftmost column
           if(iJetPt == firstDrawnJetPtBinEEC[0]){
             legend = new TLegend(0.19, 0.05 + bottomMarginAdder*1.1, 0.7, 0.2 / (thisPadScale*0.78) + bottomMarginAdder*0.1);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry((TObject*)0, Form("#frac{PbPb %.0f-%.0f%%}{pp}", card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality)), "");
             legend->Draw();
           }
@@ -1604,7 +1607,7 @@ void finalResultPlotter(){
           // Add information about the nominal weight histogram to selected oad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+1 && iCentrality == firstDrawnCentralityBin[0]+1){
             legend = new TLegend(0.1, 0.83, 0.5, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "EEC ratio with n=1", "lpf");
             legend->Draw();
           }
@@ -1612,7 +1615,7 @@ void finalResultPlotter(){
           // Add information about the squared weight histogram to selected oad
           if(iJetPt == firstDrawnJetPtBinEEC[0]+2 && iCentrality == firstDrawnCentralityBin[0]+1){
             legend = new TLegend(0.1, 0.83, 0.5, 0.93);
-            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.1 * thisPadScale); legend->SetTextFont(62);
+            legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.12 * thisPadScale); legend->SetTextFont(62);
             legend->AddEntry(systematicUncertaintyPbPbToPpRatio[1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "EEC ratio with n=2", "lpf");
             legend->Draw();
           }
@@ -2490,15 +2493,30 @@ void finalResultPlotter(){
           }
 
           // Make a legend for the jet pT bins
-          legend = new TLegend(0.18, 0.18, 0.47, 0.52);
+          if(physicsBriefingStyle){
+            legend = new TLegend(0.18, 0.24, 0.47, 0.4);
+          } else {
+            legend = new TLegend(0.18, 0.18, 0.47, 0.52);
+          }
+          
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(supplementaryLegendTextSize); legend->SetTextFont(62);
 
           // Add legends from each distribution
           for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
-            legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality)), "lpf");
+            if(physicsBriefingStyle){
+              if(iCentrality == 0){
+                legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "With quark-gluon plasma", "lpf");
+              }
+            } else {
+              legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], Form("PbPb %.0f-%.0f%%", card[kPbPb][weightExponent-1]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][weightExponent-1]->GetHighBinBorderCentrality(iCentrality)), "lpf");
+            }            
           }
 
-          legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp", "lpf");
+          if(physicsBriefingStyle){
+            legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "Without quark-gluon plasma", "lpf");
+          } else {
+            legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp", "lpf");
+          }
 
           // Draw the legend
           legend->Draw();
@@ -2507,40 +2525,53 @@ void finalResultPlotter(){
           box = new TBox();
           box->SetFillColorAlpha(kWhite, 0.95);
 
-          // The pp text needs to be hidden for drawing styles 0-3
-          if(iDrawingStyle < 4){
-            box->DrawBox(0.008, 0.49, 0.015, 0.7); // Hide the pp text
-          }
+          // No white boxes for physics briefing style
+          if(!physicsBriefingStyle){
 
-          // The 50-90% text needs to be drawn for styles 3 and 6
-          if(iDrawingStyle != 3 && iDrawingStyle !=6){
-            box->DrawBox(0.008, 0.7, 0.041, 0.92); // Hide the 50-90% text
-          }
-          
-          // The 30-50% text needs to be drawn for styles 2 and 6
-          if(iDrawingStyle != 2 && iDrawingStyle != 6){
-            box->DrawBox(0.008, 0.92, 0.041, 1.33); // Hide the 30-50% text
-          }
-          
-          // The 10-30% text needs to be drawn for styles 1 and 6
-          if(iDrawingStyle != 1 && iDrawingStyle != 6){
-            box->DrawBox(0.008, 1.33, 0.041, 1.88); // Hide the 10-30% text
-          }
+            // The pp text needs to be hidden for drawing styles 0-3
+            if(iDrawingStyle < 4){
+              box->DrawBox(0.008, 0.49, 0.015, 0.7); // Hide the pp text
+            }
 
-          // The 0-10% text needs to be drawn for styles 0, 5 and 6
-          if(iDrawingStyle > 0 && iDrawingStyle < 5){
-            box->DrawBox(0.008, 1.88, 0.04, 2.75); // Hide the 0-10% text
-          }
+            // The 50-90% text needs to be drawn for styles 3 and 6
+            if(iDrawingStyle != 3 && iDrawingStyle !=6){
+              box->DrawBox(0.008, 0.7, 0.041, 0.92); // Hide the 50-90% text
+            }
+          
+            // The 30-50% text needs to be drawn for styles 2 and 6
+            if(iDrawingStyle != 2 && iDrawingStyle != 6){
+              box->DrawBox(0.008, 0.92, 0.041, 1.33); // Hide the 30-50% text
+            }
+          
+            // The 10-30% text needs to be drawn for styles 1 and 6
+            if(iDrawingStyle != 1 && iDrawingStyle != 6){
+              box->DrawBox(0.008, 1.33, 0.041, 1.88); // Hide the 10-30% text
+            }
+
+            // The 0-10% text needs to be drawn for styles 0, 5 and 6
+            if(iDrawingStyle > 0 && iDrawingStyle < 5){
+              box->DrawBox(0.008, 1.88, 0.04, 2.75); // Hide the 0-10% text
+            }
+
+          } // Physics briefing drawing style
 
           // Add some interesting information to the plot
           mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(0.06);
-          mainTitle->DrawLatexNDC(0.185, 0.55, "CMS");
+          if(physicsBriefingStyle){
+            mainTitle->DrawLatexNDC(0.185, 0.85, "CMS");
+          } else {
+            mainTitle->DrawLatexNDC(0.185, 0.55, "CMS");
+          }
 
           if(addPreliminaryTag){
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.045);
-            mainTitle->DrawLatexNDC(0.315, 0.55, "Preliminary");
+            if(physicsBriefingStyle){
+              mainTitle->DrawLatexNDC(0.315, 0.85, "Preliminary");
+            } else {
+              mainTitle->DrawLatexNDC(0.315, 0.55, "Preliminary");
+            }
           }
 
           mainTitle->SetTextFont(42);
@@ -2550,11 +2581,13 @@ void finalResultPlotter(){
           mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(supplementaryLegendTextSize);
 
-          mainTitle->DrawLatexNDC(0.522, 0.85, jetPtString.Data());
-          mainTitle->DrawLatexNDC(0.675, 0.78, "anti-k_{T} R = 0.4");
-          mainTitle->DrawLatexNDC(0.765, 0.71, "|#eta_{jet}| < 1.6");
-          mainTitle->DrawLatexNDC(0.726, 0.64, trackPtString.Data());
-          mainTitle->DrawLatexNDC(0.87, 0.57, Form("n=%d", weightExponent));
+          if(!physicsBriefingStyle){
+            mainTitle->DrawLatexNDC(0.522, 0.85, jetPtString.Data());
+            mainTitle->DrawLatexNDC(0.675, 0.78, "anti-k_{T} R = 0.4");
+            mainTitle->DrawLatexNDC(0.765, 0.71, "|#eta_{jet}| < 1.6");
+            mainTitle->DrawLatexNDC(0.726, 0.64, trackPtString.Data());
+            mainTitle->DrawLatexNDC(0.87, 0.57, Form("n=%d", weightExponent));
+          }
 
           // Save the figures to file
           if(saveFigures){

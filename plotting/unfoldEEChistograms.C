@@ -317,11 +317,13 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   // Unfolding using Bayesian unfolding
   RooUnfoldBayes* bayesUnfold[nCentralityBins][nTrackPtBins];
   int nMatrixBins = 0;
+  //int nIterations = 8;
   if(includeCovariance) nMatrixBins = hUnfoldingCovariance[firstStudiedCentralityBin][firstStudiedTrackPtBinEEC]->GetNbinsX();
   for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
     if(genJetsInData) break; // No unfolding for gen jets
     for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
       bayesUnfold[iCentrality][iTrackPt] = new RooUnfoldBayes(rooResponse[iCentrality][iTrackPt], energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt], unfoldConfigurationProvider->GetNumberOfIterations(dataCard->GetBinBordersCentrality(iCentrality), dataCard->GetLowBinBorderTrackPtEEC(iTrackPt)));
+      //bayesUnfold[iCentrality][iTrackPt] = new RooUnfoldBayes(rooResponse[iCentrality][iTrackPt], energyEnergyCorrelatorForUnfolding[iCentrality][iTrackPt], nIterations);
 
       // Create a matrix and set it as covariance
       if(includeCovariance){

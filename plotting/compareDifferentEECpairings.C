@@ -11,11 +11,13 @@
 void compareDifferentEECpairings(){
   
   // Predefined configuration for public figures
-  bool truthToMixedConeBackgroundComparison = true;
-  bool truthSignalToBackgroundSubtractedComparison = false;
+  bool truthToMixedConeBackgroundComparison = false;
+  bool truthSignalToBackgroundSubtractedComparison = true;
+  bool backgroundComponentsFromData = false;
+  bool backgroundComponentsFromSimulation = false;
 
   // Sanity check for public figure drawing
-  if(truthToMixedConeBackgroundComparison + truthSignalToBackgroundSubtractedComparison > 1){
+  if(truthToMixedConeBackgroundComparison + truthSignalToBackgroundSubtractedComparison + backgroundComponentsFromData + backgroundComponentsFromSimulation > 1){
     cout << "ERROR! Only one predefined figure can be activated at a time." << endl;
     cout << "Please select only one figure to draw," << endl;
     return;
@@ -41,8 +43,13 @@ void compareDifferentEECpairings(){
   // data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_allBackgrounds_matchMultiplicity_lowStats_processed_2024-04-12.root
 
   // Use predefined file for the comparison
-  if(truthToMixedConeBackgroundComparison || truthSignalToBackgroundSubtractedComparison){
+  if(truthToMixedConeBackgroundComparison || truthSignalToBackgroundSubtractedComparison || backgroundComponentsFromSimulation){
     fileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_matchMultiplicity_someMissing_processed_2024-04-24.root";
+  }
+
+  // Use predefined file when plotting 
+  if(backgroundComponentsFromData){
+    fileName = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
   }
   
   // Open the files and check that they exist
@@ -71,7 +78,7 @@ void compareDifferentEECpairings(){
   comparedCentralityBin.push_back(std::make_pair(0,10));
   //comparedCentralityBin.push_back(std::make_pair(10,30));
   //comparedCentralityBin.push_back(std::make_pair(30,50));
-  //comparedCentralityBin.push_back(std::make_pair(50,90));
+  comparedCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
@@ -83,6 +90,11 @@ void compareDifferentEECpairings(){
   comparedTrackPtBin.push_back(1.0);
   //comparedTrackPtBin.push_back(2.0);
   //comparedTrackPtBin.push_back(3.0);
+
+  // For MC, just write 0-10 instead of 4-14 etc.
+  int adjustCentralityPercentage = 1;
+
+  TString systemString = "PbPb";
 
   // Enumeration for different pairing types
   enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kCompiledBackground, kCompiledBackgroundTruthLevel, kCombinedSignalMixedConePair, kCombinedMixedConePair, kBackgroundSubtracted, knPairingTypes};
@@ -138,7 +150,10 @@ void compareDifferentEECpairings(){
     for(auto& centralityBin : comparedCentralityBin){
       centralityBin.first += 4;
       centralityBin.second += 4;
+      systemString = "Pythia+Hydjet";
     }
+  } else {
+    adjustCentralityPercentage = 0; // Never adjust centrality values for data
   }
 
   // Override the selected configuration if we are dealing with predefined figures
@@ -182,13 +197,36 @@ void compareDifferentEECpairings(){
  
   }
 
+  if(backgroundComponentsFromData || backgroundComponentsFromSimulation){
+
+    // Select the correct pairings for the background comparison
+    comparedEnergyEnergyCorrelatorPairings.clear();
+    comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCompiledBackground, knSubeventCombinations));
+    comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCombinedSignalMixedConePair, knSubeventCombinations));
+    comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kCombinedMixedConePair, knSubeventCombinations));
+    comparedEnergyEnergyCorrelatorPairings.push_back(std::make_pair(kMixedMixedConePair, knSubeventCombinations));
+
+    useManualLegend = true;
+    manualLegend.clear();
+    manualLegend.push_back("Total background");
+    manualLegend.push_back("Signal + mixed event");
+    manualLegend.push_back("Mixed event 1 + Mixed event 1");
+    manualLegend.push_back("Mixed event 1 + Mixed event 2");
+
+    // Do also other configuration
+    legendPosition = kBottomLeft;
+    normalizeDistributions = false;
+    compareIntegrals = false;
+ 
+  }
+
   // ====================================================
   //                Drawing configuration
   // ====================================================
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  TString saveComment = "_backgroundSubtractionValidation";   // Comment given for this specific file
+  TString saveComment = "_signalExtraction";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   int weightExponent = card->GetWeightExponent();
@@ -212,8 +250,16 @@ void compareDifferentEECpairings(){
   }
 
   if(truthSignalToBackgroundSubtractedComparison){
-    ratioZoom = std::make_pair(0, 14);
+    //ratioZoom = std::make_pair(0, 14);
+    ratioZoom = std::make_pair(0.8, 1.2);
     logRatio = false;
+    automaticZoom = true;
+  }
+
+  // Configuration for predefined figures
+  if(backgroundComponentsFromData || backgroundComponentsFromSimulation){
+    ratioZoom = std::make_pair(0.01, 2);
+    logRatio = true;
     automaticZoom = true;
   }
 
@@ -542,10 +588,10 @@ void compareDifferentEECpairings(){
     legendX2 = 0.43;
     legendY2 = 0.95;
   } else if (legendPosition == kPaperClosure){
-    legendX1 = 0.58;
-    legendY1 = 0.05;
-    legendX2 = 0.85;
-    legendY2 = 0.48;
+    legendX1 = 0.53;
+    legendY1 = 0.03;
+    legendX2 = 0.80;
+    legendY2 = 0.46;
   }
 
   // Automatic zoom helper veriables
@@ -573,9 +619,9 @@ void compareDifferentEECpairings(){
 
         // Create the legend and add jet and track pT information to it
         legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
-        legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+        legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.06);legend->SetTextFont(62);
 
-        legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second), "");
+        legend->AddEntry((TObject*) 0, Form("%s %.0f-%.0f%%", systemString.Data(), centralityBin.first-4*adjustCentralityPercentage, centralityBin.second-4*adjustCentralityPercentage), "");
         legend->AddEntry((TObject*) 0, Form("%.0f < jet p_{T} < %.0f GeV", jetPtBin.first, jetPtBin.second), "");
         legend->AddEntry((TObject*) 0, Form("p_{T}^{ch} > %.0f GeV, %s", trackPtBin, energyWeightString.Data()), "");
 
@@ -637,12 +683,12 @@ void compareDifferentEECpairings(){
         legend->Draw();
 
         // Add CMS simulation tag to the canvas
-        if(legendPosition == kPaperClosure){
-          tagLegend = new TLegend(0.16, 0.74, 0.43, 0.78);
-          tagLegend->SetFillStyle(0);tagLegend->SetBorderSize(0);tagLegend->SetTextSize(0.07);tagLegend->SetTextFont(62);
-          tagLegend->AddEntry((TObject*) 0, "CMS simulation", "");
-          tagLegend->Draw();
-        }
+        //if(legendPosition == kPaperClosure){
+        //  tagLegend = new TLegend(0.16, 0.74, 0.43, 0.78);
+        //  tagLegend->SetFillStyle(0);tagLegend->SetBorderSize(0);tagLegend->SetTextSize(0.07);tagLegend->SetTextFont(62);
+        //  tagLegend->AddEntry((TObject*) 0, "CMS simulation", "");
+        //  tagLegend->Draw();
+        //}
           
         // Set linear scale for ratio, unless specifically asked to be logarithmic
         if(!logRatio) drawer->SetLogY(false);

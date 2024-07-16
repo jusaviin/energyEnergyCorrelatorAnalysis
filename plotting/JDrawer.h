@@ -1024,7 +1024,7 @@ public:
   }
   
   /*
-   * Setter for grid in x-axis
+   * Setter for ticks in x-axis
    */
   void SetTickX(bool tick = true){
     if(tick){
@@ -1035,7 +1035,7 @@ public:
   }
   
   /*
-   * Setter for grid in y-axis
+   * Setter for ticks in y-axis
    */
   void SetTickY(bool tick = true){
     if(tick){
@@ -1046,7 +1046,7 @@ public:
   }
   
   /*
-   * Setter for grids in both axes
+   * Setter for ticks in both axes
    */
   void SetTick(int tickX, int tickY){
     SetTickX(tickX);

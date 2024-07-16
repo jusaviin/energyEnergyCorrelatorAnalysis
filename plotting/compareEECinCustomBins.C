@@ -10,8 +10,8 @@ void compareEECinCustomBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root";
-  fileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root";
+  fileName[0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root";
+  fileName[1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_shiftedPt_nominalSmear_truthReference_processed_2024-02-14.root";
   
   
   // Open the files and check that they exist
@@ -67,7 +67,7 @@ void compareEECinCustomBins(){
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(3);
   comparedTrackPtBin.push_back(3);
-  commonLegend.push_back(Form("%.1f < track p_{T}", comparedTrackPtBin.at(0)));
+  commonLegend.push_back(Form("p_{T}^{ch} > %.1f GeV", comparedTrackPtBin.at(0)));
 
   // ====================================================
   //                    Configuration
@@ -109,7 +109,7 @@ void compareEECinCustomBins(){
   } // File loop
   
   // Helper histograms
-  std::pair<double, double> drawingRange = std::make_pair(0.006, 0.39);
+  std::pair<double, double> drawingRange = std::make_pair(0.008, 0.39);
   double epsilon = 0.0001;
   int lowNormalizationBin, highNormalizationBin;
   int iCentrality;

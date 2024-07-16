@@ -107,7 +107,7 @@ void fakeJetRaa(){
 
   // Save the figures to a file
   if(saveFigures){
-  gPad->GetCanvas()->SaveAs(Form("figures/fakeJetRaa%s.%s", saveComment, figureFormat));
+    gPad->GetCanvas()->SaveAs(Form("figures/fakeJetRaa%s.%s", saveComment, figureFormat));
   }
   
 }

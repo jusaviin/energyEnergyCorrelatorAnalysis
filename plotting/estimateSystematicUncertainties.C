@@ -41,16 +41,17 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     return;
   }
 
-  // Before mixing can be generated for different track selections, use the relative uncertainties done with respect to reflected cone
-  // TODO: We need to use premade file also for tracking efficiencies. There it is crucial that the background is exactly the same, and does not affect the results. Use the obtained relative uncertainties also for these.
-  const bool temporaryLackOfMixingFixForTrackSelection = true;
+  // For tracking efficiencies and selections, we do not have the same amount of mixed events available as for default results.
+  // In order to avoid folding different mixing statistics into systematic uncertainties, in these cases for the final
+  // uncertainty file we can read directly the relative uncertainty determined from a case where the backgrounds are identical.
+  const bool readRelativeUncertaintyForTracking = true;
   
   // ==================================================================
   // ============================= Input ==============================
   // ==================================================================
 
   // Nominal results
-  TString nominalResultFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root"};
+  TString nominalResultFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root"};
   //TString nominalResultFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root"}; // Result files for track selection uncertainties
   TFile* nominalResultFile = TFile::Open(nominalResultFileName[weightExponent-1]);
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
@@ -58,8 +59,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
-  TString jetEnergyResolutionSmearDownFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-04-17.root"};
-  TString jetEnergyResolutionSmearUpFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-04-17.root"};
+  TString jetEnergyResolutionSmearDownFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-05-28.root"};
+  TString jetEnergyResolutionSmearUpFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-05-28.root"};
   TFile* jetEnergyResolutionFile[2];
   jetEnergyResolutionFile[0] = TFile::Open(jetEnergyResolutionSmearDownFileName[weightExponent-1]);
   jetEnergyResolutionFile[1] = TFile::Open(jetEnergyResolutionSmearUpFileName[weightExponent-1]);
@@ -67,8 +68,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   EECHistogramManager* jetEnergyResolutionHistogramManager[2];
   
   // Results unfolded with a response matrix smeared with jet energy scale
-  TString jetEnergyScaleMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-04-17.root"};
-  TString jetEnergyScalePlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-04-17.root"};
+  TString jetEnergyScaleMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-05-28.root"};
+  TString jetEnergyScalePlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-05-28.root"};
   TFile* jetEnergyScaleFile[2];
   jetEnergyScaleFile[0] = TFile::Open(jetEnergyScaleMinusFileName[weightExponent-1]);
   jetEnergyScaleFile[1] = TFile::Open(jetEnergyScalePlusFileName[weightExponent-1]);
@@ -76,14 +77,14 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   EECHistogramManager* jetEnergyScaleHistogramManager[2];
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
-  TString jetPtPriorFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-04-17.root"};
+  TString jetPtPriorFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-05-28.root"};
   TFile* jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
   EECCard* jetPtPriorCard;
   EECHistogramManager* jetPtPriorHistogramManager;
 
   // Results unfolded with a different number of iterations compared to nominal results
-  TString unfoldingIterationsMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith3Iterations_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith3Iterations_processed_2024-04-17.root"};
-  TString unfoldingIterationsPlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith5Iterations_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith5Iterations_processed_2024-04-17.root"};
+  TString unfoldingIterationsMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith3Iterations_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith3Iterations_processed_2024-05-28.root"};
+  TString unfoldingIterationsPlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith5Iterations_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith5Iterations_processed_2024-05-28.root"};
   TFile* unfoldingIterationsFile[2];
   unfoldingIterationsFile[0] = TFile::Open(unfoldingIterationsMinusFileName[weightExponent-1]);
   unfoldingIterationsFile[1] = TFile::Open(unfoldingIterationsPlusFileName[weightExponent-1]);
@@ -96,14 +97,14 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   }
 
   // Results obtained with reflected cone background subtraction method
-  TString reflectedConeFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-04-17.root"};
+  TString reflectedConeFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root"};
   TFile* backgroundSubtractionFile = TFile::Open(reflectedConeFileName[weightExponent-1]);
   EECCard* backgroundSubtractionCard;
   EECHistogramManager* backgroundSubtractionHistogramManager;
 
   // Results with varied signal-to-background ratios after unfolding
-  TString signalToBackgroundRatioLowScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-04-17.root"};
-  TString signalToBackgroundRatioHighScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-04-17.root"};
+  TString signalToBackgroundRatioLowScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root"};
+  TString signalToBackgroundRatioHighScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root"};
   TFile* signalToBackgroundRatioFile[2];
   signalToBackgroundRatioFile[0] = TFile::Open(signalToBackgroundRatioLowScaleFileName[weightExponent-1]);
   signalToBackgroundRatioFile[1] = TFile::Open(signalToBackgroundRatioHighScaleFileName[weightExponent-1]);
@@ -119,10 +120,12 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   EECCard* trackSelectionCard[2];
   EECHistogramManager* trackSelectionHistogramManager[2];
 
-  // Temporarily get the track selection uncertainties from reflected cone, and use the same relative uncertainties for mixed cone
-  TString relativeTrackSelectionUncertaintyFileName[2] = {"systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_onlyTrackSelection_2024-04-18.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_onlyTrackSelection_2024-04-18.root"};
-  TFile* relativeTrackSelectionUncertaintyFile = TFile::Open(relativeTrackSelectionUncertaintyFileName[weightExponent-1]);
-  EECCard* relativeTrackSelectionUncertaintyCard = new EECCard(relativeTrackSelectionUncertaintyFile);
+  // We do not have excessive amounts of mixing for different track selections and efficiencies. Thus, in these cases use
+  // the relative uncertainty determined from a file where we have exactly the same background. Otherwise different
+  // background statistics will add into the systematic uncertainty estimate.
+  TString relativeUncertaintyFileName[2] = {"systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_mixedConeBackground_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_mixedConeBackground_noMCnonClosure_2024-05-02.root"};
+  TFile* relativeUncertaintyFile = TFile::Open(relativeUncertaintyFileName[weightExponent-1]);
+  EECCard* relativeUncertaintyCard = new EECCard(relativeUncertaintyFile);
 
   // Results with varied single and pair track efficiency
   TString trackEfficiencyFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_trackSystematics_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_trackSystematics_processed_2024-04-17.root"};
@@ -131,8 +134,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   EECHistogramManager* trackEfficiencyHistogramManager;
 
   // Results where the jet pT response matrix is determined from 2% or 6% shifted simulation instead of nominal 4%
-  TString centralityShift2pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-04-17.root"};
-  TString centralityShift6pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-04-17.root"};
+  TString centralityShift2pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-05-28.root"};
+  TString centralityShift6pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-05-28.root"};
   TFile* centralityShiftFile[2];
   centralityShiftFile[0] = TFile::Open(centralityShift2pFileName[weightExponent-1]);
   centralityShiftFile[1] = TFile::Open(centralityShift6pFileName[weightExponent-1]);
@@ -181,7 +184,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_mixedConeBackground_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_combinedMxedConeBackground_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   //TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
@@ -366,46 +369,64 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
           energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = (TH1D*) monteCarloNonClosureFile->Get(Form("relativeUncertaintyMonteCarloClosure_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
         }
 
-        // Temporary fix: read the relative track selection uncertainty histograms
-        if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection] && temporaryLackOfMixingFixForTrackSelection){
-          iCentralityMatched = relativeTrackSelectionUncertaintyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
-          iTrackPtMatched = relativeTrackSelectionUncertaintyCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
-          iJetPtMatched = relativeTrackSelectionUncertaintyCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+        // For case where default results have more mixing than tracking variations: read the relative track selection uncertainty histograms
+        if(readRelativeUncertaintyForTracking){
 
-          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackSelection] = (TH1D*) relativeTrackSelectionUncertaintyFile->Get(Form("systematicUncertainty_trackSelection_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
-        }
+          iCentralityMatched = relativeUncertaintyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+          iTrackPtMatched = relativeUncertaintyCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+          iJetPtMatched = relativeUncertaintyCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
 
-        // Setup the histogram manager for tracking efficiencies
-        if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] || !skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
-          iCentralityMatched = trackEfficiencyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
-          iTrackPtMatched = trackEfficiencyCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
-          iJetPtMatched = trackEfficiencyCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
-        }
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection]){
+            energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackSelection] = (TH1D*) relativeUncertaintyFile->Get(Form("systematicUncertainty_trackSelection_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
+          }
 
-        // Read the histograms for single track efficiency
-        if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency]){
-          singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][0] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-          singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][1] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-        }
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency]){
+            energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = (TH1D*) relativeUncertaintyFile->Get(Form("systematicUncertainty_trackEfficiency_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
+          }
 
-        // Read the histograms for track pair efficiency
-        if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
-          trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][0] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-          trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][1] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
-        }
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
+            energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackPairEfficiency] = (TH1D*) relativeUncertaintyFile->Get(Form("systematicUncertainty_trackPairEfficiency_C%dJ%dT%d", iCentralityMatched, iJetPtMatched, iTrackPtMatched));
+          }
+
+        } else {
+        // Regular case where we do the evaluation for the tracking related uncertainties rather than reading relative uncertianties from a premade file
+
+          // Setup the histogram manager for tracking efficiencies
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] || !skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
+            iCentralityMatched = trackEfficiencyCard->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+            iTrackPtMatched = trackEfficiencyCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+            iJetPtMatched = trackEfficiencyCard->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+          }
+
+          // Read the histograms for single track efficiency
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency]){
+            singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][0] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+            singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][1] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+          }
+
+          // Read the histograms for track pair efficiency
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
+            trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][0] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+            trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][1] = trackEfficiencyHistogramManager->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+          }
+
+        } // if-else for using premade file for tracking related uncertainties
 
 
         for(int iFile = 0; iFile < 2; iFile++){
 
-          // Normalize the single track efficiency histograms to one
-          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency]){
-            singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-          }
+          if(!readRelativeUncertaintyForTracking){
 
-          // Normalize the track pair efficiency histograms to one
-          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
-            trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
-          }
+            // Normalize the single track efficiency histograms to one
+            if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency]){
+              singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+            }
+
+            // Normalize the track pair efficiency histograms to one
+            if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
+              trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+            }
+          } // Regular track uncertainty evaluation
 
           // Read the jet energy resolution histograms
           if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kJetEnergyResolution]){
@@ -452,7 +473,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
           }
 
           // Read the track selection uncertainty histograms
-          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection] && !temporaryLackOfMixingFixForTrackSelection){
+          if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection] && !readRelativeUncertaintyForTracking){
             iCentralityMatched = trackSelectionCard[iFile]->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
             iTrackPtMatched = trackSelectionCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
             iJetPtMatched = trackSelectionCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
@@ -739,8 +760,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          // Before mixing can be done for the different track cut variation, use the reflected cone results as proxy and take the same relative uncertianty for the mixed cone
-          if(temporaryLackOfMixingFixForTrackSelection){
+          // Select between previously determined relative uncertainties and new evaluation
+          if(readRelativeUncertaintyForTracking){
 
             optimusPrimeTheTransformer->TransformToRelativeUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackSelection], true);
             optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackSelection], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], true);
@@ -777,19 +798,28 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+          // Select between previously determined relative uncertainties and new evaluation
+          if(readRelativeUncertaintyForTracking){
 
-          // Draw example plots on how the uncertainty is obtained
-          if(plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
-            legendNames[0] = "Efficiency - 5%";
-            legendNames[1] = "Efficiency + 5%";
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kSingleTrackEfficiency], true);
+            optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kSingleTrackEfficiency], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], true);
 
-            // Set reasonable ratio zoom
-            if(setAutomaticRatioZoom){
-              ratioZoom = std::make_pair(0.999999,1.000001);
+          } else {
+
+            energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kSingleTrackEfficiency] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+
+            // Draw example plots on how the uncertainty is obtained
+            if(plotExample[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+              legendNames[0] = "Efficiency - 5%";
+              legendNames[1] = "Efficiency + 5%";
+
+              // Set reasonable ratio zoom
+              if(setAutomaticRatioZoom){
+                ratioZoom = std::make_pair(0.999999,1.000001);
+              }
+
+              drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSingleTrackEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
             }
-
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], singleTrackEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSingleTrackEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop
@@ -806,19 +836,28 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
       for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
         for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
 
-          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackPairEfficiency] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+          // Select between previously determined relative uncertainties and new evaluation
+          if(readRelativeUncertaintyForTracking){
 
-          // Draw example plots on how the uncertainty is obtained
-          if(plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
-            legendNames[0] = "Pair efficiency - 10%";
-            legendNames[1] = "Pair efficiency + 10%";
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackPairEfficiency], true);
+            optimusPrimeTheTransformer->TransformToAbsoluteUncertainty(energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackPairEfficiency], nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], true);
 
-            // Set reasonable ratio zoom
-            if(setAutomaticRatioZoom){
-              ratioZoom = std::make_pair(0.8,1.2);
+          } else {
+
+            energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kTrackPairEfficiency] = findTheDifference(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2);
+
+            // Draw example plots on how the uncertainty is obtained
+            if(plotExample[SystematicUncertaintyOrganizer::kTrackPairEfficiency] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+              legendNames[0] = "Pair efficiency - 10%";
+              legendNames[1] = "Pair efficiency + 10%";
+
+              // Set reasonable ratio zoom
+              if(setAutomaticRatioZoom){
+                ratioZoom = std::make_pair(0.8,1.2);
+              }
+
+              drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackPairEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
             }
-
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kTrackPairEfficiency), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
           }
       
         } // Track pT loop

@@ -1448,7 +1448,7 @@ void EECBackgroundScale::InitializeArrays(const bool useGenJets, int iSystematic
   //                                                    //
   // ================================================== //
 
-  // For pp, the default option is to not subtractr background, since it is assumed to be negligible.
+  // For pp, the default option is to not subtract background, since it is assumed to be negligible.
   // For systematic check, we provide numbers the are acquired from 85-95% PYTHIA+HYDJET simulation
   // This very peripheral bin should give a decent approximation for the scaling factors in pp
 

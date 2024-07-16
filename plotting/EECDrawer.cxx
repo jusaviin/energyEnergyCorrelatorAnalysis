@@ -456,7 +456,7 @@ void EECDrawer::DrawMultiplicityInJetCone(){
         // Loop over track pT bins
         for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
           
-          trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+          trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
           compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
           compactTrackPtString.ReplaceAll(".","v");
           
@@ -465,10 +465,10 @@ void EECDrawer::DrawMultiplicityInJetCone(){
             
             // Set the jet pT information for legends and figure saving
             if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
-              jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+              jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
               compactJetPtString = "";
             } else {
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
             }
             
@@ -546,11 +546,11 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
               
               // Track pT binning is different depending on the particle density type
               if(iParticleDensityType == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
-                trackPtString = Form("%.1f < track p_{T} < %.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+                trackPtString = Form("%.1f < p_{T}^{ch} < %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
                 compactTrackPtString = Form("_T%.1f-%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
                 compactTrackPtString.ReplaceAll(".","v");
               } else {
-                trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
                 compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
                 compactTrackPtString.ReplaceAll(".","v");
               }
@@ -560,11 +560,11 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
                 
                 // Set the jet pT information for legends and figure saving
                 if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
-                  jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+                  jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
                   compactJetPtString = "";
                   normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality);
                 } else {
-                  jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                  jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                   compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                   normalizationFactor = fHistograms->GetJetPtIntegral(iCentrality, fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 }
@@ -594,10 +594,10 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
               
               // Set the jet pT information for legends and figure saving
               if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
-                jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+                jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
                 compactJetPtString = Form("%.0f", fHistograms->GetCard()->GetJetPtCut());
               } else {
-                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               }
               
@@ -616,9 +616,9 @@ void EECDrawer::DrawParticleDensityAroundJetAxis(){
                 
                 // Track pT binning is different depending on the particle density type
                 if(iParticleDensityType == EECHistogramManager::kParticleDensityAroundJetAxisPtBinned || iParticleDensityType == EECHistogramManager::kParticlePtDensityAroundJetAxisPtBinned){
-                  trackPtString = Form("%.1f < track p_{T} < %.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
+                  trackPtString = Form("%.1f < p_{T}^{ch} < %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt), fHistograms->GetTrackPtBinBorderEEC(iTrackPt+1));
                 } else {
-                  trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+                  trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
                 }
                 
                 drawnHistogram = fHistograms->GetHistogramParticleDensityAroundJetAxis(iCentrality, iJetPt, iTrackPt, iJetConeType, iParticleDensityType, iSubevent);
@@ -689,10 +689,10 @@ void EECDrawer::DrawMaxParticlePtWithinJetCone(){
           
           // Set the jet pT information for legends and figure saving
           if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
-            jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+            jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
             compactJetPtString = "";
           } else {
-            jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+            jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
             compactJetPtString = Form("_J=%.0f-%.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
           }
           
@@ -712,10 +712,10 @@ void EECDrawer::DrawMaxParticlePtWithinJetCone(){
           for(int iTrackPt = 0; iTrackPt < EECHistogramManager::knProjectedMaxParticlePtBins; iTrackPt++){
             
             // Two different track pT binnings are projected from the histograms
-            trackPtString = Form("%.1f < %s p_{T} < %.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data(), fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt+1));
+            trackPtString = Form("%.1f < %s p_{T} < %.1f GeV",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data(), fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt+1));
             compactTrackPtString = Form("_T%.1f-%.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt+1));
             compactTrackPtString.ReplaceAll(".","v");
-            trackPtCutString = Form("%.1f < %s p_{T}",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data());
+            trackPtCutString = Form("%.1f GeV < %s p_{T}",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt), trackTypeString[iMaxParticlePtWithinJetCone].Data());
             compactTrackPtCutString = Form("_T>%.1f",fHistograms->GetMaxTrackPtWithinJetConeBinBorder(iTrackPt));
             compactTrackPtCutString.ReplaceAll(".","v");
             
@@ -815,14 +815,14 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             // Loop over track pT bins
             for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
               
-              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
               compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
               compactTrackPtString.ReplaceAll(".","v");
               
               // Loop over jet pT bins
               for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
                 
-                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 
                 // === Energy-energy correlator ===
@@ -855,7 +855,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
         // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
         if(fDrawEnergyEnergyCorrelatorsForConstantJetPt){
           
-          jetPtString = Form("%.0f < Jet p_{T} < %.0f", fHistograms->GetCard()->GetLowBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC), fHistograms->GetCard()->GetHighBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC));
+          jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetCard()->GetLowBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC), fHistograms->GetCard()->GetHighBinBorderJetPtEEC(fFirstDrawnJetPtBinEEC));
           
           // Loop over different subevent combinations
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
@@ -871,14 +871,15 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
             legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
             if(iSubevent < EECHistograms::knSubeventCombinations) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
-            legend->AddEntry((TObject*) 0, centralityString.Data(), "");
+            //legend->AddEntry((TObject*) 0, centralityString.Data(), "");
+            legend->AddEntry((TObject*) 0, "Cent: 0-10%", "");
             legend->AddEntry((TObject*) 0, jetPtString.Data(), "");
             
             
             // Loop over track pT bins
             for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
               
-              trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+              trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
               
               drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, fFirstDrawnJetPtBinEEC, iTrackPt, iPairingType, iSubevent);
               drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
@@ -887,10 +888,11 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               drawnHistogram->SetMarkerStyle(style[iTrackPt-fFirstDrawnTrackPtBinEEC]);
               
               // For logarithmic x-axis, cannot go all the way to zero
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.008,0.8);
               
               if(iTrackPt == fFirstDrawnTrackPtBinEEC){
-                namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                //namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                namerY = "EEC";
                 fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ","p");
               } else {
                 drawnHistogram->Draw("p,same");
@@ -916,7 +918,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString.ReplaceAll(".","v");
             
@@ -934,13 +936,14 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
               legend->AddEntry((TObject*) 0, fSystemAndEnergy.Data(), "");
               if(iSubevent < EECHistograms::knSubeventCombinations) legend->AddEntry((TObject*) 0, subeventString.Data(), "");
-              legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+              //legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+              legend->AddEntry((TObject*) 0, "Cent: 0-10%","");
               legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               
               // Loop over jet pT bins
               for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
                 
-                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 
                 drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
                 drawnHistogram->Scale(1/drawnHistogram->Integral("width"));
@@ -949,10 +952,11 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram->SetMarkerStyle(style[iJetPt-fFirstDrawnJetPtBinEEC]);
                 
                 // For logarithmic x-axis, cannot go all the way to zero
-                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.8);
+                if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.008,0.8);
                 
                 if(iJetPt == fFirstDrawnJetPtBinEEC){
-                  namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                  //namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+                  namerY = "EEC";
                   fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ","p");
                 } else {
                   drawnHistogram->Draw("p,same");
@@ -979,7 +983,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString.ReplaceAll(".","v");
             
@@ -987,10 +991,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
               
               if(iJetPt == fHistograms->GetNJetPtBinsEEC()){
-                jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+                jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
                 compactJetPtString = "";
               } else {
-                jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+                jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
                 compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               }
               
@@ -1000,7 +1004,8 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
               legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", fHistograms->GetCard()->GetAlternativeDataType(false).Data()), "");
               if(fLegendComment != "") legend->AddEntry((TObject*) 0, fLegendComment.Data(), "");
-              legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+              //legend->AddEntry((TObject*) 0, centralityString.Data(),"");
+              legend->AddEntry((TObject*) 0, "Cent: 0-10%","");
               legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
               
@@ -1019,9 +1024,10 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               } else {
                 drawnHistogram->GetYaxis()->SetRangeUser(0.00005, 60);
               }
-              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.006,0.39);
+              if(fLogDeltaR) drawnHistogram->GetXaxis()->SetRangeUser(0.008,0.39);
               
-              namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+              //namerY = Form("%s %s", fHistograms->GetEnergyEnergyCorrelatorAxisName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
+              namerY = "EEC";
               fDrawer->DrawHistogram(drawnHistogram,"#Deltar",namerY.Data()," ");
               
               // Draw the different subevent contributions to the same canvas
@@ -1110,14 +1116,14 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString = Form("_T>%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString.ReplaceAll(".","v");
             
             // Loop over jet pT bins
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
               
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               compactJetPtString = Form("_J=%.0f-%.0f",fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               
               // === Energy-energy correlator ===
@@ -1147,7 +1153,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
         // Draw all track pT cuts in the same plot with the jet pT integrated histogram TODO: Automatic scaling for y-axes, add jet pT bins
         if(fDrawEnergyEnergyCorrelatorsForConstantJetPt){
           
-          jetPtString = Form("Jet p_{T} > %.0f", fHistograms->GetCard()->GetJetPtCut());
+          jetPtString = Form("jet p_{T} > %.0f GeV", fHistograms->GetCard()->GetJetPtCut());
           
           // Only one legend for the plot
           legend = new TLegend(0.62,0.35,0.82,0.9);
@@ -1159,7 +1165,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             
             drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelator, iCentrality, fHistograms->GetNJetPtBinsEEC(), iTrackPt, iProcessLevel);
             drawnHistogram->SetLineColor(color[iTrackPt]);
@@ -1192,7 +1198,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
           // Loop over track pT bins
           for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
             
-            trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+            trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
             compactTrackPtString.ReplaceAll(".","v");
             
@@ -1206,7 +1212,7 @@ void EECDrawer::DrawProcessedEnergyEnergyCorrelators(){
             // Loop over jet pT bins
             for(int iJetPt = fFirstDrawnJetPtBinEEC; iJetPt <= fLastDrawnJetPtBinEEC; iJetPt++){
               
-              jetPtString = Form("%.0f < jet p_{T} < %.0f", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
+              jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", fHistograms->GetJetPtBinBorderEEC(iJetPt), fHistograms->GetJetPtBinBorderEEC(iJetPt+1));
               
               drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iProcessLevel);
               drawnHistogram->SetLineColor(color[iJetPt]);
@@ -1282,7 +1288,7 @@ void EECDrawer::DrawCovarianceMatrices(){
 
       for(int iTrackPt = fFirstDrawnTrackPtBinEEC; iTrackPt <= fLastDrawnTrackPtBinEEC; iTrackPt++){
 
-        trackPtString = Form("%.1f < track p_{T}",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
+        trackPtString = Form("p_{T}^{ch} > %.1f GeV",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
         compactTrackPtString = Form("%.1f",fHistograms->GetTrackPtBinBorderEEC(iTrackPt));
         compactTrackPtString.ReplaceAll(".","v");
     

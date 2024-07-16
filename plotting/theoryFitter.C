@@ -133,8 +133,8 @@ void theoryFitter(){
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     firstDrawnCentralityBin[iWeightExponent] = 0;
     lastDrawnCentralityBin[iWeightExponent] = 0;
-    firstDrawnJetPtBinEEC[iWeightExponent] = 6;
-    lastDrawnJetPtBinEEC[iWeightExponent] = 6;
+    firstDrawnJetPtBinEEC[iWeightExponent] = 5;
+    lastDrawnJetPtBinEEC[iWeightExponent] = 5;
     firstDrawnTrackPtBinEEC[iWeightExponent] = 1;
     lastDrawnTrackPtBinEEC[iWeightExponent] = 1;
   }
@@ -154,9 +154,9 @@ void theoryFitter(){
   }
   
   // Save the final plots
-  const bool saveFigures = true;
+  const bool saveFigures = false;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_newColorScheme";
+  TString saveComment =  "_jackCarlota";
   TString figureFormat = "pdf";
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
@@ -379,8 +379,8 @@ void theoryFitter(){
 
   // After the data distributions are ready, get the theory predictions
   AlgorithmLibrary *theoryProvider = new AlgorithmLibrary();
-  auto theoryCurvesForDistribution = theoryProvider->GetGraphsFromDatFile("theoryComparison/ForFittingpt140-160b3p2GLV.dat");
-  auto theoryCurvesForRatio = theoryProvider->GetGraphsFromDatFile("theoryComparison/ForFittingpt140-160b3p2GLVratioAA_pp.dat");
+  auto theoryCurvesForDistribution = theoryProvider->GetGraphsFromDatFile("theoryComparison/holguin/ForFitting_pt120-140_b3p2GLV.dat");
+  auto theoryCurvesForRatio = theoryProvider->GetGraphsFromDatFile("theoryComparison/holguin/ForFitting_pt120-140_b3p2GLVratioAA_pp.dat");
 
   // Data to theory ratio histograms
   const int nPredictions = theoryCurvesForDistribution.size();
@@ -400,27 +400,35 @@ void theoryFitter(){
   double dataIntegralRatio, theoryIntegralRatio;
   double scaleFactorDistribution[nPredictions];
   double scaleFactorRatio[nPredictions];
-  double normalizationRegionDeltaR;
+  double chi2Distribution[nPredictions];
+  double chi2Ratio[nPredictions];
+  double normalizationRegionDeltaRLow, normalizationRegionDeltaRHigh;
+  double fitRegionDeltaRHigh;
+  int lowNormalizationBin = 13;
+  int highNormalizationBin = 19;
+  int lastAnalyzedBin = 27;
   for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
     for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++){
       for(int iTrackPt = firstDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt <= lastDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt++){
 
         // Calculate the integrals in the data
-        dataIntegralDistribution = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Integral(13, 27, "width");
-        dataIntegralRatio = energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Integral(13, 27, "width");
-        normalizationRegionDeltaR = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->GetBinLowEdge(13);
+        dataIntegralDistribution = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+        dataIntegralRatio = energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+        normalizationRegionDeltaRLow = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->GetBinLowEdge(lowNormalizationBin);
+        normalizationRegionDeltaRHigh = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->GetBinUpEdge(highNormalizationBin);
+        fitRegionDeltaRHigh = energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->GetBinUpEdge(lastAnalyzedBin);
 
         // Loop over all predictions and find scaling factors
         for(int iPrediction = 0; iPrediction < nPredictions; iPrediction++){
 
           // Find scaling factor for distributions
           histogrammifiedTheoryDistribution[iPrediction] = theoryProvider->Histogrammify(theoryCurvesForDistribution.at(iPrediction).second, energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
-          theoryIntegralDistribution = histogrammifiedTheoryDistribution[iPrediction]->Integral(13, 27, "width");
+          theoryIntegralDistribution = histogrammifiedTheoryDistribution[iPrediction]->Integral(lowNormalizationBin, highNormalizationBin, "width");
           scaleFactorDistribution[iPrediction] = dataIntegralDistribution/theoryIntegralDistribution;
 
           // Find scaling factors for ratios
           histogrammifiedTheoryRatio[iPrediction] = theoryProvider->Histogrammify(theoryCurvesForRatio.at(iPrediction).second, energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
-          theoryIntegralRatio = histogrammifiedTheoryRatio[iPrediction]->Integral(13, 27, "width");
+          theoryIntegralRatio = histogrammifiedTheoryRatio[iPrediction]->Integral(lowNormalizationBin, highNormalizationBin, "width");
           scaleFactorRatio[iPrediction] = dataIntegralRatio/theoryIntegralRatio;
 
         }
@@ -428,7 +436,6 @@ void theoryFitter(){
       } // Track pT loop
     } // Jet pT loop
   } // Centrality loop
-
 
   // ========================================= //
   //   Draw the histograms in separate plots   //
@@ -510,6 +517,10 @@ void theoryFitter(){
           // Draw the different centrality bins to the same plot
           iPrediction = 0;
           for(auto thisPrediction : theoryCurvesForDistribution){
+            
+            // Skip high k values
+            if(atof(thisPrediction.first) > 0.6) continue;
+
             thisPrediction.second->Scale(scaleFactorDistribution[iPrediction]);
 
             // Give some nice styles for the predictions
@@ -521,7 +532,7 @@ void theoryFitter(){
             thisPrediction.second->Draw("pl,same");
 
             // Add a legend for the theory prediction
-            legend->AddEntry(thisPrediction.second, thisPrediction.first, "p");
+            legend->AddEntry(thisPrediction.second, Form("k = %s", thisPrediction.first.Data()), "p");
 
             // Increment the counter for styles
             iPrediction++;
@@ -531,7 +542,8 @@ void theoryFitter(){
           legend->Draw();
 
           // Draw a line showing the normalization region for predictions
-          lineDrawer->DrawLine(normalizationRegionDeltaR, 1, normalizationRegionDeltaR, 20);
+          lineDrawer->DrawLine(normalizationRegionDeltaRLow, 1, normalizationRegionDeltaRLow, 20);
+          lineDrawer->DrawLine(normalizationRegionDeltaRHigh, 1, normalizationRegionDeltaRHigh, 20);
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
@@ -539,6 +551,10 @@ void theoryFitter(){
           // Take a ratio between histogrammified graph and data
           iPrediction = 0;
           for(auto thisPrediction : theoryCurvesForDistribution){
+
+            // Skip high k values
+            if(atof(thisPrediction.first) > 0.6) continue;
+
             distributionToTheoryRatio[iPrediction] = theoryProvider->Histogrammify(thisPrediction.second, energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
             distributionToTheoryRatio[iPrediction]->Divide(energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
             iPrediction++;
@@ -562,7 +578,7 @@ void theoryFitter(){
           drawer->SetGridY(false);
 
           // Draw a line showing the normalization region for predictions
-          lineDrawer->DrawLine(normalizationRegionDeltaR, 0.5, normalizationRegionDeltaR, 1.5);
+          lineDrawer->DrawLine(normalizationRegionDeltaRLow, 0.5, normalizationRegionDeltaRLow, 1.5);
 
           // If a plot name is given, save the plot in a file
           if(saveFigures) {
@@ -593,8 +609,8 @@ void theoryFitter(){
           // Create a new canvas for the plot
           drawer->CreateSplitCanvas();
 
-          // Use logarithmic axis for EEC
-          drawer->SetLogY(true);
+          // No logarithmic drawing for ratio
+          drawer->SetLogY(false);
 
           // Setup the legend for plots
           legend = new TLegend(0.23, 0.05, 0.53, 0.6);
@@ -609,6 +625,7 @@ void theoryFitter(){
 
           // Set the x-axis drawing range
           energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+          energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.4, 1.6);
 
           // Draw the pp correlator to upper canves
           drawer->DrawHistogramToUpperPad(energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "p");
@@ -617,6 +634,10 @@ void theoryFitter(){
           // Draw the different centrality bins to the same plot
           iPrediction = 0;
           for(auto thisPrediction : theoryCurvesForRatio){
+
+            // Skip high k values
+            if(atof(thisPrediction.first) > 0.6) continue;
+
             thisPrediction.second->Scale(scaleFactorRatio[iPrediction]);
 
             // Give some nice styles for the predictions
@@ -628,7 +649,7 @@ void theoryFitter(){
             thisPrediction.second->Draw("pl,same");
 
             // Add a legend for the theory prediction
-            legend->AddEntry(thisPrediction.second, thisPrediction.first, "p");
+            legend->AddEntry(thisPrediction.second, Form("k = %s", thisPrediction.first.Data()), "p");
 
             // Increment the counter for styles
             iPrediction++;
@@ -638,7 +659,8 @@ void theoryFitter(){
           legend->Draw();
 
           // Draw a line showing the normalization region for predictions
-          lineDrawer->DrawLine(normalizationRegionDeltaR, 0.5, normalizationRegionDeltaR, 2);
+          lineDrawer->DrawLine(normalizationRegionDeltaRLow, 0.5, normalizationRegionDeltaRLow, 1.5);
+          lineDrawer->DrawLine(normalizationRegionDeltaRHigh, 0.5, normalizationRegionDeltaRHigh, 1.5);
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
@@ -646,6 +668,10 @@ void theoryFitter(){
           // Take a ratio between histogrammified graph and data
           iPrediction = 0;
           for(auto thisPrediction : theoryCurvesForRatio){
+
+            // Skip high k values
+            if(atof(thisPrediction.first) > 0.6) continue;
+
             ratioToTheoryRatio[iPrediction] = theoryProvider->Histogrammify(thisPrediction.second, energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
             ratioToTheoryRatio[iPrediction]->Divide(energyEnergyCorrelatorPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]);
             iPrediction++;
@@ -669,7 +695,8 @@ void theoryFitter(){
           drawer->SetGridY(false);
 
           // Draw a line showing the normalization region for predictions
-          lineDrawer->DrawLine(normalizationRegionDeltaR, 0.5, normalizationRegionDeltaR, 1.5);
+          lineDrawer->DrawLine(normalizationRegionDeltaRLow, 0.5, normalizationRegionDeltaRLow, 1.5);
+          oneLine->Draw();
 
           // If a plot name is given, save the plot in a file
           if(saveFigures) {
@@ -680,4 +707,37 @@ void theoryFitter(){
       } // Jet pT loop
     } // Centrality loop
   } // Comparing theory with the PbPb distribution
+
+  // After everything has been done. Fit a line to theory/data ratio and determine chi2. Then print all the results to console.
+  // After all the ratios have been calculated, fit the unfolded to truth ratios with a constant and read the chi2 of the fit
+  TF1* testFunction = new TF1("testFunction", "1" ,normalizationRegionDeltaRLow, fitRegionDeltaRHigh);
+  double chiSquare;
+  for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
+    for(int iTrackPt = firstDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt <= lastDrawnTrackPtBinEEC[weightExponent-1]; iTrackPt++){
+      for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++){
+        for(int iPrediction = 0; iPrediction < nPredictions; iPrediction++){
+          chiSquare = distributionToTheoryRatio[iPrediction]->Chisquare(testFunction, "R");
+          chi2Distribution[iPrediction] = chiSquare;
+
+          chiSquare = ratioToTheoryRatio[iPrediction]->Chisquare(testFunction, "R");
+          chi2Ratio[iPrediction] = chiSquare;
+        } // Prediction k-value loop
+      } // Jet pT loop
+    } // Track pT loop
+  } // Centrality loop
+
+  cout << "Normalization region: " << normalizationRegionDeltaRLow << " < DeltaR < " << normalizationRegionDeltaRHigh << endl;
+  cout << "Region for chi2 determination: " << normalizationRegionDeltaRLow << " < DeltaR < " << fitRegionDeltaRHigh << endl;
+
+    // Print the scale factors to the console
+  cout << "Fits to PbPb distribution: " << endl;
+  for(int iPrediction = 0; iPrediction < nPredictions; iPrediction++){
+    cout << "k = " << theoryCurvesForDistribution.at(iPrediction).first.Data() << "  scale = " << scaleFactorDistribution[iPrediction] << "  chi2/ndf = " << chi2Distribution[iPrediction] / (lastAnalyzedBin - lowNormalizationBin + 1) << endl;
+  }
+  cout << "Fits to PbPb/pp ratio: " << endl;
+  for(int iPrediction = 0; iPrediction < nPredictions; iPrediction++){
+    cout << "k = " << theoryCurvesForRatio.at(iPrediction).first.Data() << "  scale = " << scaleFactorRatio[iPrediction] << "  chi2/ndf = " << chi2Ratio[iPrediction] / (lastAnalyzedBin - lowNormalizationBin + 1) << endl;
+  }
+
+
 }

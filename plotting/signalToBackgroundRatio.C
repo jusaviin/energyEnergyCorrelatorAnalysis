@@ -9,7 +9,7 @@
 void signalToBackgroundRatio(){
   
   // Input file
-  TString inputFileName = "data/PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-19.root";
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_matchMultiplicity_someMissing_processed_2024-04-24.root";
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-19.root
@@ -53,16 +53,16 @@ void signalToBackgroundRatio(){
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
-  //comparedTrackPtBin.push_back(1.5);
+  comparedTrackPtBin.push_back(1.5);
   comparedTrackPtBin.push_back(2.0);
-  //comparedTrackPtBin.push_back(2.5);
+  comparedTrackPtBin.push_back(2.5);
   comparedTrackPtBin.push_back(3.0);
 
   // Fitting parameters
   const bool doFit = true;
 
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_includeFit";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
@@ -227,11 +227,11 @@ void signalToBackgroundRatio(){
   // Draw each graph to separate canvas
   for(auto centralityBin : comparedCentralityBin){
     iCentrality = card->FindBinIndexCentrality(centralityBin);
-    centralityString = Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second);
+    centralityString = Form("Pythia+Hydjet: %.0f-%.0f%%", centralityBin.first-4, centralityBin.second-4);
     compactCentralityString = Form("_C=%.0f-%.0f", centralityBin.first, centralityBin.second);
     for(auto trackPtBin : comparedTrackPtBin){
       iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
-      trackPtString = Form("%.1f < track p_{T}", trackPtBin);
+      trackPtString = Form("p_{T}^{ch} > %.1f GeV", trackPtBin);
       compactTrackPtString = Form("_T>%.1f", trackPtBin);
       compactTrackPtString.ReplaceAll(".", "v");
 
@@ -256,7 +256,7 @@ void signalToBackgroundRatio(){
       if(doFit) gSignalToBackgroundRatio[iCentrality][iTrackPt]->Fit(fitToRatio[iCentrality][iTrackPt]);
 
       // Draw the graphs to canvas
-      drawer->DrawGraphCustomAxes(gSignalToBackgroundRatio[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T}", "(Signal + BG) / BG", " ", "a,p");
+      drawer->DrawGraphCustomAxes(gSignalToBackgroundRatio[iCentrality][iTrackPt], comparedJetPtBin.at(0).first, comparedJetPtBin.at(nAnalyzedJetPtBins-1).second, minimumValue - drawMargin, maximumValue + drawMargin, "Jet p_{T} (GeV)", "(Signal + BG) / BG", " ", "a,p");
 
       // Add the legend to the canvas
       legend->Draw();
