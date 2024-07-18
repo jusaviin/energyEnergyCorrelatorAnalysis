@@ -102,7 +102,7 @@ private:
   const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "ReflectedMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "ReflectedSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair"};
   
   // Naming for jet cone types
-  const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone", "MixedCone"};
+  const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"SignalCone", "ReflectedCone", "MixedCone", "SecondMixedCone"};
   
   // Maximum particle pT within the jet cone study
   const char* fMaxParticlePtInJetConeHistogramName = "maxParticlePtInJet";
@@ -295,6 +295,9 @@ public:
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
 
+  // Getters for jet shape histograms
+  TH1D* GetHistogramJetShape(const int iCentrality, const int iJetPt, const int iTrackPt, const int iParticleType = EECHistograms::kSignalCone, const int iSubevent = EECHistograms::knSubeventTypes) const;  // Jet shape histograms
+
   // Getters for reflected cone QA histograms
   TH1D* GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality);
   TH1D* GetHistogramJetPtWithinReflectedCone(const int iCentrality);
@@ -452,6 +455,9 @@ private:
   TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
   TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
 
+  // Histograms for jet shapes
+  TH1D* fhJetShape[kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];
+
   // Quality assurance histograms for reflected cone
   TH1D* fhNumberOfJetsWithinReflectedCone[kMaxCentralityBins];
   TH1D* fhJetPtWithinReflectedCone[kMaxCentralityBins];
@@ -500,6 +506,7 @@ private:
   void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
   void LoadMaxParticlePtInJetConeHistograms(); // Loader for maximum particle pT in jet cone histograms
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
+  void LoadJetShapeHistograms(); // Loader for jet shape histograms
   void LoadReflectedConeQAHistograms();        // Loader for reflected cone QA histograms
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
@@ -527,6 +534,7 @@ private:
   void WriteParticleDensityAroundJetsHistograms();    // Write the particle density histograms around the jet axes
   void WriteMaxParticlePtWithinJetConeHistograms();   // Write the maximum particle pT within the jet cone histograms
   void WriteEnergyEnergyCorrelatorHistograms();       // Write the energy-energy correlator histograms to the file that is currently open
+  void WriteJetShapeHistograms();                     // Write the jet shape histograms to the file that is currently open
   void WriteReflectedConeQAHistograms();              // Write the reflected cone QA histograms to the file that is currently open
   void WriteJetPtResponseMatrix();                    // Write the jet pT response matrices
   void WriteClosureHistograms();                      // Write the closure histograms to the file that is currently open

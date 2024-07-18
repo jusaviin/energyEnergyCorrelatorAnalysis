@@ -508,6 +508,101 @@ void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram,
 }
 
 /*
+ * Square the contents of a histogram
+ *
+ *  TH1* transformedHistogram = Histogram that will get its contents squared
+ */
+void AlgorithmLibrary::SquareHistogram(TH1* transformedHistogram){
+
+  // Helper variables for the transformation
+  double binContent;
+  double binError;
+
+  // Loop over all the bins in the histogram
+  for(int iBin = 1; iBin <= transformedHistogram->GetNbinsX(); iBin++){
+    
+    // Find current bin content and error in each bin
+    binContent = transformedHistogram->GetBinContent(iBin);
+    binError = transformedHistogram->GetBinError(iBin);
+
+    // Square the bin content and properly scale the bin error
+    transformedHistogram->SetBinContent(iBin, binContent*binContent);
+    transformedHistogram->SetBinError(iBin, 2*binContent*binError);
+
+  } // Bin loop
+
+}
+
+/*
+ * Transform histogram to cumulant
+ *
+ *  TH1D* originalHistogram = Histogram from which cumulant distribution is calculated
+ *  const int lowestBin = Bin index of the lowest bin included in the cumulant calculation
+ *
+ *  return: Cumulant distribution corresponding to the original histogram
+ */
+TH1D* AlgorithmLibrary::GetCumulant(TH1* originalHistogram, const int lowestBin){
+  
+  // First, clone the original histogram to get the correct binning
+  TH1D* cumulantHistogram = (TH1D*) originalHistogram->Clone(Form("%sCumulant", originalHistogram->GetName()));
+
+  // For the cumulant distribution, set the bins before the lowest bin border to zero
+  for(int iBin = 1; iBin < lowestBin; iBin++){
+    cumulantHistogram->SetBinContent(iBin, 0);
+    cumulantHistogram->SetBinError(iBin, 0);
+  }
+
+  // Helper variables for integration
+  double binIntegral;
+  double binIntegralError;
+
+  // For the other bins, calculate the cumulant by integrating from the lowest bin to the current bin
+  for(int iBin = lowestBin; iBin <= originalHistogram->GetNbinsX(); iBin++){
+    binIntegral = originalHistogram->IntegralAndError(lowestBin, iBin, binIntegralError, "width");
+    cumulantHistogram->SetBinContent(iBin, binIntegral);
+    cumulantHistogram->SetBinError(iBin, binIntegralError);
+  }
+
+  // Return the cumulant histogram
+  return cumulantHistogram;
+
+}
+
+/*
+ * Change the normalization of the histogram from bin width based to bin area based
+ *
+ *  TH1* transformedHistogram = Histogram that will get its contents squared
+ */
+void AlgorithmLibrary::ChangeBinWidthToBinAreaNormalization(TH1* normalizedHistogram){
+
+  // Helper variables
+  double binContent;
+  double binError;
+  double binWidth;
+  double binArea;
+  double lowBinBorder;
+  double highBinBorder;
+
+  // Loop over all the bins in the histogram
+  for(int iBin = 1; iBin <= normalizedHistogram->GetNbinsX(); iBin++){
+    
+    // Find current bin content, error, and width information
+    binContent = normalizedHistogram->GetBinContent(iBin);
+    binError = normalizedHistogram->GetBinError(iBin);
+    lowBinBorder = normalizedHistogram->GetXaxis()->GetBinLowEdge(iBin);
+    highBinBorder = normalizedHistogram->GetXaxis()->GetBinUpEdge(iBin);
+    binWidth = highBinBorder - lowBinBorder;
+    binArea = TMath::Pi() * (highBinBorder*highBinBorder - lowBinBorder*lowBinBorder);
+
+    // Square the bin content and properly scale the bin error
+    normalizedHistogram->SetBinContent(iBin, binContent * binWidth / binArea);
+    normalizedHistogram->SetBinError(iBin, binError * binWidth / binArea);
+
+  } // Bin loop
+
+}
+
+/*
  * Get a TString with today's date
  */
 TString AlgorithmLibrary::GetToday(){

@@ -49,6 +49,9 @@ public:
   void TransformToRelativeUncertainty(TH1D* transformedHistogram, const bool centerAtOne = false);
   void TransformToAbsoluteUncertainty(TH1D* transformedHistogram, TH1D* absoluteScaleHistogram, const bool centerAtOne = false);
   void SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram, const double lowRange, const double highRange, const double threshold, const double suppressionLevel);
+  void SquareHistogram(TH1* transformedHistogram); // Square the contents of a histogram
+  void ChangeBinWidthToBinAreaNormalization(TH1* normalizedHistogram); // Change the normalization of the histogram
+  TH1D* GetCumulant(TH1* transformedHistogram, const int lowestBin = 1); // Transform histogram to cumulant
   TString GetToday(); // Getter for today's date
   std::vector<std::pair<TString, TGraph*>>  GetGraphsFromDatFile(TString fileName);
   TH1D* Histogrammify(TGraph* gSource, TH1D* hBinning);
