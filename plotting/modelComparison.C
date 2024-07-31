@@ -159,7 +159,7 @@ void modelComparison(int weightExponent = 1){
   drawnJetPtBin.push_back(std::make_pair(120,140));
   //drawnJetPtBin.push_back(std::make_pair(140,160));
   //drawnJetPtBin.push_back(std::make_pair(160,180));
-  //drawnJetPtBin.push_back(std::make_pair(180,200));
+  drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
@@ -184,8 +184,9 @@ void modelComparison(int weightExponent = 1){
   // 1 = Holguin perturbative calculations with different k-values
   // 2 = CoLBT predictions with different q-values
   // 3 = Selection of Hybrid, Holguin and CoLBT predictions
-  int theoryComparisonIndex = 3; 
-  TString theorySaveName[4] = {"hybridModel", "holguin", "colbt", "threeModels"};
+  // 4 = Best k from Holguin and CoLBT
+  int theoryComparisonIndex = 4; 
+  TString theorySaveName[5] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt"};
 
 
   // Binning for double ratio plots
@@ -198,13 +199,13 @@ void modelComparison(int weightExponent = 1){
   bool drawDoubleRatioDataToTheoryComparison = false;
 
   // Flag for adding preliminary tag to the figures
-  bool addPreliminaryTag = true;
+  bool addPreliminaryTag = false;
 
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
-  TString saveComment =  "_preliminaryTag";
+  TString saveComment =  "_paperVersion";
   TString figureFormat = "pdf";
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
@@ -1592,6 +1593,47 @@ void modelComparison(int weightExponent = 1){
               anotherLegend->AddEntry(energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue], "CoLBT, q=1", "f");
             }
 
+          } else if (theoryComparisonIndex == 4){
+            // Theory comparison index 4, comparison between best k in Holguin calculation and CoLBT
+
+            // Add the perturbative calculation with k=0.3
+            iKValue = holguinHistograms->FindKValueIndex(0.3);
+
+            // There are some bins for which the prediction does not exist
+            if(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(kMagenta);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(kMagenta);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], "Holguin, k=0.3", "pl");
+            }
+
+            // Then add all different q-values for CoLBT
+            for(auto myQValue : coLBTqValue){
+              iQValue = coLBTHistograms->FindQValueIndex(myQValue);
+
+              // There are some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue] == NULL) continue;
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetLineColor(color[iQValue]);
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerColor(color[iQValue]);
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], 0.4);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("3,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue], Form("CoLBT, q=%.1f", myQValue), "f");
+            }
+
           }
 
           // Draw the legends to the upper pad
@@ -1700,7 +1742,7 @@ void modelComparison(int weightExponent = 1){
               hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->Draw("same,e3");
             }
 
-            // Then, add peerturbative calculation by Holguin and friends
+            // Then, add perturbative calculation by Holguin and friends
             iKValue = holguinHistograms->FindKValueIndex(0.3);
             if(holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
               holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[1]);
@@ -1717,6 +1759,30 @@ void modelComparison(int weightExponent = 1){
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerStyle(kFullCircle);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerSize(0);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[0], 0.4);
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("same,e3");
+            }
+
+          } else if(theoryComparisonIndex == 4){
+            // Theory comparison index 4, comparison between best k in Holguin calculation and CoLBT
+
+            // Add the perturbative calculation by Holguin and friends
+            iKValue = holguinHistograms->FindKValueIndex(0.3);
+            if(holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(kMagenta);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineWidth(3);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(kMagenta);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
+            }
+
+            // Theory comparison index 2, CoLBT prediction
+            for(auto myQValue : coLBTqValue){
+              iQValue = coLBTHistograms->FindQValueIndex(myQValue);
+              if(coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue] == NULL) continue;
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerColor(color[iQValue]);
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerStyle(kFullCircle);
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerSize(0);
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], 0.4);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("same,e3");
             }
 
