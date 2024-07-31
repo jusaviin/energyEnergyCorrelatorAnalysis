@@ -49,7 +49,7 @@ AlgorithmLibrary::~AlgorithmLibrary()
 std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax){
   
   // Use the whole histogram as a search range
-  std::pair<double,double> searchRange = std::make_pair(1, histogram->GetNbinsX());
+  std::pair<int,int> searchRange = std::make_pair(1, histogram->GetNbinsX());
   return FindHistogramMinMax(histogram, currentMinMax, searchRange);
   
 }
@@ -59,21 +59,37 @@ std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, 
  *
  *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
  *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
- *             std::pair<double,double> searchRange = Range from which the minimum and maximum values are searched
+ *             std::pair<double,double> searchRange = bin value range from which the minimum and maximum values are searched
  */
 std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
-  
-  // As initial guess, take the given minimum and maximum values
-  std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
   
   // Find the bin range from which the minimum and maximum values are searched
   double epsilon = 0.00001;
   int firstBin = histogram->GetXaxis()->FindBin(searchRange.first+epsilon);
   int lastBin = histogram->GetXaxis()->FindBin(searchRange.second-epsilon);
+
+  std::pair<int,int> searchBins = std::make_pair(firstBin, lastBin);
+
+  // Return the minimum and maximum values from the histogram
+  return FindHistogramMinMax(histogram, currentMinMax, searchBins);
+  
+}
+
+/*
+ * Find the minimum and maximum values from a histogram. They must be more extreme than the current values
+ *
+ *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
+ *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
+ *             std::pair<int,int> searchRange = Bin index range from which the minimum and maximum values are searched
+ */
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax, std::pair<int,int> searchRange){
+  
+  // As initial guess, take the given minimum and maximum values
+  std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
   
   // Loop through all the bins in the histogram and update the minimum and maximum values
   double currentValue, currentError;
-  for(int iBin = firstBin; iBin <= lastBin; iBin++){
+  for(int iBin = searchRange.first; iBin <= searchRange.second; iBin++){
     currentValue = histogram->GetBinContent(iBin);
     currentError = histogram->GetBinError(iBin);
     if((currentValue-currentError) < newMinMax.first) newMinMax.first = currentValue-currentError;
