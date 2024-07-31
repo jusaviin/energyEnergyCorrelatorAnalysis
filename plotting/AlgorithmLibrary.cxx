@@ -49,7 +49,7 @@ AlgorithmLibrary::~AlgorithmLibrary()
 std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax){
   
   // Use the whole histogram as a search range
-  std::pair<double,double> searchRange = std::make_pair(1, histogram->GetNbinsX());
+  std::pair<int,int> searchRange = std::make_pair(1, histogram->GetNbinsX());
   return FindHistogramMinMax(histogram, currentMinMax, searchRange);
   
 }
@@ -59,21 +59,37 @@ std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, 
  *
  *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
  *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
- *             std::pair<double,double> searchRange = Range from which the minimum and maximum values are searched
+ *             std::pair<double,double> searchRange = bin value range from which the minimum and maximum values are searched
  */
 std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax, std::pair<double,double> searchRange){
-  
-  // As initial guess, take the given minimum and maximum values
-  std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
   
   // Find the bin range from which the minimum and maximum values are searched
   double epsilon = 0.00001;
   int firstBin = histogram->GetXaxis()->FindBin(searchRange.first+epsilon);
   int lastBin = histogram->GetXaxis()->FindBin(searchRange.second-epsilon);
+
+  std::pair<int,int> searchBins = std::make_pair(firstBin, lastBin);
+
+  // Return the minimum and maximum values from the histogram
+  return FindHistogramMinMax(histogram, currentMinMax, searchBins);
+  
+}
+
+/*
+ * Find the minimum and maximum values from a histogram. They must be more extreme than the current values
+ *
+ *  Arguments: TH1D* histogram = Histogram from which the minimum and maximum values are searched
+ *             std::pair<double,double> currentMinMax = The found values need to be more extreme than these to be accepted
+ *             std::pair<int,int> searchRange = Bin index range from which the minimum and maximum values are searched
+ */
+std::pair<double,double> AlgorithmLibrary::FindHistogramMinMax(TH1D* histogram, std::pair<double,double> currentMinMax, std::pair<int,int> searchRange){
+  
+  // As initial guess, take the given minimum and maximum values
+  std::pair<double,double> newMinMax = std::make_pair(currentMinMax.first, currentMinMax.second);
   
   // Loop through all the bins in the histogram and update the minimum and maximum values
   double currentValue, currentError;
-  for(int iBin = firstBin; iBin <= lastBin; iBin++){
+  for(int iBin = searchRange.first; iBin <= searchRange.second; iBin++){
     currentValue = histogram->GetBinContent(iBin);
     currentError = histogram->GetBinError(iBin);
     if((currentValue-currentError) < newMinMax.first) newMinMax.first = currentValue-currentError;
@@ -504,6 +520,101 @@ void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram,
       fluctuatingHistogram->SetBinContent(iBin, biggestNeighbor+biggestNeighbor*suppressionLevel);
     }
   }
+
+}
+
+/*
+ * Square the contents of a histogram
+ *
+ *  TH1* transformedHistogram = Histogram that will get its contents squared
+ */
+void AlgorithmLibrary::SquareHistogram(TH1* transformedHistogram){
+
+  // Helper variables for the transformation
+  double binContent;
+  double binError;
+
+  // Loop over all the bins in the histogram
+  for(int iBin = 1; iBin <= transformedHistogram->GetNbinsX(); iBin++){
+    
+    // Find current bin content and error in each bin
+    binContent = transformedHistogram->GetBinContent(iBin);
+    binError = transformedHistogram->GetBinError(iBin);
+
+    // Square the bin content and properly scale the bin error
+    transformedHistogram->SetBinContent(iBin, binContent*binContent);
+    transformedHistogram->SetBinError(iBin, 2*binContent*binError);
+
+  } // Bin loop
+
+}
+
+/*
+ * Transform histogram to cumulant
+ *
+ *  TH1D* originalHistogram = Histogram from which cumulant distribution is calculated
+ *  const int lowestBin = Bin index of the lowest bin included in the cumulant calculation
+ *
+ *  return: Cumulant distribution corresponding to the original histogram
+ */
+TH1D* AlgorithmLibrary::GetCumulant(TH1* originalHistogram, const int lowestBin){
+  
+  // First, clone the original histogram to get the correct binning
+  TH1D* cumulantHistogram = (TH1D*) originalHistogram->Clone(Form("%sCumulant", originalHistogram->GetName()));
+
+  // For the cumulant distribution, set the bins before the lowest bin border to zero
+  for(int iBin = 1; iBin < lowestBin; iBin++){
+    cumulantHistogram->SetBinContent(iBin, 0);
+    cumulantHistogram->SetBinError(iBin, 0);
+  }
+
+  // Helper variables for integration
+  double binIntegral;
+  double binIntegralError;
+
+  // For the other bins, calculate the cumulant by integrating from the lowest bin to the current bin
+  for(int iBin = lowestBin; iBin <= originalHistogram->GetNbinsX(); iBin++){
+    binIntegral = originalHistogram->IntegralAndError(lowestBin, iBin, binIntegralError, "width");
+    cumulantHistogram->SetBinContent(iBin, binIntegral);
+    cumulantHistogram->SetBinError(iBin, binIntegralError);
+  }
+
+  // Return the cumulant histogram
+  return cumulantHistogram;
+
+}
+
+/*
+ * Change the normalization of the histogram from bin width based to bin area based
+ *
+ *  TH1* transformedHistogram = Histogram that will get its contents squared
+ */
+void AlgorithmLibrary::ChangeBinWidthToBinAreaNormalization(TH1* normalizedHistogram){
+
+  // Helper variables
+  double binContent;
+  double binError;
+  double binWidth;
+  double binArea;
+  double lowBinBorder;
+  double highBinBorder;
+
+  // Loop over all the bins in the histogram
+  for(int iBin = 1; iBin <= normalizedHistogram->GetNbinsX(); iBin++){
+    
+    // Find current bin content, error, and width information
+    binContent = normalizedHistogram->GetBinContent(iBin);
+    binError = normalizedHistogram->GetBinError(iBin);
+    lowBinBorder = normalizedHistogram->GetXaxis()->GetBinLowEdge(iBin);
+    highBinBorder = normalizedHistogram->GetXaxis()->GetBinUpEdge(iBin);
+    binWidth = highBinBorder - lowBinBorder;
+    binArea = TMath::Pi() * (highBinBorder*highBinBorder - lowBinBorder*lowBinBorder);
+
+    // Square the bin content and properly scale the bin error
+    normalizedHistogram->SetBinContent(iBin, binContent * binWidth / binArea);
+    normalizedHistogram->SetBinError(iBin, binError * binWidth / binArea);
+
+  } // Bin loop
 
 }
 
