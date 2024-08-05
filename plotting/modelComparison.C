@@ -6,6 +6,7 @@
 #include "HybridModelHistogramManager.h"
 #include "HolguinHistogramManager.h"
 #include "CoLBTHistogramManager.h"
+#include "JewelHistogramManager.h"
 
 /*
  * Determine up and down uncertainty bands for shape correlated uncertainties
@@ -80,6 +81,7 @@ void modelComparison(int weightExponent = 1){
   TString hybridModelFolder = "theoryComparison/hybridModel/data";
   TString holguinDataFolder = "theoryComparison/holguin";
   TString coLBTFolder = "theoryComparison/colbt";
+  TString jewelDataFolder = "theoryComparison/jewel";
   
   TFile* inputFile[kNDataTypes][nWeightExponents];
   TFile* uncertaintyFile[kNDataTypes][nWeightExponents];
@@ -151,15 +153,15 @@ void modelComparison(int weightExponent = 1){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  //drawnCentralityBin.push_back(std::make_pair(10,30));
-  //drawnCentralityBin.push_back(std::make_pair(30,50));
-  //drawnCentralityBin.push_back(std::make_pair(50,90));
+  drawnCentralityBin.push_back(std::make_pair(10,30));
+  drawnCentralityBin.push_back(std::make_pair(30,50));
+  drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
   //drawnJetPtBin.push_back(std::make_pair(140,160));
   //drawnJetPtBin.push_back(std::make_pair(160,180));
-  drawnJetPtBin.push_back(std::make_pair(180,200));
+  //drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
@@ -185,8 +187,9 @@ void modelComparison(int weightExponent = 1){
   // 2 = CoLBT predictions with different q-values
   // 3 = Selection of Hybrid, Holguin and CoLBT predictions
   // 4 = Best k from Holguin and CoLBT
-  int theoryComparisonIndex = 4; 
-  TString theorySaveName[5] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt"};
+  // 5 = Only JEWEL
+  int theoryComparisonIndex = 5; 
+  TString theorySaveName[6] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt", "jewel"};
 
 
   // Binning for double ratio plots
@@ -194,8 +197,8 @@ void modelComparison(int weightExponent = 1){
   std::pair<int, int> trackPtBinsForDoubleRatio = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.first), card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.second));
 
   // Choose which plots to draw
-  bool drawDistributionDataToTheoryComparison = false;
-  bool drawRatioDataToTheoryComparison = true;
+  bool drawDistributionDataToTheoryComparison = true;
+  bool drawRatioDataToTheoryComparison = false;
   bool drawDoubleRatioDataToTheoryComparison = false;
 
   // Flag for adding preliminary tag to the figures
@@ -205,8 +208,8 @@ void modelComparison(int weightExponent = 1){
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
-  TString saveComment =  "_paperVersion";
-  TString figureFormat = "pdf";
+  TString saveComment =  "_jewelCheck";
+  TString figureFormat = "png";
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
   // Ratio zoom settings
@@ -336,6 +339,15 @@ void modelComparison(int weightExponent = 1){
   TH1D* histogrammifiedCoLBTPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][CoLBTHistogramManager::kQValues];
   TH1D* coLBTToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][CoLBTHistogramManager::kQValues];
 
+  // Energy-energy correlators for JEWEL predictions
+  TH1D* energyEnergyCorrelatorJewelPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorJewelPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorJewelPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+
+  TH1D* jewelToDataRatioPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* jewelToDataRatioPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* jewelToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+
   // Initialize histograms to NULL
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
@@ -359,6 +371,9 @@ void modelComparison(int weightExponent = 1){
 
         energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
         systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
+
+        energyEnergyCorrelatorJewelPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
+        jewelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt] = NULL;
 
         for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
           hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][iUncertainty] = NULL;
@@ -386,6 +401,11 @@ void modelComparison(int weightExponent = 1){
 
           energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+
+          energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+          energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
 
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
             hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
@@ -917,7 +937,7 @@ void modelComparison(int weightExponent = 1){
             energyEnergyCorrelatorHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralRatio/theoryIntegralRatio);
             histogrammifiedHolguinPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Scale(dataIntegralRatio/theoryIntegralRatio);
 
-            // Now we can take a ratio between hybrid model prediction and data
+            // Now we can take a ratio between Holguin prediction and data
             holguinToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue] = (TH1D*) histogrammifiedHolguinPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iKValue]->Clone(Form("holguinRatioToDataPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
             errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessHolguinPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iKValue));
             optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
@@ -964,6 +984,52 @@ void modelComparison(int weightExponent = 1){
             coLBTToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iQValue]->Divide(errorlessData);
         
           } // Q-vaule loop
+        } // Centrality loop
+      } // Track pT loop
+    } // Jet pT loop
+  } // Weight exponent loop
+
+  // Read the histograms for JEWEL
+  JewelHistogramManager* jewelHistograms = new JewelHistogramManager(jewelDataFolder);
+  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+    for(auto jetPtBin : drawnJetPtBin){
+      iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+      for(auto trackPtBin : drawnTrackPtBin){
+        iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
+
+        // Load the pp histograms
+        energyEnergyCorrelatorJewelPp[iWeightExponent][iJetPt][iTrackPt] = jewelHistograms->GetEnergyEnergyCorrelatorPp(jetPtBin, trackPtBin, iWeightExponent+1);
+
+        // There are only a few bins for which predictions exist. Before continuing, check if the histograms are NULL
+        if(energyEnergyCorrelatorJewelPp[iWeightExponent][iJetPt][iTrackPt] == NULL) continue;
+
+        // Now we can take a ratio between JEWEL prediction and data
+        jewelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorJewelPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("jewelRatioToDataPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+        errorlessData = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("errorlessJewel%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+        optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+        jewelToDataRatioPp[iWeightExponent][iJetPt][iTrackPt]->Divide(errorlessData);
+
+        for(auto centralityBin : drawnCentralityBin){
+          iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+
+          // Load the PbPb and ratio histograms
+          energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = jewelHistograms->GetEnergyEnergyCorrelatorPbPb(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1);
+          energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = jewelHistograms->GetEnergyEnergyCorrelatorPbPbToPpRatio(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1);
+
+          // There are only a few bins for which predictions exist. Before continuing, check if the histograms are NULL
+          if(energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] == NULL) continue;
+
+          // Take a ratio between JEWEL prediction and data
+          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("jewelRatioToDataPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(errorlessData);
+
+          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("jewelRatioToDataPbPbToPpRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          errorlessData = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(errorlessData);
+        
         } // Centrality loop
       } // Track pT loop
     } // Jet pT loop
@@ -1087,39 +1153,53 @@ void modelComparison(int weightExponent = 1){
 
         legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp data", "lpf");
 
-        // Add legend for Pythia8 and Herwig7
-        legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kPythia], "Pythia8 CP5", "pl");
-        legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kHerwig], "Herwig7 CH3", "pl");
+        if(theoryComparisonIndex < 5){
+          // Pythia+Herwig+Hybrid
+
+          // Add legend for Pythia8 and Herwig7
+          legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kPythia], "Pythia8 CP5", "pl");
+          legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kHerwig], "Herwig7 CH3", "pl");
     
-        // There is no wake in pp, so do only comparison with Hybrid without wake
-        if(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0] != NULL){
+          // There is no wake in pp, so do only comparison with Hybrid without wake
+          if(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0] != NULL){
 
-          // Give some nice styles for the predictions
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineColor(ppModelColor[kPpCompareHybrid]);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineWidth(0);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerColor(ppModelColor[kPpCompareHybrid]);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
+            // Give some nice styles for the predictions
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineColor(ppModelColor[kPpCompareHybrid]);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineWidth(0);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerColor(ppModelColor[kPpCompareHybrid]);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
 
-          // Draw the prediction to the same canvas as the data
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("3,same");
+            // Draw the prediction to the same canvas as the data
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("3,same");
 
-          // Add a legend for the theory prediction
-          legend->AddEntry(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0], "Hybrid model", "f");
-        }
+            // Add a legend for the theory prediction
+            legend->AddEntry(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0], "Hybrid model", "f");
+          }
 
-        // After hybrid model, add also Pythia8 and Herwig7 predictions
-        for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
+          // After hybrid model, add also Pythia8 and Herwig7 predictions
+          for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
 
-          // Give some nice styles for the predictions
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
+            // Give some nice styles for the predictions
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
 
-          // Draw the prediction to the same canvas as the data
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->Draw("same,p");
+            // Draw the prediction to the same canvas as the data
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->Draw("same,p");
+          }
+        } else if(theoryComparisonIndex == 5){
+          // Theory comparison index 5: JEWEL vacuum
 
+          // Set a nice style for the JEWEL histograms
+          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(color[0]);
+          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+
+          // Draw the jewel histogram and add it to the legend
+          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,pl");
+          legend->AddEntry(energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt], "JEWEL", "pl");
         }
 
         // Draw the legend to the upper pad
@@ -1155,19 +1235,6 @@ void modelComparison(int weightExponent = 1){
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoomPpDistribution.first, ratioZoomPpDistribution.second);
 
-        // Set the style for histograms
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerSize(0);
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
-
-        // Set the style for pp MC simulation to data ratios
-        for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
-        }
-
         // Set the style for uncertainty bands for systematic and statistical uncertainties from data
         for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
           hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][iUncertainty]->SetLineColor(kBlack);
@@ -1192,12 +1259,39 @@ void modelComparison(int weightExponent = 1){
         legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
         legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
 
-        // Draw the ratio with respect to hybrid model
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("same,e3");
+        if(theoryComparisonIndex < 5){
 
-        // Draw the ratio with respect to Pythia and Herwig simulations
-        hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kPythia]->Draw("same,p");
-        hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kHerwig]->Draw("same,p");
+          // Set the style for MC to data comparison histograms
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerSize(0);
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
+
+          // Set the style for pp MC simulation to data ratios
+          for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
+          }
+
+          // Draw the ratio with respect to hybrid model
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("same,e3");
+
+          // Draw the ratio with respect to Pythia and Herwig simulations
+          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kPythia]->Draw("same,p");
+          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kHerwig]->Draw("same,p");
+
+        } else if(theoryComparisonIndex == 5){
+          // Theory comparison index 5: JEWEL vacuum
+
+          // Set the style for the histograms
+          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(color[0]);
+
+          // Draw the histogram to the same canvas as data
+          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,pl");
+        }
 
         // Draw the legend to the lower pad
         legend->Draw();
@@ -1304,6 +1398,23 @@ void modelComparison(int weightExponent = 1){
               // Add a legend for the theory prediction
               legend->AddEntry(energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], Form("Holguin, k=%.1f", myKValue), "pl");
             }
+          } else if(theoryComparisonIndex == 5){
+            // Theory comparison index 5, comparison to JEWEL
+
+            // There are some bins for which the prediction does not exist
+            if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+            }
           }
 
           // Draw the legend to the upper pad
@@ -1384,6 +1495,16 @@ void modelComparison(int weightExponent = 1){
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[iKValue]);
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
+            }
+          } else if(theoryComparisonIndex == 5){
+            // Theory comparison index 5, JEWEL prediction
+
+            if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              //jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+              //jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(color[0], 0.4);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
             }
           }
 
@@ -1612,7 +1733,7 @@ void modelComparison(int weightExponent = 1){
 
               // Add a legend for the theory prediction
               anotherLegend->AddEntry(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], "Holguin, k=0.3", "pl");
-            }
+            } 
 
             // Then add all different q-values for CoLBT
             for(auto myQValue : coLBTqValue){
@@ -1634,6 +1755,23 @@ void modelComparison(int weightExponent = 1){
               anotherLegend->AddEntry(energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue], Form("CoLBT, q=%.1f", myQValue), "f");
             }
 
+          } else if (theoryComparisonIndex == 5){
+            // Theory comparison index 5, comparison to JEWEL
+
+            // There are some bins for which the prediction does not exist
+            if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+            }
           }
 
           // Draw the legends to the upper pad
@@ -1775,7 +1913,7 @@ void modelComparison(int weightExponent = 1){
               holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
             }
 
-            // Theory comparison index 2, CoLBT prediction
+            // Then, add CoLBT prediction
             for(auto myQValue : coLBTqValue){
               iQValue = coLBTHistograms->FindQValueIndex(myQValue);
               if(coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue] == NULL) continue;
@@ -1786,6 +1924,16 @@ void modelComparison(int weightExponent = 1){
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("same,e3");
             }
 
+          } else if(theoryComparisonIndex == 5){
+            // Theory comparison index 5, JEWEL prediction
+
+            if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
+              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(color[0], 0.4);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
+            }
           }
 
           // Draw the legend to the lower pad

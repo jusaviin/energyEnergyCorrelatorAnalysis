@@ -71,8 +71,8 @@ private:
 
   // Histograms for energy-energy correlators
   TGraphErrors* fEnergyEnergyCorrelatorPp[kJetPtBins][kTrackPtBins][kEnergyWeights][kWakeConfigurations];  // Energy-energy correlators for pp
-  TGraphErrors* fEnergyEnergyCorrelatorPbPb[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kWakeConfigurations];  // Energy-energy correlators for pp
-  TGraphErrors* fEnergyEnergyCorrelatorPbPbToPpRatio[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kWakeConfigurations];  // Energy-energy correlators for pp
+  TGraphErrors* fEnergyEnergyCorrelatorPbPb[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kWakeConfigurations];  // Energy-energy correlators for PbPb
+  TGraphErrors* fEnergyEnergyCorrelatorPbPbToPpRatio[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kWakeConfigurations];  // Energy-energy correlators for PbPb to pp ratio
   
   // Find bin indices from bin borders
   int FindCentralityBinIndex(std::pair<int,int> centralityBin) const; // Get a centrality bin index from a given centrality bin borders
