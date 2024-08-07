@@ -73,23 +73,32 @@ void JewelHistogramManager::LoadHistograms(TString inputDirectory){
    
   // Loop over all the files that are present in the input directory and create graphs from the information inside the files
   TFile* currentFile;
+  std::filesystem::path filePath;
   for(int iJetPt = 0; iJetPt < kJetPtBins; iJetPt++){
 
-    // Load the pp histograms
-    currentFile = TFile::Open(Form("%s/pp_%s_100k.root", inputDirectory.Data(), fJetPtName[iJetPt]));
+    // Check that the file we are supposed to open exists:
+    filePath = Form("%s/pp_%s_100k.root", inputDirectory.Data(), fJetPtName[iJetPt]);
+    if(std::filesystem::exists(filePath)){
 
-    for(int iTrackPt = 0; iTrackPt < kTrackPtBins; iTrackPt++){
-      for(int iEnergyWeight = 0; iEnergyWeight < kEnergyWeights; iEnergyWeight++){
+      // Load the pp histograms
+      currentFile = TFile::Open(Form("%s/pp_%s_100k.root", inputDirectory.Data(), fJetPtName[iJetPt]));
 
-        // Read the histogram from the file
-        fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) currentFile->Get(Form("_%s_%s_1", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt]));
-        fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->SetName(Form("energyEnergyCorrelatorJewelPp%d%d%d", iJetPt, iTrackPt, iEnergyWeight));
+      for(int iTrackPt = 0; iTrackPt < kTrackPtBins; iTrackPt++){
+        for(int iEnergyWeight = 0; iEnergyWeight < kEnergyWeights; iEnergyWeight++){
 
-        // Normalize the histogram to one
-      } // Energy weight loop
-    } // Track pT loop
+          // Read the histogram from the file
+          fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) currentFile->Get(Form("_%s_%s_%d", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt], iJetPt+1));
+          fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->SetName(Form("energyEnergyCorrelatorJewelPp%d%d%d", iJetPt, iTrackPt, iEnergyWeight));
+
+        } // Energy weight loop
+      } // Track pT loop
+    } // pp file exists
 
     for(int iCentrality = 0; iCentrality < kCentralityBins; iCentrality++){
+
+      // Check that the PbPb file exists:
+      filePath = Form("%s/PbPb_Subtracted_%s_%s_100k.root", inputDirectory.Data(), fJetPtName[iJetPt], fCentralityName[iCentrality]);
+      if(!std::filesystem::exists(filePath)) continue;
 
       // Load the PbPb histograms
       currentFile = TFile::Open(Form("%s/PbPb_Subtracted_%s_%s_100k.root", inputDirectory.Data(), fJetPtName[iJetPt], fCentralityName[iCentrality]));
@@ -97,7 +106,7 @@ void JewelHistogramManager::LoadHistograms(TString inputDirectory){
       for(int iTrackPt = 0; iTrackPt < kTrackPtBins; iTrackPt++){
         for(int iEnergyWeight = 0; iEnergyWeight < kEnergyWeights; iEnergyWeight++){
 
-          fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) currentFile->Get(Form("_%s_%s_1", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt]));
+          fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) currentFile->Get(Form("_%s_%s_%d", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt], iJetPt+1));
           fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->SetName(Form("energyEnergyCorrelatorJewelPbPb%d%d%d%d", iCentrality, iJetPt, iTrackPt, iEnergyWeight));
 
         } // Energy weight loop
@@ -119,20 +128,24 @@ void JewelHistogramManager::NormalizeHistograms(){
       for(int iEnergyWeight = 0; iEnergyWeight < kEnergyWeights; iEnergyWeight++){
 
         // Normalize pp distributions
-        lowIntegralBin = fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->FindBin(fLowNormalizationDeltaR);
-        highIntegralBin = fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->FindBin(fHighNormalizationDeltaR);
-        fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->Scale(1.0 / fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->Integral(lowIntegralBin, highIntegralBin, "width"));
+        if(fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]){
+          lowIntegralBin = fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->FindBin(fLowNormalizationDeltaR);
+          highIntegralBin = fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->FindBin(fHighNormalizationDeltaR);
+          fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->Scale(1.0 / fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->Integral(lowIntegralBin, highIntegralBin, "width"));
+        }
 
         for(int iCentrality = 0; iCentrality < kCentralityBins; iCentrality++){
 
           // Normalize PbPb distributions
-          lowIntegralBin = fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->FindBin(fLowNormalizationDeltaR);
-          highIntegralBin = fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->FindBin(fHighNormalizationDeltaR);
-          fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Scale(1.0 / fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Integral(lowIntegralBin, highIntegralBin, "width"));
+          if(fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]){
+            lowIntegralBin = fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->FindBin(fLowNormalizationDeltaR);
+            highIntegralBin = fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->FindBin(fHighNormalizationDeltaR);
+            fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Scale(1.0 / fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Integral(lowIntegralBin, highIntegralBin, "width"));
 
-          // Recalculate the ratios with newly normalized histograms
-          fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Clone(Form("jewelRatio%d%d%d%d", iCentrality, iJetPt, iTrackPt, iEnergyWeight));
-          fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Divide(fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]);
+            // Recalculate the ratios with newly normalized histograms
+            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Clone(Form("jewelRatio%d%d%d%d", iCentrality, iJetPt, iTrackPt, iEnergyWeight));
+            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight]->Divide(fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]);
+          }
         }
 
       } // Energy weight loop

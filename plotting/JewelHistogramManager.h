@@ -4,6 +4,7 @@
 // C++ includes
 #include <iostream>
 #include <fstream>    // File stream for input/output to/from files
+#include <filesystem> // Checking that files exists
 
 // Root includes
 #include <TFile.h>
@@ -24,7 +25,7 @@ public:
   // Dimensions for histogram arrays
   static const int kCentralityBins = 4;       // Number of centrality bins for which the predictions are available
   static const int kTrackPtBins = 2;          // Number of track pT bins for which the predictions are available
-  static const int kJetPtBins = 1;            // Number of jet pT bins for which the predictions are available
+  static const int kJetPtBins = 4;            // Number of jet pT bins for which the predictions are available
   static const int kEnergyWeights = 2;        // Number of energy weights for which the predictions are available
   
 private:
@@ -32,13 +33,13 @@ private:
   // File name convention to find predictions for different bins
   const char* fCentralityName[kCentralityBins] = {"010", "1030", "3050", "5090"}; // String telling which centrality bin a file corresponds to
   const char* fTrackPtName[kTrackPtBins] = {"ptgt1", "ptgt2"}; // String telling which track pT cut a histograms corresponds to
-  const char* fJetPtName[kJetPtBins] = {"120140"}; // String telling which jet pT cut a file corresponds to
+  const char* fJetPtName[kJetPtBins] = {"120140", "140160", "160180", "180200"}; // String telling which jet pT cut a file corresponds to
   const char* fEnergyWeightName[kEnergyWeights] = {"hEEC", "hE2E2C"}; // String telling which energy weight the histogram has
   
   // Bin borders for different binning variables
   std::pair<int,int> fCentralityBinBorders[kCentralityBins] = {std::make_pair(0,10), std::make_pair(10,30), std::make_pair(30,50), std::make_pair(50,90)};
   double fTrackPtCuts[kTrackPtBins] = {1, 2};
-  std::pair<int,int> fJetPtBinBorders[kJetPtBins] = {std::make_pair(120,140)};
+  std::pair<int,int> fJetPtBinBorders[kJetPtBins] = {std::make_pair(120,140), std::make_pair(140,160), std::make_pair(160,180), std::make_pair(180,200)};
   double fEnergyWeights[kEnergyWeights] = {1, 2};
   
 public:
