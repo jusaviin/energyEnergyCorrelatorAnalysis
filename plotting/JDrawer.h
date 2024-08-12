@@ -1215,6 +1215,13 @@ public:
     fSinglePad->Range(xLow,yLow,xHigh,yHigh);
     fSinglePad->Clear();
   }
+
+  /*
+   * Get the pointed to canvas
+   */
+  TCanvas* GetCanvas(){
+    return fCanvas;
+  }
   
 };
 
