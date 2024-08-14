@@ -34,8 +34,22 @@ void calculateCorrelatedBands(TH1D* correlatedHistogram, TH1D* correlatedBandUpH
 
 /*
  * Macro for making final result plots comparing energy-energy correlators between pp and PbPb
+ *  Arguments:
+ *   int weightExponent = Drawn energy weight exponent
+ *   int theoryComparisonIndex  = Index for the selected theory predictions
+ *       0 = Hybrid model with different wake configuration
+ *       1 = Holguin perturbative calculations with different k-values
+ *       2 = CoLBT predictions with different q-values
+ *       3 = Selection of Hybrid, Holguin and CoLBT predictions
+ *       4 = Best k from Holguin and CoLBT
+ *       5 = Only JEWEL
+ *       6 = Best k from Holguin and JEWEL
+ *   int drawnPlots = Index to select which plots are drawn to the canvas
+ *       0 = Compare energy-energy correlator distributions to theory predictions
+ *       1 = Compare PbPb/pp ratios to theory predictions
+ *       2 = Compare double ratios to theory predictions
  */
-void modelComparison(int weightExponent = 1){
+void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int drawnPlots = 0){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
   enum enumSystematicUncertaintyType{kUncorrelatedUncertainty, kCorrelatedUncertainty, kCorrelatedUncertaintyShapeUp, kCorrelatedUncertaintyShapeDown, knSystematicUncertaintyTypes};
@@ -153,14 +167,14 @@ void modelComparison(int weightExponent = 1){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  //drawnCentralityBin.push_back(std::make_pair(10,30));
-  //drawnCentralityBin.push_back(std::make_pair(30,50));
-  //drawnCentralityBin.push_back(std::make_pair(50,90));
+  drawnCentralityBin.push_back(std::make_pair(10,30));
+  drawnCentralityBin.push_back(std::make_pair(30,50));
+  drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  //drawnJetPtBin.push_back(std::make_pair(140,160));
-  //drawnJetPtBin.push_back(std::make_pair(160,180));
+  drawnJetPtBin.push_back(std::make_pair(140,160));
+  drawnJetPtBin.push_back(std::make_pair(160,180));
   drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
@@ -189,7 +203,6 @@ void modelComparison(int weightExponent = 1){
   // 4 = Best k from Holguin and CoLBT
   // 5 = Only JEWEL
   // 6 = Best k from Holguin and JEWEL
-  int theoryComparisonIndex = 0; 
   TString theorySaveName[7] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt", "jewel", "holguinAndJewel"};
 
 
@@ -198,9 +211,9 @@ void modelComparison(int weightExponent = 1){
   std::pair<int, int> trackPtBinsForDoubleRatio = std::make_pair(card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.first), card[kPbPb][0]->GetBinIndexTrackPtEEC(trackPtCutsForDoubleDatio.second));
 
   // Choose which plots to draw
-  bool drawDistributionDataToTheoryComparison = false;
-  bool drawRatioDataToTheoryComparison = false;
-  bool drawDoubleRatioDataToTheoryComparison = true;
+  bool drawDistributionDataToTheoryComparison = (drawnPlots == 0);
+  bool drawRatioDataToTheoryComparison = (drawnPlots == 1);
+  bool drawDoubleRatioDataToTheoryComparison = (drawnPlots == 2);
 
   // Flag for adding preliminary tag to the figures
   bool addPreliminaryTag = false;
