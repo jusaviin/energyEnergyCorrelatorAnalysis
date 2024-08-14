@@ -167,20 +167,20 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  drawnCentralityBin.push_back(std::make_pair(10,30));
-  drawnCentralityBin.push_back(std::make_pair(30,50));
-  drawnCentralityBin.push_back(std::make_pair(50,90));
+  //drawnCentralityBin.push_back(std::make_pair(10,30));
+  //drawnCentralityBin.push_back(std::make_pair(30,50));
+  //drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  drawnJetPtBin.push_back(std::make_pair(140,160));
-  drawnJetPtBin.push_back(std::make_pair(160,180));
-  drawnJetPtBin.push_back(std::make_pair(180,200));
+  //drawnJetPtBin.push_back(std::make_pair(140,160));
+  //drawnJetPtBin.push_back(std::make_pair(160,180));
+  //drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  drawnTrackPtBin.push_back(2.0);
+  //drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
@@ -536,27 +536,31 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           hRelativeUncertaintyPp[iWeightExponent][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
         }
 
-        // Read the relevant systematic uncertainties for double ratio from pp
-        uncertaintyBackgroundSubtraction = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
-        uncertaintyTrackPairEfficiency = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
-        uncertaintyMCnonclosure = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
-        uncertaintyTrackSelection = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
+        if(drawDoubleRatioDataToTheoryComparison){
 
-        // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
-        // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
-        // Thus integrals over the analysis region tell the degree of overlap of these regions.
-        lowAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
-        highAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
-        lowPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio.first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
-        highPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio.second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
-        trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+          // Read the relevant systematic uncertainties for double ratio from pp
+          uncertaintyBackgroundSubtraction = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
+          uncertaintyTrackPairEfficiency = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
+          uncertaintyMCnonclosure = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
+          uncertaintyTrackSelection = uncertainties[kPp][iWeightExponent]->GetSystematicUncertainty(0, iJetPtMatchedPpUncertainty, iTrackPtMatchedPpUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
 
-        // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
-        // by the expected overlap.
-        systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
-        for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-          systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
-        }
+          // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
+          // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
+          // Thus integrals over the analysis region tell the degree of overlap of these regions.
+          lowAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
+          highAnalysisBin = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
+          lowPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio.first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+          highPtIntegral = energyEnergyCorrelatorRawPp[iWeightExponent][iJetPt][trackPtBinsForDoubleRatio.second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+          trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+
+          // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
+          // by the expected overlap.
+          systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+          for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
+            systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
+          }
+
+        } // Histograms relevant to double ratio
 
 
         for(auto centralityBin : drawnCentralityBin){
@@ -586,28 +590,32 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
           }
 
-          // Read the relevant systematic uncertainties for double ratio from PbPb
-          uncertaintyBackgroundSubtraction = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
-          uncertaintyTrackPairEfficiency = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
-          uncertaintyTrackSelection = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
-          uncertaintyMCnonclosure = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
-          uncertaintySignalToBackgroundRatio = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kSignalToBackgroundRatio);
+          if(drawDoubleRatioDataToTheoryComparison){
 
-          // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
-          // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
-          // Thus integrals over the analysis region tell the degree of overlap of these regions.
-          lowAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
-          highAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
-          lowPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
-          highPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
-          trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+            // Read the relevant systematic uncertainties for double ratio from PbPb
+            uncertaintyBackgroundSubtraction = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kBackgroundSubtraction);
+            uncertaintyTrackPairEfficiency = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackPairEfficiency);
+            uncertaintyTrackSelection = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kTrackSelection);
+            uncertaintyMCnonclosure = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kMonteCarloNonClosure);
+            uncertaintySignalToBackgroundRatio = uncertainties[kPbPb][iWeightExponent]->GetSystematicUncertainty(iCentralityMatched, iJetPtMatchedPbPbUncertainty, iTrackPtMatchedPbPbUncertainty, SystematicUncertaintyOrganizer::kSignalToBackgroundRatio);
 
-          // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
-          // by the expected overlap.
-          systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-          for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
-            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintySignalToBackgroundRatio->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
-          }
+            // For double ratio, we can find the proper scaling factor for the tracking uncertainties by comparing integrals of raw
+            // energy-energy correlators between different track pT bins. The higher track pT cuts are subsets of the lower cuts.
+            // Thus integrals over the analysis region tell the degree of overlap of these regions.
+            lowAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.first + epsilon);
+            highAnalysisBin = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(analysisDeltaR.second - epsilon);
+            lowPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+            highPtIntegral = energyEnergyCorrelatorRawPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Integral(lowAnalysisBin, highAnalysisBin, "width");
+            trackCorrelation = 1 - highPtIntegral / lowPtIntegral;
+
+            // Now for the double ratio, we can combine the relevant uncertainties while scaling down the tracking related ones
+            // by the expected overlap.
+            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) uncertaintyBackgroundSubtraction->Clone(Form("doubleRatioUncertaintyFromPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+            for(int iBin = 1; iBin <= uncertaintyBackgroundSubtraction->GetNbinsX(); iBin++){
+              systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, TMath::Sqrt(TMath::Power(uncertaintyBackgroundSubtraction->GetBinError(iBin),2) + TMath::Power(uncertaintyTrackPairEfficiency->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyTrackSelection->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintySignalToBackgroundRatio->GetBinError(iBin)*trackCorrelation,2) + TMath::Power(uncertaintyMCnonclosure->GetBinError(iBin),2)));
+            }
+
+          } // Doing stuff relevant to double ratio
         } // Centrality loop
       } // Track pT loop
     } // Jet pT loop
@@ -630,7 +638,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
         systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
         systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->GetBinContent(10));
-        systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10));
+
+        if(drawDoubleRatioDataToTheoryComparison){
+          systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinContent(10));
+        } // Stuff relevant for double ratios
 
         for(auto centralityBin : drawnCentralityBin){
 
@@ -639,7 +650,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
           systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
           systematicUncertaintyForPbPb[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForPbPb[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
-          systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
+          
+          if(drawDoubleRatioDataToTheoryComparison){
+            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Scale(energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10) / systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinContent(10));
+          } // Studd relevant for double ratios
 
           energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
           energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]);
@@ -655,53 +669,57 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   } // Weight exponent loop
 
   // Reduce the statistical uncertainties by the overlapping statistics fraction for the double ratios
-  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    for(auto jetPtBin : drawnJetPtBin){
-      iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
-      for(auto trackPtBin : drawnTrackPtBin){
-        iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
-
-        energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorForDoubleRatioFromPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
-
-        for(int iBin = 1; iBin <= energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetNbinsX(); iBin++){
-          energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinError(iBin) * trackCorrelation);
-        }
-
-        for(auto centralityBin : drawnCentralityBin){
-          iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
-
-          energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorForDoubleRatioFromPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-
-          for(int iBin = 1; iBin <= energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetNbinsX(); iBin++){
-            energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * trackCorrelation);
-          }
-
-        } // Centrality loop
-      } // Track pT loop
-    } // Jet pT loop
-  } // Weight exponent loop
-
-  // After regular ratios have been calculated, proceed to calculating double ratio. Here we need to use different histograms as above to properly take into account systematic uncertainty cancellation due to correlated datasets.
-  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    for(auto centralityBin : drawnCentralityBin){
-      iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+  if(drawDoubleRatioDataToTheoryComparison){
+    for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
       for(auto jetPtBin : drawnJetPtBin){
-      iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+        iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
         for(auto trackPtBin : drawnTrackPtBin){
           iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
 
-          // Calculate the single ratios with properly handled double ratio uncertainties
-          energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
-          systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
+          energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorForDoubleRatioFromPp%d%d%d", iWeightExponent, iJetPt, iTrackPt));
+
+          for(int iBin = 1; iBin <= energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetNbinsX(); iBin++){
+            energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->SetBinError(iBin, energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]->GetBinError(iBin) * trackCorrelation);
+          }
+
+          for(auto centralityBin : drawnCentralityBin){
+            iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+
+            energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("energyEnergyCorrelatorForDoubleRatioFromPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
+
+            for(int iBin = 1; iBin <= energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetNbinsX(); iBin++){
+              energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->SetBinError(iBin, energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetBinError(iBin) * trackCorrelation);
+            }
+
+          } // Centrality loop
         } // Track pT loop
-        // Calculate the double ratios from the single ratios with properly handled uncertainties
-        energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Clone(Form("energyEnergyCorrelatorDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]);
-        systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Clone(Form("systematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]);
       } // Jet pT loop
-    } // Centrality llop
-  } // Weight exponent loop
+    } // Weight exponent loop
+  
+
+    // After regular ratios have been calculated, proceed to calculating double ratio. Here we need to use different histograms as above to properly take into account systematic uncertainty cancellation due to correlated datasets.
+    for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+      for(auto centralityBin : drawnCentralityBin){
+        iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+        for(auto jetPtBin : drawnJetPtBin){
+        iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+          for(auto trackPtBin : drawnTrackPtBin){
+            iTrackPt = card[kPbPb][iWeightExponent]->GetBinIndexTrackPtEEC(trackPtBin);
+
+            // Calculate the single ratios with properly handled double ratio uncertainties
+            energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
+            systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(systematicUncertaintyForDoubleRatioFromPp[iWeightExponent][iJetPt][iTrackPt]);
+          } // Track pT loop
+          // Calculate the double ratios from the single ratios with properly handled uncertainties
+          energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Clone(Form("energyEnergyCorrelatorDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]);
+          systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt] = (TH1D*) systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second]->Clone(Form("systematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Divide(systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first]);
+        } // Jet pT loop
+      } // Centrality llop
+    } // Weight exponent loop
+
+  } // Reducing statistical uncertainty by overlapping statistics for double ratios and then calculating them
 
   // For illustration purposes, create up and down shifted uncertainty bands
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -771,31 +789,33 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   } // Weight exponent loop
 
   // Calculate the relative uncertainties also for double ratios
-  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    for(auto centralityBin : drawnCentralityBin){
-      iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
-      for(auto jetPtBin : drawnJetPtBin){
-        iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+  if(drawDoubleRatioDataToTheoryComparison){
+    for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+      for(auto centralityBin : drawnCentralityBin){
+        iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+        for(auto jetPtBin : drawnJetPtBin){
+          iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
 
-        // For relative uncertainties, read the total systematic uncertainties
-        hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintySystematic] = (TH1D*) systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeSystematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp] = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeStatisticalUncertaintyUpDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
-        hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalDown] = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeStatisticalUncertaintyDownDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          // For relative uncertainties, read the total systematic uncertainties
+          hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintySystematic] = (TH1D*) systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeSystematicUncertaintyDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp] = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeStatisticalUncertaintyUpDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
+          hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalDown] = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("relativeStatisticalUncertaintyDownDoubleRatio%d%d%d", iWeightExponent, iCentrality, iJetPt));
 
-        // Transform the uncertainties into relative uncertainties
-        for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
-          optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][iUncertainty], true);
-        }
+          // Transform the uncertainties into relative uncertainties
+          for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
+            optimusPrimeTheTransformer->TransformToRelativeUncertainty(hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][iUncertainty], true);
+          }
 
-        // Move the statistical uncertainty bin contents up and down by the uncertainties
-        for(int iBin = 1; iBin <= hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->GetNbinsX(); iBin++){
-          binError = hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->GetBinError(iBin);
-          hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->SetBinContent(iBin, 1 + binError);
-          hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
-        }
-      } // Jet pT loop
-    } // Centrality loop
-  } // Weight exponent loop
+          // Move the statistical uncertainty bin contents up and down by the uncertainties
+          for(int iBin = 1; iBin <= hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->GetNbinsX(); iBin++){
+            binError = hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->GetBinError(iBin);
+            hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalUp]->SetBinContent(iBin, 1 + binError);
+            hRelativeUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt][kRelativeUncertaintyStatisticalDown]->SetBinContent(iBin, 1 - binError);
+          }
+        } // Jet pT loop
+      } // Centrality loop
+    } // Weight exponent loop
+  } // Relative uncertainties for double ratios
 
   // Read the histograms for pp MC
   TH1D* errorlessData;
@@ -879,28 +899,30 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   } // Weight exponent loop
 
   // After all the Hybrid model histograms have been read, calculate double ratios from them
-  for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
-    weightExponentHybrid = iWeightExponent+1;
-    for(auto centralityBin : drawnCentralityBin){
-      iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
-      for(auto jetPtBin : drawnJetPtBin){
-        iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
-        for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
+  if(drawDoubleRatioDataToTheoryComparison){
+    for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+      weightExponentHybrid = iWeightExponent+1;
+      for(auto centralityBin : drawnCentralityBin){
+        iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
+        for(auto jetPtBin : drawnJetPtBin){
+          iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
+          for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
  
-          // First, calculate the double ratio in Hybrid model
-          histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake] = (TH1D*) histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second][iWake]->Clone(Form("energyEnergyCorrelatorDoubleRatioHybrid%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
-          histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Divide(histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first][iWake]);
+            // First, calculate the double ratio in Hybrid model
+            histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake] = (TH1D*) histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.second][iWake]->Clone(Form("energyEnergyCorrelatorDoubleRatioHybrid%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
+            histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Divide(histogrammifiedHybridModelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][trackPtBinsForDoubleRatio.first][iWake]);
 
-          // Then, take a ratio between the double ratio in Hybrid model and double ratio in data
-          hybridModelToDataRatioDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake] = (TH1D*) histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Clone(Form("energyEnergyCorrelatorDoubleRatioDataHybridComparison%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
-          errorlessData = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("errorlessComparisonToHybridDoubleRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
-          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
-          hybridModelToDataRatioDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Divide(errorlessData);
+            // Then, take a ratio between the double ratio in Hybrid model and double ratio in data
+            hybridModelToDataRatioDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake] = (TH1D*) histogrammifiedHybridModelDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Clone(Form("energyEnergyCorrelatorDoubleRatioDataHybridComparison%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
+            errorlessData = (TH1D*) energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Clone(Form("errorlessComparisonToHybridDoubleRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iWake));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            hybridModelToDataRatioDoubleRatio[iWeightExponent][iCentrality][iJetPt][iWake]->Divide(errorlessData);
 
-        } // Wake loop
-      } // Jet pT loop
-    } // Centrality loop
-  } // Weight exponent loop
+          } // Wake loop
+        } // Jet pT loop
+      } // Centrality loop
+    } // Weight exponent loop
+  } // Only calculate double ratios from Hybrid model if that is drawn
 
   // Helper veriables for normalizing the perturbative calculation
   double normalizationRegionDeltaRLow, normalizationRegionDeltaRHigh;
@@ -1082,6 +1104,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   TString compactJetPtString;
   TString trackPtString;
   TString compactTrackPtString;
+  TString distributionString;
 
   // Common variables for different plots
   TLegend* legend;
@@ -1095,6 +1118,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   double bottomRowScale, bottomPadMargin, leftPadMargin;
   double leftMarginAdder, bottomMarginAdder;
   double thisPadScale;
+
+  // Legend position variables
+  double legendX1, legendX2, legendY1, legendY2;
 
   // Legend text size for easy tuning
   double legendTextUpperCanvasSize = 0.07;
@@ -1140,10 +1166,22 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         drawer->SetLogY(true);
 
         // Setup the legend for plots
-        legend = new TLegend(0.2, 0.05, 0.5, 0.6);
+        legendX1 = 0.2; legendX2 = 0.5;
+        legendY1 = 0.05; legendY2 = 0.6;
+        if(theoryComparisonIndex == 5){
+          legendX1 = 0.21;
+          legendX2 = 0.51;
+          legendY2 = 0.3;
+        }
+        legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
         legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+        if(theoryComparisonIndex >= 5){
+          anotherLegend = new TLegend(legendX1+0.3, legendY1, legendX2+0.3, legendY2);
+          anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
+        }
 
         // Set the drawing style for pp data and uncertainty histograms
         energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -1165,7 +1203,11 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         systematicUncertaintyForPp[weightExponent-1][kCorrelatedUncertainty][iJetPt][iTrackPt]->Draw("same,e3");
         energyEnergyCorrelatorSignalPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,p");
 
-        legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp data", "lpf");
+        if(theoryComparisonIndex < 5){
+          legend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp data", "lpf");
+        } else {
+          anotherLegend->AddEntry(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "pp data", "lpf");
+        }
 
         if(theoryComparisonIndex < 5){
           // Pythia+Herwig+Hybrid
@@ -1213,11 +1255,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
           // Draw the jewel histogram and add it to the legend
           energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,pl");
-          legend->AddEntry(energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt], "JEWEL", "pl");
+          anotherLegend->AddEntry(energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt], "JEWEL", "pl");
         }
 
         // Draw the legend to the upper pad
         legend->Draw();
+        if(theoryComparisonIndex >= 5) anotherLegend->Draw();
 
         // Draw latex messages to the plots
         mrLatexer->SetTextFont(62);
@@ -1313,9 +1356,11 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Draw a line at one
         oneLine->Draw();
 
+        distributionString = theoryComparisonIndex < 5 ? "Model" : "Jewel";
+
         // If a plot name is given, save the plot in a file
         if(saveFigures) {
-          gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_distributionModelComparison%s_pp%s%s.%s", saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
+          gPad->GetCanvas()->SaveAs(Form("figures/energyEnergyCorrelator_distribution%sComparison%s_pp%s%s.%s", distributionString.Data(), saveComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat.Data()));
         }
 
 
@@ -1332,10 +1377,20 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           drawer->SetLogY(true);
 
           // Setup the legend for plots
-          legend = new TLegend(0.21, 0.05, 0.51, 0.6);
+          legendX1 = 0.21; legendX2 = 0.51;
+          legendY1 = 0.05; legendY2 = 0.6;
+          if(theoryComparisonIndex >= 5){
+            legendY2 = 0.3;
+          }
+          legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
+
+          if(theoryComparisonIndex >= 5){
+            anotherLegend = new TLegend(legendX1+0.3, legendY1, legendX2+0.3, legendY2);
+            anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
+          }
 
           // Set the drawing style for PbPb histogram
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullSquare);
@@ -1366,7 +1421,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
           // Draw the data points to the same canvas and add the histogram to the legend
           energyEnergyCorrelatorSignalPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
-          legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], centralityString.Data(), "lpf");
+
+          if(theoryComparisonIndex < 5){
+            legend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], centralityString.Data(), "lpf");
+          } else {
+            anotherLegend->AddEntry(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], centralityString.Data(), "lpf");
+          }
 
           // Choose a set of theory predictions to draw to the figure
           if(theoryComparisonIndex == 0){
@@ -1427,7 +1487,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
 
               // Add a legend for the theory prediction
-              legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
             }
           } else if(theoryComparisonIndex == 6){
             // Theory comparison index 6, comparison to best k-value from Holguin and JEWEL
@@ -1470,6 +1530,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
           // Draw the legend to the upper pad
           legend->Draw();
+          if(theoryComparisonIndex >= 5) anotherLegend->Draw();
 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
@@ -1597,6 +1658,19 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Draw data/theory comparison for PbPb to pp ratios
   if(drawRatioDataToTheoryComparison){
 
+    // Change the zoom setting if we are drawing JEWEL, in order for points not to overlap with legends
+    if(theoryComparisonIndex == 5){
+      pbpbToPpRatioZoom.first = 0.1;
+      pbpbToPpRatioZoom.second = 2.4;
+      ratioZoom.first = 0;
+      ratioZoom.second = 2.1;
+    }
+
+    if(theoryComparisonIndex == 6){
+      pbpbToPpRatioZoom.first = 0.1;
+      pbpbToPpRatioZoom.second = 2.1;
+    }
+
     for(auto centralityBin : drawnCentralityBin){
       iCentrality = card[kPbPb][weightExponent-1]->FindBinIndexCentrality(centralityBin);
 
@@ -1623,13 +1697,23 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           drawer->SetLogY(false);
 
           // Setup the legend for plots
-          legend = new TLegend(0.54, 0.03, 0.84, 0.21);
+          legendX1 = 0.54; legendX2 = 0.84;
+          legendY1 = 0.03; legendY2 = 0.21;
+          if(theoryComparisonIndex == 2){
+            legendX1 = 0.19; legendX2 = 0.49;
+          }
+          legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
           legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
 
           // Make another legend to which all the different histograms are collected.
-          anotherLegend = new TLegend(0.19, 0.03, 0.49, 0.3);
+          legendX1 = 0.19; legendX2 = 0.49;
+          legendY1 = 0.03; legendY2 = 0.3;
+          if(theoryComparisonIndex == 2){
+            legendX1 = 0.54; legendX2 = 0.84;
+          }
+          anotherLegend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
 
           // Set the drawing style for PbPb to pp ratio histograms
@@ -1891,7 +1975,15 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Draw latex messages to the plots
           mrLatexer->SetTextFont(62);
           mrLatexer->SetTextSize(0.09);
-          mrLatexer->DrawLatexNDC(0.19, 0.765, "CMS");
+
+          // Need to move the CMS text if doing JEWEL comparisons, it will otherwise overlap with points
+          if(theoryComparisonIndex >= 5){
+            mrLatexer->DrawLatexNDC(0.16, 0.9, "CMS");
+          } else if (theoryComparisonIndex == 2) {
+            mrLatexer->DrawLatexNDC(0.21, 0.765, "CMS");
+          } else {
+            mrLatexer->DrawLatexNDC(0.19, 0.765, "CMS");
+          }
 
           if(addPreliminaryTag){
             mrLatexer->SetTextFont(52);
@@ -1907,15 +1999,27 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Binning
           mrLatexer->SetTextFont(62);
           mrLatexer->SetTextSize(0.07);
-          mrLatexer->DrawLatexNDC(0.51, 0.765, jetPtString.Data());
-          mrLatexer->DrawLatexNDC(0.642, 0.67, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.725, 0.58, "|#eta_{jet}| < 1.6");
+          if(theoryComparisonIndex == 2){
+            mrLatexer->DrawLatexNDC(0.5, 0.775, jetPtString.Data());
+            mrLatexer->DrawLatexNDC(0.632, 0.68, "anti-k_{T} R = 0.4");
+            mrLatexer->DrawLatexNDC(0.715, 0.59, "|#eta_{jet}| < 1.6");
+          } else {
+            mrLatexer->DrawLatexNDC(0.51, 0.765, jetPtString.Data());
+            mrLatexer->DrawLatexNDC(0.642, 0.67, "anti-k_{T} R = 0.4");
+            mrLatexer->DrawLatexNDC(0.725, 0.58, "|#eta_{jet}| < 1.6");
+          }
+          
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
 
           // Create a new legend to show the different data uncertainty bands
-          legend = new TLegend(0.25, 0.86, 0.92, 0.96);
+          legendX1 = 0.25; legendX2 = 0.92;
+          legendY1 = 0.86; legendY2 = 0.96;
+          if(theoryComparisonIndex == 6){
+            legendX1 = 0.33; legendX2 = 0.95;
+          }
+          legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
           legend->SetNColumns(2);
 
