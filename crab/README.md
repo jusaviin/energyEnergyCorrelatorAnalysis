@@ -6,8 +6,7 @@ All the necessary configuration for running the code using the CRAB system is fo
 
 1. Create local tar ball:
     ```
-    make clean
-    tar -cvzf eec5TeV.tar.gz Makefile eecAnalysis.cxx jetEnergyCorrections trackCorrectionTables src
+    ./makeEECAnalysisTar.sh
     ```
 
 2. Move the tar ball to lxplus:
