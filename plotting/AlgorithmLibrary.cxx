@@ -526,9 +526,10 @@ void AlgorithmLibrary::SuppressSingleBinFluctuations(TH1D* fluctuatingHistogram,
 /*
  * Square the contents of a histogram
  *
- *  TH1* transformedHistogram = Histogram that will get its contents squared
+ *  TH1* transformedHistogram = Histogram that will get its contents exponentiated
+ *  const double exponent = Amount of exponentiation applied to the histogram bins
  */
-void AlgorithmLibrary::SquareHistogram(TH1* transformedHistogram){
+void AlgorithmLibrary::ExponentiateHistogram(TH1* transformedHistogram, const double exponent){
 
   // Helper variables for the transformation
   double binContent;
@@ -542,10 +543,22 @@ void AlgorithmLibrary::SquareHistogram(TH1* transformedHistogram){
     binError = transformedHistogram->GetBinError(iBin);
 
     // Square the bin content and properly scale the bin error
-    transformedHistogram->SetBinContent(iBin, binContent*binContent);
-    transformedHistogram->SetBinError(iBin, 2*binContent*binError);
+    transformedHistogram->SetBinContent(iBin, TMath::Power(binContent, exponent));
+    transformedHistogram->SetBinError(iBin, exponent * TMath::Power(binContent, exponent-1) * binError);
 
   } // Bin loop
+
+}
+
+/*
+ * Square the contents of a histogram
+ *
+ *  TH1* transformedHistogram = Histogram that will get its contents squared
+ */
+void AlgorithmLibrary::SquareHistogram(TH1* transformedHistogram){
+
+  // Use the exponentiation function to do the dirty work
+  ExponentiateHistogram(transformedHistogram, 2);
 
 }
 

@@ -10,6 +10,12 @@
  *  const double lowDrawRange = Lowest drawn DeltaR value in the figure. The default 0.008 is used in data analysis.
  */
 void compareEECinCustomBins(const int presetComparison = 0, const double lowDrawRange = 0.008){
+
+  // Enumeration for cumulant scaling variants
+  enum enumCumulantVariations{kJetShape, kCorrelator, kAdvancedCorrelator, knCumulants};
+
+  TString cumulantName[knCumulants] = {"jetShape", "correlator", "advancedCorrelator"};
+  TString legendText[knCumulants] = {"E1C cumulant scale", "E2C cumulant scale (old)", "E2C cumulant scale (new)"};
   
   // Files for comparison
   std::vector<TString> fileName;
@@ -205,6 +211,15 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   // Flag for drawing the jet shape scale
   bool drawJetShapeCumulantScale = false;
+  std::vector<int> drawnCumulantIndex;  
+  drawnCumulantIndex.push_back(kCorrelator);
+  drawnCumulantIndex.push_back(kAdvancedCorrelator);
+
+  if(drawnCumulantIndex.size() > 1 &&  fileName.size() > 2){
+    cout << "ERROR! Please only draw one cumulant style if you add more than two files!" << endl;
+    cout << "Now, the execution of the code will stop. I cannot let you make crowded figures." << endl;
+    return;
+  }
 
   // Create an object to easilty manipulate histograms
   AlgorithmLibrary* optimusPrimeTheTransformer = new AlgorithmLibrary();
@@ -255,12 +270,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   TH1D* hEnergyEnergyCorrelator[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hEnergyEnergyCorrelatorRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
   TH1D* hJetShape[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hJetShapeCumulant[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hCorrelatorCumulant[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hJetShapeCumulantScaledDistribution[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hCorrelatorCumulantScaledDistribution[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hJetShapeCumulantScaledRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* hCorrelatorCumulantScaledRatio[nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hCumulant[knCumulants][nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hCumulantScaledDistribution[knCumulants][nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* hCumulantScaledRatio[knCumulants][nComparisonFiles][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
 
   // Jet pT spectra for determining mean jet pT in each analysis bin
   TH1D* hJetPt[nComparisonFiles][nCentralityBins];
@@ -276,12 +288,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
           hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
           hJetShape[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hJetShapeCumulant[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hCorrelatorCumulant[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
-          hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt] = NULL;
+          for(int iCumulant = 0; iCumulant < knCumulants; iCumulant++){
+            hCumulant[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = NULL;
+            hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = NULL;
+            hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = NULL;
+          }
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
@@ -352,8 +363,8 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           optimusPrimeTheTransformer->SquareHistogram(hJetShape[iFile][iCentrality][iJetPt][iTrackPt]);
 
           // For the squared histogram, calculate the cumulant in the full DeltaR region and in the analysis region
-          hJetShapeCumulant[iFile][iCentrality][iJetPt][iTrackPt] = optimusPrimeTheTransformer->GetCumulant(hJetShape[iFile][iCentrality][iJetPt][iTrackPt], lowNormalizationBin);
-          hJetShapeCumulant[iFile][iCentrality][iJetPt][iTrackPt]->SetName(Form("jetShapeCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
+          hCumulant[kJetShape][iFile][iCentrality][iJetPt][iTrackPt] = optimusPrimeTheTransformer->GetCumulant(hJetShape[iFile][iCentrality][iJetPt][iTrackPt], lowNormalizationBin);
+          hCumulant[kJetShape][iFile][iCentrality][iJetPt][iTrackPt]->SetName(Form("jetShapeCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
 
           // Take the squared cumulant also for energy-energy correlators
           helperHistogram = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecHelper%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
@@ -361,8 +372,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           optimusPrimeTheTransformer->SquareHistogram(helperHistogram);
 
           // Calculate the cumulant from the squared energy-energy correlator distribution
-          hCorrelatorCumulant[iFile][iCentrality][iJetPt][iTrackPt] = optimusPrimeTheTransformer->GetCumulant(helperHistogram, lowNormalizationBin);
-          hCorrelatorCumulant[iFile][iCentrality][iJetPt][iTrackPt]->SetName(Form("correlatorCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
+          hCumulant[kCorrelator][iFile][iCentrality][iJetPt][iTrackPt] = optimusPrimeTheTransformer->GetCumulant(helperHistogram, lowNormalizationBin);
+          hCumulant[kCorrelator][iFile][iCentrality][iJetPt][iTrackPt]->SetName(Form("correlatorCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
+
+          // For advanced cumulant scaling, use the regular cumulant histograms as a base
+          hCumulant[kAdvancedCorrelator][iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hCumulant[kCorrelator][iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("advancedCorrelatorCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
 
         } // Track pT loop
       } // Jet pT loop
@@ -376,6 +390,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   double currentBinContent;
   double binCenter;
   double energyLoss;
+  double advancedScaleFactor;
 
   // Scale the ratio histogram with the ratio of cumulants of squared jet shapes
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
@@ -388,47 +403,38 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
       for(auto jetPtBin : comparedJetPtBin){
         iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
         energyLoss = meanJetPt[iFile][iCentrality][iJetPt] - meanJetPt[0][iCentrality][iJetPt];
-        cout << "Energy loss is: " << energyLoss << endl;
         for(auto trackPtBin : comparedTrackPtBin){
           iTrackPt = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
 
-          hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("jetShapeCumulantScaledDistribution%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          scaleHistogram = (TH1D*) hJetShapeCumulant[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("scaleForJetShapeCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          scaleHistogram->Divide(hJetShapeCumulant[referenceFile][iCentrality][iJetPt][iTrackPt]);
+          for(int iCumulant : drawnCumulantIndex){
 
-          // For the scale histogram, add the energy loss term to the cumulant ratio
-          for(int iBin = 1; iBin <= scaleHistogram->GetNbinsX(); iBin++){
-            currentBinContent = scaleHistogram->GetBinContent(iBin);
-            binCenter = scaleHistogram->GetBinCenter(iBin);
-            scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - binCenter)));
-          }
+            advancedScaleFactor = 1;
 
-          hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
-          distributionScale = hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
-          hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
+            hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("%sCumulantScaledDistribution%d%d%d%d", cumulantName[iCumulant].Data(), iFile, iCentrality, iJetPt, iTrackPt));
+            scaleHistogram = (TH1D*) hCumulant[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("scaleFor%sCumulant%d%d%d%d", cumulantName[iCumulant].Data(), iFile, iCentrality, iJetPt, iTrackPt));
+            scaleHistogram->Divide(hCumulant[iCumulant][referenceFile][iCentrality][iJetPt][iTrackPt]);
 
-          hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("jetShapeCumulantScaledRatio%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
-          hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
+            if(iCumulant == kAdvancedCorrelator) {
+              optimusPrimeTheTransformer->ExponentiateHistogram(scaleHistogram, 2.0/3.0);
+              advancedScaleFactor = 2.0/3.0;
+            }
 
-          hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatorCumulantScaledDistribution%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          scaleHistogram = (TH1D*) hCorrelatorCumulant[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("scaleForCorrelatorCumulant%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          scaleHistogram->Divide(hCorrelatorCumulant[referenceFile][iCentrality][iJetPt][iTrackPt]);
+            // For the scale histogram, add the energy loss term to the cumulant ratio
+            for(int iBin = 1; iBin <= scaleHistogram->GetNbinsX(); iBin++){
+              currentBinContent = scaleHistogram->GetBinContent(iBin);
+              binCenter = scaleHistogram->GetBinCenter(iBin);
+              scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - advancedScaleFactor * binCenter)));
+            }
 
-          // For the scale histogram, add the energy loss term to the cumulant ratio
-          for(int iBin = 1; iBin <= scaleHistogram->GetNbinsX(); iBin++){
-            currentBinContent = scaleHistogram->GetBinContent(iBin);
-            binCenter = scaleHistogram->GetBinCenter(iBin);
-            scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - binCenter)));
-          }
+            hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
+            distributionScale = hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
+            hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
 
-          hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
-          distributionScale = hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, "width");
-          hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
+            hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("%sCumulantScaledRatio%d%d%d%d", cumulantName[iCumulant].Data(), iFile, iCentrality, iJetPt, iTrackPt));
+            hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
+            hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
 
-          hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("correlatorCumulantScaledRatio%d%d%d%d", iFile, iCentrality, iJetPt, iTrackPt));
-          hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
-          hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Scale(1.0 / distributionScale);
+          } // Variant loop for cumulants
 
         } // Track pT loop
       } // Jet pT loop
@@ -459,9 +465,12 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   TString legendString;
   TString scaleString;
   int markerStyle[] = {kOpenSquare, kOpenCircle, kOpenCross, kOpenDoubleDiamond, kOpenDiamond, kOpenStar};
+  //int markerStyle[] = {53, 54, 57, 65, 56, 58};
   int color[] = {kBlack, kRed, kBlue, kGreen+3, kMagenta, kCyan};
-  int cumulantMarkerStyle[] = {kOpenDiamond, kOpenDiamond, kOpenCrossX, kOpenCrossX};
-  int cumulantColor[] = {kMagenta, kMagenta, kCyan, kCyan};
+  int cumulantMarkerStyle[] = {kOpenDiamond, kOpenDiamond, kOpenCrossX, kOpenCrossX, kOpenDoubleDiamond, kOpenDoubleDiamond};
+  //int cumulantMarkerStyle[] = {56, 56, 67, 67, 65, 65};
+  int cumulantColor[] = {kMagenta, kMagenta, kCyan, kCyan, kGreen+3, kGreen+3};
+  int styleIndex;
   TLegend* legend;
   TLegend* ratioLegend[4];
   TLatex* missingTextFiller = new TLatex();
@@ -519,38 +528,43 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
             hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iFile]);
             hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[iFile]);
             hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[iFile]);
+            //hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->SetLineWidth(2);
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(markerStyle[iFile]);
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[iFile]);
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[iFile]);
+            //hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineWidth(2);
 
             // Different styles for cumulant depending if jet shape cumulant are drawn or not
-            if(drawJetShapeCumulantScale){
+            if(drawnCumulantIndex.size() > 1){
+              // Several cumulants from one shifted system are drawn to the same sigure
 
-              hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullDiamond);
-              hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kGreen+3);
-              hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(kGreen+3);
+              styleIndex = 0;
+              for(int iCumulant : drawnCumulantIndex){
 
-              hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullDiamond);
-              hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kGreen+3);
-              hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(kGreen+3);
+                hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[styleIndex]);
+                hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[styleIndex]);
+                hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[styleIndex]);
+                //hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetLineWidth(2);
 
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(kMagenta);
+                hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[styleIndex]);
+                hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[styleIndex]);
+                hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[styleIndex]);
+                //hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->SetLineWidth(2);
 
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(kMagenta);
+                styleIndex = styleIndex + 2;
+
+              }
 
             } else {
+              // Single cumulant for several files are drawn to the same figure
 
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[iFile]);
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[iFile]);
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[iFile]);
+              hCumulantScaledDistribution[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[iFile]);
+              hCumulantScaledDistribution[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[iFile]);
+              hCumulantScaledDistribution[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[iFile]);
 
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[iFile]);
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[iFile]);
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[iFile]);
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(cumulantMarkerStyle[iFile]);
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(cumulantColor[iFile]);
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(cumulantColor[iFile]);
 
             }
           } // Setting drawing style for histograms
@@ -561,8 +575,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           for(int iFile = 0; iFile < nComparisonFiles; iFile++){
 
             hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
-            hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
-            hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
+            for(int iCumulant : drawnCumulantIndex){
+              hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
+            }
   
             if(iFile%2 == 1) distributionScale *=2;
 
@@ -588,8 +603,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
             // Draw also the cumulant scaled distributions to the same plot
             if(iFile%2 == 1){
-              if(drawJetShapeCumulantScale) hJetShapeCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
-              hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+              for(int iCumulant : drawnCumulantIndex){
+                hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+              }
             }
           }
 
@@ -603,14 +619,22 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
               legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T,jet} < %.0f GeV%s", systemForLegend.at(iFile).Data(), jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), scaleString.Data()), "p");
 
               // If jet shape cumulant scales are not drawn, add cumulants to main legend
-              if(iFile%2 == 1 && !drawJetShapeCumulantScale){
-                legend->AddEntry(hCorrelatorCumulantScaledDistribution[iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T,jet} < %.0f GeV, E2C cumulant scale%s", systemForLegend.at(iFile).Data(), jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), scaleString.Data()), "p");
+              if(iFile%2 == 1){
+                for(int iCumulant : drawnCumulantIndex){
+                  legend->AddEntry(hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T,jet} < %.0f GeV, %s%s", systemForLegend.at(iFile).Data(), jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), legendText[iCumulant].Data(), scaleString.Data()), "p");
+                }
                 distributionScale *= 2;
               }
             } else {
               legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("%.0f < jet p_{T} < %.0f GeV %s", jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), legendComment.at(iFile).Data()), "p");
-            }
-          }
+
+              if(iFile%2 == 1){
+                for(int iCumulant : drawnCumulantIndex){
+                  legend->AddEntry(hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt], Form("%.0f < p_{T,jet} < %.0f GeV, %s%s", jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), legendText[iCumulant].Data(), scaleString.Data()), "p");
+                } // Cumulant style loop
+              } // If for odd file indices
+            } // If for length of systemForLegend array
+          } // File loop
   
           // Draw the legends to the upper pad
           legend->Draw();
@@ -630,24 +654,12 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
             hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
           }
           for(int iFile = 1; iFile < nComparisonFiles; iFile = iFile+2){
-            if(drawJetShapeCumulantScale) hJetShapeCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
-            hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            for(int iCumulant : drawnCumulantIndex){
+              hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+            }
           }
 
           drawer->SetGridY(false);
-
-          // Only add the legend to the lower canvas if jet shape cumulant scaling is used
-          if(drawJetShapeCumulantScale){
-
-            legend = new TLegend(0.25, 0.85, 0.95, 0.95);
-            legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.08);legend->SetTextFont(62);
-            legend->SetNColumns(2);
-            for(int iFile = 1; iFile < nComparisonFiles; iFile = iFile+2){
-              legend->AddEntry(hJetShapeCumulantScaledRatio[1][iCentrality][iJetPt][iTrackPt], "E1C cumulant scale", "pl");
-              legend->AddEntry(hCorrelatorCumulantScaledRatio[1][iCentrality][iJetPt][iTrackPt], "E2C cumulant scale", "pl");
-            }
-            legend->Draw();
-          }
 
           // The eV in GeV in the lower pad title is not drawn correctly because it gets behing the upper pad Add it manually:
           thisCanvas = drawer->GetCanvas();
@@ -727,9 +739,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           for(auto jetPtBin : comparedJetPtBin){
             iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
 
-            hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(ratioMarkerStyle[ratioIndex]);
-            hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(ratioColor[ratioIndex]);
-            hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(ratioColor[ratioIndex++]);
+            hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(ratioMarkerStyle[ratioIndex]);
+            hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(ratioColor[ratioIndex]);
+            hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->SetLineColor(ratioColor[ratioIndex++]);
           } // Jet pT loop
         } // Setting drawing style for histograms
 
@@ -743,16 +755,16 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
             iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
 
             // Scale distributions from different files to keep the drawing cleaner
-            hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
+            hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
 
             // Draw all the ratios to the same canvas
             if(ratioIndex++ == 0){
               // For the first histogram, set correct drawing range and draw it to the canvas
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
-              drawer->DrawHistogram(hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt], "#Deltar", Form("Ratio to %.0f GeV lower p_{T,jet} bin", jetPtShift.at(1)), " ");
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+              drawer->DrawHistogram(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], "#Deltar", Form("Ratio to %.0f GeV lower p_{T,jet} bin", jetPtShift.at(1)), " ");
             } else {
-              hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+              hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
             }
 
             // Add things to legend
@@ -761,9 +773,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
             }
 
             if(systemForLegend.size() > 1){
-              ratioLegend[iFile]->AddEntry(hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T,jet} < %.0f GeV", systemForLegend.at(iFile).Data(), jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile)), "p");
+              ratioLegend[iFile]->AddEntry(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T,jet} < %.0f GeV", systemForLegend.at(iFile).Data(), jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile)), "p");
             } else {
-              ratioLegend[iFile]->AddEntry(hCorrelatorCumulantScaledRatio[iFile][iCentrality][iJetPt][iTrackPt], Form("%.0f < jet p_{T} < %.0f GeV %s", jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), legendComment.at(iFile).Data()), "p");
+              ratioLegend[iFile]->AddEntry(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], Form("%.0f < jet p_{T} < %.0f GeV %s", jetPtBin.first + jetPtShift.at(iFile), jetPtBin.second + jetPtShift.at(iFile), legendComment.at(iFile).Data()), "p");
             }
 
             // Draw lines to where different distributions are scaled
