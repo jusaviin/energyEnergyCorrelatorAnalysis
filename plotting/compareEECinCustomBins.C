@@ -195,9 +195,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  //comparedJetPtBin.push_back(std::make_pair(140,160));
-  //comparedJetPtBin.push_back(std::make_pair(160,180));
-  //comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1);
@@ -206,8 +206,8 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   double energyWeight = card[0]->GetWeightExponent();
 
   // Select which plots are drawn
-  bool drawDistributionsAndRatios = true;
-  bool drawOnlyRatios = false;
+  bool drawDistributionsAndRatios = false;
+  bool drawOnlyRatios = true;
 
   // Select which cumulant scaling distributions are drawn
   std::vector<int> drawnCumulantIndex;  
@@ -395,7 +395,6 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   double currentBinContent;
   double binCenter;
   double energyLoss;
-  double advancedScaleFactor;
 
   // Scale the ratio histogram with the ratio of cumulants of squared jet shapes
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
@@ -413,8 +412,6 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
           for(int iCumulant : drawnCumulantIndex){
 
-            advancedScaleFactor = 1;
-
             hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("%sCumulantScaledDistribution%d%d%d%d", cumulantName[iCumulant].Data(), iFile, iCentrality, iJetPt, iTrackPt));
             hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt]->Clone(Form("%sCumulantScaledRatio%d%d%d%d", cumulantName[iCumulant].Data(), iFile, iCentrality, iJetPt, iTrackPt));
 
@@ -425,14 +422,17 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
             if(iCumulant == kAdvancedCorrelator) {
               optimusPrimeTheTransformer->ExponentiateHistogram(scaleHistogram, 2.0/3.0);
-              advancedScaleFactor = 2.0/3.0;
             }
 
             // For the scale histogram, add the energy loss term to the cumulant ratio
             for(int iBin = 1; iBin <= scaleHistogram->GetNbinsX(); iBin++){
               currentBinContent = scaleHistogram->GetBinContent(iBin);
               binCenter = scaleHistogram->GetBinCenter(iBin);
-              scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - advancedScaleFactor * binCenter)));
+              if(iCumulant == kAdvancedCorrelator){
+                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1.0 / 3.0)));
+              } else {
+                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - binCenter)));
+              }
             }
 
             hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Divide(scaleHistogram);
