@@ -219,7 +219,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_tickTesting";
+  TString saveComment =  "_tickUpdate";
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
@@ -236,8 +236,8 @@ void finalResultPlotter(){
   int markerColorPp = kBlack;
   int bandColorUpPbPb[] = {kOrange+7, kViolet-3, kPink-3, kOrange-3};
   int bandColorDownPbPb[] = {kPink+9, kAzure+8, kViolet+6, kSpring};
-  int markerStylePpEnergyWeight[] = {kFullDiamond, kFullDoubleDiamond};
-  int markerColorPpEnergyWeight[] = {kViolet-2, kCyan+1};
+  int markerStylePpEnergyWeight[] = {kFullCrossX, kFullFourTrianglesPlus};
+  int markerColorPpEnergyWeight[] = {kOrange, kCyan};
 
   // Definition on how much the jet pT is shifted for shifted pT figures
   std::vector<std::pair<std::pair<double,double>,std::pair<double,double>>> jetPtShiftDefinition;
