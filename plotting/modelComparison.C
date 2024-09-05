@@ -180,7 +180,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  //drawnTrackPtBin.push_back(2.0);
+  drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
@@ -1098,6 +1098,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Logarithmic deltaR axis
   drawer->SetLogX(true); 
 
+  drawer->SetTick(0,0);
+
   TString centralityString;
   TString compactCentralityString;
   TString jetPtString;
@@ -1125,6 +1127,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Legend text size for easy tuning
   double legendTextUpperCanvasSize = 0.07;
   double legendTextLowerCanvasSize = 0.1;
+
+  // Adjust tick sizes for x-axis
+  double tickSizeX = 0.05;
 
   // Normalization and style for theory predictions
   int color[9] = {kRed, kBlue, kGreen+3, kMagenta, kCyan, kOrange+7, kViolet-3, kPink-3, kOrange-3};
@@ -1197,6 +1202,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Set the x-axis drawing range
         systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
         systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(distributionZoom[weightExponent-1].first, distributionZoom[weightExponent-1].second);
+
+        // Adjust tick size for x-axis
+        systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(tickSizeX);
 
         // Draw the data correlator to upper canves
         drawer->DrawHistogramToUpperPad(systematicUncertaintyForPp[weightExponent-1][kUncorrelatedUncertainty][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
@@ -1281,9 +1289,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Binning
         mrLatexer->SetTextFont(62);
         mrLatexer->SetTextSize(0.07);
-        mrLatexer->DrawLatexNDC(0.58, 0.76, jetPtString.Data());
-        mrLatexer->DrawLatexNDC(0.712, 0.665, "anti-k_{T} R = 0.4");
-        mrLatexer->DrawLatexNDC(0.795, 0.575, "|#eta_{jet}| < 1.6");
+        mrLatexer->DrawLatexNDC(0.58, 0.775, jetPtString.Data());
+        mrLatexer->DrawLatexNDC(0.712, 0.68, "anti-k_{T} R = 0.4");
+        mrLatexer->DrawLatexNDC(0.795, 0.59, "|#eta_{jet}| < 1.6");
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
@@ -1291,6 +1299,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Set the axis drawing ranges for ratio
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoomPpDistribution.first, ratioZoomPpDistribution.second);
+
+        // Adjust tick sizes for the x-axis
+        hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetTickLength(tickSizeX * 1.5);
 
         // Set the style for uncertainty bands for systematic and statistical uncertainties from data
         for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
@@ -1413,6 +1424,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Set the axis drawing ranges
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(distributionZoom[weightExponent-1].first, distributionZoom[weightExponent-1].second);
+
+          // Adjust tick size for x-axis
+          systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(tickSizeX);
 
           // Draw the systematic uncertainties to the upper canvas
           drawer->DrawHistogramToUpperPad(systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "EEC", " ", "e2");
@@ -1551,9 +1565,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Binning
           mrLatexer->SetTextFont(62);
           mrLatexer->SetTextSize(0.07);
-          mrLatexer->DrawLatexNDC(0.58, 0.76, jetPtString.Data());
-          mrLatexer->DrawLatexNDC(0.712, 0.665, "anti-k_{T} R = 0.4");
-          mrLatexer->DrawLatexNDC(0.795, 0.575, "|#eta_{jet}| < 1.6");
+          mrLatexer->DrawLatexNDC(0.58, 0.775, jetPtString.Data());
+          mrLatexer->DrawLatexNDC(0.712, 0.68, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.795, 0.59, "|#eta_{jet}| < 1.6");
 
           // Linear scale for the ratio
           drawer->SetLogY(false);
@@ -1561,6 +1575,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Set the axis drawing ranges for ratio
           hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+
+          // Adjust tick size for x-axis
+          hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetTickLength(tickSizeX*1.5);
 
           // Set the style for uncertainty bands for systematic and statistical uncertainties from data
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
@@ -1698,7 +1715,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
           // Setup the legend for plots
           legendX1 = 0.54; legendX2 = 0.84;
-          legendY1 = 0.03; legendY2 = 0.21;
+          legendY1 = 0.04; legendY2 = 0.22;
           if(theoryComparisonIndex == 2){
             legendX1 = 0.19; legendX2 = 0.49;
           }
@@ -1709,7 +1726,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
           // Make another legend to which all the different histograms are collected.
           legendX1 = 0.19; legendX2 = 0.49;
-          legendY1 = 0.03; legendY2 = 0.3;
+          legendY1 = 0.04; legendY2 = 0.31;
           if(theoryComparisonIndex == 2){
             legendX1 = 0.54; legendX2 = 0.84;
           }
@@ -1737,6 +1754,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Set the x-axis drawing range
           systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(pbpbToPpRatioZoom.first, pbpbToPpRatioZoom.second);
+
+          // Adjust tick size for x-axis
+          systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(tickSizeX);
 
           // Draw first the systematic uncertainties to the upper canves
           drawer->DrawHistogramToUpperPad(systematicUncertaintyPbPbToPpRatio[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt], "#Deltar", "#frac{PbPb}{pp}", " ", "e2");
@@ -1980,15 +2000,15 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           if(theoryComparisonIndex >= 5){
             mrLatexer->DrawLatexNDC(0.16, 0.9, "CMS");
           } else if (theoryComparisonIndex == 2) {
-            mrLatexer->DrawLatexNDC(0.21, 0.765, "CMS");
+            mrLatexer->DrawLatexNDC(0.21, 0.78, "CMS");
           } else {
-            mrLatexer->DrawLatexNDC(0.19, 0.765, "CMS");
+            mrLatexer->DrawLatexNDC(0.19, 0.78, "CMS");
           }
 
           if(addPreliminaryTag){
             mrLatexer->SetTextFont(52);
             mrLatexer->SetTextSize(0.065);
-            mrLatexer->DrawLatexNDC(0.3, 0.765, "Preliminary");
+            mrLatexer->DrawLatexNDC(0.3, 0.78, "Preliminary");
           }
 
           // Luminosity
@@ -2000,13 +2020,13 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           mrLatexer->SetTextFont(62);
           mrLatexer->SetTextSize(0.07);
           if(theoryComparisonIndex == 2){
-            mrLatexer->DrawLatexNDC(0.5, 0.775, jetPtString.Data());
-            mrLatexer->DrawLatexNDC(0.632, 0.68, "anti-k_{T} R = 0.4");
-            mrLatexer->DrawLatexNDC(0.715, 0.59, "|#eta_{jet}| < 1.6");
+            mrLatexer->DrawLatexNDC(0.5, 0.79, jetPtString.Data());
+            mrLatexer->DrawLatexNDC(0.632, 0.695, "anti-k_{T} R = 0.4");
+            mrLatexer->DrawLatexNDC(0.715, 0.605, "|#eta_{jet}| < 1.6");
           } else {
-            mrLatexer->DrawLatexNDC(0.51, 0.765, jetPtString.Data());
-            mrLatexer->DrawLatexNDC(0.642, 0.67, "anti-k_{T} R = 0.4");
-            mrLatexer->DrawLatexNDC(0.725, 0.58, "|#eta_{jet}| < 1.6");
+            mrLatexer->DrawLatexNDC(0.51, 0.78, jetPtString.Data());
+            mrLatexer->DrawLatexNDC(0.642, 0.685, "anti-k_{T} R = 0.4");
+            mrLatexer->DrawLatexNDC(0.725, 0.595, "|#eta_{jet}| < 1.6");
           }
           
 
@@ -2026,6 +2046,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Set the axis drawing ranges
           hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
           hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+
+          // Adjust tick size for x-axis
+          hRelativeUncertaintyPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->GetXaxis()->SetTickLength(tickSizeX*1.5);
 
           // Set the style for uncertainty bands for systematic and statistical uncertainties from data
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
@@ -2233,6 +2256,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
         systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetYaxis()->SetRangeUser(doubleRatioZoom.first, doubleRatioZoom.second);
 
+        // Adjust tick size for x-axis
+        systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt]->GetXaxis()->SetTickLength(tickSizeX);
+
         // Draw first the systematic uncertainties to the upper canves
         drawer->DrawHistogramToUpperPad(systematicUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt], "#Deltar", Form("#frac{PbPb/pp (p_{T}^{ch} > %.0f GeV)}{PbPb/pp (p_{T}^{ch} > %.0f GeV)}", trackPtCutsForDoubleDatio.second, trackPtCutsForDoubleDatio.first), " ", "e2");
 
@@ -2269,12 +2295,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Draw latex messages to the plots
         mrLatexer->SetTextFont(62);
         mrLatexer->SetTextSize(0.09);
-        mrLatexer->DrawLatexNDC(0.26, 0.765, "CMS");
+        mrLatexer->DrawLatexNDC(0.26, 0.78, "CMS");
 
         if(addPreliminaryTag){
           mrLatexer->SetTextFont(52);
           mrLatexer->SetTextSize(0.065);
-          mrLatexer->DrawLatexNDC(0.37, 0.765, "Preliminary");
+          mrLatexer->DrawLatexNDC(0.37, 0.78, "Preliminary");
         }
 
         // Luminosity
@@ -2285,9 +2311,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Binning
         mrLatexer->SetTextFont(62);
         mrLatexer->SetTextSize(0.07);
-        mrLatexer->DrawLatexNDC(0.58, 0.765, jetPtString.Data());
-        mrLatexer->DrawLatexNDC(0.712, 0.67, "anti-k_{T} R = 0.4");
-        mrLatexer->DrawLatexNDC(0.795, 0.58, "|#eta_{jet}| < 1.6");
+        mrLatexer->DrawLatexNDC(0.58, 0.78, jetPtString.Data());
+        mrLatexer->DrawLatexNDC(0.712, 0.685, "anti-k_{T} R = 0.4");
+        mrLatexer->DrawLatexNDC(0.795, 0.595, "|#eta_{jet}| < 1.6");
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
@@ -2300,6 +2326,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Set the axis drawing ranges
         hRelativeUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt][kRelativeUncertaintySystematic]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
         hRelativeUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt][kRelativeUncertaintySystematic]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+
+        // Adjust tick size for x-axis
+        hRelativeUncertaintyDoubleRatio[weightExponent-1][iCentrality][iJetPt][kRelativeUncertaintySystematic]->GetXaxis()->SetTickLength(tickSizeX*1.5);
 
         // Set the style for histograms
         for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){

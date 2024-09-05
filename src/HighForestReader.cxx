@@ -183,6 +183,7 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fParticleChargeBranch(in.fParticleChargeBranch),
   fParticleSubeventBranch(in.fParticleSubeventBranch),
   fTrackPtVector(in.fTrackPtVector),
+  fTrackPtErrorVector(in.fTrackPtErrorVector),
   fTrackPhiVector(in.fTrackPhiVector),
   fTrackEtaVector(in.fTrackEtaVector),
   fHighPurityTrackVector(in.fHighPurityTrackVector),
@@ -291,7 +292,7 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   }
   
   fTrackPtVector = in.fTrackPtVector;
-  fTrackPtVector = in.fTrackPtVector;
+  fTrackPtErrorVector = in.fTrackPtErrorVector;
   fTrackPhiVector = in.fTrackPhiVector;
   fTrackEtaVector = in.fTrackEtaVector;
   fHighPurityTrackVector = in.fHighPurityTrackVector;

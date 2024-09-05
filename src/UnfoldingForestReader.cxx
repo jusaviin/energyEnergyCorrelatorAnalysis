@@ -319,6 +319,7 @@ UnfoldingForestReader::UnfoldingForestReader(const UnfoldingForestReader& in) :
   fEventWeight(in.fEventWeight),
   fnTracks(in.fnTracks),
   fTrackPtVector(in.fTrackPtVector),
+  fTrackPtErrorVector(in.fTrackPtErrorVector),
   fTrackPhiVector(in.fTrackPhiVector),
   fTrackEtaVector(in.fTrackEtaVector),
   fHighPurityTrackVector(in.fHighPurityTrackVector),
@@ -487,7 +488,7 @@ UnfoldingForestReader& UnfoldingForestReader::operator=(const UnfoldingForestRea
   
   // Copy the track vectors
   fTrackPtVector = in.fTrackPtVector;
-  fTrackPtVector = in.fTrackPtVector;
+  fTrackPtErrorVector = in.fTrackPtErrorVector;
   fTrackPhiVector = in.fTrackPhiVector;
   fTrackEtaVector = in.fTrackEtaVector;
   fHighPurityTrackVector = in.fHighPurityTrackVector;

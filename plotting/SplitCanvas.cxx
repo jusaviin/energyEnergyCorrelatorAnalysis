@@ -12,6 +12,7 @@ SplitCanvas::SplitCanvas() :
   fCanvasHeight(600),
   fBottomRowScale(1),
   fBottomPadMargin(0),
+  fLeftColumnScale(1),
   fLeftPadMargin(0)
 {
   fPad = NULL;
@@ -25,6 +26,7 @@ SplitCanvas::SplitCanvas(TString canvasName, TString canvasTitle, double width, 
   fCanvasHeight(height),
   fBottomRowScale(1),
   fBottomPadMargin(0),
+  fLeftColumnScale(1),
   fLeftPadMargin(0)
 {
   fPad = NULL;
@@ -77,6 +79,7 @@ void SplitCanvas::DivideNeatly(int nDivisionsHorizontal, int nDivisionsVertical)
       if(iColumn == 0) {
       	leftShift = absoluteLeftMargin / (absoluteLeftMargin + padWidthWithoutMargin * fCanvasWidth);
       	fLeftPadMargin = leftShift;
+        fLeftColumnScale = 1 - leftShift;
       }
       if(iRow == nDivisionsHorizontal - 1){
       	bottomShift = absoluteBottomMargin / (absoluteBottomMargin + padHeightWithoutMargin * fCanvasHeight);
@@ -166,6 +169,11 @@ double SplitCanvas::GetBottomRowScale(){
 // Getter for the margin added to the bottom pad
 double SplitCanvas::GetBottomPadMargin(){
   return fBottomPadMargin;
+}
+
+// Getter for the left column horizontal scaling factor
+double SplitCanvas::GetLeftColumnScale(){
+  return fLeftColumnScale;
 }
 
 // Getter for the margin added to the left pad

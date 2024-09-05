@@ -23,6 +23,7 @@ public :
 	void CD(int iPad);
 	double GetBottomRowScale();  // Getter for bottom row title size scaling factor
 	double GetBottomPadMargin(); // Getter for the margin added to the bottom pad
+	double GetLeftColumnScale(); // Getter for the left column horizontal scaling factor
 	double GetLeftPadMargin();   // Getter for the margin added to the left pad
 
 private :
@@ -34,6 +35,7 @@ private :
 	double fCanvasHeight;    // Height of the created canvas
 	double fBottomRowScale;  // Scaling factor to be applied to the bottom row title sizes
 	double fBottomPadMargin; // Get the extra margin added to the bottom pad
+	double fLeftColumnScale; // Scaling factor to be applied to the leftmost column
 	double fLeftPadMargin;   // Extra margin added to the left pad
 };
 

@@ -164,14 +164,14 @@ void finalResultPlotter(){
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
   bool drawDoubleRatioToSingleCanvas = false;
-  bool drawBigCanvasAllDistributions = false; // Draw distributions with all defined weight exponents to the same figure
+  bool drawBigCanvasAllDistributions = true; // Draw distributions with all defined weight exponents to the same figure
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
   bool drawLetterPaperDistributions = false; // Draw the energy-energy correlator distribution for letter paper format
   bool drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
 
   // Supplementary plots
   bool drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
-  bool drawSupplementaryEECCentrality = true; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
+  bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
   bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
 
@@ -179,7 +179,7 @@ void finalResultPlotter(){
   double supplementaryLegendTextSize = 0.045;
 
   // Preliminary tag
-  bool addPreliminaryTag = true;
+  bool addPreliminaryTag = false;
 
   // Simplified drawing style for physics briefing
   bool physicsBriefingStyle = false;
@@ -219,7 +219,7 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_physicsBriefingStyle2";
+  TString saveComment =  "_tickTesting";
   TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
@@ -624,9 +624,10 @@ void finalResultPlotter(){
   oneLine->SetLineColor(kBlack);
   oneLine->SetLineStyle(2);
   int canvasIndex;
-  double bottomRowScale, bottomPadMargin, leftPadMargin;
+  double bottomRowScale, bottomPadMargin, leftColumnScale, leftPadMargin;
   double leftMarginAdder, bottomMarginAdder;
   double thisPadScale;
+  double firstRowScale;
 
   // Draw individual plots with all centralities mixed together in a single figure
   if(drawIndividualPlotsAllCentralities){
@@ -768,6 +769,10 @@ void finalResultPlotter(){
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
 
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
+
+          // Improve tick marks
+          //systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(0.05);
+
 
           // Set the drawing ranges
           systematicUncertaintyForPbPb[weightExponent-1][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
@@ -1281,6 +1286,7 @@ void finalResultPlotter(){
 
       bottomRowScale = bigDualDistributionCanvas[iTrackPt]->GetBottomRowScale();
       bottomPadMargin = bigDualDistributionCanvas[iTrackPt]->GetBottomPadMargin();
+      leftColumnScale = bigDualDistributionCanvas[iTrackPt]->GetLeftColumnScale();
       leftPadMargin = bigDualDistributionCanvas[iTrackPt]->GetLeftPadMargin();
 
       for(int iCentrality = firstDrawnCentralityBin[0]; iCentrality <= lastDrawnCentralityBin[0]; iCentrality++){
@@ -1293,8 +1299,9 @@ void finalResultPlotter(){
           gPad->SetLogy();
           gPad->SetLogx();
 
-          // The titles in the bottow row need to be scaled, since it has more margin than other rows
+          // The titles in the bottow row need to be scaled, since it has more margin than other rows. Same for leftmost column
           thisPadScale = (iCentrality == lastDrawnCentralityBin[0]) ? bottomRowScale : 1;
+          firstRowScale = (iJetPt == firstDrawnJetPtBinEEC[0]) ? leftColumnScale : 1;
 
           // Set the axis titles and labels
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
@@ -1317,6 +1324,9 @@ void finalResultPlotter(){
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
 
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
+
+          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(0.06 * thisPadScale / firstRowScale);
+          systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTickLength(0.05 * firstRowScale / thisPadScale);
 
           // Set the drawing ranges
           systematicUncertaintyForPbPb[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
@@ -1508,6 +1518,7 @@ void finalResultPlotter(){
 
       bottomRowScale = bigDualRatioCanvas[iTrackPt]->GetBottomRowScale();
       bottomPadMargin = bigDualRatioCanvas[iTrackPt]->GetBottomPadMargin();
+      leftColumnScale = bigDualRatioCanvas[iTrackPt]->GetLeftColumnScale();
       leftPadMargin = bigDualRatioCanvas[iTrackPt]->GetLeftPadMargin();
 
       for(int iCentrality = firstDrawnCentralityBin[0]; iCentrality <= lastDrawnCentralityBin[0]; iCentrality++){
@@ -1520,8 +1531,9 @@ void finalResultPlotter(){
           gPad->SetLogy(0); // Linear y-axis scale for ratios
           gPad->SetLogx();
 
-          // The titles in the bottow row need to be scaled, since it has more margin than other rows
+          // The titles in the bottow row need to be scaled, since it has more margin than other rows. Same for leftmost column
           thisPadScale = (iCentrality == lastDrawnCentralityBin[0]) ? bottomRowScale : 1;
+          firstRowScale = (iJetPt == firstDrawnJetPtBinEEC[0]) ? leftColumnScale : 1;
 
           // Set the axis titles and labels
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTitleOffset(0.85);
@@ -1544,6 +1556,9 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetNdivisions(505);
 
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->SetTitle("");
+
+          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetTickLength(0.06 * thisPadScale / firstRowScale);
+          systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetTickLength(0.05 * firstRowScale / thisPadScale);
 
           // Set the drawing ranges
           systematicUncertaintyPbPbToPpRatio[0][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
