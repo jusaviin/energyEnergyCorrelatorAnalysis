@@ -291,7 +291,6 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   }
   
   fTrackPtVector = in.fTrackPtVector;
-  fTrackPtVector = in.fTrackPtVector;
   fTrackPhiVector = in.fTrackPhiVector;
   fTrackEtaVector = in.fTrackEtaVector;
   fHighPurityTrackVector = in.fHighPurityTrackVector;

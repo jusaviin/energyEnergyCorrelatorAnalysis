@@ -219,8 +219,8 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_physicsBriefingStyle2";
-  TString figureFormat = "pdf";
+  TString saveComment =  "_forCumulantIllustration";
+  TString figureFormat = "png";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
   }

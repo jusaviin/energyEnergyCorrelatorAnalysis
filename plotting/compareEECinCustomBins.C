@@ -15,7 +15,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   enum enumCumulantVariations{kNoCumulant, kJetShape, kCorrelator, kAdvancedCorrelator, knCumulants};
 
   TString cumulantName[knCumulants] = {"default", "jetShape", "correlator", "advancedCorrelator"};
-  TString legendText[knCumulants] = {"E2C", "E1C cumulant scale", "E2C cumulant scale (old)", "E2C/#it{C}_{2}"};
+  TString legendText[knCumulants] = {"E2C", "E1C cumulant scale", "E2C cumulant scale (old)", "E2C/#it{C}_{#kern[-0.02]{2}}"};
   
   // Files for comparison
   std::vector<TString> fileName;
@@ -195,9 +195,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  //comparedJetPtBin.push_back(std::make_pair(140,160));
+  //comparedJetPtBin.push_back(std::make_pair(160,180));
+  //comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1);
@@ -206,12 +206,15 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   double energyWeight = card[0]->GetWeightExponent();
 
   // Select which plots are drawn
-  bool drawDistributionsAndRatios = false;
-  bool drawOnlyRatios = true;
+  bool drawDistributionsAndRatios = true;
+  bool drawOnlyRatios = false;
 
   // Select which cumulant scaling distributions are drawn
   std::vector<int> drawnCumulantIndex;  
   drawnCumulantIndex.push_back(kAdvancedCorrelator);
+
+  // Flag for which energy loss estimate to use
+  bool useExactEnergyLoss = false; // true = Use exact energy loss number. false = Use approximate energy loss number
 
   if(drawnCumulantIndex.size() > 1 &&  fileName.size() > 2){
     cout << "ERROR! Please only draw one cumulant style if you add more than two files!" << endl;
@@ -248,10 +251,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.75, 1.25); // For only ratio: 0.86, 1.72
-  std::pair<double, double> onlyRatioZoom = std::make_pair(0.85, 1.75);
+  std::pair<double, double> onlyRatioZoom = std::make_pair(0.96, 1.12);
 
   if(drawnCumulantIndex.at(0) == kNoCumulant){
-    onlyRatioZoom.second = 1.85;
+    onlyRatioZoom.first = 0.92;
+    onlyRatioZoom.second = 1.26;
   }
   
   // Create and setup a new histogram managers to project and handle the histograms
@@ -395,6 +399,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   double currentBinContent;
   double binCenter;
   double energyLoss;
+  int maximumBin;
 
   // Scale the ratio histogram with the ratio of cumulants of squared jet shapes
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
@@ -406,9 +411,15 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
       iCentrality = isPbPbData ? card[0]->FindBinIndexCentrality(centralityBin) : 0;
       for(auto jetPtBin : comparedJetPtBin){
         iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
-        energyLoss = meanJetPt[iFile][iCentrality][iJetPt] - meanJetPt[0][iCentrality][iJetPt];
+        energyLoss = (meanJetPt[iFile][iCentrality][iJetPt] - meanJetPt[referenceFile][iCentrality][iJetPt]) / meanJetPt[iFile][iCentrality][iJetPt];
+
         for(auto trackPtBin : comparedTrackPtBin){
           iTrackPt = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
+
+          if(!useExactEnergyLoss){
+            maximumBin = hEnergyEnergyCorrelator[referenceFile][iCentrality][iJetPt][iTrackPt]->GetMaximumBin();
+            energyLoss = 3 * ( TMath::Power(hCumulant[kCorrelator][iFile][iCentrality][iJetPt][iTrackPt]->GetBinContent(maximumBin) / hCumulant[kCorrelator][referenceFile][iCentrality][iJetPt][iTrackPt]->GetBinContent(maximumBin), 2.0/3.0) - 1 );
+          }
 
           for(int iCumulant : drawnCumulantIndex){
 
@@ -429,9 +440,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
               currentBinContent = scaleHistogram->GetBinContent(iBin);
               binCenter = scaleHistogram->GetBinCenter(iBin);
               if(iCumulant == kAdvancedCorrelator){
-                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1.0 / 3.0)));
+                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss * (1.0 / 3.0)));
               } else {
-                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss / meanJetPt[iFile][iCentrality][iJetPt] * (1 - binCenter)));
+                scaleHistogram->SetBinContent(iBin, currentBinContent - (energyLoss * (1 - binCenter)));
               }
             }
 
@@ -476,13 +487,14 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   TString scaleString;
   int markerStyle[] = {kOpenSquare, kOpenCircle, kOpenCross, kOpenDoubleDiamond, kOpenDiamond, kOpenStar};
   //int markerStyle[] = {53, 54, 57, 65, 56, 58};
-  int color[] = {kBlack, kRed, kBlue, kGreen+3, kMagenta, kCyan};
+  int color[] = {kBlack, kRed, kBlue, kGreen+3, kMagenta, kCyan+2};
   int cumulantMarkerStyle[] = {kOpenDiamond, kOpenDiamond, kOpenCrossX, kOpenCrossX, kOpenDoubleDiamond, kOpenDoubleDiamond};
   //int cumulantMarkerStyle[] = {56, 56, 67, 67, 65, 65};
-  int cumulantColor[] = {kMagenta, kMagenta, kCyan, kCyan, kGreen+3, kGreen+3};
+  int cumulantColor[] = {kMagenta, kMagenta, kCyan+2, kCyan+2, kGreen+3, kGreen+3};
   int styleIndex;
   TLegend* legend;
-  TLegend* ratioLegend[4];
+  TLegend* topRightLegend;
+  TLegend* ratioLegend[5];
   TLatex* missingTextFiller = new TLatex();
   TCanvas* thisCanvas;
   TPad* overlay;
@@ -514,25 +526,30 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           drawer->CreateSplitCanvas();
           
           // Logarithmic EEC axis
-          drawer->SetLogY(true);
+          drawer->SetLogY(false);
 
-          legend = new TLegend(0.16+legendXadder, 0.04, 0.43+legendXadder, 0.52);
+          legend = new TLegend(0.2+legendXadder, 0.02, 0.47+legendXadder, 0.38);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+
+          topRightLegend = new TLegend(0.58, 0.64, 0.85, 0.84);
+          topRightLegend->SetFillStyle(0); topRightLegend->SetBorderSize(0);
+          topRightLegend->SetTextSize(0.05); topRightLegend->SetTextFont(62);
 
           // If we have manually determined system string, use it. Otherwise read the system from card
           if(systemForLegend.size() == 1){
-            legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", systemForLegend.at(0).Data()), "");
+            topRightLegend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", systemForLegend.at(0).Data()), "");
           } else if (systemForLegend.size() > 1){
-            legend->AddEntry((TObject*) 0, "pp simulation 5.02 TeV", "");
+            topRightLegend->AddEntry((TObject*) 0, "pp simulation 5.02 TeV", "");
           } else {
-            legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card[0]->GetAlternativeDataType(false).Data()), "");
+            topRightLegend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card[0]->GetAlternativeDataType(false).Data()), "");
           } 
 
           // Add centrality and charged particle pT information
           if(isPbPbData){
-            legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second), "");
+            topRightLegend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", centralityBin.first, centralityBin.second), "");
           }
-          legend->AddEntry((TObject*) 0, Form("%.0f < p_{T} < %.0f GeV, p_{T}^{ch} > %.1f GeV", jetPtBin.first, jetPtBin.second, trackPtBin), "");
+          topRightLegend->AddEntry((TObject*) 0, Form("%.0f < p_{T} < %.0f GeV", jetPtBin.first, jetPtBin.second), "");
+          topRightLegend->AddEntry((TObject*) 0, Form("p_{T}^{ch} > %.1f GeV", trackPtBin), "");
 
           // Set drawing style for all histograms
           for(int iFile = 0; iFile < nComparisonFiles; iFile++){
@@ -590,15 +607,15 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
               hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
             }
   
-            if(iFile%2 == 1) distributionScale *=2;
+            if(iFile%2 == 1) distributionScale *=1.3;
 
             histogramMinMax = optimusPrimeTheTransformer->FindHistogramMinMax(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], histogramMinMax, drawingRange);
 
           }
 
           // Add some margin to minimum and maximum values
-          histogramMinMax.first = histogramMinMax.first / 2.0;
-          histogramMinMax.second = histogramMinMax.second * 1.5;
+          histogramMinMax.first = 0.01;
+          histogramMinMax.second = histogramMinMax.second * 1.07;
 
           // Set the axis drawing ranges
           hEnergyEnergyCorrelator[0][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
@@ -624,7 +641,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           for(int iFile = 0; iFile < nComparisonFiles; iFile++){
             scaleString = "";
             if(iFile > 1){
-              scaleString = Form(" #times %.0f", distributionScale);
+              scaleString = Form(" #times %.1f", distributionScale);
             }
             if(systemForLegend.size() > 1){
               legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("%s, #varepsilon = %.0f GeV, E2C%s", systemForLegend.at(iFile).Data(), jetPtShift.at(iFile), scaleString.Data()), "p");
@@ -634,7 +651,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
                 for(int iCumulant : drawnCumulantIndex){
                   legend->AddEntry(hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt], Form("%s, #varepsilon = %.0f GeV, %s%s", systemForLegend.at(iFile).Data(), jetPtShift.at(iFile), legendText[iCumulant].Data(), scaleString.Data()), "p");
                 }
-                distributionScale *= 2;
+                distributionScale *= 1.3;
               }
             } else {
               legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], Form("#varepsilon = %.0f GeV, %s", jetPtShift.at(iFile), legendComment.at(iFile).Data()), "p");
@@ -648,6 +665,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           } // File loop
   
           // Draw the legends to the upper pad
+          topRightLegend->Draw();
           legend->Draw();
           
           // Linear scale for the ratio
@@ -684,8 +702,10 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   // Draw only the ratio plots with all jet pT bins drawn in the same plot
   if(drawOnlyRatios){
 
-    drawer->SetRelativeCanvasSize(1,1.5);
-    drawer->SetLeftMargin(0.1);
+    //drawer->SetRelativeCanvasSize(1,1.5);
+    //drawer->SetLeftMargin(0.1);
+    drawer->SetSplitRatio(0.5);
+    drawer->SetTitleOffsetY(1.85);
 
     int ratioMarkerStyle[] = {kFullSquare, kFullCircle, kFullCross, kFullCrossX, kOpenSquare, kOpenCircle, kOpenCross, kOpenCrossX};
     int ratioColor[] = {kBlack, kRed, kBlue, kGreen+3, kBlack, kRed, kBlue, kGreen+3};
@@ -707,39 +727,42 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
         iTrackPt = card[0]->GetBinIndexTrackPtEEC(trackPtBin);
         compactTrackPtString = Form("_T>%.1f",trackPtBin);
         compactTrackPtString.ReplaceAll(".","v");
+
+        // Create a split canvas for the ratios
+        drawer->CreateSplitCanvas();
           
         // Use linear axis scale since we are only drawing ratios
         drawer->SetLogY(false);
 
         // Create several legends for optimal presentation. Different drawing styles require different legend position
-        legendX1 = 0.122; legendX2 = 0.43; legendY1 = 0.4; legendY2 = 0.45;
+        legendX1 = 0.125; legendX2 = 0.43; legendY1 = 0.82; legendY2 = 0.9;
         if(drawnCumulantIndex.at(0) == kNoCumulant){
-          legendX1 = 0.522; legendX2 = 0.83; legendY1 = 0.23; legendY2 = 0.48;
-          if(presetComparison == 13){
-            legendY1 = 0.25; legendY2 = 0.5;
-          }
+          legendX1 = 0.5; legendX2 = 0.81; legendY1 = 0.48; legendY2 = 0.88;
         }
         ratioLegend[0] = new TLegend(legendX1, legendY1, legendX2, legendY2);
 
-        ratioLegend[1] = new TLegend(0.1, 0.3, 0.9, 0.4); 
+        ratioLegend[1] = new TLegend(0.13, legendY1-0.16, 0.9, legendY1); 
 
-        legendX1 = 0.122; legendX2 = 0.43; legendY1 = 0.8; legendY2 = 0.9;
+        legendX1 = 0.125; legendX2 = 0.43; legendY1 = 0.65; legendY2 = 0.81;
         if(drawnCumulantIndex.at(0) == kNoCumulant){
-          legendX1 = 0.462; legendX2 = 0.76; legendY1 = 0.6; legendY2 = 0.9;
+          legendX1 = 0.5; legendX2 = 0.81; legendY1 = 0.32; legendY2 = 0.72;
         }
         ratioLegend[2] = new TLegend(legendX1, legendY1, legendX2, legendY2);
 
-        ratioLegend[3] = new TLegend(0.1, 0.7, 0.9, 0.8);
+        ratioLegend[3] = new TLegend(0.13, legendY1-0.16, 0.9, legendY1);
+
+        ratioLegend[4] = new TLegend(0.375,legendY2,0.775,legendY2+0.08);
         
 
-        for(int iLegend = 0; iLegend < 4; iLegend++){
+        for(int iLegend = 0; iLegend < 5; iLegend++){
           ratioLegend[iLegend]->SetFillStyle(0);ratioLegend[iLegend]->SetBorderSize(0);
-          ratioLegend[iLegend]->SetTextSize(0.037);ratioLegend[iLegend]->SetTextFont(62);
+          ratioLegend[iLegend]->SetTextSize(0.06);ratioLegend[iLegend]->SetTextFont(62);
         }
 
-        ratioLegend[2]->AddEntry((TObject*) 0, Form("pp simulation 5.02 TeV, p_{T}^{ch} > %.1f GeV", trackPtBin), "");
-        ratioLegend[2]->AddEntry((TObject*) 0, Form("r%s #times 1.4", legendText[drawnCumulantIndex.at(0)].Data()), "");
-        ratioLegend[0]->AddEntry((TObject*) 0, Form("r%s", legendText[drawnCumulantIndex.at(0)].Data()), "");
+        legendIndex = (drawnCumulantIndex.at(0) == kNoCumulant) ? 4 : 2;
+        ratioLegend[legendIndex]->AddEntry((TObject*) 0, Form("pp simulation 5.02 TeV, p_{T}^{ch} > %.1f GeV", trackPtBin), "");
+        ratioLegend[2]->AddEntry((TObject*) 0, Form("r%s (#varepsilon = %.0f GeV / #varepsilon = %.0f GeV)", legendText[drawnCumulantIndex.at(0)].Data(), jetPtShift.at(1), jetPtShift.at(0)), "");
+        ratioLegend[0]->AddEntry((TObject*) 0, Form("r%s (#varepsilon = %.0f GeV / #varepsilon = %.0f GeV)", legendText[drawnCumulantIndex.at(0)].Data(), jetPtShift.at(1), jetPtShift.at(0)), "");
 
         ratioLegend[1]->SetNColumns(2);
         ratioLegend[3]->SetNColumns(2);
@@ -757,52 +780,43 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
         } // Setting drawing style for histograms
 
         // Draw all the hisrograms to the canvas
-        ratioIndex = 0;
-        distributionScale = 1;
-        scaleString = "";
         for(int iFile = 1; iFile < nComparisonFiles; iFile = iFile + 2){
-          distributionScale = 1 + (iFile-1)*0.2;
           for(auto jetPtBin : comparedJetPtBin){
             iJetPt = card[0]->FindBinIndexJetPtEEC(jetPtBin);
 
-            // Scale distributions from different files to keep the drawing cleaner
-            hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->Scale(distributionScale);
-
             // Draw all the ratios to the same canvas
-            if(ratioIndex++ == 0){
+            if(jetPtBin == comparedJetPtBin.at(0)){
               // For the first histogram, set correct drawing range and draw it to the canvas
               hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
               hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(onlyRatioZoom.first, onlyRatioZoom.second);
-              drawer->DrawHistogram(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], "R_{L}", Form("#frac{#varepsilon = %.0f GeV}{#varepsilon = %.0f GeV}", jetPtShift.at(1), jetPtShift.at(0)), " ");
+              if(iFile == 1){
+                drawer->DrawHistogramToLowerPad(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], "R_{L}", Form("#frac{#varepsilon = %.0f GeV}{#varepsilon = %.0f GeV}", jetPtShift.at(1), jetPtShift.at(0)), " ");
+              } else {
+                drawer->DrawHistogramToUpperPad(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], "R_{L}", Form("#frac{#varepsilon = %.0f GeV}{#varepsilon = %.0f GeV}", jetPtShift.at(1), jetPtShift.at(0)), " ");
+              }
             } else {
               hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
-            }
-
-            // Add things to legend
-            if(iFile > 1){
-              scaleString = Form(" #times %.1f", distributionScale);
             }
 
             legendIndex = drawnCumulantIndex.at(0) == kNoCumulant ? iFile - 1 : iFile;
 
             if(systemForLegend.size() > 1){
-              ratioLegend[legendIndex]->AddEntry(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], Form("%s, %.0f < p_{T} < %.0f GeV", systemForLegend.at(iFile).Data(), jetPtBin.first, jetPtBin.second), "p");
+              ratioLegend[legendIndex]->AddEntry(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], Form("#kern[-0.08]{%s, %.0f < p_{T} < %.0f GeV}", systemForLegend.at(iFile).Data(), jetPtBin.first, jetPtBin.second), "p");
             } else {
               ratioLegend[legendIndex]->AddEntry(hCumulantScaledRatio[drawnCumulantIndex.at(0)][iFile][iCentrality][iJetPt][iTrackPt], Form("%.0f < jet p_{T} < %.0f GeV %s", jetPtBin.first, jetPtBin.second, legendComment.at(iFile).Data()), "p");
             }
 
             // Draw lines to where different distributions are scaled
             if(jetPtBin == comparedJetPtBin.at(0)){
-              lineDrawer->DrawLine(drawingRange.first, distributionScale, drawingRange.second, distributionScale);
+              lineDrawer->DrawLine(drawingRange.first, 1, drawingRange.second, 1);
             }
           } // Jet pT loop
+
+          // Draw the legends
+          ratioLegend[iFile-1]->Draw();
+          ratioLegend[iFile]->Draw();
+          if((drawnCumulantIndex.at(0) == kNoCumulant) && iFile > 1) ratioLegend[4]->Draw();
         } // File loop
-  
-        // Draw the legends
-        for(int iLegend = 0; iLegend < 4; iLegend++){
-          ratioLegend[iLegend]->Draw();
-          if(drawnCumulantIndex.at(0) == kNoCumulant) iLegend++;
-        }
           
         // Save the figures to a file
         if(saveFigures){
