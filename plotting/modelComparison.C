@@ -173,9 +173,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  //drawnJetPtBin.push_back(std::make_pair(140,160));
-  //drawnJetPtBin.push_back(std::make_pair(160,180));
-  //drawnJetPtBin.push_back(std::make_pair(180,200));
+  drawnJetPtBin.push_back(std::make_pair(140,160));
+  drawnJetPtBin.push_back(std::make_pair(160,180));
+  drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
@@ -355,12 +355,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
   // Energy-energy correlators for JEWEL predictions
   TH1D* energyEnergyCorrelatorJewelPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* energyEnergyCorrelatorJewelPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* energyEnergyCorrelatorJewelPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* energyEnergyCorrelatorJewelPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][JewelHistogramManager::kRecoilSettings];
+  TH1D* energyEnergyCorrelatorJewelPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][JewelHistogramManager::kRecoilSettings];
 
   TH1D* jewelToDataRatioPp[nWeightExponents][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* jewelToDataRatioPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
-  TH1D* jewelToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH1D* jewelToDataRatioPbPb[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][JewelHistogramManager::kRecoilSettings];
+  TH1D* jewelToDataRatioPbPbToPpRatio[nWeightExponents][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][JewelHistogramManager::kRecoilSettings];
 
   // Initialize histograms to NULL
   for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
@@ -416,10 +416,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           energyEnergyCorrelatorForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
           systematicUncertaintyForDoubleRatioFromPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
 
-          energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
-          energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
-          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
-          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = NULL;
+          for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+            energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = NULL;
+            energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = NULL;
+            jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = NULL;
+            jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = NULL;
+          }
 
           for(int iUncertainty = 0; iUncertainty < knRelativeUncertaintyTypes; iUncertainty++){
             hRelativeUncertaintyPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
@@ -1048,24 +1050,26 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         for(auto centralityBin : drawnCentralityBin){
           iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
 
-          // Load the PbPb and ratio histograms
-          energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = jewelHistograms->GetEnergyEnergyCorrelatorPbPb(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1);
-          energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = jewelHistograms->GetEnergyEnergyCorrelatorPbPbToPpRatio(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1);
+          for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
 
-          // There are only a few bins for which predictions exist. Before continuing, check if the histograms are NULL
-          if(energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] == NULL) continue;
+            // Load the PbPb and ratio histograms
+            energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = jewelHistograms->GetEnergyEnergyCorrelatorPbPb(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1, iRecoil);
+            energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = jewelHistograms->GetEnergyEnergyCorrelatorPbPbToPpRatio(centralityBin, jetPtBin, trackPtBin, iWeightExponent+1, iRecoil);
 
-          // Take a ratio between JEWEL prediction and data
-          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("jewelRatioToDataPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-          errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelPbPb%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
-          jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(errorlessData);
+            // The prediction might not exist in all bins
+            if(energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
 
-          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt] = (TH1D*) energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("jewelRatioToDataPbPbToPpRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-          errorlessData = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelRatio%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt));
-          optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
-          jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Divide(errorlessData);
-        
+            // Take a ratio between JEWEL prediction and data
+            jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = (TH1D*) energyEnergyCorrelatorJewelPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil]->Clone(Form("jewelRatioToDataPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iRecoil));
+            errorlessData = (TH1D*) energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelPbPb%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iRecoil));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            jewelToDataRatioPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil]->Divide(errorlessData);
+
+            jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil] = (TH1D*) energyEnergyCorrelatorJewelPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil]->Clone(Form("jewelRatioToDataPbPbToPpRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iRecoil));
+            errorlessData = (TH1D*) energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Clone(Form("errorlessJewelRatio%d%d%d%d%d", iWeightExponent, iCentrality, iJetPt, iTrackPt, iRecoil));
+            optimusPrimeTheTransformer->RemoveUncertainties(errorlessData);
+            jewelToDataRatioPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt][iRecoil]->Divide(errorlessData);
+          } // Recoil loop
         } // Centrality loop
       } // Track pT loop
     } // Jet pT loop
@@ -1133,6 +1137,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
   // Normalization and style for theory predictions
   int color[9] = {kRed, kBlue, kGreen+3, kMagenta, kCyan, kOrange+7, kViolet-3, kPink-3, kOrange-3};
+
+  int jewelMarkerStyle[JewelHistogramManager::kRecoilSettings];
+  jewelMarkerStyle[0] = kFullCross;
+  jewelMarkerStyle[1] = kFullCrossX;
 
   // Colors for model comparisons in pp data
   int ppModelColor[knPpModelComparisons];
@@ -1314,9 +1322,16 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic]->SetLineWidth(0);
 
         // Create a new legend to show the different data uncertainty bands
-        legend = new TLegend(0.25, 0.86, 0.95, 0.96);
+        legendX1 = 0.25; legendX2 = 0.95;
+        legendY1 = 0.86; legendY2 = 0.96;
+        if(theoryComparisonIndex >= 5){
+          legendX1 = 0.19;
+          legendX2 = 0.54;
+          legendY1 = 0.74;
+        }
+        legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
-        legend->SetNColumns(2);
+        if(theoryComparisonIndex < 5) legend->SetNColumns(2);
 
         // Draw the error bars from data
         drawer->DrawHistogramToLowerPad(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
@@ -1392,6 +1407,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           legendY1 = 0.05; legendY2 = 0.6;
           if(theoryComparisonIndex >= 5){
             legendY2 = 0.3;
+            legendX1 = 0.14;
+            legendX2 = 0.44;
           }
           legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
@@ -1489,19 +1506,22 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           } else if(theoryComparisonIndex == 5){
             // Theory comparison index 5, comparison to JEWEL
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+            // Compare the prediction with and without recoils
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+
+              // There might be some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetLineColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
 
               // Draw the prediction to the same canvas as the data
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("pl,same");
 
               // Add a legend for the theory prediction
-              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
           } else if(theoryComparisonIndex == 6){
             // Theory comparison index 6, comparison to best k-value from Holguin and JEWEL
@@ -1513,8 +1533,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             if(energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[0]);
-              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[0]);
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[2]);
+              energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[2]);
               energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
 
               // Draw the prediction to the same canvas as the data
@@ -1524,21 +1544,23 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               legend->AddEntry(energyEnergyCorrelatorHolguinPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], "Holguin, k=0.3", "pl");
             }
 
-            // Add the JEWEL predictions to the same plot
+            // Add the JEWEL predictions with and without recoil to the same plot
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+
+              // There might be some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[1]);
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[1]);
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetLineColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
 
               // Draw the prediction to the same canvas as the data
-              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("pl,same");
 
               // Add a legend for the theory prediction
-              legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+              legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
           }
 
@@ -1591,9 +1613,16 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
 
           // Create a new legend to show the different data uncertainty bands
-          legend = new TLegend(0.25, 0.86, 0.95, 0.96);
+          legendX1 = 0.25; legendX2 = 0.95;
+          legendY1 = 0.86; legendY2 = 0.96;
+          if(theoryComparisonIndex >= 5){
+            legendX1 = 0.19;
+            legendX2 = 0.54;
+            legendY1 = 0.74;
+          }
+          legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
-          legend->SetNColumns(2);
+          if(theoryComparisonIndex < 5) legend->SetNColumns(2);
 
           // Draw the error bars from the data
           drawer->DrawHistogramToLowerPad(hRelativeUncertaintyPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "#Deltar", "#frac{Theory}{Data}", " ", "e3");
@@ -1628,12 +1657,11 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           } else if(theoryComparisonIndex == 5){
             // Theory comparison index 5, JEWEL prediction
 
-            if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
-              //jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
-              //jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(color[0], 0.4);
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+              if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
             }
           } else if(theoryComparisonIndex == 6){
             // Theory comparison index 6, best Holguin k-value and JEWEL prediction
@@ -1641,18 +1669,19 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             // Draw the perturbative calculation
             iKValue = holguinHistograms->FindKValueIndex(0.3);
             if(holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
-              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[0]);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[2]);
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineWidth(3);
-              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[0]);
+              holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[2]);
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
               holguinToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
             }
 
-            // Add the JEWEL prediction to the same figure
-            if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[1]);
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
-              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
+            // Add the JEWEL predictions to the same figure
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+              if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
             }
           }
 
@@ -1678,14 +1707,14 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
     // Change the zoom setting if we are drawing JEWEL, in order for points not to overlap with legends
     if(theoryComparisonIndex == 5){
       pbpbToPpRatioZoom.first = 0.1;
-      pbpbToPpRatioZoom.second = 2.4;
+      pbpbToPpRatioZoom.second = 2.9;
       ratioZoom.first = 0;
       ratioZoom.second = 2.1;
     }
 
     if(theoryComparisonIndex == 6){
       pbpbToPpRatioZoom.first = 0.1;
-      pbpbToPpRatioZoom.second = 2.1;
+      pbpbToPpRatioZoom.second = 2.75;
     }
 
     for(auto centralityBin : drawnCentralityBin){
@@ -1718,6 +1747,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           legendY1 = 0.04; legendY2 = 0.22;
           if(theoryComparisonIndex == 2){
             legendX1 = 0.19; legendX2 = 0.49;
+          } else if(theoryComparisonIndex >= 5){
+            legendX1 = 0.58; legendX2 = 0.88;
+            legendY1 = 0.54; legendY2 = 0.36;
           }
           legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
@@ -1729,6 +1761,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           legendY1 = 0.04; legendY2 = 0.31;
           if(theoryComparisonIndex == 2){
             legendX1 = 0.54; legendX2 = 0.84;
+          } else if(theoryComparisonIndex >= 5){
+            legendX1 = 0.5; legendX2 = 0.9;
+            legendY1 = 0.56; legendY2 = 0.83;
           }
           anotherLegend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
@@ -1932,19 +1967,22 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           } else if (theoryComparisonIndex == 5){
             // Theory comparison index 5, comparison to JEWEL
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+            // Compare distributions with and without recoil
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+
+              // There might be some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[0]);
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetLineColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
 
               // Draw the prediction to the same canvas as the data
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("pl,same");
 
               // Add a legend for the theory prediction
-              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
           } else if (theoryComparisonIndex == 6){
             // Theory comparison index 6, comparison to best k-value from Holguin and JEWEL
@@ -1956,8 +1994,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             if(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[0]);
-              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[0]);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(kMagenta);
+              energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(kMagenta);
               energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
 
               // Draw the prediction to the same canvas as the data
@@ -1967,21 +2005,22 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               anotherLegend->AddEntry(energyEnergyCorrelatorHolguinPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue], "Holguin, k=0.3", "pl");
             } 
 
-            // Add the JEWEL prediction to the same plot
+            // Add the JEWEL predictions with and without recoil to the same plot
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
 
-            // There are some bins for which the prediction does not exist
-            if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
+              // There might be some bins for which the prediction does not exist
+              if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
 
               // Give some nice styles for the predictions
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetLineColor(color[1]);
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[1]);
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetLineColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
 
               // Draw the prediction to the same canvas as the data
-              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("pl,same");
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("pl,same");
 
               // Add a legend for the theory prediction
-              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt], "JEWEL", "pl");
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
           }
 
@@ -2023,6 +2062,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             mrLatexer->DrawLatexNDC(0.5, 0.79, jetPtString.Data());
             mrLatexer->DrawLatexNDC(0.632, 0.695, "anti-k_{T} R = 0.4");
             mrLatexer->DrawLatexNDC(0.715, 0.605, "|#eta_{jet}| < 1.6");
+          } else if(theoryComparisonIndex >= 5) {
+            mrLatexer->DrawLatexNDC(0.54, 0.08, jetPtString.Data());
+            mrLatexer->DrawLatexNDC(0.22, 0.17, "anti-k_{T} R = 0.4");
+            mrLatexer->DrawLatexNDC(0.22, 0.08, "|#eta_{jet}| < 1.6");
           } else {
             mrLatexer->DrawLatexNDC(0.51, 0.78, jetPtString.Data());
             mrLatexer->DrawLatexNDC(0.642, 0.685, "anti-k_{T} R = 0.4");
@@ -2036,8 +2079,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Create a new legend to show the different data uncertainty bands
           legendX1 = 0.25; legendX2 = 0.92;
           legendY1 = 0.86; legendY2 = 0.96;
-          if(theoryComparisonIndex == 6){
-            legendX1 = 0.33; legendX2 = 0.95;
+          if(theoryComparisonIndex >= 2){
+            legendX1 = 0.22; legendX2 = 0.89;
+            legendY1 = 0.3; legendY2 = 0.4;
           }
           legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextLowerCanvasSize); legend->SetTextFont(62);
@@ -2161,12 +2205,11 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           } else if(theoryComparisonIndex == 5){
             // Theory comparison index 5, JEWEL prediction
 
-            if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[0]);
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
-              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
-              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(color[0], 0.4);
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+              if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
             }
           } else if(theoryComparisonIndex == 6){
             // Theory comparison index 6, best k-value from Holguin and JEWEL prediction
@@ -2174,19 +2217,18 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             // Add perturbative calculation by Holguin and friends
             iKValue = holguinHistograms->FindKValueIndex(0.3);
             if(holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue] != NULL){
-              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(color[0]);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerColor(kMagenta);
               holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineWidth(3);
-              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(color[0]);
+              holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetLineColor(kMagenta);
               holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->SetMarkerStyle(kFullCircle);
               holguinToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iKValue]->Draw("same,HIST,C");
             }
 
-            if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt] != NULL){
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerColor(color[1]);
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
-              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetMarkerSize(0);
-              //jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->SetFillColorAlpha(color[0], 0.4);
-              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt]->Draw("same,pl");
+            for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+              if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil] == NULL) continue;
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
             }
           }
 

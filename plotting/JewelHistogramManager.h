@@ -21,9 +21,12 @@
 class JewelHistogramManager {
  
 public:
+
+  // Enumeration for different recoil configurations
+  enum enumTrackHistograms{kRecoil, kNoRecoil, kRecoilSettings};
   
   // Dimensions for histogram arrays
-  static const int kCentralityBins = 4;       // Number of centrality bins for which the predictions are available
+  static const int kCentralityBins = 1;       // Number of centrality bins for which the predictions are available
   static const int kTrackPtBins = 2;          // Number of track pT bins for which the predictions are available
   static const int kJetPtBins = 4;            // Number of jet pT bins for which the predictions are available
   static const int kEnergyWeights = 2;        // Number of energy weights for which the predictions are available
@@ -31,16 +34,18 @@ public:
 private:
   
   // File name convention to find predictions for different bins
-  const char* fCentralityName[kCentralityBins] = {"010", "1030", "3050", "5090"}; // String telling which centrality bin a file corresponds to
+  const char* fCentralityName[kCentralityBins] = {"010"}; // String telling which centrality bin a file corresponds to
   const char* fTrackPtName[kTrackPtBins] = {"ptgt1", "ptgt2"}; // String telling which track pT cut a histograms corresponds to
-  const char* fJetPtName[kJetPtBins] = {"120140", "140160", "160180", "180200"}; // String telling which jet pT cut a file corresponds to
   const char* fEnergyWeightName[kEnergyWeights] = {"hEEC", "hE2E2C"}; // String telling which energy weight the histogram has
+  const char* fRecoilName[kRecoilSettings] = {"_nr", ""}; // String telling which recoil settings are used in the file
   
   // Bin borders for different binning variables
-  std::pair<int,int> fCentralityBinBorders[kCentralityBins] = {std::make_pair(0,10), std::make_pair(10,30), std::make_pair(30,50), std::make_pair(50,90)};
+  std::pair<int,int> fCentralityBinBorders[kCentralityBins] = {std::make_pair(0,10)};
   double fTrackPtCuts[kTrackPtBins] = {1, 2};
   std::pair<int,int> fJetPtBinBorders[kJetPtBins] = {std::make_pair(120,140), std::make_pair(140,160), std::make_pair(160,180), std::make_pair(180,200)};
   double fEnergyWeights[kEnergyWeights] = {1, 2};
+
+  const char* fRecoilLegendName[kRecoilSettings] = {"JEWEL, no recoils", "JEWEL, with recoils"};
   
 public:
   
@@ -54,13 +59,16 @@ public:
   // Getters for energy-energy correlator graphs
   TH1D* GetEnergyEnergyCorrelatorPp(const int iJetPt, const int iTrackPt, const int iEnergyWeight) const;
   TH1D* GetEnergyEnergyCorrelatorPp(std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight) const;
-  TH1D* GetEnergyEnergyCorrelatorPbPb(const int iCentrality, const int iJetPt, const int iTrackPt, const int iEnergyWeight) const;
-  TH1D* GetEnergyEnergyCorrelatorPbPb(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight) const;
-  TH1D* GetEnergyEnergyCorrelatorPbPbToPpRatio(const int iCentrality, const int iJetPt, const int iTrackPt, const int iEnergyWeight) const;
-  TH1D* GetEnergyEnergyCorrelatorPbPbToPpRatio(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight) const;
+  TH1D* GetEnergyEnergyCorrelatorPbPb(const int iCentrality, const int iJetPt, const int iTrackPt, const int iEnergyWeight, const int iRecoil) const;
+  TH1D* GetEnergyEnergyCorrelatorPbPb(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight, const int iRecoil) const;
+  TH1D* GetEnergyEnergyCorrelatorPbPbToPpRatio(const int iCentrality, const int iJetPt, const int iTrackPt, const int iEnergyWeight, const int iRecoil) const;
+  TH1D* GetEnergyEnergyCorrelatorPbPbToPpRatio(std::pair<int,int> centralityBin, std::pair<int,int> jetPtBin, double trackPtCut, double energyWeight, const int iRecoil) const;
 
   // Set the normalization region for the analysis
   void SetNormalizationRegion(double lowDeltaR, double highDeltaR);
+
+  // Getter for a nice legend name for the recoil configuration
+  const char* GetRecoilName(const int iRecoil) const;
   
 private:
 
@@ -70,8 +78,8 @@ private:
 
   // Histograms for energy-energy correlators
   TH1D* fEnergyEnergyCorrelatorPp[kJetPtBins][kTrackPtBins][kEnergyWeights];  // Energy-energy correlators for pp
-  TH1D* fEnergyEnergyCorrelatorPbPb[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights];  // Energy-energy correlators for PbPb
-  TH1D* fEnergyEnergyCorrelatorPbPbToPpRatio[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights];  // Energy-energy correlators for PbPb to pp ratio
+  TH1D* fEnergyEnergyCorrelatorPbPb[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kRecoilSettings];  // Energy-energy correlators for PbPb
+  TH1D* fEnergyEnergyCorrelatorPbPbToPpRatio[kCentralityBins][kJetPtBins][kTrackPtBins][kEnergyWeights][kRecoilSettings];  // Energy-energy correlators for PbPb to pp ratio
 
   // Normalize all histograms
   void NormalizeHistograms();
@@ -81,6 +89,8 @@ private:
   int FindJetPtBinIndex(std::pair<int,int> jetPtBin) const; // Get a jet pT bin index from a given jet pT bin borders
   int FindTrackPtBinIndex(double trackPtBin) const; // Get a track pT bin index from a given track pT cut
   int FindEnergyWeightIndex(double energyWeight) const; // Get an energy weight bin index from a given energy weight value
+
+
   
 };
 

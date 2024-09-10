@@ -164,8 +164,8 @@ void finalResultPlotter(){
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
   bool drawDoubleRatioToSingleCanvas = false;
-  bool drawBigCanvasAllDistributions = true; // Draw distributions with all defined weight exponents to the same figure
-  bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
+  bool drawBigCanvasAllDistributions = false; // Draw distributions with all defined weight exponents to the same figure
+  bool drawBigCanvasAllRatios = true; // Draw ratios with all defined energy weight exponents to the same figure
   bool drawLetterPaperDistributions = false; // Draw the energy-energy correlator distribution for letter paper format
   bool drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
 
