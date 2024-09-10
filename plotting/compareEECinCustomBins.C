@@ -133,9 +133,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   // Automatically determine from file name which files are Pythia8 ans which are Herwig7
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     if(fileName.at(iFile).Contains("Pythia8")){
-      systemForLegend.push_back("Pythia8");
+      systemForLegend.push_back("PYTHIA8");
     } else {
-      systemForLegend.push_back("Herwig7");
+      systemForLegend.push_back("HERWIG7");
     }
   }
 
@@ -195,9 +195,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  //comparedJetPtBin.push_back(std::make_pair(140,160));
-  //comparedJetPtBin.push_back(std::make_pair(160,180));
-  //comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1);
@@ -215,6 +215,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   // Flag for which energy loss estimate to use
   bool useExactEnergyLoss = false; // true = Use exact energy loss number. false = Use approximate energy loss number
+  bool includeEnergyLoss = true; // true = Include energy loss term. false = Use zeroth order approximation
 
   if(drawnCumulantIndex.size() > 1 &&  fileName.size() > 2){
     cout << "ERROR! Please only draw one cumulant style if you add more than two files!" << endl;
@@ -240,7 +241,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
     saveComment = "_pythiaHerwig5GeVShift"; // Manually defined save comment
   }
 
-  saveComment.Append("_newCumulantWeight");
+  if(drawnCumulantIndex.at(0) == kAdvancedCorrelator){
+    saveComment.Append("_newCumulantWeight");
+  } else {
+    saveComment.Append("_noCumulantWeight");
+  }
 
   // Add the energy weight string to the save comment
   if(energyWeight == 1){
@@ -251,13 +256,8 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.75, 1.25); // For only ratio: 0.86, 1.72
-  std::pair<double, double> onlyRatioZoom = std::make_pair(0.96, 1.12);
+  std::pair<double, double> onlyRatioZoom = std::make_pair(0.96, 1.26);
 
-  if(drawnCumulantIndex.at(0) == kNoCumulant){
-    onlyRatioZoom.first = 0.92;
-    onlyRatioZoom.second = 1.26;
-  }
-  
   // Create and setup a new histogram managers to project and handle the histograms
   EECHistogramManager* histograms[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
