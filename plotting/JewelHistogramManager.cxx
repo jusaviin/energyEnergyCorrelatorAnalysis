@@ -97,6 +97,7 @@ void JewelHistogramManager::LoadHistograms(TString inputDirectory){
           // Read the histogram from the file
           fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight] = (TH1D*) currentFile->Get(Form("_%s_%s_%d", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt], iJetPt+1));
           fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->SetName(Form("energyEnergyCorrelatorJewelPp%d%d%d", iJetPt, iTrackPt, iEnergyWeight));
+          fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight]->Scale(1.0,"width");
 
         } // Energy weight loop
       } // Track pT loop
@@ -121,6 +122,7 @@ void JewelHistogramManager::LoadHistograms(TString inputDirectory){
 
             fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iRecoil] = (TH1D*) currentFile->Get(Form("_%s_%s_%d", fEnergyWeightName[iEnergyWeight], fTrackPtName[iTrackPt], iJetPt+1));
             fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iRecoil]->SetName(Form("energyEnergyCorrelatorJewelPbPb%d%d%d%d%d", iCentrality, iJetPt, iTrackPt, iEnergyWeight, iRecoil));
+            fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iRecoil]->Scale(1.0,"width");
 
           } // Energy weight loop
         } // Track pT loop
