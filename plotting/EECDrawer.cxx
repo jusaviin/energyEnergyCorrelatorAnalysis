@@ -757,6 +757,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
   // Helper variables for histogram drawing
   TH1D* drawnHistogram;
   TLegend* legend;
+  TLegend* anotherLegend;
   
   // Helper variables for centrality naming in figures
   TString centralityString;
@@ -1000,14 +1001,18 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               
               // Only one legend for the plot
               legendY1 = (fLegendComment != "") ? 0.5 : 0.55;
-              legend = new TLegend(0.62,legendY1,0.82,0.9);
+              legend = new TLegend(0.22,legendY1,0.42,0.8);
               legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
               legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV", fHistograms->GetCard()->GetAlternativeDataType(false).Data()), "");
               if(fLegendComment != "") legend->AddEntry((TObject*) 0, fLegendComment.Data(), "");
               //legend->AddEntry((TObject*) 0, centralityString.Data(),"");
               legend->AddEntry((TObject*) 0, "Cent: 0-10%","");
-              legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
               legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
+              legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
+              
+
+              anotherLegend = new TLegend(0.62,0.2,0.82,0.45);
+              anotherLegend->SetFillStyle(0);anotherLegend->SetBorderSize(0);anotherLegend->SetTextSize(0.05);anotherLegend->SetTextFont(62);
               
               // First, draw the total distribution to the canvas
               drawnHistogram = fHistograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, iPairingType);
@@ -1016,7 +1021,7 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
               drawnHistogram->SetLineColor(color[0]);
               drawnHistogram->SetMarkerColor(color[0]);
               drawnHistogram->SetMarkerStyle(style[0]);
-              legend->AddEntry(drawnHistogram, "All combinations", "p");
+              anotherLegend->AddEntry(drawnHistogram, "All combinations", "p");
               
               // For logarithmic x-axis, cannot go all the way to zero. Drawing range based on weight exponent.
               if(fHistograms->GetCard()->GetWeightExponent() == 1){
@@ -1044,11 +1049,12 @@ void EECDrawer::DrawEnergyEnergyCorrelationHistograms(){
                 drawnHistogram->SetMarkerStyle(style[iSubevent+colorAdder]);
                 drawnHistogram->Draw("same");
                 
-                legend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "p");
+                anotherLegend->AddEntry(drawnHistogram, fHistograms->GetSubeventCombination(iSubevent), "p");
               } // Subevent type loop
               
               // Draw the legend
               legend->Draw();
+              anotherLegend->Draw();
               
               // Save the figure to a file
               namerY = Form("%s%sSubeventDecomposition",fHistograms->GetEnergyEnergyCorrelatorHistogramName(iEnergyEnergyCorrelator), fHistograms->GetPairingTypeSaveName(iPairingType));
