@@ -10,8 +10,8 @@ void compareEECinCustomBins(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root";
-  fileName[1] = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_shiftedPt_nominalSmear_truthReference_processed_2024-02-14.root";
+  fileName[0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_addLowPtBins_processed_2024-04-18.root";
+  fileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_fixedCovarianceMatrix_processed_2024-05-28.root";
   
   
   // Open the files and check that they exist
@@ -52,21 +52,21 @@ void compareEECinCustomBins(){
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(0,100));
-  comparedCentralityBin.push_back(std::make_pair(0,100));
+  comparedCentralityBin.push_back(std::make_pair(0,10));
   if(isPbPbData) commonLegend.push_back(Form("Cent: %.0f-%.0f%%", comparedCentralityBin.at(0).first, comparedCentralityBin.at(0).second));
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
+  comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(135,155));
   for(auto jetPtBin : comparedJetPtBin){
     individualLegend.push_back(Form("%.0f < jet p_{T} < %.0f", jetPtBin.first, jetPtBin.second));
   }
-  legendComment.push_back(" GeV (pp, no E-loss)");
-  legendComment.push_back(" GeV (PbPb, before E-loss)");
+  legendComment.push_back(" GeV (pp)");
+  legendComment.push_back(" GeV (PbPb)");
 
   std::vector<double> comparedTrackPtBin;
-  comparedTrackPtBin.push_back(3);
-  comparedTrackPtBin.push_back(3);
+  comparedTrackPtBin.push_back(1);
+  comparedTrackPtBin.push_back(1);
   commonLegend.push_back(Form("p_{T}^{ch} > %.1f GeV", comparedTrackPtBin.at(0)));
 
   // ====================================================
@@ -123,8 +123,7 @@ void compareEECinCustomBins(){
     iJetPt = card[iFile]->FindBinIndexJetPtEEC(comparedJetPtBin.at(iFile));
     iTrackPt = card[iFile]->GetBinIndexTrackPtEEC(comparedTrackPtBin.at(iFile));
 
-    cout << "iCentrality: " << iCentrality << " iJetPt: " << iJetPt << " iTrackPt: " << iTrackPt << endl;
-    hEnergyEnergyCorrelator[iFile] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
+    hEnergyEnergyCorrelator[iFile] = histograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
     if(hEnergyEnergyCorrelator[iFile] == NULL)  cout << "We Got NULL" << endl;
 
     // Normalize the distributions to one in the drawingRange
