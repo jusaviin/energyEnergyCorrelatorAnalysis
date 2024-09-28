@@ -133,9 +133,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   // Automatically determine from file name which files are Pythia8 ans which are Herwig7
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     if(fileName.at(iFile).Contains("Pythia8")){
-      systemForLegend.push_back("PYTHIA8");
+      systemForLegend.push_back("Pythia8");
     } else {
-      systemForLegend.push_back("HERWIG7");
+      systemForLegend.push_back("Herwig7");
     }
   }
 
@@ -195,9 +195,9 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  //comparedJetPtBin.push_back(std::make_pair(140,160));
+  //comparedJetPtBin.push_back(std::make_pair(160,180));
+  //comparedJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1);
@@ -253,6 +253,8 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
   } else {
     saveComment.Append("_energyWeightSquared");
   }
+
+  saveComment.Append("_hideScaledResult");
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.75, 1.25); // For only ratio: 0.86, 1.72
@@ -531,7 +533,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           legend = new TLegend(0.2+legendXadder, 0.02, 0.47+legendXadder, 0.38);
           legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
 
-          topRightLegend = new TLegend(0.58, 0.64, 0.85, 0.84);
+          legendX1 = 0.58; legendX2 = 0.85; legendY1 = 0.64; legendY2 = 0.84;
+          if(presetComparison < 13){
+            legendY1 = 0.54;
+          }
+          topRightLegend = new TLegend(legendX1, legendY1, legendX2, legendY2);
           topRightLegend->SetFillStyle(0); topRightLegend->SetBorderSize(0);
           topRightLegend->SetTextSize(0.05); topRightLegend->SetTextFont(62);
 
@@ -632,7 +638,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
             // Draw also the cumulant scaled distributions to the same plot
             if(iFile%2 == 1){
               for(int iCumulant : drawnCumulantIndex){
-                hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+                //hCumulantScaledDistribution[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
               }
             }
           }
@@ -667,6 +673,11 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           // Draw the legends to the upper pad
           topRightLegend->Draw();
           legend->Draw();
+
+          // Hide the cumulant legend
+          TBox* box = new TBox();
+          box->SetFillColor(kWhite);
+          box->DrawBox(0.01,0.6, 0.05, 1.7);
           
           // Linear scale for the ratio
           drawer->SetLogY(false);
@@ -684,7 +695,7 @@ void compareEECinCustomBins(const int presetComparison = 0, const double lowDraw
           }
           for(int iFile = 1; iFile < nComparisonFiles; iFile = iFile+2){
             for(int iCumulant : drawnCumulantIndex){
-              hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
+              //hCumulantScaledRatio[iCumulant][iFile][iCentrality][iJetPt][iTrackPt]->Draw("same");
             }
           }
 
