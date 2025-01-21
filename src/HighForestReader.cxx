@@ -490,7 +490,7 @@ void HighForestReader::Initialize(){
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
     } else { // PbPb data or MC
     
-      // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
+      // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
       fSkimTree->SetBranchStatus("pprimaryVertexFilter",1);
       fSkimTree->SetBranchAddress("pprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
     

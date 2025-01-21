@@ -1304,6 +1304,7 @@ void EECAnalyzer::RunAnalysis(){
             jetPt = jetPtCorrected;
             
             // If we are using smearing scenario, modify the jet pT using gaussian smearing
+            // Note that for MC, we need to smear the jet pT to match the resolution in data
             if(fJetUncertaintyMode > 0){
               smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
               jetPt = jetPt * fRng->Gaus(1,smearingFactor);
@@ -2234,6 +2235,7 @@ void EECAnalyzer::FillUnfoldingResponse(){
     jetPt = fJetCorrector2018->GetCorrectedPT();
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
+    // Note that for MC, we need to smear the jet pT to match the resolution in data
     if(fJetUncertaintyMode > 0) {
       smearingFactor = GetSmearingFactor(jetPt, jetEta, centrality);
       jetPt = jetPt * fRng->Gaus(1, smearingFactor);

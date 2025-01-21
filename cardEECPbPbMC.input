@@ -11,7 +11,7 @@ MatchJets 0 # 0 = Do not match jets. 1 = Match generator level jets with reconst
 TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
-FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
+FilledHistograms 159 # Bit 0 = Event information histograms                  (to set: 1)
                     # Bit 1 = Jet histograms                                (to set: 2)
                     # Bit 2 = Track histograms                              (to set: 4)
                     # Bit 3 = Multiplicity and particle density within jets (to set: 8)
@@ -31,7 +31,7 @@ MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysi
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
 MaxMaxTrackPtFraction 0.98 # Maximum fraction of jet pT taken by the highest pT track in jet
-JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Uncertainty smear down, 5 = Uncertainty smear up
+JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Less smear for MC, 5 = More smear for MC
 
 # Cuts for tracks
 TrackEtaCut 2.4             # Region in eta around midrapidity from which tracks are accepted
@@ -77,7 +77,7 @@ TrackPtBinEdges     0.7 1 1.5 2 2.5 3 3.5 4 300         # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
 # Background estimation using eta-reflected jet cone
-DoReflectedCone 3  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background, 3 = Do mixed event background from mega skimmed files
+DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background, 3 = Do mixed event background from mega skimmed files
 AllowJetsInReflectedCone 1 # -1 = Do not allow reconstructed jets in reflected cone. 0 = Do not allow default jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug
