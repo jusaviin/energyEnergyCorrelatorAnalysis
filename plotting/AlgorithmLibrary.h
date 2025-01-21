@@ -58,6 +58,7 @@ public:
   std::vector<std::pair<TString, TGraph*>>  GetGraphsFromDatFile(TString fileName);
   TH1D* Histogrammify(TGraph* gSource, TH1D* hBinning);
   TH1D* HistogrammifyWithErrors(TGraphErrors* gSource, TH1D* hBinning);
+  TString StringifyNumber(double number, int accuracy = 1, char decimalPoint = 'p'); // Produce a string from number using given accuracy
   
 private:
   

@@ -815,3 +815,34 @@ TH1D* AlgorithmLibrary::HistogrammifyWithErrors(TGraphErrors* gSource, TH1D* hBi
   return histogrammifiedGraph;
 
 }
+
+/*
+ * Get a string out of a number
+ *
+ *  double number = Number from which we want to dig a string out
+ *  int accuracy = Number of numbers after the decimal point to show
+ *  char decimalPoint = Character used to describe the decimal point in the string
+ */
+TString AlgorithmLibrary::StringifyNumber(double number, int accuracy, char decimalPoint){
+
+  // Make a string for the number
+  TString numberString;
+  double epsilon = 1e-10;
+
+  // Check if the number is an integer
+  if(TMath::Abs(number - static_cast<int>(number)) < epsilon){
+    // If the number is integer already, just return integer string 
+    numberString = Form("%.0f", number);
+  } else {
+    // If the number is not integer, return the value with the defined accuracy
+    TString accuracyString = Form("%%.%df", accuracy);
+    numberString = Form(accuracyString, number);
+    if(decimalPoint != '.'){
+      numberString.ReplaceAll('.',decimalPoint);
+    }
+  }
+
+  // Return the stringified number
+  return numberString;
+
+}
