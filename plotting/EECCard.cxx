@@ -409,12 +409,14 @@ std::pair<double,double> EECCard::GetBinBordersTrackPtEEC(const int iBin) const{
  */
 int EECCard::GetWeightExponent(int index) const{
 
-  // Do a sanity check for the input index. Return -1 for nonsensical indices
-  if(index < 1) return -1;
-  if(index > fCardEntries[kWeightExponent]->GetNoElements()) return -1;
-
   // If the entry does not exist, the exponent must be 1 since this entry was added to the card to make a study for higher exponents
   if(fCardEntries[kWeightExponent]){
+
+    // Do a sanity check for the input index. Return -1 for nonsensical indices
+    if(index < 1) return -1;
+    if(index > fCardEntries[kWeightExponent]->GetNoElements()) return -1;
+    
+    // If the index is sane, return the weight exponent from the said index
     return (*fCardEntries[kWeightExponent])[index];
   } else {
     return 1;
