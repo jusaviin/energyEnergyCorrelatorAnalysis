@@ -3,6 +3,7 @@
 #include "EECCard.h"
 #include "JDrawer.h"
 #include "SplitCanvas.h"
+#include "AlgorithmLibrary.h"
 
 /*
  * Determine up and down uncertainty bands for shape correlated uncertainties
@@ -163,7 +164,7 @@ void finalResultPlotter(){
   bool drawBigCanvasDistributions = false;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = false;
+  bool drawDoubleRatioToSingleCanvas = true;
   bool drawBigCanvasAllDistributions = false; // Draw distributions with all defined weight exponents to the same figure
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
   bool drawLetterPaperDistributions = false; // Draw the energy-energy correlator distribution for letter paper format
@@ -174,10 +175,14 @@ void finalResultPlotter(){
   bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
   bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
-  bool drawSupplementaryEECShiftIllustration = true; // Draw two pp distributions and one PbPb distribution to the same figure
+  bool drawSupplementaryEECShiftIllustration = false; // Draw two pp distributions and one PbPb distribution to the same figure
 
   // Option to hide the shift histogram for shift illustration
-  bool hideShiftInIllustration = true; // Hide the shifted pp distribution in the shift illustration
+  bool hideShiftInIllustration = false; // Hide the shifted pp distribution in the shift illustration
+
+  // Save all the drawn histograms from HepData
+  bool saveHepDataFiles = true;
+  TString hepDataTrackPtString;
 
   // Configuration for supplementary plots
   double supplementaryLegendTextSize = 0.045;
@@ -223,8 +228,8 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_tickUpdate";
-  TString figureFormat = "pdf";
+  TString saveComment =  "_showAll";
+  TString figureFormat = "png";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
   }
@@ -253,6 +258,9 @@ void finalResultPlotter(){
   TLine* lineDrawer = new TLine();
   lineDrawer->SetLineStyle(2);
   lineDrawer->SetLineColor(kBlack);
+
+  // Algorithm library for any useful manipulation
+  AlgorithmLibrary* manipulator = new AlgorithmLibrary();
 
   // =============================================== //
   // Read the histograms from the histogram managers //
@@ -1157,6 +1165,12 @@ void finalResultPlotter(){
     TString doubleRatioJetPtString;
     TString doubleRatioTrackPtString;
 
+    // If we are writing files for HepData, open a file for writing
+    TFile *doubleRatioHepDataFile;
+    if(saveHepDataFiles){
+      doubleRatioHepDataFile = TFile::Open("hepdata_energyEnergyCorrelatorDoubleRatio_hin-23-004.root","RECREATE");
+    }
+
     // For the double ratios, make separate canvases for each jet pT bin
     for(int iJetPt = firstDrawnJetPtBinEEC[weightExponent-1]; iJetPt <= lastDrawnJetPtBinEEC[weightExponent-1]; iJetPt++){
 
@@ -1224,6 +1238,24 @@ void finalResultPlotter(){
         energyEnergyCorrelatorDoubleRatio[weightExponent-1][iCentrality][iJetPt]->Draw("same,p");
       }
 
+      // Save the double ratio histograms for HepData
+      if(saveHepDataFiles){
+
+        for(int iCentrality = firstDrawnCentralityBin[weightExponent-1]; iCentrality <= lastDrawnCentralityBin[weightExponent-1]; iCentrality++){
+
+          for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+
+            // Choose the analysis region for the energy-energy correlator ratios and write them to file
+            energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+            energyEnergyCorrelatorDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Write(Form("energyEnergyCorrelatorDoubleRatio%s_C%.0f-%.0f_J%.0f-%.0f", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt)));
+
+            systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+            systematicUncertaintyDoubleRatio[iWeightExponent][iCentrality][iJetPt]->Write(Form("energyEnergyCorrelatorDoubleRatio_systematicUncertainty%s_C%.0f-%.0f_J%.0f-%.0f", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt)));
+
+          } // Weight exponent loop
+        } // Centrality loop
+      } // Saving HepData files
+
       // Show the centrality bin in the legend
       legend = new TLegend(0.28, 0.22, 0.53, 0.5);
       legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.055); legend->SetTextFont(62);
@@ -1267,6 +1299,11 @@ void finalResultPlotter(){
 
     } // Jet pT loop
 
+    // Close the HepData file if it was opened
+    if(saveHepDataFiles){
+      doubleRatioHepDataFile->Close();
+    }
+
   } // If for drawing double ratios
 
   // ========================================================================================= //
@@ -1278,6 +1315,12 @@ void finalResultPlotter(){
     // Draw all the distributions to big canvases
     SplitCanvas* bigDualDistributionCanvas[nTrackPtBinsEEC];
     mainTitle = new TLatex();
+
+    // If we are writing files for HepData, open a file for writing
+    TFile *distributionHepDataFile;
+    if(saveHepDataFiles){
+      distributionHepDataFile = TFile::Open("hepdata_energyEnergyCorrelatorDistribution_hin-23-004.root","RECREATE");
+    }
 
     for(int iTrackPt = firstDrawnTrackPtBinEEC[0]; iTrackPt <= lastDrawnTrackPtBinEEC[0]; iTrackPt++){
       compactTrackPtString = Form("_T>%.1f", card[kPbPb][0]->GetLowBinBorderTrackPtEEC(iTrackPt));
@@ -1390,6 +1433,44 @@ void finalResultPlotter(){
           systematicUncertaintyForPp[1][kCorrelatedUncertainty][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorSignalPp[1][iJetPt][iTrackPt]->Draw("same,p");
 
+          // Save the relevant histograms for HepData submission
+          if(saveHepDataFiles){
+
+            hepDataTrackPtString = manipulator->StringifyNumber(card[kPbPb][0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+            
+            // Only save the pp histograms once
+            if(iCentrality == firstDrawnCentralityBin[0]){
+
+              for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+
+                // Choose the analysis region for the energy-energy correlator histograms and write them to file
+                energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+                energyEnergyCorrelatorSignalPp[iWeightExponent][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator%s_pp_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+                systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+                systematicUncertaintyForPp[iWeightExponent][kUncorrelatedUncertainty][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator_uncorrelatedUncertainty%s_pp_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+                systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+                systematicUncertaintyForPp[iWeightExponent][kCorrelatedUncertainty][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator_correlatedUncertainty%s_pp_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+              }
+            }
+
+            // Save also the PbPb histograms
+            for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+
+              // Choose the analysis region for the energy-energy correlator histograms and write them to file
+              energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              energyEnergyCorrelatorSignalPbPb[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+              systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              systematicUncertaintyForPbPb[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator_uncorrelatedUncertainty%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+              systematicUncertaintyForPbPb[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              systematicUncertaintyForPbPb[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelator_correlatedUncertainty%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+            }
+
+          } // End for saving HepData files
+
           // Legend adders to put the legends to correct positions
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC[0]) ? leftPadMargin : 0;
           bottomMarginAdder = (iCentrality == lastDrawnCentralityBin[0]) ? bottomPadMargin : 0;
@@ -1499,6 +1580,12 @@ void finalResultPlotter(){
       }
 
     }  // Track pT loop
+
+    // Close the HepData file if it was opened
+    if(saveHepDataFiles){
+      distributionHepDataFile->Close();
+    }
+
   } // If for drawing big canvases
 
   // ======================================================================================== //
@@ -1510,6 +1597,12 @@ void finalResultPlotter(){
     // Draw all the distributions to big canvases
     SplitCanvas* bigDualRatioCanvas[nTrackPtBinsEEC];
     mainTitle = new TLatex();
+
+    // If we are writing files for HepData, open a file for writing
+    TFile *ratioHepDataFile;
+    if(saveHepDataFiles){
+      ratioHepDataFile = TFile::Open("hepdata_energyEnergyCorrelatorRatio_hin-23-004.root","RECREATE");
+    }
 
     for(int iTrackPt = firstDrawnTrackPtBinEEC[0]; iTrackPt <= lastDrawnTrackPtBinEEC[0]; iTrackPt++){
       compactTrackPtString = Form("_T>%.1f", card[kPbPb][0]->GetLowBinBorderTrackPtEEC(iTrackPt));
@@ -1601,6 +1694,27 @@ void finalResultPlotter(){
           systematicUncertaintyPbPbToPpRatio[1][kCorrelatedUncertaintyShapeUp][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           systematicUncertaintyPbPbToPpRatio[1][kCorrelatedUncertaintyShapeDown][iCentrality][iJetPt][iTrackPt]->Draw("same,e3");
           energyEnergyCorrelatorPbPbToPpRatio[1][iCentrality][iJetPt][iTrackPt]->Draw("same,p");
+
+          // Save the ratio histograms for HepData
+          if(saveHepDataFiles){
+
+            hepDataTrackPtString = manipulator->StringifyNumber(card[kPbPb][0]->GetLowBinBorderTrackPtEEC(iTrackPt));
+
+            // Save also the PbPb histograms
+            for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
+
+              // Choose the analysis region for the energy-energy correlator ratios and write them to file
+              energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              energyEnergyCorrelatorPbPbToPpRatio[iWeightExponent][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelatorRatio%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+              systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              systematicUncertaintyPbPbToPpRatio[iWeightExponent][kUncorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelatorRatio_uncorrelatedUncertainty%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+
+              systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(analysisDeltaR.first, analysisDeltaR.second);
+              systematicUncertaintyPbPbToPpRatio[iWeightExponent][kCorrelatedUncertainty][iCentrality][iJetPt][iTrackPt]->Write(Form("energyEnergyCorrelatorRatio_correlatedUncertainty%s_C%.0f-%.0f_J%.0f-%.0f_T%s", energyWeightString[iWeightExponent].Data(), card[kPbPb][0]->GetLowBinBorderCentrality(iCentrality), card[kPbPb][0]->GetHighBinBorderCentrality(iCentrality), card[kPbPb][0]->GetLowBinBorderJetPtEEC(iJetPt), card[kPbPb][0]->GetHighBinBorderJetPtEEC(iJetPt), hepDataTrackPtString.Data()));
+            }
+
+          }
 
           // Legend adders to put the legends to correct positions
           leftMarginAdder = (iJetPt == firstDrawnJetPtBinEEC[0]) ? leftPadMargin : 0;
@@ -1695,6 +1809,12 @@ void finalResultPlotter(){
       }
 
     }  // Track pT loop
+
+    // Close the HepData file if it was opened
+    if(saveHepDataFiles){
+      ratioHepDataFile->Close();
+    }
+
   } // If for drawing big canvases
 
   // =================================================================================== //
