@@ -180,7 +180,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  drawnTrackPtBin.push_back(2.0);
+  //drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
@@ -216,13 +216,13 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   bool drawDoubleRatioDataToTheoryComparison = (drawnPlots == 2);
 
   // Flag for adding preliminary tag to the figures
-  bool addPreliminaryTag = true;
+  bool addPreliminaryTag = false;
 
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
-  TString saveComment =  "_preliminaryTag";
+  TString saveComment =  "";
   TString figureFormat = "pdf";
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
@@ -1173,6 +1173,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Normalization and style for theory predictions
   int color[9] = {kRed, kBlue, kGreen+3, kMagenta, kCyan, kOrange+7, kViolet-3, kPink-3, kOrange-3};
 
+  // Change opacity for filled areas in order to make things visible in grauscale
+  double jetWakeOpacity[HybridModelHistogramManager::kWakeConfigurations] = {0.4, 0.6, 0.5};
+  double colbtOpacity[CoLBTHistogramManager::kQValues] = {0.4, 0.6};
+
   int jewelMarkerStyle[JewelHistogramManager::kRecoilSettings];
   jewelMarkerStyle[0] = kFullCross;
   jewelMarkerStyle[1] = kFullCrossX;
@@ -1482,7 +1486,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
               energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
               energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
 
               // Draw the prediction to the same canvas as the data
               energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
@@ -1644,7 +1648,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
               hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
               hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
-              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
               hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
             }
           } else if(theoryComparisonIndex == 1){
@@ -1827,7 +1831,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetLineColor(color[iWake]);
               energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
               energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
-              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
 
               // Draw the prediction to the same canvas as the data
               energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("3,same");
@@ -1870,7 +1874,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetLineColor(color[iQValue]);
               energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerColor(color[iQValue]);
               energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerStyle(kFullCircle);
-              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], 0.4);
+              energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], colbtOpacity[iQValue]);
 
               // Draw the prediction to the same canvas as the data
               energyEnergyCorrelatorCoLBTPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("3,same");
@@ -2145,7 +2149,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerColor(color[iWake]);
               hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerStyle(kFullCircle);
               hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetMarkerSize(0);
-              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
               hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iWake]->Draw("same,e3");
             }
           } else if (theoryComparisonIndex == 1){
@@ -2168,7 +2172,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerColor(color[iQValue]);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerStyle(kFullCircle);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetMarkerSize(0);
-              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], 0.4);
+              coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->SetFillColorAlpha(color[iQValue], colbtOpacity[iQValue]);
               coLBTToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iQValue]->Draw("same,e3");
             }
           } else if(theoryComparisonIndex == 3){
@@ -2345,7 +2349,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetLineColor(color[iWake]);
             histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetMarkerStyle(kFullCircle);
             histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetMarkerSize(0);
-            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
 
             // Draw the prediction to the same canvas as the data
             histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->Draw("same,e3");
@@ -2445,7 +2449,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           for(int iWake = 0; iWake < HybridModelHistogramManager::kWakeConfigurations; iWake++){
             hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetMarkerStyle(kFullCircle);
             hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetMarkerSize(0);
-            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetFillColorAlpha(color[iWake], 0.4);
+            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
             hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->Draw("same,e3");
           }
         } else if(theoryComparisonIndex >= 5){
