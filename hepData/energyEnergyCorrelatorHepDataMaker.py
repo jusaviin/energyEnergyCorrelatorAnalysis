@@ -123,9 +123,6 @@ from hepdata_lib import Variable, Uncertainty
 def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHistogram, yAxisName, includePp, energyWeightBin, jetPtBin, trackPtBin):
 
     # Define reaction and centrality labels.
-    pbpbReactionLabel = "PB PB --> JET CHARGED X"
-    pbpbEnergyLabel = "$\\sqrt{s_{\\mathrm{NN}}}$"
-    reactionLabel = [pbpbReactionLabel, pbpbReactionLabel, pbpbReactionLabel, pbpbReactionLabel, "P P --> JET CHARGED X"]
     centralityLabel = ["0-10%", "10-30%", "30-50%", "50-90%", "pp"]
     jetPtLabel = ["$120 < p_{\\mathrm{T,jet}} < 140$ GeV", "$140 < p_{\\mathrm{T,jet}} < 160$ GeV", "$160 < p_{\\mathrm{T,jet}} < 180$ GeV", "$180 < p_{\\mathrm{T,jet}} < 200$ GeV"]
     trackPtLabel = ["$> 1$ GeV", "$> 2$ GeV"]
@@ -170,8 +167,6 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
     for i in range(firstCentralityBin,lastCentralityBin):
         myVariable = Variable(yAxisName, is_independent=False, is_binned=False, units="")
         myVariable.values = valueHistogram[(i-firstCentralityBin)]["y"]
-        myVariable.add_qualifier(pbpbEnergyLabel,"5.02 TeV")
-        myVariable.add_qualifier("Reaction",reactionLabel[i])
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
         myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[jetPtBin])
         myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
@@ -301,6 +296,10 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
         
     return xAxis, yAxis
 
+# Different jet pT values are located in different columns in the figures. This needs to be added to the description of the tables.
+jetPtLocation = ["leftmost column", "second column from the left", "second column from the right", "rightmost column"]
+energyWeightLocation = ["left column", "right column"]
+
 ###############################################################################################
 #     Table for energy-energy correlator distributions with pT cut 1 GeV. Paper figure 1.     #
 ###############################################################################################
@@ -310,7 +309,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
         table1 = Table("Figure 1-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table1.description = "The energy-energy correlator distributions constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions and for pp collisions.".format(trackPtDescription[0], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table1.location = "Data from figure 1, located on page NN."
+        table1.location = "Data from figure 1, {:s}.".format(jetPtLocation[iJetPt])
         table1.keywords["observables"] = ["Energy-energy correlator"]
         table1.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table1.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
@@ -335,7 +334,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
         table2 = Table("Figure 2-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table2.description = "The energy-energy correlator distributions constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions and for pp collisions.".format(trackPtDescription[1], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table2.location = "Data from figure 2, located on page NN."
+        table2.location = "Data from figure 2, {:s}.".format(jetPtLocation[iJetPt])
         table2.keywords["observables"] = ["Energy-energy correlator"]
         table2.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table2.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
@@ -363,8 +362,8 @@ for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
         table3 = Table("Figure 3-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table3.description = "The energy-energy correlator PbPb/pp ratios constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions.".format(trackPtDescription[0], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table3.location = "Data from figure 3, located on page NN."
-        table3.keywords["observables"] = ["Energy-energy correlator"]
+        table3.location = "Data from figure 3, {:s}.".format(jetPtLocation[iJetPt])
+        table3.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table3.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table3.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
@@ -388,8 +387,8 @@ for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
         table4 = Table("Figure 4-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table4.description = "The energy-energy correlator PbPb/pp ratios constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions.".format(trackPtDescription[1], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table4.location = "Data from figure 4, located on page NN."
-        table4.keywords["observables"] = ["Energy-energy correlator"]
+        table4.location = "Data from figure 4, {:s}.".format(jetPtLocation[iJetPt])
+        table4.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table4.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table4.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
@@ -413,7 +412,7 @@ for iCentrality in range(nCentrality-1, -1, -1):
     for iEnergyWeight in range(0, nEnergyWeight):   
         table5 = Table("Figure A{:d}-{:d}".format(30 - iCentrality, iEnergyWeight))
         table5.description = "The double ratios of PbPb to pp single ratios with $p_{\\mathrm{T}}^{\\mathrm{ch}}$ > 2 GeV and $p_{\\mathrm{T}}^{\\mathrm{ch}}$ > 1 GeV."
-        table5.location = "Data from figure A{:d}, located on the supplemental material.".format(30 - iCentrality)
+        table5.location = "Data from figure A{:d}, {:s}.".format(30 - iCentrality, energyWeightLocation[iEnergyWeight])
         table5.keywords["observables"] = ["Energy-energy correlator double ratio"]
         table5.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         # #table5.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
