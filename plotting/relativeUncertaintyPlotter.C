@@ -75,10 +75,10 @@ void relativeUncertaintyPlotter(){
   
   // The final results are available for all the bins that are unfolded
   int firstDrawnCentralityBin = uncertaintyCard[kPbPb]->GetFirstUnfoldedCentralityBin();
-  int lastDrawnCentralityBin = uncertaintyCard[kPbPb]->GetFirstUnfoldedCentralityBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedCentralityBin();
+  int lastDrawnCentralityBin = uncertaintyCard[kPbPb]->GetLastUnfoldedCentralityBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedCentralityBin();
   
   int firstDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedJetPtBin();
-  int lastDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedJetPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin();
+  int lastDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin();
   
   int firstDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin();
   int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
@@ -183,7 +183,7 @@ void relativeUncertaintyPlotter(){
         // Next, read the PbPb histograms and calculate relative uncertainties if the uncertainty source is relevant for PbPb
         if(!uncertainties[kPbPb]->GetSystematicUncertaintyRelevancyForPbPb(iUncertainty)) continue;
 
-        for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++) {
+        for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
 
           systematicUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt] = uncertainties[kPbPb]->GetSystematicUncertainty(iCentrality, iJetPt, iTrackPt, iUncertainty);
           relativeUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt] = (TH1D*) systematicUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt]->Clone(Form("relativeUncertaintyPbPb%d%d%d%d", iUncertainty, iCentrality, iJetPt, iTrackPt));
@@ -193,6 +193,67 @@ void relativeUncertaintyPlotter(){
       } // Uncertainty source loop
     } // Track pT loop
   } // Jet pT loop
+
+  // ================================================================= //
+  //   For each uncertainty, calculate a score of how important it is  //
+  // ================================================================= //
+
+  // Calculate how important each uncertainty is by just taking an integral over the relative uncertainty distribution
+  double importanceScore[nCentralityBins+1][SystematicUncertaintyOrganizer::kAll];
+
+  // Initialize the importance scores to zero
+  for(int iCentrality = 0; iCentrality < nCentralityBins+1; iCentrality++){
+    for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::kAll; iUncertainty++){
+      importanceScore[iCentrality][iUncertainty] = 0;
+    } // Uncertainty loop
+  } // Centrality loop
+
+  // Go through each uncertainty source in each centrality bin and integrate the distribution in the analysis region
+  int firstIntegralBin, lastIntegralBin;
+  for(int iJetPt = firstDrawnJetPtBinEEC; iJetPt <= lastDrawnJetPtBinEEC; iJetPt++){
+    for(int iTrackPt = firstDrawnTrackPtBinEEC; iTrackPt <= lastDrawnTrackPtBinEEC; iTrackPt++){
+
+      for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::kAll; iUncertainty++){
+
+        // Only calculate the relative importance if uncertainty is relevant
+        if(uncertainties[kPp]->GetSystematicUncertaintyRelevancyForPp(iUncertainty)){
+          firstIntegralBin = relativeUncertaintyForPp[iUncertainty][iJetPt][iTrackPt]->FindBin(analysisDeltaR.first);
+          lastIntegralBin = relativeUncertaintyForPp[iUncertainty][iJetPt][iTrackPt]->FindBin(analysisDeltaR.second);
+          importanceScore[nCentralityBins][iUncertainty] += relativeUncertaintyForPp[iUncertainty][iJetPt][iTrackPt]->Integral(firstIntegralBin, lastIntegralBin, "width");
+        }
+
+        // Next, calculate relative importance if the uncertainty source is relevant for PbPb
+        if(!uncertainties[kPbPb]->GetSystematicUncertaintyRelevancyForPbPb(iUncertainty)) continue;
+
+        for(int iCentrality = firstDrawnCentralityBin; iCentrality <= lastDrawnCentralityBin; iCentrality++){
+          firstIntegralBin = relativeUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt]->FindBin(analysisDeltaR.first);
+          lastIntegralBin = relativeUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt]->FindBin(analysisDeltaR.second);
+          importanceScore[iCentrality][iUncertainty] += relativeUncertaintyForPbPb[iUncertainty][iCentrality][iJetPt][iTrackPt]->Integral(firstIntegralBin, lastIntegralBin, "width");
+        } // Centrality loop
+      } // Systematic uncertainty loop
+
+    } // Track pT loop
+  } // Jet pT loop
+
+  // Create a number between 0 and 10 from the importance scores
+  double referenceScore;
+  for(int iCentrality = 0; iCentrality < nCentralityBins+1; iCentrality++){
+    referenceScore = importanceScore[iCentrality][SystematicUncertaintyOrganizer::kJetEnergyScale];
+    for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::kAll; iUncertainty++){
+      importanceScore[iCentrality][iUncertainty] = importanceScore[iCentrality][iUncertainty] / referenceScore * 10;
+    } // Uncertainty loop
+  } // Centrality loop
+
+  // Print an array of the importance scores
+  cout << "                            0-10   10-30   30-50   50-90   pp" << endl;
+  for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::kAll; iUncertainty++){
+    cout << Form("%25s",uncertainties[0]->GetSystematicUncertaintyName(iUncertainty).Data());
+    for(int iCentrality = 0; iCentrality < nCentralityBins+1; iCentrality++){
+      cout << "  " << Form("%.2f", importanceScore[iCentrality][iUncertainty]) << "  ";
+    }
+    cout << endl;
+  }
+
 
   // ======================================================= //
   //   Draw all the relative uncertainties in the same plot  //
