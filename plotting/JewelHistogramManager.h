@@ -23,7 +23,7 @@ class JewelHistogramManager {
 public:
 
   // Enumeration for different recoil configurations
-  enum enumTrackHistograms{kRecoil, kNoRecoil, kRecoilSettings};
+  enum enumTrackHistograms{kNoRecoil, kRecoil, kRecoilSettings};
   
   // Dimensions for histogram arrays
   static const int kCentralityBins = 1;       // Number of centrality bins for which the predictions are available
