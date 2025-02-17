@@ -173,14 +173,14 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  drawnJetPtBin.push_back(std::make_pair(140,160));
-  drawnJetPtBin.push_back(std::make_pair(160,180));
+  //drawnJetPtBin.push_back(std::make_pair(140,160));
+  //drawnJetPtBin.push_back(std::make_pair(160,180));
   drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  //drawnTrackPtBin.push_back(2.0);
+  drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
@@ -217,6 +217,9 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
   // Flag for adding preliminary tag to the figures
   bool addPreliminaryTag = false;
+
+  // Legend mode where the differences in plots shown side-by-side in the main text are highlighted
+  bool mainTextHighlightMode = true;
 
   // Save the final plots
   const bool saveFigures = true;
@@ -1217,20 +1220,38 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         // Use logarithmic axis for EEC
         drawer->SetLogY(true);
 
-        // Setup the legend for plots
+        // Setup the legend for the plots
         legendX1 = 0.2; legendX2 = 0.5;
         legendY1 = 0.05; legendY2 = 0.55;
+
+        // Make the legend slightly smaller in the main text highlight mode
+        if(mainTextHighlightMode) legendY2 = 0.5;
+
         legend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
 
-        anotherLegend = new TLegend(0.5, 0.05, 0.8, 0.25);
+        // Setup the another legend for the plots
+        legendX1 = 0.5; legendX2 = 0.8;
+        legendY1 = 0.05; legendY2 = 0.25;
+
+        // Fow main text highlight mode, the legend needs to be more to the right and up
+        if(mainTextHighlightMode){
+          legendX1 = 0.58; legendY1 = 0.08;
+        }
+
+        anotherLegend = new TLegend(legendX1, legendY1, legendX2, legendY2);
         anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
+        if(mainTextHighlightMode) anotherLegend->SetTextSize(legendTextUpperCanvasSize*2);
 
         if(theoryComparisonIndex >= 5){
           anotherLegend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
           anotherLegend->AddEntry((TObject*)0, trackPtString.Data(), "");
         } else {
-          legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          if(mainTextHighlightMode){
+            anotherLegend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          } else {
+            legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
+          }
           legend->AddEntry((TObject*)0, trackPtString.Data(), "");
         }
 
@@ -1310,7 +1331,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
         // Draw the legend to the upper pad
         legend->Draw();
-        if(theoryComparisonIndex >= 5) anotherLegend->Draw();
+        if(theoryComparisonIndex >= 5 || mainTextHighlightMode) anotherLegend->Draw();
 
         // Draw latex messages to the plots
         mrLatexer->SetTextFont(62);
@@ -2088,13 +2109,31 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             mrLatexer->DrawLatexNDC(0.22, 0.17, "anti-k_{T} R = 0.4");
             mrLatexer->DrawLatexNDC(0.22, 0.08, "|#eta_{jet}| < 1.6");
           } else if(theoryComparisonIndex >= 5){
-            mrLatexer->DrawLatexNDC(0.54, 0.08, jetPtString.Data());
-            mrLatexer->DrawLatexNDC(0.22, 0.17, "anti-k_{T} R = 0.4");
-            mrLatexer->DrawLatexNDC(0.22, 0.08, "|#eta_{jet}| < 1.6");
+
+            if(mainTextHighlightMode){
+              mrLatexer->SetTextSize(0.11);
+              mrLatexer->DrawLatexNDC(0.39, 0.08, jetPtString.Data());
+              mrLatexer->SetTextSize(0.07);
+              mrLatexer->DrawLatexNDC(0.2, 0.22, "anti-k_{T} R = 0.4");
+              mrLatexer->DrawLatexNDC(0.2, 0.13, "|#eta_{jet}| < 1.6");
+            } else {
+              mrLatexer->DrawLatexNDC(0.54, 0.08, jetPtString.Data());
+              mrLatexer->DrawLatexNDC(0.22, 0.17, "anti-k_{T} R = 0.4");
+              mrLatexer->DrawLatexNDC(0.22, 0.08, "|#eta_{jet}| < 1.6");
+            }
           } else {
-            mrLatexer->DrawLatexNDC(0.51, 0.78, jetPtString.Data());
-            mrLatexer->DrawLatexNDC(0.642, 0.685, "anti-k_{T} R = 0.4");
-            mrLatexer->DrawLatexNDC(0.725, 0.595, "|#eta_{jet}| < 1.6");
+
+            if(mainTextHighlightMode){
+              mrLatexer->SetTextSize(0.11);
+              mrLatexer->DrawLatexNDC(0.34, 0.75, jetPtString.Data());
+              mrLatexer->SetTextSize(0.07);
+              mrLatexer->DrawLatexNDC(0.642, 0.625, "anti-k_{T} R = 0.4");
+              mrLatexer->DrawLatexNDC(0.642, 0.535, "|#eta_{jet}| < 1.6");
+            } else {
+              mrLatexer->DrawLatexNDC(0.51, 0.78, jetPtString.Data());
+              mrLatexer->DrawLatexNDC(0.642, 0.685, "anti-k_{T} R = 0.4");
+              mrLatexer->DrawLatexNDC(0.725, 0.595, "|#eta_{jet}| < 1.6");
+            }
           }
           
 
@@ -2403,10 +2442,18 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
         // Binning
         mrLatexer->SetTextFont(62);
-        mrLatexer->SetTextSize(0.07);
-        mrLatexer->DrawLatexNDC(0.58, 0.78, jetPtString.Data());
-        mrLatexer->DrawLatexNDC(0.712, 0.685, "anti-k_{T} R = 0.4");
-        mrLatexer->DrawLatexNDC(0.795, 0.595, "|#eta_{jet}| < 1.6");
+
+        if(mainTextHighlightMode){
+          mrLatexer->SetTextSize(0.11);
+          mrLatexer->DrawLatexNDC(0.39, 0.76, jetPtString.Data());
+          mrLatexer->SetTextSize(0.07);
+          mrLatexer->DrawLatexNDC(0.39, 0.63, "anti-k_{T} R = 0.4, |#eta_{jet}| < 1.6");
+        } else {
+          mrLatexer->SetTextSize(0.07);
+          mrLatexer->DrawLatexNDC(0.58, 0.78, jetPtString.Data());
+          mrLatexer->DrawLatexNDC(0.712, 0.685, "anti-k_{T} R = 0.4");
+          mrLatexer->DrawLatexNDC(0.795, 0.595, "|#eta_{jet}| < 1.6");
+        }
 
         // Linear scale for the ratio
         drawer->SetLogY(false);
