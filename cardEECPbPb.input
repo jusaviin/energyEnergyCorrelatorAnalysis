@@ -59,7 +59,7 @@ HighPtHatCut 1      # Maximum accepted pT hat
 MultiplicityMode 0  # 0 = Weight MC centrality to match data. 1 = Weight multiplicity to match
 
 # Configuration for energy-energy correlators
-JetRadius 0.4       # Radius around jets used to calculate the correlations
+JetRadius 0.8       # Radius around jets used to calculate the correlations
 WeightExponent 1 2  # Exponents given for the energy weight in EECs
 SmearDeltaR 0       # Flag for smearing DeltaR values in EECs
 SmearEnergyWeight 0 # Flag for smearing energy weights in EECs

@@ -180,7 +180,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  drawnTrackPtBin.push_back(2.0);
+  //drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
 
@@ -219,7 +219,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   bool addPreliminaryTag = false;
 
   // Legend mode where the differences in plots shown side-by-side in the main text are highlighted
-  bool mainTextHighlightMode = true;
+  bool mainTextHighlightMode = false;
 
   // Save the final plots
   const bool saveFigures = true;
