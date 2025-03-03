@@ -28,7 +28,9 @@ HighForestReader::HighForestReader() :
   fParticleSubeventBranch(0),
   fJetPtArray(),
   fJetPhiArray(),
+  fJetWTAPhiArray(),
   fJetEtaArray(),
+  fJetWTAEtaArray(),
   fJetRawPtArray(),
   fTrackPtArray(),
   fTrackPtErrorArray(),
@@ -111,7 +113,9 @@ HighForestReader::HighForestReader(Int_t dataType, Int_t useJetTrigger, Int_t je
   fParticleSubeventBranch(0),
   fJetPtArray(),
   fJetPhiArray(),
+  fJetWTAPhiArray(),
   fJetEtaArray(),
+  fJetWTAEtaArray(),
   fTrackPtArray(),
   fTrackPtErrorArray(),
   fTrackPhiArray(),
@@ -206,7 +210,9 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   for(Int_t i = 0; i < fnMaxJet; i++){
     fJetPtArray[i] = in.fJetPtArray[i];
     fJetPhiArray[i] = in.fJetPhiArray[i];
+    fJetWTAPhiArray[i] = in.fJetWTAPhiArray[i];
     fJetEtaArray[i] = in.fJetEtaArray[i];
+    fJetWTAEtaArray[i] = in.fJetWTAEtaArray[i];
     fJetRawPtArray[i] = in.fJetRawPtArray[i];
     fJetMaxTrackPtArray[i] = in.fJetMaxTrackPtArray[i];
   }
@@ -265,7 +271,9 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   for(Int_t i = 0; i < fnMaxJet; i++){
     fJetPtArray[i] = in.fJetPtArray[i];
     fJetPhiArray[i] = in.fJetPhiArray[i];
+    fJetWTAPhiArray[i] = in.fJetWTAPhiArray[i];
     fJetEtaArray[i] = in.fJetEtaArray[i];
+    fJetWTAEtaArray[i] = in.fJetWTAEtaArray[i];
     fJetRawPtArray[i] = in.fJetRawPtArray[i];
     fJetMaxTrackPtArray[i] = in.fJetMaxTrackPtArray[i];
   }
@@ -349,8 +357,6 @@ void HighForestReader::Initialize(){
   }
   
   // Connect the branches to the jet tree
-  const char* jetAxis[2] = {"jt","WTA"};
-  const char* branchName;
 
   // Jet trees are not needed for mixed events
   if(fMixingMode){
@@ -364,15 +370,15 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchStatus("jtpt",1);
     fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
   
-    // If specified, select WTA axis for jet phi
-    branchName = Form("%sphi",jetAxis[fJetAxis]);
-    fJetTree->SetBranchStatus(branchName,1);
-    fJetTree->SetBranchAddress(branchName,&fJetPhiArray,&fJetPhiBranch);
-  
-    // If specified, select WTA axis for jet eta
-    branchName = Form("%seta",jetAxis[fJetAxis]);
-    fJetTree->SetBranchStatus(branchName,1);
-    fJetTree->SetBranchAddress(branchName,&fJetEtaArray,&fJetEtaBranch);
+    // Find eta nd phi for E-scheme and WTA axes
+    fJetTree->SetBranchStatus("jtphi",1);
+    fJetTree->SetBranchAddress("jtphi",&fJetPhiArray,&fJetPhiBranch);
+    fJetTree->SetBranchStatus("WTAphi",1);
+    fJetTree->SetBranchAddress("WTAphi",&fJetWTAPhiArray,&fJetWTAPhiBranch);
+    fJetTree->SetBranchStatus("jteta",1);
+    fJetTree->SetBranchAddress("jteta",&fJetEtaArray,&fJetEtaBranch);
+    fJetTree->SetBranchStatus("WTAeta",1);
+    fJetTree->SetBranchAddress("WTAeta",&fJetWTAEtaArray,&fJetWTAEtaBranch);
   
     fJetTree->SetBranchStatus("nref",1);
     fJetTree->SetBranchAddress("nref",&fnJets,&fnJetsBranch);
@@ -777,13 +783,17 @@ Float_t HighForestReader::GetJetPt(Int_t iJet) const{
 }
 
 // Getter for jet phi
-Float_t HighForestReader::GetJetPhi(Int_t iJet) const{
-  return fJetPhiArray[iJet];
+Float_t HighForestReader::GetJetPhi(Int_t iJet, Int_t iJetAxis) const{
+  if(iJetAxis < 0 || iJetAxis > 1) iJetAxis = fJetAxis; // Ensure that jet axis index in reasonable
+  if(iJetAxis == 0) return fJetPhiArray[iJet];
+  return fJetWTAPhiArray[iJet];
 }
 
 // Getter for jet eta
-Float_t HighForestReader::GetJetEta(Int_t iJet) const{
-  return fJetEtaArray[iJet];
+Float_t HighForestReader::GetJetEta(Int_t iJet, Int_t iJetAxis) const{
+  if(iJetAxis < 0 || iJetAxis > 1) iJetAxis = fJetAxis; // Ensure that jet axis index in reasonable
+  if(iJetAxis == 0) return fJetEtaArray[iJet];
+  return fJetWTAEtaArray[iJet];
 }
 
 // Getter for jet raw pT

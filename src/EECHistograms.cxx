@@ -381,6 +381,11 @@ void EECHistograms::CreateHistograms(){
   const Double_t minNumberOfJetsReflectedCone = -0.5;
   const Double_t maxNumberOfJetsReflectedCone = 4.5;
   const Int_t nNumberOfJetsReflectedConeBins = 5;
+
+  // Bins for jet axis difference
+  const Double_t minDeltaJetAxis = 0;
+  const Double_t maxDeltaJetAxis = 0.4;
+  const Int_t nBinsDeltaJetXis = 40;
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
@@ -458,7 +463,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderMultiplicityInJets[nAxesMultiplicityInJets];
   Double_t highBinBorderMultiplicityInJets[nAxesMultiplicityInJets];
   
-  const Int_t nAxesJet = 5;
+  const Int_t nAxesJet = 6;
   Int_t nBinsJet[nAxesJet];
   Double_t lowBinBorderJet[nAxesJet];
   Double_t highBinBorderJet[nAxesJet];
@@ -478,7 +483,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   Double_t highBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   
-  const Int_t nAxesEnergyEnergyCorrelator = 7;
+  const Int_t nAxesEnergyEnergyCorrelator = 8;
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
@@ -651,6 +656,11 @@ void EECHistograms::CreateHistograms(){
   nBinsJet[4] = nClosureParticleTypeBins;        // nBins for jet flavor
   lowBinBorderJet[4] = minClosureParticleType;   // low bin border for jet flavor
   highBinBorderJet[4] = maxClosureParticleType;  // high bin border for jet flavor
+
+  // Axis 5 for the jet histogram: difference between WTA and E-scheme axes
+  nBinsJet[5] = nBinsDeltaJetXis;         // nBins for jet flavor
+  lowBinBorderJet[5] = minDeltaJetAxis;   // low bin border for jet flavor
+  highBinBorderJet[5] = maxDeltaJetAxis;  // high bin border for jet flavor
   
   // Create the histogram for all jets using the above binning information
   fhInclusiveJet = new THnSparseF("inclusiveJet","inclusiveJet",nAxesJet,nBinsJet,lowBinBorderJet,highBinBorderJet); fhInclusiveJet->Sumw2();
@@ -799,6 +809,11 @@ void EECHistograms::CreateHistograms(){
   nBinsEnergyEnergyCorrelator[6] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
   lowBinBorderEnergyEnergyCorrelator[6] = minEnergyWeightEEC;  // Index of the first defined energy weight
   highBinBorderEnergyEnergyCorrelator[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
+
+  // Axis 7 for the energy-energy correlator histogram: DeltaR between WTA and E-scheme axes
+  nBinsEnergyEnergyCorrelator[7] = nBinsDeltaJetXis;          // Number of energy weights defined in the card
+  lowBinBorderEnergyEnergyCorrelator[7] = minDeltaJetAxis;    // Index of the first defined energy weight
+  highBinBorderEnergyEnergyCorrelator[7] = maxDeltaJetAxis;   // Index of the last defined energy weight
 
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections

@@ -56,8 +56,8 @@ public:
   
   // Getters for leaves in jet tree
   virtual Float_t GetJetPt(Int_t iJet) const = 0;         // Getter for jet pT
-  virtual Float_t GetJetPhi(Int_t iJet) const = 0;        // Getter for jet phi
-  virtual Float_t GetJetEta(Int_t iJet) const = 0;        // Getter for jet eta
+  virtual Float_t GetJetPhi(Int_t iJet, Int_t iAxis = -1) const = 0;        // Getter for jet phi
+  virtual Float_t GetJetEta(Int_t iJet, Int_t iAxis = -1) const = 0;        // Getter for jet eta
   virtual Int_t GetNJets() const;                         // Getter for number of jets
   virtual Float_t GetJetRawPt(Int_t iJet) const = 0;      // Getter for jet raw pT
   virtual Float_t GetJetMaxTrackPt(Int_t iJet) const = 0; // Getter for maximum track pT inside a jet
@@ -125,7 +125,7 @@ protected:
   Int_t fDataType;        // Type of data read with the tree. 0 = pp, 1 = PbPb, 2 = ppMC, 3 = PbPbMC
   Int_t fUseJetTrigger;   // 0 = Do not use any triggers, 1 = Require jet trigger
   Int_t fJetType;         // Choose the type of jets usedfor analysis. 0 = Calo jets, 1 = PF jets
-  Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = Leading particle flow candidate, 2 = WTA
+  Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = WTA
   Bool_t fMatchJets;      // Match generator and reconstructed level jets
   Bool_t fReadTrackTree;  // Read the track trees from the forest
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest

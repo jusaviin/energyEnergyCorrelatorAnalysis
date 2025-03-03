@@ -711,6 +711,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetPtWeight = 1;         // Weighting for jet pT
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
   Bool_t jetOver120Found = false;   // Flag for finding a jet above 120 GeV from the event
+  Double_t jetDeltaAxis = 0;        // DeltaR between WTA and E-scheme axes
 
   // Variables for reflected cone QA study
   ForestReader* reflectedConeForestReader; // Forest reader for reflected cone studies
@@ -795,7 +796,7 @@ void EECAnalyzer::RunAnalysis(){
   }
   
   // Fillers for THnSparses
-  const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
+  const Int_t nFillJet = 6;         // 6 is nominal, 9 used for smearing study
   const Int_t nFillMultiplicity = 3; // 3 is nominal
   const Int_t nFillMultiplicityInJetCone = 5;
   const Int_t nFillParticleDensityInJetCone = 6;
@@ -1194,12 +1195,14 @@ void EECAnalyzer::RunAnalysis(){
           jetEta = fRng->Uniform(-fJetEtaCut, fJetEtaCut);
           jetReflectedEta = GetReflectedEta(jetEta);
           jetFlavor = 0;
+          jetDeltaAxis = 0;
         } else {
           jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
           jetPhi = fJetReader->GetJetPhi(jetIndex);
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
           jetFlavor = 0;
+          jetDeltaAxis = GetDeltaR(jetEta, jetPhi, fJetReader->GetJetEta(jetIndex, TMath::Abs(fJetAxis-1)), fJetReader->GetJetPhi(jetIndex, TMath::Abs(fJetAxis-1)));
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
@@ -1389,6 +1392,7 @@ void EECAnalyzer::RunAnalysis(){
           fillerJet[2] = jetEta;                  // Axis 2 = any jet eta
           fillerJet[3] = centrality;              // Axis 3 = centrality
           fillerJet[4] = jetFlavor;               // Axis 4 = flavor of the jet
+          fillerJet[5] = jetDeltaAxis;            // Axis 5 = DeltaR between WTA and E-scheme axes
           
           fHistograms->fhInclusiveJet->Fill(fillerJet,fTotalEventWeight*jetPtWeight); // Fill the data point to histogram
           
@@ -1774,7 +1778,7 @@ void EECAnalyzer::RunAnalysis(){
             }
 
             // Then calculate the energy-energy correlator for this jet
-            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
+            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt, jetDeltaAxis);
 
             // After that is done, add the contents from this event to the total coveriance matrix
             // Covariance matrix calculation only for data, not needed in MC
@@ -1892,11 +1896,12 @@ void EECAnalyzer::RunAnalysis(){
  *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
  *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
  *  const double jetPt = pT of the jet the tracks are close to
+ *  const double jetDeltaAxis = DeltaR between WTA and E-scheme axes
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt, const double jetDeltaAxis){
   
   // Define a filler for THnSparse
-  Double_t fillerEnergyEnergyCorrelator[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerEnergyEnergyCorrelator[8];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
@@ -2049,6 +2054,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
           fillerEnergyEnergyCorrelator[4] = iPairingType;              // Axis 4: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
           fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
           fillerEnergyEnergyCorrelator[6] = weightIndex;               // Axis 6: Inxed for the current energy-energy correlator weight
+          fillerEnergyEnergyCorrelator[7] = jetDeltaAxis;              // Axis 7: DeltaR between WTA and E-scheme axes
 
           if(fFillEnergyEnergyCorrelators){
             fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram

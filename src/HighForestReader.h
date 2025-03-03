@@ -38,8 +38,8 @@ public:
   
   // Getters for leaves in jet tree
   Float_t GetJetPt(Int_t iJet) const;         // Getter for jet pT
-  Float_t GetJetPhi(Int_t iJet) const;        // Getter for jet phi
-  Float_t GetJetEta(Int_t iJet) const;        // Getter for jet eta
+  Float_t GetJetPhi(Int_t iJet, Int_t iAxis = -1) const;    // Getter for jet phi
+  Float_t GetJetEta(Int_t iJet, Int_t iAxis = -1) const;    // Getter for jet eta
   Float_t GetJetRawPt(Int_t iJet) const;      // Getter for jet raw pT
   Float_t GetJetMaxTrackPt(Int_t iJet) const; // Getter for maximum track pT inside a jet
   
@@ -117,7 +117,9 @@ private:
   // Leaves for jet tree
   Float_t fJetPtArray[fnMaxJet] = {0};            // pT:s of all the jets in an event
   Float_t fJetPhiArray[fnMaxJet] = {0};           // phis of all the jets in an event
+  Float_t fJetWTAPhiArray[fnMaxJet] = {0};        // phis of all the jets in an event with WTA axis
   Float_t fJetEtaArray[fnMaxJet] = {0};           // etas of all the jets in an event
+  Float_t fJetWTAEtaArray[fnMaxJet] = {0};        // etas of all the jets in an event with WTA axis
   Float_t fJetRawPtArray[fnMaxJet] = {0};         // raw jet pT for all the jets in an event
   Float_t fJetMaxTrackPtArray[fnMaxJet] = {0};    // maximum track pT inside a jet for all the jets in an event
   Float_t fJetRefPtArray[fnMaxJet] = {0};         // reference generator level pT for a reconstructed jet

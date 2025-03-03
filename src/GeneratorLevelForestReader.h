@@ -37,8 +37,8 @@ public:
   
   // Getters for leaves in jet tree
   Float_t GetJetPt(Int_t iJet) const;         // Getter for jet pT
-  Float_t GetJetPhi(Int_t iJet) const;        // Getter for jet phi
-  Float_t GetJetEta(Int_t iJet) const;        // Getter for jet eta
+  Float_t GetJetPhi(Int_t iJet, Int_t iJetAxis = -1) const;        // Getter for jet phi
+  Float_t GetJetEta(Int_t iJet, Int_t iJetAxis = -1) const;        // Getter for jet eta
   Float_t GetJetRawPt(Int_t iJet) const;      // Getter for jet raw pT (not relevant for generator jets, just return value that passes cuts)
   Float_t GetJetMaxTrackPt(Int_t iJet) const; // Getter for maximum track pT inside a jet (not relevant for generator jets, just return value that passes cuts)
   

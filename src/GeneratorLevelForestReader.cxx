@@ -458,14 +458,16 @@ Float_t GeneratorLevelForestReader::GetJetPt(Int_t iJet) const{
 }
 
 // Getter for jet phi
-Float_t GeneratorLevelForestReader::GetJetPhi(Int_t iJet) const{
-  if(fJetAxis == 0) return fJetPhiArray[iJet];
+Float_t GeneratorLevelForestReader::GetJetPhi(Int_t iJet, Int_t iJetAxis) const{
+  if(iJetAxis < 0 || iJetAxis > 1) iJetAxis = fJetAxis; // Ensure that jet axis index in reasonable
+  if(iJetAxis == 0) return fJetPhiArray[iJet];
   return fJetWTAPhiArray[iJet];
 }
 
 // Getter for jet eta
-Float_t GeneratorLevelForestReader::GetJetEta(Int_t iJet) const{
-  if(fJetAxis == 0) return fJetEtaArray[iJet];
+Float_t GeneratorLevelForestReader::GetJetEta(Int_t iJet, Int_t iJetAxis) const{
+  if(iJetAxis < 0 || iJetAxis > 1) iJetAxis = fJetAxis; // Ensure that jet axis index in reasonable
+  if(iJetAxis == 0) return fJetEtaArray[iJet];
   return fJetWTAEtaArray[iJet];
 }
 
