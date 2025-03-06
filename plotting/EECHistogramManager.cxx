@@ -59,6 +59,10 @@ EECHistogramManager::EECHistogramManager() :
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType] = false;
   }
+
+  for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+    fLoadPairingType[iPairingType] = false;
+  }
   
   // Default binning for centrality
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins + 1; iCentrality++){
@@ -109,6 +113,10 @@ EECHistogramManager::EECHistogramManager() :
     fhJetPhi[iCentrality] = NULL;     // Jet phi histograms
     fhJetEta[iCentrality] = NULL;     // Jet eta histograms
     fhJetEtaPhi[iCentrality] = NULL;  // 2D eta-phi histogram for jets
+
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      fhJetDeltaAxis[iCentrality][iJetPt] = NULL; // DeltaR between WTA and E-scheme axes
+    }
     
     // Track histograms
     for(int iTrackType = 0; iTrackType < knTrackCategories; iTrackType++){
@@ -158,7 +166,9 @@ EECHistogramManager::EECHistogramManager() :
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations+1; iSubevent++){
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = NULL;
+              for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = NULL;
+              } // E-scheme and WTA axis DeltaR loop
             } // Subevent loop
           } // Pairing type loop (same jet/reflected cone)
         } // Track pT bins for energy-energy correlators
@@ -170,7 +180,9 @@ EECHistogramManager::EECHistogramManager() :
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iProcessingLevel = 0; iProcessingLevel < knEnergyEnergyCorrelatorProcessingLevels; iProcessingLevel++){
-              fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = NULL;
+            for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+              fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = NULL;
+            } // E-scheme and WTA axis DeltaR loop
           } // Pairing type loop (same jet/reflected cone)
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
@@ -376,6 +388,10 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType] = in.fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType];
   }
+
+  for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+    fLoadPairingType[iPairingType] = in.fLoadPairingType[iPairingType];
+  }
   
   // Copy binning for centrality
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins + 1; iCentrality++){
@@ -416,6 +432,10 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     fhJetPhi[iCentrality] = in.fhJetPhi[iCentrality];       // Jet phi histograms
     fhJetEta[iCentrality] = in.fhJetEta[iCentrality];       // Jet eta histograms
     fhJetEtaPhi[iCentrality] = in.fhJetEtaPhi[iCentrality]; // 2D eta-phi histogram for jets
+
+    for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+      fhJetDeltaAxis[iCentrality][iJetPt] = in.fhJetDeltaAxis[iCentrality][iJetPt]; // DeltaR between WTA and E-scheme axes
+    }
 
     
     // Track histograms
@@ -466,7 +486,9 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
             for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations+1; iSubevent++){
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = in.fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
+              for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = in.fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
+              } // DeltaR between E-scheme and WTA axes loop
             } // Subevent loop
           } // Pairing type loop
         } // Track pT bins for energy-energy correlators
@@ -478,7 +500,9 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
       for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
         for(int iTrackPt = 0; iTrackPt < kMaxTrackPtBinsEEC; iTrackPt++){
           for(int iProcessingLevel = 0; iProcessingLevel < knEnergyEnergyCorrelatorProcessingLevels; iProcessingLevel++){
-              fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = in.fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
+            for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+              fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = in.fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
+            } // DeltaR between E-scheme and WTA axes loop 
           } // Pairing type loop (same jet/reflected cone)
         } // Track pT bins for energy-energy correlators
       } // Jet pT bins for energy-energy correlators
@@ -587,33 +611,33 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
         // =================================== //
         
         // First find the correct histogram and normalize it to one
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt));
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt));
         
-        normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
+        normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
 
         // Mixed event background subtraction method. In this method, jet cone is placed on the location of the original jet in minimum bias mixed events. This way detector performance stays the same. Particles from original jet cone are paired with particles in the mixed event cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we generate another mixed event, subtract the pairing between two different mixed events, and add back pairings from a single mixed event. This gives the most accurate estimation of the background.
         if(iMethod == 0){
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]);
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
         } 
          
         // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake_fake backgorund is negligible.
         else {
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
+         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
 
         }
         
         // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
 
         // Only subtract background for PbPb
         if(isPbPb){
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground], -1);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground], -1);
         }
         
         // =================================== //
@@ -624,33 +648,33 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
           jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
           // First find the correct histogram and normalize it to one
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt, iJetPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt, iJetPt));
           
-          normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
+          normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
           
           // Mixed event background subtraction method. In this method, jet cone is placed on the location of the original jet in minimum bias mixed events. This way detector performance stays the same. Particles from original jet cone are paired with particles in the mixed event cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we generate another mixed event, subtract the pairing between two different mixed events, and add back pairings from a single mixed event. This gives the most accurate estimation of the background.
           if(iMethod == 0){
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][kMaxJetDeltaAxisBins][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
           } 
          
           // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake_fake backgorund is negligible.
           else {
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
 
           }
           
           // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
 
           // Only subtract background for PbPb
           if(isPbPb){
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground], -1);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground], -1);
           }
           
         } // Jet pT loop
@@ -704,37 +728,37 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
           jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
           // First, clone the unfolded distribution
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
           
           // Next, find the scaling factor for background from integrals of the unfolded, and the non-unfolded distributions
-          scalingFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Integral("width") / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Integral("width");
+          scalingFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Integral("width") / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Integral("width");
           
           // Mixed event background subtraction method. In this method, jet cone is placed on the location of the original jet in minimum bias mixed events. This way detector performance stays the same. Particles from original jet cone are paired with particles in the mixed event cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we generate another mixed event, subtract the pairing between two different mixed events, and add back pairings from a single mixed event. This gives the most accurate estimation of the background.
           if(iMethod == 0){
 
             // Since pairing signal particles with mixed cone particles should give the same results regardless if we use the first or second mixed cones to do the pairing, average these two in order to suppress fluctuations
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalSecondMixedConePair][EECHistograms::knSubeventCombinations]);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(0.5);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalSecondMixedConePair][EECHistograms::knSubeventCombinations]);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(0.5);
 
             // Since mixed cone pairs in two used mixed events both have the same information, get the average of them to suppress fluctuations in the background
-            trueFakeBackground = (TH1D*)fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("trueFakeBackground_%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt));
-            trueFakeBackground->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSecondMixedConePair][EECHistograms::knSubeventCombinations]);
+            trueFakeBackground = (TH1D*)fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("trueFakeBackground_%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt));
+            trueFakeBackground->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSecondMixedConePair][EECHistograms::knSubeventCombinations]);
             trueFakeBackground->Scale(0.5);
 
             // Add the true fake background and subtract the fake fake background
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(trueFakeBackground);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(trueFakeBackground);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair][EECHistograms::knSubeventCombinations],-1);
           }
 
           // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake_fake backgorund is negligible.
           else {
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
           }
 
           // Scale the reflected cone background estimate with the difference in yields before and after unfolding to keep to total background level correct
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(scalingFactor);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(scalingFactor);
 
           // For nominal pp results, do not subtract the background
           // This is done only for PbPb and for systematic uncertainty analysis for pp
@@ -742,10 +766,10 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
 
             // We also need to scale the reflected cone background estimate with the difference in signal to background
             // ratios before and after unfolding in order to not oversubtract the background
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(signalToBackgroundScaleProvider->GetEECSignalToBackgroundUnfoldingScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb, iSystematic));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(signalToBackgroundScaleProvider->GetEECSignalToBackgroundUnfoldingScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb, iSystematic));
           
             // Now that the background is properly normalized, it can be subtracted from the unfolded distribution to get the signal
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding], -1);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal]->Add(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding], -1);
           }
           
         } // Jet pT loop
@@ -782,15 +806,15 @@ void EECHistogramManager::StabilizeBackground(){
             if(!fSystemAndEnergy.Contains("PbPb MC") && iSubevent < EECHistograms::knSubeventCombinations) continue;
 
             // After the summation has been performed, put a properly scaled sum histogram in each jet pT bin as the new background histogram
-            lowIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.008);
-            highIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.39);
+            lowIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.008);
+            highIntegralBin = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->GetXaxis()->FindBin(0.39);
             for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
-              targetIntegral = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width");
+              targetIntegral = fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width");
 
               // Only do the sacling if there is some content in the original histogram
               if(targetIntegral > 0){
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Clone(Form("stabilizedBackground%d%d%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent));
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Scale(targetIntegral / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width"));
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Clone(Form("stabilizedBackground%d%d%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent));
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Scale(targetIntegral / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Integral(lowIntegralBin, highIntegralBin, "width"));
               }
             } // Jet pT loop
           } // Subevent loop
@@ -853,8 +877,8 @@ void EECHistogramManager::CombineMixedConeBackgrounds(EECHistogramManager* anoth
 
             // Combining histograms with this method assumes that both histograms have similar number of events
             // More complicated weighting system is needed if the histograms have different numbers of events.
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Add(anotherManager->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, matchingCentralityBin, matchingJetPtBin, matchingTrackPtBin, iPairingType));
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Scale(0.5);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Add(anotherManager->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, matchingCentralityBin, matchingJetPtBin, matchingTrackPtBin, iPairingType));
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Scale(0.5);
 
           } // Pairing type loop
         } // Jet pT loop
@@ -1039,6 +1063,7 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
  *       Axis 2                 Jet eta
  *       Axis 3               Centrality
  *       Axis 4   Jet flavor (for MC) 1 = Quark, 2 = Gluon
+ *       Axis 5     DeltaR between E-scheme and WTA axes
  *
  */
 void EECHistogramManager::LoadJetHistograms(){
@@ -1047,6 +1072,9 @@ void EECHistogramManager::LoadJetHistograms(){
   int duplicateRemoverCentrality = -1;
   int lowerCentralityBin = 0;
   int higherCentralityBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  std::pair<double,double> jetPtBinBorders;
   THnSparseD* histogramArray;
   
   // Define arrays to help find the histograms
@@ -1060,6 +1088,8 @@ void EECHistogramManager::LoadJetHistograms(){
   histogramArray = (THnSparseD*) fInputFile->Get(fJetHistogramName);
   
   for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
+
+    nAxes = 1;
     
     // Select the bin indices
     lowerCentralityBin = fCentralityBinIndices[iCentralityBin];
@@ -1081,6 +1111,31 @@ void EECHistogramManager::LoadJetHistograms(){
     fhJetPhi[iCentralityBin] = FindHistogram(histogramArray,1,nAxes,axisIndices,lowLimits,highLimits);
     fhJetEta[iCentralityBin] = FindHistogram(histogramArray,2,nAxes,axisIndices,lowLimits,highLimits);
     if(fLoad2DHistograms) fhJetEtaPhi[iCentralityBin] = FindHistogram2D(histogramArray,1,2,nAxes,axisIndices,lowLimits,highLimits);
+
+    // Reset the axis restrictions before loading the jet axis difference histograms
+    for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+      histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+    }
+
+    nAxes = 2;
+   
+    for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+      jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
+      lowerJetPtBin = histogramArray->GetAxis(0)->FindBin(jetPtBinBorders.first);
+      higherJetPtBin = histogramArray->GetAxis(0)->FindBin(jetPtBinBorders.second)+duplicateRemoverCentrality;
+
+      // Select jet pT bins
+      axisIndices[1] = 0; lowLimits[1] = lowerJetPtBin; highLimits[1] = higherJetPtBin;
+
+      // Load the jet axis difference histograms
+      fhJetDeltaAxis[iCentralityBin][iJetPt] = FindHistogram(histogramArray,5,nAxes,axisIndices,lowLimits,highLimits);
+
+    }
+
+    // Reset the axis restrictions after loading the jet axis difference histograms
+    for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+      histogramArray->GetAxis(iAxis)->SetRange(0, 0);
+    }
     
   } // Loop over centrality bins
 }
@@ -1518,15 +1573,16 @@ void EECHistogramManager::LoadMaxParticlePtInJetConeHistograms(){
  *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus/
  *                   energyEnergyCorrelatorPairEfficiencyVariationPlus/energyEnergyCorrelatorPairEfficiencyVariationMinus
  *
- *     Axis index       Content of axis                   Note
- * ----------------------------------------------------------------------
- *       Axis 0              DeltaR
- *       Axis 1              Jet pT
- *       Axis 2           Track pT cut
- *       Axis 3            Centrality
- *       Axis 4           Pairing type           Same jet/reflected cone
- *       Axis 5       Subevent combination        Only relevant for MC
- *       Axis 6        Energy weight index      Only present in new files
+ *     Axis index           Content of axis                          Note
+ * ----------------------------------------------------------------------------------
+ *       Axis 0                  DeltaR
+ *       Axis 1                  Jet pT
+ *       Axis 2               Track pT cut
+ *       Axis 3                Centrality
+ *       Axis 4               Pairing type                  Same jet/reflected cone
+ *       Axis 5           Subevent combination               Only relevant for MC
+ *       Axis 6            Energy weight index             Only present in new files
+ *       Axis 7    DeltaR between E-scheme and WTA axes
  */
 void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   
@@ -1534,6 +1590,9 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
   int axisIndices[6] = {0};
   int lowLimits[6] = {0};
   int highLimits[6] = {0};
+
+  // Variables for JetDeltaAxis bins
+  int nJetDeltaAxisBins = 0;
   
   // Define helper variables
   int duplicateRemover = -1;
@@ -1554,6 +1613,9 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     // For track pT bins, we are looking at all the tracks above the lower threshold
     histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
     higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+
+    // Find the number of DeltaR between E-scheme and WTA axes bins
+    nJetDeltaAxisBins = histogramArray->GetAxis(7)->GetNbins();
 
     // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
     // We need this information in newer files to project the desired energy weight from the THnSparse
@@ -1613,7 +1675,22 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           highLimits[weightRestricted+2] = higherTrackPtBin;
           
           // Read the energy-energy correlator histograms without jet pT restrictions
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3+weightRestricted, axisIndices, lowLimits, highLimits);
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3+weightRestricted, axisIndices, lowLimits, highLimits);
+
+          // Read the same histograms in each DeltaR between E-scheme and WTA axes
+          for(int iJetDeltaAxis = 0; iJetDeltaAxis < nJetDeltaAxisBins; iJetDeltaAxis++){
+
+            // Add restriction for DeltaR between E-scheme and WTA axes axis (7)
+            axisIndices[weightRestricted+3] = 7; 
+            lowLimits[weightRestricted+3] = iJetDeltaAxis+1; 
+            highLimits[weightRestricted+3] = iJetDeltaAxis+1;
+
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+
+          }
+
+          // Remove the restrictions in the DeltaR between E-scheme and WTA axes axis
+          histogramArray->GetAxis(7)->SetRange(0,0);
           
           // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1633,7 +1710,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
               }
               
               // Read the energy-energy correlator histograms
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
               
             } // Subevent loop
 
@@ -1655,7 +1732,23 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             highLimits[weightRestricted+3] = higherJetPtBin;
             
             // Read the energy-energy correlator histograms
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+
+            // Read the same histograms in each DeltaR between E-scheme and WTA axes
+            for(int iJetDeltaAxis = 0; iJetDeltaAxis < nJetDeltaAxisBins; iJetDeltaAxis++){
+
+              // Add restriction for DeltaR between E-scheme and WTA axes axis (7)
+              axisIndices[weightRestricted+4] = 7; 
+              lowLimits[weightRestricted+4] = iJetDeltaAxis+1; 
+              highLimits[weightRestricted+4] = iJetDeltaAxis+1;
+
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 5+weightRestricted, axisIndices, lowLimits, highLimits);
+
+            }
+
+            // Remove the restrictions in the DeltaR between E-scheme and WTA axes axis
+            histogramArray->GetAxis(7)->SetRange(0,0);
+          
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1675,7 +1768,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
                 }
                 
                 // Read the energy-energy correlator histograms
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 5+weightRestricted, axisIndices, lowLimits, highLimits);
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = FindHistogram(histogramArray, 0, 5+weightRestricted, axisIndices, lowLimits, highLimits);
 
               } // Subevent loop
 
@@ -2704,6 +2797,14 @@ void EECHistogramManager::WriteJetHistograms(){
     // Jet eta-phi
     histogramNamer = Form("%sEtaPhi_C%d",fJetHistogramName,iCentralityBin);
     if(fLoad2DHistograms && fhJetEtaPhi[iCentralityBin]) fhJetEtaPhi[iCentralityBin]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+    for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+      // DeltaR difference between E-scheme and WTA jet axes
+      histogramNamer = Form("%sDeltaAxis_C%dJ%d", fJetHistogramName, iCentralityBin, iJetPt);
+      if(fhJetDeltaAxis[iCentralityBin][iJetPt]) fhJetDeltaAxis[iCentralityBin][iJetPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+    }
     
   } // Loop over centrality bins
   
@@ -2992,7 +3093,12 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
           
           // Write histograms without jet pT binning
           histogramNamer = Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
-          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+          for(int iJetDeltaAxis = 0; iJetDeltaAxis < kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+            histogramNamer = Form("%s%s_A%dC%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iJetDeltaAxis, iCentrality, iTrackPt);
+            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+          }
           
           // For PbPb MC, write histograms without jet pT and with subevent type binning
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -3000,7 +3106,7 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
               
               // Write the energy-energy correlator histograms with subevent binning
               histogramNamer = Form("%s%s_C%dT%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iSubevent);
-              if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer.Data(), TObject::kOverwrite);
+              if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer.Data(), TObject::kOverwrite);
               
             } // Subevent type loop
           } // Data is PbPb MC
@@ -3010,7 +3116,12 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
             
             // Write the energy-energy correlator histograms
             histogramNamer = Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
-            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+            if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+            for(int iJetDeltaAxis = 0; iJetDeltaAxis < kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+              histogramNamer = Form("%s%s_A%dC%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iJetDeltaAxis, iCentrality, iTrackPt, iJetPt);
+              if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->Write(histogramNamer.Data(), TObject::kOverwrite);
+            }
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -3018,7 +3129,7 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
                 
                 // Write the energy-energy correlator histograms with subevent binning
                 histogramNamer = Form("%s%s_C%dT%dJ%dS%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, iSubevent);
-                if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer.Data(), TObject::kOverwrite);
+                if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent]->Write(histogramNamer.Data(), TObject::kOverwrite);
                 
               } // Subevent type loop
             } // Data is PbPb MC
@@ -3437,7 +3548,7 @@ void EECHistogramManager::WriteProcessed(const char* fileName, const char* fileO
         for(int iProcessingLevel = 0; iProcessingLevel < kEnergyEnergyCorrelatorUnfolded; iProcessingLevel++){
           
           // Write processed histograms
-          if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
+          if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
           
         } // Loop over different processing levels
         
@@ -3451,7 +3562,7 @@ void EECHistogramManager::WriteProcessed(const char* fileName, const char* fileO
           for(int iProcessingLevel = 0; iProcessingLevel < kEnergyEnergyCorrelatorUnfolded; iProcessingLevel++){
             
             // Write processed histograms
-            if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
+            if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
             
           } // Loop over different processing levels
         } // Loop over jet pT bins
@@ -3534,7 +3645,7 @@ void EECHistogramManager::WriteUnfoldedEnergyEnergyCorrelators(const char* fileN
         for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
             
           // Write unfolded histograms
-          if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Write(nullptr, TObject::kOverwrite);
+          if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Write(nullptr, TObject::kOverwrite);
             
         } // Loop over jet pT bins
       } // Loop over track pT bins
@@ -3596,7 +3707,7 @@ void EECHistogramManager::WriteProcessedAfterUnfolding(const char* fileName, con
           for(int iProcessingLevel = kEnergyEnergyCorrelatorBackgroundAfterUnfolding; iProcessingLevel < knEnergyEnergyCorrelatorProcessingLevels; iProcessingLevel++){
             
             // Write processed histograms
-            if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
+            if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel]) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel]->Write(nullptr, TObject::kOverwrite);
             
           } // Loop over different processing levels
         } // Loop over jet pT bins
@@ -3739,6 +3850,15 @@ void EECHistogramManager::LoadProcessedHistograms(){
     // Jet eta-phi
     histogramNamer = Form("%s/%sEtaPhi_C%d", fJetHistogramName, fJetHistogramName, iCentralityBin);
     if(fLoad2DHistograms) fhJetEtaPhi[iCentralityBin] = (TH2D*) fInputFile->Get(histogramNamer.Data());
+
+    for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+
+      // DeltaR difference between E-scheme and WTA jet axes
+      histogramNamer = Form("%s/%sDeltaAxis_C%dJ%d", fJetHistogramName, fJetHistogramName, iCentralityBin, iJetPt);
+      fhJetDeltaAxis[iCentralityBin][iJetPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+    }
+
   } // Loop over centrality bins
   
   
@@ -3942,6 +4062,9 @@ void EECHistogramManager::LoadProcessedHistograms(){
     
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
 
+      // Only load selected pairing type histograms
+      if(!fLoadPairingType[iPairingType]) continue;
+
       if(preMixingCompatibilityMode){
         folderNamer = Form("%s/", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
       } else {
@@ -3953,7 +4076,12 @@ void EECHistogramManager::LoadProcessedHistograms(){
           
           // Load the histograms without jet pT binning
           histogramNamer = Form("%s%s%s_C%dT%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
-          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+          fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+          for(int iJetDeltaAxis = 0; iJetDeltaAxis < kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+            histogramNamer = Form("%s%s%s_A%dC%dT%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iJetDeltaAxis, iCentrality, iTrackPt);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+          }
           
           // For PbPb MC, load histograms without jet pT and with subevent type binning
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -3965,7 +4093,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
               
               // Load the energy-energy correlator histograms with subevent binning
               histogramNamer = Form("%s%s%s_C%dT%dS%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, subeventIndex);
-              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+              fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
               
             } // Subevent type loop
           } // Data is PbPb MC
@@ -3978,7 +4106,12 @@ void EECHistogramManager::LoadProcessedHistograms(){
             
             // Load the energy-energy correlator histograms
             histogramNamer = Form("%s%s%s_C%dT%dJ%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt);
-            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+            for(int iJetDeltaAxis = 0; iJetDeltaAxis < kMaxJetDeltaAxisBins; iJetDeltaAxis++){
+              histogramNamer = Form("%s%s%s_A%dC%dT%dJ%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iJetDeltaAxis, iCentrality, iTrackPt, iJetPt);
+            fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+            }
             
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -3990,7 +4123,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
                 
                 // Load the energy-energy correlator histograms with subevent binning
                 histogramNamer = Form("%s%s%s_C%dT%dJ%dS%d", folderNamer.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt, iJetPt, subeventIndex);
-                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+                fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
                 
               } // Subevent type loop
             } // Data is PbPb MC
@@ -4014,7 +4147,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
             
             // Load processed energy-energt correlator histograms
             histogramNamer = Form("%sProcessed/%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[iProcessingLevel], iCentrality, iTrackPt, iJetPt);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel] = (TH1D*) fInputFile->Get(histogramNamer.Data());
             
           } // Loop over different processing levels
         } // Loop over jet pT bins
@@ -4028,7 +4161,7 @@ void EECHistogramManager::LoadProcessedHistograms(){
           
           // Load processed energy-energt correlator histograms
           histogramNamer = Form("%sProcessed/%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[iProcessingLevel], iCentrality, iTrackPt);
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][fnJetPtBinsEEC][iTrackPt][iProcessingLevel] = (TH1D*) fInputFile->Get(histogramNamer.Data());
           
         } // Loop over different processing levels
         
@@ -4543,6 +4676,17 @@ void EECHistogramManager::SetTrackPtBinRangeEEC(const int first, const int last)
   BinSanityCheck(fnTrackPtBinsEEC,fFirstLoadedTrackPtBinEEC,fLastLoadedTrackPtBinEEC);
 }
 
+ // Set a flag if you want to load specific pairing types. Giving a index out of range applies this to all pairing types
+void EECHistogramManager::SetLoadedPairingType(const int iPairingType, const bool loadOrNot){
+  if(iPairingType < 0 || iPairingType >= EECHistograms::knPairingTypes){
+    for(int jPairingType = 0; jPairingType < EECHistograms::knPairingTypes; jPairingType++){
+      fLoadPairingType[jPairingType] = loadOrNot;
+    }
+  } else {
+    fLoadPairingType[iPairingType] = loadOrNot;
+  }
+}
+
 // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
 void EECHistogramManager::SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt){
 
@@ -4576,7 +4720,7 @@ void EECHistogramManager::SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfolded
   }
 
   // If we are not out of bounds from the histogram array dimensions, copy the energy-energy correlator histogram to the array
-  fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded] = (TH1D*) unfoldedEnergyEnergyCorrelator->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfolded], iCentrality, iTrackPt, iJetPt));
+  fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded] = (TH1D*) unfoldedEnergyEnergyCorrelator->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfolded], iCentrality, iTrackPt, iJetPt));
 
 }
 
@@ -4867,6 +5011,12 @@ TH2D* EECHistogramManager::GetHistogramJetEtaPhi(int iCentrality) const{
   return fhJetEtaPhi[iCentrality];
 }
 
+// Getter for DeltaR difference histograms between WTA and E-scheme axes
+TH1D* EECHistogramManager::GetHistogramJetDeltaAxis(int iCentrality, int iJetPt) const{
+  if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+  return fhJetDeltaAxis[iCentrality][iJetPt];
+}
+
 // Getters for histograms for tracks
 
 // Getter for track pT histograms
@@ -4931,12 +5081,17 @@ TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetConePtCut(con
 
 // Getter for energy-energy correlator histograms
 TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType, const int iSubevent) const{
-  return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
+  return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
+}
+
+// Getter for energy-energy correlator histograms
+TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType, const int iSubevent) const{
+  return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];
 }
 
 // Getter for processed energy-energy correlator histograms
 TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const{
-  return fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
+  return fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][iProcessingLevel];
 }
 
 // Getter for histograms showing number of jets above 25 GeV within the reflected cone

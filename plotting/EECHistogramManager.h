@@ -61,6 +61,7 @@ public:
   static const int kMaxJetPtBinsEEC = 60;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
+  static const int kMaxJetDeltaAxisBins = 40;    // Maximum number of bins for 
   
 private:
   
@@ -201,6 +202,7 @@ public:
   void SetTrackPtBinRange(const int first, const int last);             // Setter for track pT bin range
   void SetJetPtBinRangeEEC(const int first, const int last);            // Setter for jet pT bin range in energy-energy correlator histograms
   void SetTrackPtBinRangeEEC(const int first, const int last);          // Setter for track pT bin range in energy-energy correlator histograms
+  void SetLoadedPairingType(const int iPairingType, const bool loadOrNot);    // Set a flag if you want to load specific pairing types
   
   // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
   void SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt);
@@ -272,6 +274,7 @@ public:
   TH1D* GetHistogramJetPhi(int iCentrality) const;    // Jet phi histograms
   TH1D* GetHistogramJetEta(int iCentrality) const;    // Jet eta histograms
   TH2D* GetHistogramJetEtaPhi(int iCentrality) const; // 2D eta-phi histogram for jets
+  TH1D* GetHistogramJetDeltaAxis(int iCentrality, int iJetPt) const; // DeltaR between E-scheme and WTA axes
   
   // Getters for histograms for tracks
   TH1D* GetHistogramTrackPt(const int iTrackType, const int iCentrality) const;                      // Track pT histograms
@@ -293,6 +296,7 @@ public:
   
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
 
   // Getters for reflected cone QA histograms
@@ -378,6 +382,7 @@ private:
   bool fLoadTrackParticleMatchingHistograms;               // Load the histograms for track/particle matching study
   int  fJetFlavor;                                         // Select the flavor for loaded jets (1 = Quark, 2 = Gluon)
   double fLoadedWeightExponent;                            // Value for weight exponent in energy-energy correlators that is searched from the files
+  bool fLoadPairingType[EECHistograms::knPairingTypes];    // Set which pairing types are loaded for the energy-energy correlators
   
   // ==============================================
   // ======== Ranges of histograms to load ========
@@ -433,6 +438,7 @@ private:
   TH1D* fhJetPhi[kMaxCentralityBins];     // Jet phi histograms
   TH1D* fhJetEta[kMaxCentralityBins];     // Jet eta histograms
   TH2D* fhJetEtaPhi[kMaxCentralityBins];  // 2D eta-phi histogram for jets
+  TH1D* fhJetDeltaAxis[kMaxCentralityBins][kMaxJetPtBinsEEC]; // DeltaR between WTA and E-scheme axes
 
   // Histograms for tracks
   TH1D* fhTrackPt[knTrackCategories][kMaxCentralityBins];                         // Track pT histograms
@@ -449,8 +455,8 @@ private:
   TH1D* fhMaxParticlePtInJetConePtBin[knMaxParticlePtWithinJetConeTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][knProjectedMaxParticlePtBins+1];
 
   // Histograms for energy-energy correlators
-  TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
-  TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
+  TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxJetDeltaAxisBins+1][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
+  TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxJetDeltaAxisBins+1][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
 
   // Quality assurance histograms for reflected cone
   TH1D* fhNumberOfJetsWithinReflectedCone[kMaxCentralityBins];
