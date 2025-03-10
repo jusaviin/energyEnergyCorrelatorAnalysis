@@ -26,6 +26,7 @@ EECHistograms::EECHistograms() :
   fhPtHatWeighted(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
+  fhLeadingParticleInJet(0),
   fhTrack(0),
   fhTrackUncorrected(0),
   fhParticleDensityAroundJet(0),
@@ -76,6 +77,7 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhPtHatWeighted(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
+  fhLeadingParticleInJet(0),
   fhTrack(0),
   fhTrackUncorrected(0),
   fhParticleDensityAroundJet(0),
@@ -126,6 +128,7 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhPtHatWeighted(in.fhPtHatWeighted),
   fhMultiplicity(in.fhMultiplicity),
   fhInclusiveJet(in.fhInclusiveJet),
+  fhLeadingParticleInJet(in.fhLeadingParticleInJet),
   fhTrack(in.fhTrack),
   fhTrackUncorrected(in.fhTrackUncorrected),
   fhParticleDensityAroundJet(in.fhParticleDensityAroundJet),
@@ -180,6 +183,7 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhPtHatWeighted = in.fhPtHatWeighted;
   fhMultiplicity = in.fhMultiplicity;
   fhInclusiveJet = in.fhInclusiveJet;
+  fhLeadingParticleInJet = in.fhLeadingParticleInJet;
   fhTrack = in.fhTrack;
   fhTrackUncorrected = in.fhTrackUncorrected;
   fhParticleDensityAroundJet = in.fhParticleDensityAroundJet;
@@ -230,6 +234,7 @@ EECHistograms::~EECHistograms(){
   delete fhPtHatWeighted;
   delete fhMultiplicity;
   delete fhInclusiveJet;
+  delete fhLeadingParticleInJet;
   delete fhTrack;
   delete fhTrackUncorrected;
   delete fhParticleDensityAroundJet;
@@ -372,6 +377,12 @@ void EECHistograms::CreateHistograms(){
   const Int_t nPt1TimesPt2Bins = 24;
   const Double_t pt1TimesPt2Bins[nPt1TimesPt2Bins+1] = {4,6,9,12,16,20,25,30,35,40,45,50,60,70,80,90,100,120,140,180,240,400,600,2000,90000};
 
+  // Bins for leading particle pT
+  const Double_t minLeadingPt = 1;
+  const Double_t maxLeadingPt = 500;
+  const Int_t nLeadingPtBins = 18;
+  const Double_t leadingPtBins[nLeadingPtBins+1] = {1,2,3,4,5,6,8,10,12,14,16,18,20,25,30,40,50,100,500};
+
   // Bins for jet pT within the reflected cone
   const Double_t minJetPtReflectedCone = 25;
   const Double_t maxJetPtReflectedCone = 5020;
@@ -467,6 +478,11 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsJet[nAxesJet];
   Double_t lowBinBorderJet[nAxesJet];
   Double_t highBinBorderJet[nAxesJet];
+
+  const Int_t nAxesLeadingParticleJet = 4;
+  Int_t nBinsLeadingParticleJet[nAxesLeadingParticleJet];
+  Double_t lowBinBorderLeadingParticleJet[nAxesLeadingParticleJet];
+  Double_t highBinBorderLeadingParticleJet[nAxesLeadingParticleJet];
   
   const Int_t nAxesTrack = 4;
   Int_t nBinsTrack[nAxesTrack];
@@ -483,7 +499,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   Double_t highBinBorderMaxParticlePtInJet[nAxesMaxParticlePtInJet];
   
-  const Int_t nAxesEnergyEnergyCorrelator = 8;
+  const Int_t nAxesEnergyEnergyCorrelator = 9;
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
@@ -667,6 +683,36 @@ void EECHistograms::CreateHistograms(){
 
   // Set custom centrality bins for histograms
   fhInclusiveJet->SetBinEdges(3,wideCentralityBins);
+
+  // ======== THnSparse for information about leading particle inside jets ========
+  
+  // Axis 0 for the leading particle in jet histogram: jet pT
+  nBinsLeadingParticleJet[0] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderLeadingParticleJet[0] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderLeadingParticleJet[0] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 1 for the leading particle in jet histogram: leading particle pT
+  nBinsLeadingParticleJet[1] = nLeadingPtBins;        // nBins for leading particle pT
+  lowBinBorderLeadingParticleJet[1] = minLeadingPt;   // low bin border for leading particle pT
+  highBinBorderLeadingParticleJet[1] = maxLeadingPt;  // high bin border for leading particle pT
+  
+  // Axis 2 for the leading particle in jet histogram: DeltaR between leading particle and WTA axis
+  nBinsLeadingParticleJet[2] = nBinsDeltaJetXis;         // nBins for DeltaR between leading particle and WTA axis
+  lowBinBorderLeadingParticleJet[2] = minDeltaJetAxis;   // low bin border for DeltaR between leading particle and WTA axis
+  highBinBorderLeadingParticleJet[2] = maxDeltaJetAxis;  // high bin border for DeltaR between leading particle and WTA axis
+
+  // Axis 3 for the leading particle in jet histogram: centrality
+  nBinsLeadingParticleJet[3] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderLeadingParticleJet[3] = minCentrality;  // low bin border for centrality
+  highBinBorderLeadingParticleJet[3] = maxCentrality; // high bin border for centrality
+  
+  // Create the histogram for all jets using the above binning information
+  fhLeadingParticleInJet = new THnSparseF("leadingParticleInJet", "leadingParticleInJet", nAxesLeadingParticleJet, nBinsLeadingParticleJet, lowBinBorderLeadingParticleJet, highBinBorderLeadingParticleJet); fhLeadingParticleInJet->Sumw2();
+
+  // Set custom centrality bins for histograms
+  fhLeadingParticleInJet->SetBinEdges(0,jetPtBinsEEC);              // Jet pT bins
+  fhLeadingParticleInJet->SetBinEdges(1,leadingPtBins);             // Leading particle pT bins
+  fhLeadingParticleInJet->SetBinEdges(3,wideCentralityBins);        // Centrality bins
   
   // ======== THnSparses for tracks and uncorrected tracks ========
   
@@ -811,9 +857,14 @@ void EECHistograms::CreateHistograms(){
   highBinBorderEnergyEnergyCorrelator[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
 
   // Axis 7 for the energy-energy correlator histogram: DeltaR between WTA and E-scheme axes
-  nBinsEnergyEnergyCorrelator[7] = nBinsDeltaJetXis;          // Number of energy weights defined in the card
-  lowBinBorderEnergyEnergyCorrelator[7] = minDeltaJetAxis;    // Index of the first defined energy weight
-  highBinBorderEnergyEnergyCorrelator[7] = maxDeltaJetAxis;   // Index of the last defined energy weight
+  nBinsEnergyEnergyCorrelator[7] = nBinsDeltaJetXis;          // Number of DeltaR between WTA and E-scheme axes bins
+  lowBinBorderEnergyEnergyCorrelator[7] = minDeltaJetAxis;    // Minimum DeltaR between WTA and E-scheme axes
+  highBinBorderEnergyEnergyCorrelator[7] = maxDeltaJetAxis;   // Maximum DeltaR between WTA and E-scheme axes
+
+  // Axis 8 for the energy-energy correlator histogram: Flag if one of the paired particles is a leading particle
+  nBinsEnergyEnergyCorrelator[8] = kLeadingParticleTypes;             // Number of leading particle correlation types
+  lowBinBorderEnergyEnergyCorrelator[8] = -0.5;                       // Index of the first leading particle correlation type
+  highBinBorderEnergyEnergyCorrelator[8] = kLeadingParticleTypes-0.5; // Index of the last leading particle correlation type
 
   
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
@@ -1198,6 +1249,7 @@ void EECHistograms::Write() const{
   fhPtHatWeighted->Write();
   fhMultiplicity->Write();
   fhInclusiveJet->Write();
+  fhLeadingParticleInJet->Write();
   fhTrack->Write();
   fhTrackUncorrected->Write();
   fhParticleDensityAroundJet->Write();

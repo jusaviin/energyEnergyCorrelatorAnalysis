@@ -776,10 +776,11 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t checkForDuplicates;             // Flag for checking duplicate events in the mixing list
   
   // Variables for energy-energy correlators
-  vector<double> selectedTrackPt[4];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackEta[4];    // Track eta relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackPhi[4];    // Track phi relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<int> selectedTrackSubevent[4];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<std::tuple<double,double,double,int>> selectedTrackInformation[4]; // A tuple containing pt, relative eta, relative phi and subevent from each track. Array meaning: (same jet/reflected cone/mixed cone/second mixed cone)
+  //vector<double> selectedTrackPt[4];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
+  //vector<double> relativeTrackEta[4];    // Track eta relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
+  //vector<double> relativeTrackPhi[4];    // Track phi relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
+  //vector<int> selectedTrackSubevent[4];  // Track subevent for tracks selected for energy-energy correlator analysis 
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
@@ -1407,10 +1408,11 @@ void EECAnalyzer::RunAnalysis(){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
           for(int iPairingType = 0; iPairingType < 4; iPairingType++){
-            selectedTrackPt[iPairingType].clear();
-            relativeTrackEta[iPairingType].clear();
-            relativeTrackPhi[iPairingType].clear();
-            selectedTrackSubevent[iPairingType].clear();
+            selectedTrackInformation[iPairingType].clear();
+            //selectedTrackPt[iPairingType].clear();
+            //relativeTrackEta[iPairingType].clear();
+            //relativeTrackPhi[iPairingType].clear();
+            //selectedTrackSubevent[iPairingType].clear();
           }
           
           // Clear the multiplicity arrays
@@ -1441,12 +1443,15 @@ void EECAnalyzer::RunAnalysis(){
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
             if(deltaRTrackJet < fJetRadius){
-              relativeTrackPhi[0].push_back(trackPhi-jetPhi);
-              relativeTrackEta[0].push_back(trackEta-jetEta);
+
+              // Remember necessary information from each track (pT, relative eta, relative phi, subevent)
+              selectedTrackInformation[0].push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, trackSubevent));
+              //relativeTrackPhi[0].push_back(trackPhi-jetPhi);
+              //relativeTrackEta[0].push_back(trackEta-jetEta);
               
               // Also remember track pT and subevent
-              selectedTrackPt[0].push_back(trackPt);
-              selectedTrackSubevent[0].push_back(trackSubevent);
+              //selectedTrackPt[0].push_back(trackPt);
+              //selectedTrackSubevent[0].push_back(trackSubevent);
               
               // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
               if(fFillJetConeHistograms){
@@ -1490,12 +1495,13 @@ void EECAnalyzer::RunAnalysis(){
             if(fDoReflectedCone){
               deltaRTrackJet = GetDeltaR(jetReflectedEta, jetPhi, trackEta, trackPhi);
               if(deltaRTrackJet < fJetRadius){
-                relativeTrackPhi[1].push_back(trackPhi-jetPhi);
-                relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
+                selectedTrackInformation[1].push_back(std::make_tuple(trackPt, trackEta - jetReflectedEta, trackPhi - jetPhi, trackSubevent));
+                //relativeTrackPhi[1].push_back(trackPhi-jetPhi);
+                //relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
-                selectedTrackPt[1].push_back(trackPt);
-                selectedTrackSubevent[1].push_back(trackSubevent);
+                //selectedTrackPt[1].push_back(trackPt);
+                //selectedTrackSubevent[1].push_back(trackSubevent);
                 
                 // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
                 if(fFillJetConeHistograms){
@@ -1695,12 +1701,13 @@ void EECAnalyzer::RunAnalysis(){
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
                 if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[mixedEventFillIndex].push_back(trackPhi-jetPhi);
-                  relativeTrackEta[mixedEventFillIndex].push_back(trackEta-jetEta);
+                  selectedTrackInformation[mixedEventFillIndex].push_back(std::make_tuple(trackPt, trackEta - jetEta, trackPhi - jetPhi, trackSubevent));
+                  //relativeTrackPhi[mixedEventFillIndex].push_back(trackPhi-jetPhi);
+                  //relativeTrackEta[mixedEventFillIndex].push_back(trackEta-jetEta);
 
                   // Also remember track pT and subevent
-                  selectedTrackPt[mixedEventFillIndex].push_back(trackPt);
-                  selectedTrackSubevent[mixedEventFillIndex].push_back(trackSubevent);
+                  //selectedTrackPt[mixedEventFillIndex].push_back(trackPt);
+                  //selectedTrackSubevent[mixedEventFillIndex].push_back(trackSubevent);
                 } // Track is close to a jet
               } // Mixed event track loop
 
@@ -1777,8 +1784,24 @@ void EECAnalyzer::RunAnalysis(){
               }
             }
 
+            // Before filling the energy correlators, sort the track information vectors with pT
+            for(int iPairingType = 0; iPairingType < 4; iPairingType++){
+              std::sort(selectedTrackInformation[iPairingType].begin(), selectedTrackInformation[iPairingType].end(), std::greater<std::tuple<double,double,double,int>>());
+            }
+
+            // Fill the histograms for difference between leading particle and the jet axis
+            if(selectedTrackInformation[0].size() > 0){
+              deltaRTrackJet = TMath::Sqrt(std::get<kRelativePhi>(selectedTrackInformation[0].at(0))*std::get<kRelativePhi>(selectedTrackInformation[0].at(0)) + std::get<kRelativeEta>(selectedTrackInformation[0].at(0))*std::get<kRelativeEta>(selectedTrackInformation[0].at(0)));
+
+              fillerMaxParticlePtInJetCone[0] = jetPt;          // Axis 0: Jet pT
+              fillerMaxParticlePtInJetCone[1] = std::get<kParticlePt>(selectedTrackInformation[0].at(0));  // Axis 1: Leading particle pT
+              fillerMaxParticlePtInJetCone[2] = deltaRTrackJet; // Axis 2: DeltaR between leading particle and jet axis
+              fillerMaxParticlePtInJetCone[3] = centrality;     // Axis 3: centrality
+              fHistograms->fhLeadingParticleInJet->Fill(fillerMaxParticlePtInJetCone,fTotalEventWeight);
+            }
+
             // Then calculate the energy-energy correlator for this jet
-            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt, jetDeltaAxis);
+            CalculateEnergyEnergyCorrelator(selectedTrackInformation, jetPt, jetDeltaAxis);
 
             // After that is done, add the contents from this event to the total coveriance matrix
             // Covariance matrix calculation only for data, not needed in MC
@@ -1891,17 +1914,14 @@ void EECAnalyzer::RunAnalysis(){
 /*
  * Method for calculating the energy-energy correlators for tracks within the jets
  *
- *  const vector<double> selectedTrackPt[4] = pT array for tracks selected for the analysis
- *  const vector<double> relativeTrackEta[4] = relative eta array for tracks selected for the analysis
- *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
- *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
+ *  const vector<std::tuple<double,double,double,int>> selectedTrackInformation[4] = array containing information about selected track pT, relative eta, relative phi and subevent
  *  const double jetPt = pT of the jet the tracks are close to
  *  const double jetDeltaAxis = DeltaR between WTA and E-scheme axes
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt, const double jetDeltaAxis){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<std::tuple<double,double,double,int>> selectedTrackInformation[4], const double jetPt, const double jetDeltaAxis){
   
   // Define a filler for THnSparse
-  Double_t fillerEnergyEnergyCorrelator[8];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerEnergyEnergyCorrelator[9];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
@@ -1959,22 +1979,22 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
     if((iPairingType > EECHistograms::kReflectedConePair) && !fDoMixedCone) continue;
     
     // Find the numbers of tracks for the track loops
-    nTracks1 = selectedTrackPt[firstParticleType[iPairingType]].size();
-    nTracks2 = selectedTrackPt[secondParticleType[iPairingType]].size();
+    nTracks1 = selectedTrackInformation[firstParticleType[iPairingType]].size();
+    nTracks2 = selectedTrackInformation[secondParticleType[iPairingType]].size();
     
     // Loop over all the tracks in the jet cone
     for(Int_t iFirstTrack = 0; iFirstTrack < nTracks1; iFirstTrack++){
       
       // Get the kinematics for the first track
-      trackPt1 = selectedTrackPt[firstParticleType[iPairingType]].at(iFirstTrack);
-      trackPhi1 = relativeTrackPhi[firstParticleType[iPairingType]].at(iFirstTrack);
-      trackEta1 = relativeTrackEta[firstParticleType[iPairingType]].at(iFirstTrack);
-      
+      trackPt1 = std::get<kParticlePt>(selectedTrackInformation[firstParticleType[iPairingType]].at(iFirstTrack));
+      trackPhi1 = std::get<kRelativePhi>(selectedTrackInformation[firstParticleType[iPairingType]].at(iFirstTrack));
+      trackEta1 = std::get<kRelativeEta>(selectedTrackInformation[firstParticleType[iPairingType]].at(iFirstTrack));
+
       // Get the efficiency correction for the first track
       trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(trackPt1, trackEta1, hiBin);
       
       // Find the track subevent (only relevant for simulation)
-      subeventTrack1 = selectedTrackSubevent[firstParticleType[iPairingType]].at(iFirstTrack);
+      subeventTrack1 = std::get<kSubevent>(selectedTrackInformation[firstParticleType[iPairingType]].at(iFirstTrack));
       
       // Find the starting index for the second track. Avoid double counting of pairs if we pair tracks within the same jet cone.
       // To optimize statistics, loop over all tracks when the second track is taken from reflected jet cone.
@@ -1988,15 +2008,15 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       for(Int_t iSecondTrack = startIndex; iSecondTrack < nTracks2; iSecondTrack++){
         
         // Get the kinematics for the second track
-        trackPt2 = selectedTrackPt[secondParticleType[iPairingType]].at(iSecondTrack);
-        trackPhi2 = relativeTrackPhi[secondParticleType[iPairingType]].at(iSecondTrack);
-        trackEta2 = relativeTrackEta[secondParticleType[iPairingType]].at(iSecondTrack);
+        trackPt2 = std::get<kParticlePt>(selectedTrackInformation[secondParticleType[iPairingType]].at(iSecondTrack));
+        trackPhi2 = std::get<kRelativePhi>(selectedTrackInformation[secondParticleType[iPairingType]].at(iSecondTrack));
+        trackEta2 = std::get<kRelativeEta>(selectedTrackInformation[secondParticleType[iPairingType]].at(iSecondTrack));
         
         // Get the efficiency correction for the second track
         trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
         
         // Find the track subevent (only relevant for simulation)
-        subeventTrack2 = selectedTrackSubevent[secondParticleType[iPairingType]].at(iSecondTrack);
+        subeventTrack2 = std::get<kSubevent>(selectedTrackInformation[secondParticleType[iPairingType]].at(iSecondTrack));
         
         // Find the subevent type based on the subevents of the tracks (only relevant for simulation)
         subeventCombination = GetSubeventCombination(subeventTrack1, subeventTrack2);
@@ -2055,6 +2075,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
           fillerEnergyEnergyCorrelator[5] = subeventCombination;       // Axis 5: Subevent combination type
           fillerEnergyEnergyCorrelator[6] = weightIndex;               // Axis 6: Inxed for the current energy-energy correlator weight
           fillerEnergyEnergyCorrelator[7] = jetDeltaAxis;              // Axis 7: DeltaR between WTA and E-scheme axes
+          fillerEnergyEnergyCorrelator[8] = iFirstTrack == 0;          // Axis 8: Flag for leading particle
 
           if(fFillEnergyEnergyCorrelators){
             fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram

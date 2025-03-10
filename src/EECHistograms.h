@@ -24,6 +24,7 @@ public:
   enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, knPairingTypes}; // Pair tracks between different cones
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
   enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations};
+  enum enumLeadingParticleTypes{kNotLeadingParticle, kLeadingParticle, kLeadingParticleTypes};
     
   // Constructors and destructor
   EECHistograms(); // Default constructor
@@ -57,6 +58,7 @@ public:
   TH1F* fhPtHatWeighted;           // Weighted pT hat distribution
   THnSparseF* fhMultiplicity;      // Track multiplicity from all events [multiplicity][centrality]
   THnSparseF* fhInclusiveJet;      // Inclusive jet information. Axes: [jet pT][jet phi][jet eta][cent]
+  THnSparseF* fhLeadingParticleInJet; // Histogram for leading particles within a jet Axes: [jet pT][particle pT][DeltaR]
   THnSparseF* fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent]
   THnSparseF* fhTrackUncorrected;  // Track histogram for uncorrected tracks. Axes: [uc pT][uc phi][uc eta][cent]
   THnSparseF* fhParticleDensityAroundJet;   // Particle density around the studied jets

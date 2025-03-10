@@ -40,6 +40,7 @@ private:
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix
   enum enumTupleDecoder{kTrackPt, kTrackEta, kTrackPhi, kTrackEfficiencyCorrection, kTrackCharge, kMatchIndex}; // Components of the n-tuple in track vector
+  enum enumParticleTupleDecoder{kParticlePt, kRelativeEta, kRelativePhi, kSubevent}; // Component of the n-tuple in small track vector
   enum enumSmallTupleDecoder{kPossibleMatchPtDifference, kPossibleMatchIndex}; // Components of the n-tuple in track vector
   
 public:
@@ -58,7 +59,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt, const double jetDeltaAxis);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<std::tuple<double,double,double,int>> selectedTrackInformation[4], const double jetPt, const double jetDeltaAxis);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
