@@ -712,6 +712,9 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
   Bool_t jetOver120Found = false;   // Flag for finding a jet above 120 GeV from the event
   Double_t jetDeltaAxis = 0;        // DeltaR between WTA and E-scheme axes
+  std::vector<std::pair<double,double>> jetAxisLocations; // Locations of all jet axes in an event
+  Bool_t vetoJet = false;           // Flag for vetoing jet from the analysis
+  Double_t jetDistance;             // Distance between two jets
 
   // Variables for reflected cone QA study
   ForestReader* reflectedConeForestReader; // Forest reader for reflected cone studies
@@ -1186,6 +1189,19 @@ void EECAnalyzer::RunAnalysis(){
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
       Int_t nPotentialReflectedConeJets = fUseRecoJetsForReflectedCone ? fRecoJetReader->GetNJets() : nJets;
 
+      // Before the main jet loop, do a quick jet loop and find locations of all the jets in an event
+      jetAxisLocations.clear();
+      for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
+        jetPt = fJetReader->GetJetRawPt(jetIndex);  // Get the raw pT and do manual correction later
+        jetPhi = fJetReader->GetJetPhi(jetIndex);
+        jetEta = fJetReader->GetJetEta(jetIndex);
+
+        // Remember locations for all jets above 25 GeV for veto purposes
+        if(jetPt > 25){
+          jetAxisLocations.push_back(std::make_pair(jetEta, jetPhi));
+        }
+      } // Jet location search loop
+
       // Jet loop
       for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
         
@@ -1399,12 +1415,24 @@ void EECAnalyzer::RunAnalysis(){
           
           
         } // Check if we want to fill any jet histograms
-        
+
+        // Skip energy-energy correlation for this jet if there is another jet with > 25 GeV in the vicinity
+        vetoJet = false;
+        for(auto aJetLocation : jetAxisLocations){
+          jetDistance = GetDeltaR(jetEta, jetPhi, aJetLocation.first, aJetLocation.second);
+
+          // For very small deltaR we are looking at the same jet. Do not use the jet to veto itself!
+          if(jetDistance < 0.01) continue;
+
+          // Otherwise, if there is another jet within the cone size that is used for the analysis, veto this jet from the analysis
+          if(jetDistance < 0.8) vetoJet = true;
+        }
+
         //************************************************
         //   Do energy-energy correlation within jets
         //************************************************
         
-        if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms){
+        if((fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms) && !vetoJet){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
           for(int iPairingType = 0; iPairingType < 4; iPairingType++){
