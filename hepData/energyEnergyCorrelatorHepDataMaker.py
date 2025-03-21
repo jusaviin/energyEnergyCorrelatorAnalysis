@@ -307,9 +307,9 @@ energyWeightLocation = ["left column", "right column"]
 # Make separate tables from each centrality and track pT bin
 for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
-        table1 = Table("Figure 1-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
+        table1 = Table("Figure 2-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table1.description = "The energy-energy correlator distributions constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions and for pp collisions.".format(trackPtDescription[0], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table1.location = "Data from figure 1, {:s}.".format(jetPtLocation[iJetPt])
+        table1.location = "Data from figure 2, {:s}.".format(jetPtLocation[iJetPt])
         table1.keywords["observables"] = ["Energy-energy correlator"]
         table1.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table1.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
@@ -332,9 +332,9 @@ for iEnergyWeight in range(0, nEnergyWeight):
 # Make separate tables from each centrality and track pT bin
 for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
-        table2 = Table("Figure 2-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
+        table2 = Table("Figure 3-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table2.description = "The energy-energy correlator distributions constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions and for pp collisions.".format(trackPtDescription[1], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table2.location = "Data from figure 2, {:s}.".format(jetPtLocation[iJetPt])
+        table2.location = "Data from figure 3, {:s}.".format(jetPtLocation[iJetPt])
         table2.keywords["observables"] = ["Energy-energy correlator"]
         table2.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table2.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
@@ -360,9 +360,9 @@ nCentrality = 4
 # Make separate tables from each centrality and track pT bin
 for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
-        table3 = Table("Figure 3-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
+        table3 = Table("Figure 4-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table3.description = "The energy-energy correlator PbPb/pp ratios constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions.".format(trackPtDescription[0], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table3.location = "Data from figure 3, {:s}.".format(jetPtLocation[iJetPt])
+        table3.location = "Data from figure 4, {:s}.".format(jetPtLocation[iJetPt])
         table3.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table3.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table3.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
@@ -385,9 +385,9 @@ for iEnergyWeight in range(0, nEnergyWeight):
 # Make separate tables from each centrality and track pT bin
 for iEnergyWeight in range(0, nEnergyWeight):
     for iJetPt in range(0, nJetPt):
-        table4 = Table("Figure 4-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
+        table4 = Table("Figure 5-{:d}".format(1+iJetPt+nJetPt*iEnergyWeight))
         table4.description = "The energy-energy correlator PbPb/pp ratios constructed with {:s} {:s} and {:s}. The results are shown for different centrality bins in PbPb collisions.".format(trackPtDescription[1], energyWeightDescription[iEnergyWeight], jetPtDescription[iJetPt])
-        table4.location = "Data from figure 4, {:s}.".format(jetPtLocation[iJetPt])
+        table4.location = "Data from figure 5, {:s}.".format(jetPtLocation[iJetPt])
         table4.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table4.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
         #table4.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
