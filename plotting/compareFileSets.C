@@ -101,6 +101,11 @@ void compareFileSets(){
       fileName[kPp][0][1] = "data/eschemeAxis/ppData_pfJets_eschemeAxis_nominalEnergyWeight_processed_2025-02-21.root";
       fileName[kPp][1][1] = "data/eschemeAxis/ppData_pfJets_eschemeAxis_energyWeightSquared_processed_2025-02-21.root";
 
+      //fileName[kPp][0][0] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
+      //fileName[kPp][1][0] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
+      //fileName[kPp][0][1] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
+      //fileName[kPp][1][1] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
+
       // Files for PbPb
       fileName[kPbPb][0][0] = "data/eschemeAxis/eecAnalysis_akFlowJet_eschemeAxis_nominalEnergyWeight_mixedConeSubtracted_radius8_processed_2025-02-27.root";
       fileName[kPbPb][1][0] = "data/eschemeAxis/eecAnalysis_akFlowJet_eschemeAxis_energyWeightSquared_mixedConeSubtracted_radius8_processed_2025-02-27.root";
@@ -192,8 +197,8 @@ void compareFileSets(){
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
-  comparedTrackPtBin.push_back(2.0);
-  comparedTrackPtBin.push_back(3.0);
+  //comparedTrackPtBin.push_back(2.0);
+  //comparedTrackPtBin.push_back(3.0);
 
   // For Monte Carlo, a 4% centrality shift is applied
   if(card[kPbPb][0][0]->GetDataType().Contains("MC")){
@@ -211,7 +216,7 @@ void compareFileSets(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels;
 
   TString energyCorrelatorType[EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels+1];
   energyCorrelatorType[EECHistogramManager::kEnergyEnergyCorrelatorNormalized] = "Normalized";
@@ -255,7 +260,7 @@ void compareFileSets(){
 
   bool drawPp = true; // Include pp comparisons for single ratio histograms
   bool drawSingleRatios = true; // Draw the single ratio histograms
-  bool drawDoubleRatios = true; // Draw the double ratio histograms
+  bool drawDoubleRatios = false; // Draw the double ratio histograms
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
