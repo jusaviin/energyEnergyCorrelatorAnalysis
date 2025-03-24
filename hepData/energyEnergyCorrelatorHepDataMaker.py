@@ -106,6 +106,37 @@ reactionLabel = [pbpbReactionLabel, pbpbReactionLabel, pbpbReactionLabel, pbpbRe
 # Read the variables from the histograms
 from hepdata_lib import Variable, Uncertainty
 
+# Function for finding the correct rounding information to a given number
+#
+# Arguments:
+#   myNumber = Number which need determination of significant digits
+#
+# Return: The integer that should be given to the round() function in order to round the number to two significant digits
+#
+def decimalsToRound(myNumber):
+
+    # Transform the number to a string and tokenize it from decimal point
+    tokens = str(myNumber).split(".")
+
+    # If there are more than one number before decimal place, there are enough significant digits before the decimal point that we can cut out everything below
+    if len(tokens[0]) > 1:
+        return 0
+
+    # If there is exactly one non-zero number before decimal point, we need to include one digit after the decimal point
+    if tokens[0] != "0":
+        return 1
+
+    # If the number before the decimal point is zero, count the number of leading zeros after the decimal point
+    counter = 0
+    for i in range(len(tokens[1])):
+        if tokens[1][i] == "0":
+            counter = counter+1
+        else:
+            break;
+
+    # We are rounding to two significant digits, so the amount of numbers to keep after decimal point is two plus the first non-zero location
+    return 2+counter;
+
 # Function for finding x and y-axis variables from input histograms
 #
 # Arguments:
@@ -164,14 +195,14 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
     yAxis = []
 
     # Read the values
-    for i in range(firstCentralityBin,lastCentralityBin):
+    for iCentrality in range(firstCentralityBin,lastCentralityBin):
         myVariable = Variable(yAxisName, is_independent=False, is_binned=False, units="")
-        myVariable.values = valueHistogram[(i-firstCentralityBin)]["y"]
+        myVariable.values = valueHistogram[(iCentrality-firstCentralityBin)]["y"]
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
         myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[jetPtBin])
         myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
         myVariable.add_qualifier("$p_{\\mathrm{T}}^{\\mathrm{ch}}$",trackPtLabel[trackPtBin])
-        myVariable.add_qualifier("Centrality",centralityLabel[i])
+        myVariable.add_qualifier("Centrality",centralityLabel[iCentrality])
 
         # If there are points outside of the analysis range, remove them from the values table:
         for j in range(overRange):
@@ -180,18 +211,20 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
         for j in range(underRange):
             myVariable.values.pop(0)
         
-        yAxis.append(myVariable)
+        #yAxis.append(myVariable)
         
-    # Read the uncertainties
-    for i in range(firstCentralityBin,lastCentralityBin):
+    
+    #for i in range(firstCentralityBin,lastCentralityBin):
+
+        # Read the uncertainties
         statisticalUncertainty = Uncertainty("stat", is_symmetric=True)
-        statisticalUncertainty.values = valueHistogram[(i-firstCentralityBin)]["dy"]
+        statisticalUncertainty.values = valueHistogram[(iCentrality-firstCentralityBin)]["dy"]
 
         correlatedSystematicUncertainty = Uncertainty("corr sys", is_symmetric=True)
-        correlatedSystematicUncertainty.values = correlatedErrorHistogram[(i-firstCentralityBin)]["dy"]
+        correlatedSystematicUncertainty.values = correlatedErrorHistogram[(iCentrality-firstCentralityBin)]["dy"]
 
         uncorrelatedSystematicUncertainty = Uncertainty("uncorr sys", is_symmetric=True)
-        uncorrelatedSystematicUncertainty.values = uncorrelatedErrorHistogram[(i-firstCentralityBin)]["dy"]
+        uncorrelatedSystematicUncertainty.values = uncorrelatedErrorHistogram[(iCentrality-firstCentralityBin)]["dy"]
 
         # If there are points outside of the analysis range, remove them from the values table:
         for j in range(overRange):
@@ -204,9 +237,38 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
             correlatedSystematicUncertainty.values.pop(0)
             uncorrelatedSystematicUncertainty.values.pop(0)
 
-        yAxis[(i-firstCentralityBin)].add_uncertainty(statisticalUncertainty)
-        yAxis[(i-firstCentralityBin)].add_uncertainty(correlatedSystematicUncertainty)
-        yAxis[(i-firstCentralityBin)].add_uncertainty(uncorrelatedSystematicUncertainty)
+        # Before defining the axis round all numbers to specified precision
+        for iBin in range(len(myVariable.values)):
+
+            # Initialize the helper variables for this point
+            roundInputValue = 0
+            currentDecimals = 0
+
+            # First we need to check which uncertainty is the smallest
+            currentDecimals = decimalsToRound(statisticalUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            currentDecimals = decimalsToRound(correlatedSystematicUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            currentDecimals = decimalsToRound(uncorrelatedSystematicUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            # Now that we have the desired precision determined, we can round the numbers accordingly
+            round(myVariable.values[iBin], roundInputValue)
+            round(statisticalUncertainty.values[iBin], roundInputValue)
+            round(correlatedSystematicUncertainty.values[iBin], roundInputValue)
+            round(uncorrelatedSystematicUncertainty.values[iBin], roundInputValue)
+
+
+        # Add the variable with uncertainties to the y-axis list
+        yAxis.append(myVariable)
+        yAxis[(iCentrality-firstCentralityBin)].add_uncertainty(statisticalUncertainty)
+        yAxis[(iCentrality-firstCentralityBin)].add_uncertainty(correlatedSystematicUncertainty)
+        yAxis[(iCentrality-firstCentralityBin)].add_uncertainty(uncorrelatedSystematicUncertainty)
         
     return xAxis, yAxis
 
