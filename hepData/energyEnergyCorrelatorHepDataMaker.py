@@ -232,6 +232,31 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
             correlatedSystematicUncertainty.values.pop(0)
             uncorrelatedSystematicUncertainty.values.pop(0)
 
+        # Before defining the y-axis, round all numbers to specified precision
+        for iBin in range(len(myVariable.values)):
+
+            # Initialize the helper variables for this point
+            roundInputValue = 0
+            currentDecimals = 0
+
+            # First we need to check which uncertainty is the smallest
+            currentDecimals = decimalsToRound(statisticalUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            currentDecimals = decimalsToRound(correlatedSystematicUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            currentDecimals = decimalsToRound(uncorrelatedSystematicUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            # Now that we have the desired precision determined, we can round the numbers accordingly
+            myVariable.values[iBin] = round(myVariable.values[iBin], roundInputValue)
+            statisticalUncertainty.values[iBin] = round(statisticalUncertainty.values[iBin], roundInputValue)
+            correlatedSystematicUncertainty.values[iBin] = round(correlatedSystematicUncertainty.values[iBin], roundInputValue)
+            uncorrelatedSystematicUncertainty.values[iBin] = round(uncorrelatedSystematicUncertainty.values[iBin], roundInputValue)
             
 
         # Add the rounded variables to the y-axis list
@@ -288,14 +313,14 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
     yAxis = []
 
     # Loop is over all jet pT bins and read the variables
-    for i in range(0, len(jetPtLabel)):
+    for iJetPt in range(0, len(jetPtLabel)):
         myVariable = Variable("$\\frac{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 2 \\mathrm{GeV})}{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 1 \\mathrm{GeV})}$", is_independent=False, is_binned=False, units="")
-        myVariable.values = valueHistogram[i]["y"]
+        myVariable.values = valueHistogram[iJetPt]["y"]
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
         myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
         myVariable.add_qualifier("Centrality",centralityLabel[centralityBin])
         myVariable.add_qualifier("$n$",energyWeightLabel[energyWeightBin])
-        myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[i])
+        myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[iJetPt])
 
         # If there are points outside of the analysis range, remove them from the values table:
         for j in range(overRange):
@@ -304,15 +329,11 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
         for j in range(underRange):
             myVariable.values.pop(0)
         
-        yAxis.append(myVariable)
-        
-    # Read the uncertainties
-    for i in range(0, len(jetPtLabel)):
         statisticalUncertainty = Uncertainty("stat", is_symmetric=True)
-        statisticalUncertainty.values = valueHistogram[i]["dy"]
+        statisticalUncertainty.values = valueHistogram[iJetPt]["dy"]
 
         systematicUncertainty = Uncertainty("sys", is_symmetric=True)
-        systematicUncertainty.values = errorHistogram[i]["dy"]
+        systematicUncertainty.values = errorHistogram[iJetPt]["dy"]
 
         # If there are points outside of the analysis range, remove them from the values table:
         for j in range(overRange):
@@ -323,8 +344,31 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
             statisticalUncertainty.values.pop(0)
             systematicUncertainty.values.pop(0)
 
-        yAxis[i].add_uncertainty(statisticalUncertainty)
-        yAxis[i].add_uncertainty(systematicUncertainty)
+         # Before defining the y-axis, round all numbers to specified precision
+        for iBin in range(len(myVariable.values)):
+
+            # Initialize the helper variables for this point
+            roundInputValue = 0
+            currentDecimals = 0
+
+            # First we need to check which uncertainty is the smallest
+            currentDecimals = decimalsToRound(statisticalUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            currentDecimals = decimalsToRound(systematicUncertainty.values[iBin])
+            if currentDecimals > roundInputValue:
+                roundInputValue = currentDecimals
+
+            # Now that we have the desired precision determined, we can round the numbers accordingly
+            myVariable.values[iBin] = round(myVariable.values[iBin], roundInputValue)
+            statisticalUncertainty.values[iBin] = round(statisticalUncertainty.values[iBin], roundInputValue)
+            systematicUncertainty.values[iBin] = round(systematicUncertainty.values[iBin], roundInputValue)
+
+        # Add the rounded variables to the y-axis list
+        yAxis.append(myVariable)
+        yAxis[iJetPt].add_uncertainty(statisticalUncertainty)
+        yAxis[iJetPt].add_uncertainty(systematicUncertainty)
         
     return xAxis, yAxis
 
