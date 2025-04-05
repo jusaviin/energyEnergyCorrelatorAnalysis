@@ -11,9 +11,9 @@ void fullAnalysisClosure(){
 
   // Enumeration for distribution type
   enum enumDistributionType{kMeasured, kTruth, kNDistributionTypes};
-  bool isPbPbData = false;
+  bool isPbPbData = true;
   const int nSplits = isPbPbData ? 2 : 3;
-  const int weightExponent = 2;
+  const int weightExponent = 1;
 
   // Ensure that a reasonable weight exponent is selected
   if(weightExponent < 1 || weightExponent > 2){
@@ -69,9 +69,9 @@ void fullAnalysisClosure(){
   // Uncertainty file. First index is pp file, second PbPb file. The code will automatically select the correct one
   TString uncertaintyFileName[2][2] = {
     // Uncertainty files for pT1*pT2 weight
-    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_noMCnonClosure_2024-02-23.root"},
+    {"systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root"},
     // Uncertainty files for pT1^{2}*pT2^{2} weight. TODO: Update the file names!
-    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_noMCnonClosure_2024-02-23.root"}
+    {"systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root", "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root"}
   };
 
   TFile* inputFile[kNDistributionTypes][nSplits];
@@ -169,7 +169,7 @@ void fullAnalysisClosure(){
   }
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
   TString saveComment = Form("%s_Pythia_UpdatedHerwig", nameAdder[weightExponent-1].Data());   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
@@ -206,8 +206,13 @@ void fullAnalysisClosure(){
     }
   }
 
+
+  cout << "Histograms loaded" << endl;
+
   // Create systematic uncertainty organizer to illustrate the uncertainties on closures
   SystematicUncertaintyOrganizer* uncertaintyOrganizer = new SystematicUncertaintyOrganizer(uncertaintyFile);
+
+  cout << "Systematic unceratiny" << endl;
 
   // Energy-energy correlator histograms
   TH1D* hEnergyEnergyCorrelatorSignal[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][kNDistributionTypes][nSplits]; // Last bin, true signal/extracted signal
@@ -232,6 +237,8 @@ void fullAnalysisClosure(){
       } // Track pT loop
     } // Centrality loop
   } // Energy-energy correlator type loop
+
+  cout << "initialization to MULL" << endl;
   
   // Helper histograms
   TH1D *helperHistogram;
@@ -280,6 +287,8 @@ void fullAnalysisClosure(){
       } // Centrality loop
     } // Split loop
   } // Energy-energy correlator type loop
+
+  cout << "First loop" << endl;
 
   TH1D* backgroundHelper = NULL;
   TH1D* trackPairHelper = NULL;
@@ -330,6 +339,8 @@ void fullAnalysisClosure(){
 
   } // Energy-energy correlator type loop
 
+  cout << "Second loop" << endl;
+
   // Calculate the uncertainty for Monte Carlo non-closure
   TString histogramNamer;
   double averageNonClosure;
@@ -378,6 +389,8 @@ void fullAnalysisClosure(){
       } // Track pT loop
     } // Centrality loop
   } // Energy-energy correlator type loop
+
+  cout << "Drawing" << endl;
 
   // ==========================================================================
   //        Draw the selected energy-energy correlator signal ratios

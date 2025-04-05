@@ -164,7 +164,7 @@ void finalResultPlotter(){
   bool drawBigCanvasDistributions = false;
   bool drawBigCanvasRatios = false;
   bool drawDoubleRatios = false;
-  bool drawDoubleRatioToSingleCanvas = true;
+  bool drawDoubleRatioToSingleCanvas = false;
   bool drawBigCanvasAllDistributions = false; // Draw distributions with all defined weight exponents to the same figure
   bool drawBigCanvasAllRatios = false; // Draw ratios with all defined energy weight exponents to the same figure
   bool drawLetterPaperDistributions = false; // Draw the energy-energy correlator distribution for letter paper format
@@ -174,21 +174,28 @@ void finalResultPlotter(){
   bool drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
   bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
-  bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
+  bool drawSupplementaryEECRatioWeightExponent = true; // Draw PbPb/pp ratios from all weight exponents to the same figure
   bool drawSupplementaryEECShiftIllustration = false; // Draw two pp distributions and one PbPb distribution to the same figure
 
   // Option to hide the shift histogram for shift illustration
   bool hideShiftInIllustration = false; // Hide the shifted pp distribution in the shift illustration
 
   // Save all the drawn histograms from HepData
-  bool saveHepDataFiles = true;
+  bool saveHepDataFiles = false;
   TString hepDataTrackPtString;
 
   // Configuration for supplementary plots
   double supplementaryLegendTextSize = 0.045;
 
-  // Preliminary tag
-  bool addPreliminaryTag = true;
+  // Preliminary/Supplementary tag
+  enum enumTagType{kNoTag, kPreliminaryTag, kSupplementaryTag, knTagTypes};
+  int tagSelection = kSupplementaryTag;
+  const char* tagName[knTagTypes];
+  tagName[kNoTag] = "";
+  tagName[kPreliminaryTag] = "Preliminary";
+  tagName[kSupplementaryTag] = "Supplementary";
+
+  double tagShift[knTagTypes] = {0,0,-0.07};
 
   // Simplified drawing style for physics briefing
   bool physicsBriefingStyle = false;
@@ -228,8 +235,8 @@ void finalResultPlotter(){
   // Save the final plots
   const bool saveFigures = true;
   TString energyWeightString[nWeightExponents] = {"_nominalEnergyWeight", "_energyWeightSquared"};
-  TString saveComment =  "_showAll";
-  TString figureFormat = "png";
+  TString saveComment =  "_supplementaryTag";
+  TString figureFormat = "pdf";
   if(!drawBigCanvasAllRatios && !drawBigCanvasAllDistributions && !drawLetterPaperDistributions && !drawLetterPaperRatios && !drawSupplementaryEECRatioWeightExponent){
     saveComment.Prepend(energyWeightString[weightExponent-1]);
   }
@@ -640,6 +647,7 @@ void finalResultPlotter(){
   double leftMarginAdder, bottomMarginAdder;
   double thisPadScale;
   double firstRowScale;
+  double cmsPosition;
 
   // Draw individual plots with all centralities mixed together in a single figure
   if(drawIndividualPlotsAllCentralities){
@@ -1271,12 +1279,12 @@ void finalResultPlotter(){
       mainTitle->SetTextFont(62);
       mainTitle->SetTextSize(0.08);
 
-      if(addPreliminaryTag){
+      if(tagSelection){
         mainTitle->DrawLatexNDC(0.29, 0.93, "CMS");
 
         mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.05);
-        mainTitle->DrawLatexNDC(0.27, 0.88, "Preliminary");
+        mainTitle->DrawLatexNDC(0.27, 0.88, tagName[tagSelection]);
       } else {
         mainTitle->DrawLatexNDC(0.3, 0.9, "CMS");
       }
@@ -1548,13 +1556,13 @@ void finalResultPlotter(){
 
       mainTitle->SetTextFont(62);
 
-      if(addPreliminaryTag){
+      if(tagSelection){
         mainTitle->SetTextSize(0.05);
         mainTitle->DrawLatexNDC(0.08, 0.945, "CMS");
 
         mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.035);
-        mainTitle->DrawLatexNDC(0.06, 0.91, "Preliminary");
+        mainTitle->DrawLatexNDC(0.06, 0.91, tagName[tagSelection]);
       } else {
         mainTitle->SetTextSize(0.065);
         mainTitle->DrawLatexNDC(0.08, 0.93, "CMS");
@@ -1777,13 +1785,13 @@ void finalResultPlotter(){
 
       mainTitle->SetTextFont(62);
 
-      if(addPreliminaryTag){
+      if(tagSelection){
         mainTitle->SetTextSize(0.05);
         mainTitle->DrawLatexNDC(0.08, 0.945, "CMS");
 
         mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.035);
-        mainTitle->DrawLatexNDC(0.06, 0.91, "Preliminary");
+        mainTitle->DrawLatexNDC(0.06, 0.91, tagName[tagSelection]);
       } else {
         mainTitle->SetTextSize(0.065);
         mainTitle->DrawLatexNDC(0.08, 0.93, "CMS");
@@ -2292,12 +2300,12 @@ void finalResultPlotter(){
       mainTitle->SetTextFont(62);
       mainTitle->SetTextSize(0.06);
 
-      if(addPreliminaryTag){
-        mainTitle->DrawLatexNDC(0.61, 0.85, "CMS");
+      if(tagSelection){
+        mainTitle->DrawLatexNDC(0.61+tagShift[tagSelection], 0.85, "CMS");
 
         mainTitle->SetTextFont(52);
         mainTitle->SetTextSize(0.045);
-        mainTitle->DrawLatexNDC(0.745, 0.85, "Preliminary");
+        mainTitle->DrawLatexNDC(0.745+tagShift[tagSelection], 0.85, tagName[tagSelection]);
       } else {
         mainTitle->DrawLatexNDC(0.78, 0.85, "CMS");
       }
@@ -2417,12 +2425,12 @@ void finalResultPlotter(){
         mainTitle->SetTextFont(62);
         mainTitle->SetTextSize(0.06);
 
-        if(addPreliminaryTag){
-          mainTitle->DrawLatexNDC(0.61, 0.85, "CMS");
+        if(tagSelection){
+          mainTitle->DrawLatexNDC(0.61+tagShift[tagSelection], 0.85, "CMS");
 
           mainTitle->SetTextFont(52);
           mainTitle->SetTextSize(0.045);
-          mainTitle->DrawLatexNDC(0.745, 0.85, "Preliminary");
+          mainTitle->DrawLatexNDC(0.745+tagShift[tagSelection], 0.85, tagName[tagSelection]);
         } else {
           mainTitle->DrawLatexNDC(0.78, 0.85, "CMS");
         }
@@ -2723,13 +2731,13 @@ void finalResultPlotter(){
             mainTitle->DrawLatexNDC(0.185, 0.55, "CMS");
           }
 
-          if(addPreliminaryTag){
+          if(tagSelection){
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.045);
             if(physicsBriefingStyle){
-              mainTitle->DrawLatexNDC(0.315, 0.85, "Preliminary");
+              mainTitle->DrawLatexNDC(0.315, 0.85, tagName[tagSelection]);
             } else {
-              mainTitle->DrawLatexNDC(0.315, 0.55, "Preliminary");
+              mainTitle->DrawLatexNDC(0.315, 0.55, tagName[tagSelection]);
             }
           }
 
@@ -2911,14 +2919,16 @@ void finalResultPlotter(){
           }
 
           // Add some interesting information to the plot
+          cmsPosition = (tagSelection == kSupplementaryTag) ? 0.22 : 0.2;
           mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(0.06);
-          mainTitle->DrawLatexNDC(0.2, 0.86, "CMS");
 
-          if(addPreliminaryTag){
+          mainTitle->DrawLatexNDC(cmsPosition, 0.86, "CMS");
+
+          if(tagSelection){
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.045);
-            mainTitle->DrawLatexNDC(0.31, 0.86, "Preliminary");
+            mainTitle->DrawLatexNDC(0.4 - tagSelection*0.09, 0.92 - tagSelection*0.06, tagName[tagSelection]);
           }
 
           mainTitle->SetTextFont(42);
@@ -3060,14 +3070,20 @@ void finalResultPlotter(){
           oneLine->Draw();
 
           // Add some interesting information to the plot
+          cmsPosition = (tagSelection == kSupplementaryTag) ? 0.22 : 0.2;
+          if(iTrackPt > 1) cmsPosition = 0.2;
           mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(0.06);
-          mainTitle->DrawLatexNDC(0.2, 0.86, "CMS");
+          mainTitle->DrawLatexNDC(cmsPosition, 0.86, "CMS");
 
-          if(addPreliminaryTag){
+          if(tagSelection){
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.045);
-            mainTitle->DrawLatexNDC(0.31, 0.86, "Preliminary");
+            if(iTrackPt > 1){
+              mainTitle->DrawLatexNDC(0.31, 0.86, tagName[tagSelection]);
+            } else {
+              mainTitle->DrawLatexNDC(0.4 - tagSelection*0.09, 0.915 - tagSelection*0.055, tagName[tagSelection]);
+            }
           }
 
           mainTitle->SetTextFont(42);
@@ -3077,10 +3093,13 @@ void finalResultPlotter(){
           mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(supplementaryLegendTextSize);
 
-          mainTitle->DrawLatexNDC(0.53, 0.86, jetPtString.Data());
-          mainTitle->DrawLatexNDC(0.657, 0.79, "anti-k_{T} R = 0.4");
-          mainTitle->DrawLatexNDC(0.735, 0.72, "|#eta_{jet}| < 1.6");
-          mainTitle->DrawLatexNDC(0.701, 0.65, trackPtString.Data());
+          cmsPosition = 0;
+          if(iTrackPt > 1) cmsPosition = tagShift[tagSelection];
+
+          mainTitle->DrawLatexNDC(0.53 - cmsPosition, 0.86, jetPtString.Data());
+          mainTitle->DrawLatexNDC(0.657 - cmsPosition, 0.79, "anti-k_{T} R = 0.4");
+          mainTitle->DrawLatexNDC(0.735 - cmsPosition, 0.72, "|#eta_{jet}| < 1.6");
+          mainTitle->DrawLatexNDC(0.701 - cmsPosition, 0.65, trackPtString.Data());
 
           mainTitle->DrawLatexNDC(0.22, 0.38, Form("#frac{%s}{pp}", centralityString.Data()));
 
@@ -3088,12 +3107,12 @@ void finalResultPlotter(){
           /*mainTitle->SetTextFont(62);
           mainTitle->SetTextSize(0.08);
 
-          if(addPreliminaryTag){
+          if(tagSelection){
             mainTitle->DrawLatexNDC(0.065, 0.93, "CMS");
 
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.05);
-            mainTitle->DrawLatexNDC(0.035, 0.88, "Preliminary");
+            mainTitle->DrawLatexNDC(0.035, 0.88, tagName[tagSelection]);
           } else {
             mainTitle->DrawLatexNDC(0.02, 0.89, "CMS");
           }
@@ -3101,7 +3120,7 @@ void finalResultPlotter(){
           mainTitle->SetTextFont(42);
           mainTitle->SetTextSize(0.055);
 
-          if(addPreliminaryTag){
+          if(tagSelection){
             mainTitle->DrawLatexNDC(0.33, 0.95, "1.70 nb^{-1} PbPb (5.02 TeV)");
             mainTitle->DrawLatexNDC(0.33, 0.88, "302 pb^{-1} pp (5.02 TeV)");
           } else {
@@ -3285,10 +3304,10 @@ void finalResultPlotter(){
           mainTitle->SetTextSize(0.06);
           mainTitle->DrawLatexNDC(0.185, 0.85, "CMS");
 
-          if(addPreliminaryTag){
+          if(tagSelection){
             mainTitle->SetTextFont(52);
             mainTitle->SetTextSize(0.045);
-            mainTitle->DrawLatexNDC(0.315, 0.85, "Preliminary");
+            mainTitle->DrawLatexNDC(0.315, 0.85, tagName[tagSelection]);
           }
 
           mainTitle->SetTextFont(42);
