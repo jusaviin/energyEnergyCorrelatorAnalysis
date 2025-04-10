@@ -171,10 +171,10 @@ void finalResultPlotter(){
   bool drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
 
   // Supplementary plots
-  bool drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
+  bool drawSupplementaryEECJetPt = true; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
   bool drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
   bool drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
-  bool drawSupplementaryEECRatioWeightExponent = true; // Draw PbPb/pp ratios from all weight exponents to the same figure
+  bool drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
   bool drawSupplementaryEECShiftIllustration = false; // Draw two pp distributions and one PbPb distribution to the same figure
 
   // Option to hide the shift histogram for shift illustration
