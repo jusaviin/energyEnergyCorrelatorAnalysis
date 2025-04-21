@@ -9,6 +9,7 @@
 // Function definitions. Implementations after the main macro.
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs, const int ignoreIndex);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
+TH1D* findStandardDeviation(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iCentrality, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
@@ -41,6 +42,10 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     return;
   }
 
+  TString weightExponentString[2];
+  weightExponentString[0] = "nominalEnergyWeight";
+  weightExponentString[1] = "energyWeightSquared";
+
   // For tracking efficiencies and selections, we do not have the same amount of mixed events available as for default results.
   // In order to avoid folding different mixing statistics into systematic uncertainties, in these cases for the final
   // uncertainty file we can read directly the relative uncertainty determined from a case where the backgrounds are identical.
@@ -61,62 +66,62 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   // Results unfolded with a response matrix smeared with jet energy resolution
   TString jetEnergyResolutionSmearDownFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearDown_processed_2024-05-28.root"};
   TString jetEnergyResolutionSmearUpFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithUncertaintySmearUp_processed_2024-05-28.root"};
+  TString jetEnergyResolutionFileName[2];
+  jetEnergyResolutionFileName[0] = jetEnergyResolutionSmearDownFileName[weightExponent-1];
+  jetEnergyResolutionFileName[1] = jetEnergyResolutionSmearUpFileName[weightExponent-1];
   TFile* jetEnergyResolutionFile[2];
-  jetEnergyResolutionFile[0] = TFile::Open(jetEnergyResolutionSmearDownFileName[weightExponent-1]);
-  jetEnergyResolutionFile[1] = TFile::Open(jetEnergyResolutionSmearUpFileName[weightExponent-1]);
   EECCard* jetEnergyResolutionCard[2];
   EECHistogramManager* jetEnergyResolutionHistogramManager[2];
   
   // Results unfolded with a response matrix smeared with jet energy scale
   TString jetEnergyScaleMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithMinusJetEnergyScale_processed_2024-05-28.root"};
   TString jetEnergyScalePlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithPlusJetEnergyScale_processed_2024-05-28.root"};
+  TString jetEnergyScaleFileName[2];
+  jetEnergyScaleFileName[0] = jetEnergyScaleMinusFileName[weightExponent-1];
+  jetEnergyScaleFileName[1] = jetEnergyScalePlusFileName[weightExponent-1];
   TFile* jetEnergyScaleFile[2];
-  jetEnergyScaleFile[0] = TFile::Open(jetEnergyScaleMinusFileName[weightExponent-1]);
-  jetEnergyScaleFile[1] = TFile::Open(jetEnergyScalePlusFileName[weightExponent-1]);
   EECCard* jetEnergyScaleCard[2];
   EECHistogramManager* jetEnergyScaleHistogramManager[2];
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
   TString jetPtPriorFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithModifiedPrior_processed_2024-05-28.root"};
-  TFile* jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
+  TFile* jetPtPriorFile;
   EECCard* jetPtPriorCard;
   EECHistogramManager* jetPtPriorHistogramManager;
 
   // Results unfolded with a different number of iterations compared to nominal results
   TString unfoldingIterationsMinusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith3Iterations_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith3Iterations_processed_2024-05-28.root"};
   TString unfoldingIterationsPlusFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith5Iterations_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith5Iterations_processed_2024-05-28.root"};
+  TString unfoldingIterationsFileName[2];
+  unfoldingIterationsFileName[0] = unfoldingIterationsMinusFileName[weightExponent-1];
+  unfoldingIterationsFileName[1] = unfoldingIterationsPlusFileName[weightExponent-1];
   TFile* unfoldingIterationsFile[2];
-  unfoldingIterationsFile[0] = TFile::Open(unfoldingIterationsMinusFileName[weightExponent-1]);
-  unfoldingIterationsFile[1] = TFile::Open(unfoldingIterationsPlusFileName[weightExponent-1]);
   EECCard* unfoldingIterationsCard[2];
   EECHistogramManager* unfoldingIterationsHistogramManager[2];
-  for(int iUnfoldingIterationsFile = 0; iUnfoldingIterationsFile < 2; iUnfoldingIterationsFile++){
-    unfoldingIterationsCard[iUnfoldingIterationsFile] = new EECCard(unfoldingIterationsFile[iUnfoldingIterationsFile]);
-    unfoldingIterationsHistogramManager[iUnfoldingIterationsFile] = new EECHistogramManager(unfoldingIterationsFile[iUnfoldingIterationsFile], unfoldingIterationsCard[iUnfoldingIterationsFile]);
-    loadRelevantHistograms(unfoldingIterationsHistogramManager[iUnfoldingIterationsFile]);
-  }
 
   // Results obtained with reflected cone background subtraction method
   TString reflectedConeFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root"};
-  TFile* backgroundSubtractionFile = TFile::Open(reflectedConeFileName[weightExponent-1]);
+  TFile* backgroundSubtractionFile;
   EECCard* backgroundSubtractionCard;
   EECHistogramManager* backgroundSubtractionHistogramManager;
 
   // Results with varied signal-to-background ratios after unfolding
   TString signalToBackgroundRatioLowScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_lowSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root"};
   TString signalToBackgroundRatioHighScaleFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWithNominalSmear_highSignalToBackgroundScaleEstimateAfterUnfolding_processed_2024-05-28.root"};
+  TString signalToBackgroundRatioFileName[2];
+  signalToBackgroundRatioFileName[0] = signalToBackgroundRatioLowScaleFileName[weightExponent-1];
+  signalToBackgroundRatioFileName[1] = signalToBackgroundRatioHighScaleFileName[weightExponent-1];
   TFile* signalToBackgroundRatioFile[2];
-  signalToBackgroundRatioFile[0] = TFile::Open(signalToBackgroundRatioLowScaleFileName[weightExponent-1]);
-  signalToBackgroundRatioFile[1] = TFile::Open(signalToBackgroundRatioHighScaleFileName[weightExponent-1]);
   EECCard* signalToBackgroundRatioCard[2];
   EECHistogramManager* signalToBackgroundRatioHistogramManager[2];
 
   // Result with different track selections
   TString looseTrackSelectionFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_looseTrackCuts_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_looseTrackCuts_processed_2024-04-17.root"};
   TString tightTrackSelectionFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_tightTrackCuts_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_tightTrackCuts_processed_2024-04-17.root"};
+  TString trackSelectionFileName[2];
+  trackSelectionFileName[0] = looseTrackSelectionFileName[weightExponent-1];
+  trackSelectionFileName[1] = tightTrackSelectionFileName[weightExponent-1];
   TFile* trackSelectionFile[2];
-  trackSelectionFile[0] = TFile::Open(looseTrackSelectionFileName[weightExponent-1]);
-  trackSelectionFile[1] = TFile::Open(tightTrackSelectionFileName[weightExponent-1]);
   EECCard* trackSelectionCard[2];
   EECHistogramManager* trackSelectionHistogramManager[2];
 
@@ -129,18 +134,29 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   // Results with varied single and pair track efficiency
   TString trackEfficiencyFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_trackSystematics_processed_2024-04-17.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_trackSystematics_processed_2024-04-17.root"};
-  TFile* trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
+  TFile* trackEfficiencyFile;
   EECCard* trackEfficiencyCard;
   EECHistogramManager* trackEfficiencyHistogramManager;
 
   // Results where the jet pT response matrix is determined from 2% or 6% shifted simulation instead of nominal 4%
   TString centralityShift2pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith2pCentShift_processed_2024-05-28.root"};
   TString centralityShift6pFileName[2] = {"data/eecAnalysis_akFlowJet_nominalEnergyWeight_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-05-28.root", "data/eecAnalysis_akFlowJet_energyWeightSquared_mixedConeBackground_unfoldingWith6pCentShift_processed_2024-05-28.root"};
+  TString centralityShiftFileName[2];
+  centralityShiftFileName[0] = centralityShift2pFileName[weightExponent-1];
+  centralityShiftFileName[1] = centralityShift6pFileName[weightExponent-1];
   TFile* centralityShiftFile[2];
-  centralityShiftFile[0] = TFile::Open(centralityShift2pFileName[weightExponent-1]);
-  centralityShiftFile[1] = TFile::Open(centralityShift6pFileName[weightExponent-1]);
   EECCard* centralityShiftCard[2];
   EECHistogramManager* centralityShiftHistogramManager[2];
+
+  // Results where the unfolding has been done with randomized response matrices to evaluate MC statistics uncertainty
+  const int nMCStatisticsRandomizations = 50;
+  TString mcStatisticsFileName[nMCStatisticsRandomizations];
+  for(int iVariation = 0; iVariation < nMCStatisticsRandomizations; iVariation++){
+    mcStatisticsFileName[iVariation] = Form("data/mcStatisticsRandomization/eecAnalysis_akFlowJet_%s_combinedBackground_mcStatisticsUncertaintyRandom%d_processed_2025-04-16.root", weightExponentString[weightExponent-1].Data(), iVariation+1);
+  }
+  TFile* mcStatisticsFile[nMCStatisticsRandomizations];
+  EECCard* mcStatisticsCard[nMCStatisticsRandomizations];
+  EECHistogramManager* mcStatisticsHistogramManager[nMCStatisticsRandomizations];
 
   // File containing relative uncertainties resulting from Monte Carlo non-closure
   TString monteCarloNonClosureFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_PbPb_nominalEnergyWeight_2024-02-23.root", "systematicUncertainties/monteCarloNonClosureRelative_PbPb_energyWeightSquared_2024-02-23.root"};
@@ -184,7 +200,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_combinedMxedConeBackground_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_PbPb%s_combinedMxedConeBackground_includeMCstats_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   //TString outputFileName = Form("systematicUncertainties/lul_PbPb%s_dummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
@@ -199,6 +215,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   // SystematicUncertaintyOrganizer::kSingleTrackEfficiency
   // SystematicUncertaintyOrganizer::kTrackPairEfficiency
   // SystematicUncertaintyOrganizer::kCentralityShift
+  // SystematicUncertaintyOrganizer::kMonteCarloStatistics
   // SystematicUncertaintyOrganizer::kMonteCarloNonClosure
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
   bool plotExample[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -227,6 +244,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* trackPairEfficiencyUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* centralityShiftUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][2];
+  TH1D* monteCarloStatisticsUncertaintyCorrelators[nCentralityBins][nJetPtBinsEEC][nTrackPtBinsEEC][nMCStatisticsRandomizations];
   TH1D* twoGeVRelativeHistogram;
   TH1D* currentRelativeHistogram;
 
@@ -250,6 +268,9 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
           trackPairEfficiencyUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
           centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
         }
+        for(int iFile = 0; iFile < nMCStatisticsRandomizations; iFile++){
+          monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = NULL;
+        }
         for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++){
           energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][iUncertainty] = NULL;
         }
@@ -260,6 +281,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   // Load histograms only from files which are not skipped
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kJetEnergyResolution]){
     for(int iJetEnergyResolutionFile = 0; iJetEnergyResolutionFile < 2; iJetEnergyResolutionFile++){
+      jetEnergyResolutionFile[iJetEnergyResolutionFile] = TFile::Open(jetEnergyResolutionFileName[iJetEnergyResolutionFile]);
       jetEnergyResolutionCard[iJetEnergyResolutionFile] = new EECCard(jetEnergyResolutionFile[iJetEnergyResolutionFile]);
       jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile] = new EECHistogramManager(jetEnergyResolutionFile[iJetEnergyResolutionFile], jetEnergyResolutionCard[iJetEnergyResolutionFile]);
       loadRelevantHistograms(jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile]);
@@ -268,19 +290,31 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kJetEnergyScale]){
     for(int iJetEnergyScaleFile = 0; iJetEnergyScaleFile < 2; iJetEnergyScaleFile++){
+      jetEnergyScaleFile[iJetEnergyScaleFile] = TFile::Open(jetEnergyScaleFileName[iJetEnergyScaleFile]);
       jetEnergyScaleCard[iJetEnergyScaleFile] = new EECCard(jetEnergyScaleFile[iJetEnergyScaleFile]);
       jetEnergyScaleHistogramManager[iJetEnergyScaleFile] = new EECHistogramManager(jetEnergyScaleFile[iJetEnergyScaleFile], jetEnergyScaleCard[iJetEnergyScaleFile]);
       loadRelevantHistograms(jetEnergyScaleHistogramManager[iJetEnergyScaleFile]);
     }
   }
 
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kUnfoldingIterations]){
+    for(int iUnfoldingIterationsFile = 0; iUnfoldingIterationsFile < 2; iUnfoldingIterationsFile++){
+      unfoldingIterationsFile[iUnfoldingIterationsFile] = TFile::Open(unfoldingIterationsFileName[iUnfoldingIterationsFile]);
+      unfoldingIterationsCard[iUnfoldingIterationsFile] = new EECCard(unfoldingIterationsFile[iUnfoldingIterationsFile]);
+      unfoldingIterationsHistogramManager[iUnfoldingIterationsFile] = new EECHistogramManager(unfoldingIterationsFile[iUnfoldingIterationsFile], unfoldingIterationsCard[iUnfoldingIterationsFile]);
+      loadRelevantHistograms(unfoldingIterationsHistogramManager[iUnfoldingIterationsFile]);
+    }
+  }
+
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kUnfoldingTruth]){
+    jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
     jetPtPriorCard = new EECCard(jetPtPriorFile);
     jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
     loadRelevantHistograms(jetPtPriorHistogramManager);
   }
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kBackgroundSubtraction]){
+    backgroundSubtractionFile = TFile::Open(reflectedConeFileName[weightExponent-1]);
     backgroundSubtractionCard = new EECCard(backgroundSubtractionFile);
     backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
     loadRelevantHistograms(backgroundSubtractionHistogramManager);
@@ -288,6 +322,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSignalToBackgroundRatio]){
     for(int iSignalToBackgroundRatioFile = 0; iSignalToBackgroundRatioFile < 2; iSignalToBackgroundRatioFile++){
+      signalToBackgroundRatioFile[iSignalToBackgroundRatioFile] = TFile::Open(signalToBackgroundRatioFileName[iSignalToBackgroundRatioFile]);
       signalToBackgroundRatioCard[iSignalToBackgroundRatioFile] = new EECCard(signalToBackgroundRatioFile[iSignalToBackgroundRatioFile]);
       signalToBackgroundRatioHistogramManager[iSignalToBackgroundRatioFile] = new EECHistogramManager(signalToBackgroundRatioFile[iSignalToBackgroundRatioFile], signalToBackgroundRatioCard[iSignalToBackgroundRatioFile]);
       loadRelevantHistograms(signalToBackgroundRatioHistogramManager[iSignalToBackgroundRatioFile]);
@@ -296,6 +331,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackSelection]){
     for(int iTrackSelectionFile = 0; iTrackSelectionFile < 2; iTrackSelectionFile++){
+      trackSelectionFile[iTrackSelectionFile] = TFile::Open(trackSelectionFileName[iTrackSelectionFile]);
       trackSelectionCard[iTrackSelectionFile] = new EECCard(trackSelectionFile[iTrackSelectionFile]);
       trackSelectionHistogramManager[iTrackSelectionFile] = new EECHistogramManager(trackSelectionFile[iTrackSelectionFile], trackSelectionCard[iTrackSelectionFile]);
       loadRelevantHistograms(trackSelectionHistogramManager[iTrackSelectionFile]);
@@ -303,6 +339,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
   }
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kSingleTrackEfficiency] || !skipUncertaintySource[SystematicUncertaintyOrganizer::kTrackPairEfficiency]){
+    trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
     trackEfficiencyCard = new EECCard(trackEfficiencyFile);
     trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
     loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
@@ -310,9 +347,19 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
 
   if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kCentralityShift]){
     for(int iCentralityShiftFile = 0; iCentralityShiftFile < 2; iCentralityShiftFile++){
+      centralityShiftFile[iCentralityShiftFile] = TFile::Open(centralityShiftFileName[iCentralityShiftFile]);
       centralityShiftCard[iCentralityShiftFile] = new EECCard(centralityShiftFile[iCentralityShiftFile]);
       centralityShiftHistogramManager[iCentralityShiftFile] = new EECHistogramManager(centralityShiftFile[iCentralityShiftFile], centralityShiftCard[iCentralityShiftFile]);
       loadRelevantHistograms(centralityShiftHistogramManager[iCentralityShiftFile]);
+    }
+  }
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics]){
+    for(int iMonteCarloStatisticsFile = 0; iMonteCarloStatisticsFile < nMCStatisticsRandomizations; iMonteCarloStatisticsFile++){
+      mcStatisticsFile[iMonteCarloStatisticsFile] = TFile::Open(mcStatisticsFileName[iMonteCarloStatisticsFile]);
+      mcStatisticsCard[iMonteCarloStatisticsFile] = new EECCard(mcStatisticsFile[iMonteCarloStatisticsFile]);
+      mcStatisticsHistogramManager[iMonteCarloStatisticsFile] = new EECHistogramManager(mcStatisticsFile[iMonteCarloStatisticsFile], mcStatisticsCard[iMonteCarloStatisticsFile]);
+      loadRelevantHistograms(mcStatisticsHistogramManager[iMonteCarloStatisticsFile]);
     }
   }
 
@@ -494,7 +541,20 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
             centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / centralityShiftUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
           }
 
-        }
+        } // Loop over two file variations
+
+        // Read the Monte Carlo statistics uncertainty histograms
+        if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics]){
+          for(int iFile = 0; iFile < nMCStatisticsRandomizations; iFile++){
+            iCentralityMatched = mcStatisticsCard[iFile]->FindBinIndexCentrality(nominalResultCard->GetBinBordersCentrality(iCentrality));
+            iTrackPtMatched = mcStatisticsCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+            iJetPtMatched = mcStatisticsCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+            monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile] = mcStatisticsHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentralityMatched, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+            // Normalize the Monte Carlo statistics histograms to one
+            monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Scale(1.0 / monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+          } // Loop over different response matrix randomizations
+        } // Monte Carlo statistics uncertainty histograms
 
       } // Track pT loop
     } // Jet pT loop
@@ -649,7 +709,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Jet energy scale uncertainty
+  } // Uncertainty from number of iterations for unfolding
   
   // ================================================== //
   //   Uncertainty coming from background subtraction   //
@@ -825,7 +885,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Track selection uncertainty
+  } // Single track efficiency uncertainty
 
   // =================================================== //
   //    Uncertainty coming from track pair efficiency    //
@@ -863,7 +923,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Track selection uncertainty
+  } // Track pair efficiency uncertainty
 
   // ================================================ //
   //     Uncertainty coming from centrality shift     //
@@ -902,7 +962,42 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Background subtraction uncertainty
+  } // Centrality shift uncertainty
+
+  // ======================================================================= //
+  //   Uncertainty coming from limited statistics in the Monte Carlo sample  //
+  // ======================================================================= //
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics]){
+    for(int iCentrality = firstStudiedCentralityBin; iCentrality <= lastStudiedCentralityBin; iCentrality++){
+      for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+        for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+          energyEnergyCorrelatorSystematicUncertainties[iCentrality][iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloStatistics] = findStandardDeviation(nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], nMCStatisticsRandomizations);
+
+          // Draw example plots on how the uncertainty is obtained
+          /*if(plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+            legendNames[0] = "Low estimate for signal-to-bg ratio";
+            legendNames[1] = "High estimate for signal-to-bg ratio";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              if(iCentrality == 0 && weightExponent == 2){
+                ratioZoom = std::make_pair(0.75,1.25);
+              } else if(iCentrality == 0 && weightExponent == 1){
+                ratioZoom = std::make_pair(0.88,1.12);
+              } else {
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], signalToBackgroundRatioUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSignalToBackgroundRatio), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
+          }*/
+      
+        } // Track pT loop
+      } // Jet pT loop
+    } // Centrality loop
+  } // Uncertainty from limited statistics in Monte Carlo
 
   // ===================================================== //
   //   Uncertainty coming from non-closure in Monte Carlo  //
@@ -921,7 +1016,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
         } // Track pT loop
       } // Jet pT loop
     } // Centrality loop
-  } // Jet energy scale uncertainty
+  } // Monte Carlo non-closure uncertainty
   
   // ============================================= //
   //   Add all uncertainty sources in quadrature   //
@@ -974,7 +1069,9 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     // Write the card from the nominal file, since all indices are syncronized with that
     nominalResultCard->Write(outputFile);
 
+    // Close the output file
     outputFile->Close();
+
   }
   
   // =========================================================================== //
@@ -1059,7 +1156,7 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
  *  return: Histogram where the error bars in each point correspond to estimated systematic uncertainty
  *
  */
-TH1D* findTheDifference(TH1D *nominalResult, TH1D *variedResult[], const int nVariations, const int ignoreIndex){
+TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int ignoreIndex){
   
   // Create an uncertainty histogram from the nominal results
   TH1D* uncertaintyHistogram = (TH1D*) nominalResult->Clone(Form("uncertaintyFor%s", variedResult[0]->GetName()));
@@ -1111,6 +1208,48 @@ TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult){
   // Enclose the single graph to an array and use the difference finder for graph array
   TH1D* comparisonArray[1] = {variedResult};
   return findTheDifference(nominalResult, comparisonArray, 1, -1);
+  
+}
+
+/*
+ * Function for finding standard deviation from a set of varied results
+ *
+ *  TH1D* nominalResult = Histogram containing nominal results
+ *  TH1D* variedResult = Histograms containing varied results for systematic uncertainty estimation
+ *  const int nVariations = Number of variations used to estimate the systematic uncertainties
+ *
+ *  return: Histogram where the error bars in each point correspond to estimated systematic uncertainty
+ *
+ */
+TH1D* findStandardDeviation(TH1D* nominalResult, TH1D* variedResult[], const int nVariations){
+  
+  // Create an uncertainty histogram from the nominal results
+  TH1D* uncertaintyHistogram = (TH1D*) nominalResult->Clone(Form("uncertaintyFor%s", variedResult[0]->GetName()));
+  
+  // In each bin, assign the systematic uncertainty to be the standard deviation of varied results
+  double meanValue;
+  double standardDeviation;
+  for(int iBin = 1; iBin <= nominalResult->GetNbinsX(); iBin++){
+
+    // First, calculate the mean value of the varied results.
+    meanValue = 0;
+    for(int iVariation = 0; iVariation < nVariations; iVariation++){
+      meanValue += variedResult[iVariation]->GetBinContent(iBin);
+    }
+    meanValue /= nVariations;
+
+    // After we have the mean value, we can calculate stadard deviation
+    standardDeviation = 0;
+    for(int iVariation = 0; iVariation < nVariations; iVariation++){
+      standardDeviation += TMath::Power(variedResult[iVariation]->GetBinContent(iBin) - meanValue, 2);
+    }
+    standardDeviation = TMath::Sqrt(standardDeviation / nVariations);
+
+    uncertaintyHistogram->SetBinError(iBin, standardDeviation);
+  } // Histogram bin loop
+  
+  // Return the histogram where the errors represent the systematic uncertainties
+  return uncertaintyHistogram;
   
 }
 

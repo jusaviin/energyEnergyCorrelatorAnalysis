@@ -30,6 +30,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fSystematicsGroupFlag[kBackgroundSubtraction] = kUncorrelatedInDeltaR;
   fSystematicsGroupFlag[kSignalToBackgroundRatio] = kCorrelatedInDeltaR;
   fSystematicsGroupFlag[kCentralityShift] = kCorrelatedInDeltaR;
+  fSystematicsGroupFlag[kMonteCarloStatistics] = kUncorrelatedInDeltaR;
   fSystematicsGroupFlag[kMonteCarloNonClosure] = kCorrelatedInDeltaR;
   fSystematicsGroupFlag[kAll] = kGroupForAll;
 
@@ -44,6 +45,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fUncertaintyColor[kBackgroundSubtraction] = kViolet-6;
   fUncertaintyColor[kSignalToBackgroundRatio] = kYellow+1;
   fUncertaintyColor[kCentralityShift] = kSpring;
+  fUncertaintyColor[kMonteCarloStatistics] = kAzure-7;
   fUncertaintyColor[kMonteCarloNonClosure] = kOrange+7;
   fUncertaintyColor[kAll] = kBlack;
 
@@ -58,6 +60,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[0][kBackgroundSubtraction] = true;
   fIsRelevant[0][kSignalToBackgroundRatio] = false;
   fIsRelevant[0][kCentralityShift] = false;
+  fIsRelevant[0][kMonteCarloStatistics] = true;
   fIsRelevant[0][kMonteCarloNonClosure] = false;
   fIsRelevant[0][kAll] = true;
 
@@ -72,6 +75,7 @@ SystematicUncertaintyOrganizer::SystematicUncertaintyOrganizer()
   fIsRelevant[1][kBackgroundSubtraction] = true;
   fIsRelevant[1][kSignalToBackgroundRatio] = true;
   fIsRelevant[1][kCentralityShift] = true;
+  fIsRelevant[1][kMonteCarloStatistics] = true;
   fIsRelevant[1][kMonteCarloNonClosure] = false;
   fIsRelevant[1][kAll] = true;
 }

@@ -34,16 +34,17 @@ void relativeUncertaintyPlotter(){
   
   // Input files
   TString uncertaintyFileName[kNDataTypes];
-  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root";
+  uncertaintyFileName[kPbPb] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_combinedMxedConeBackground_includeMCstats_2025-04-18.root";
   // systematicUncertainties_PbPb_nominalEnergyWeight_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root
   // systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root
-  // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-06.root
-  // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-06.root
-  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root";
+  // systematicUncertainties_PbPb_nominalEnergyWeight_combinedMxedConeBackground_includeMCstats_2025-04-18.root
+  // systematicUncertainties_PbPb_energyWeightSquared_combinedMxedConeBackground_includeMCstats_2025-04-18.root
+  
+  uncertaintyFileName[kPp] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCstats_2025-04-21.root";
   // systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root
   // systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root
-  // systematicUncertainties_pp_nominalEnergyWeight_includeMCnonClosure_2024-01-29.root
-  // systematicUncertainties_pp_energyWeightSquared_includeMCnonClosure_2024-01-29.root
+  // systematicUncertainties_pp_nominalEnergyWeight_includeMCstats_2025-04-21.root
+  // systematicUncertainties_pp_energyWeightSquared_includeMCstats_2025-04-21.root
 
   TFile* uncertaintyFile[kNDataTypes];
   EECCard* uncertaintyCard[kNDataTypes];

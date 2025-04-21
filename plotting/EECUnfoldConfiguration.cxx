@@ -111,7 +111,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for PbPb
       if(fIsPbPbData){
 
-        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){ 
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp || fSystematicIndex == kMCStatistics){ 
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -315,7 +315,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for pp
       } else {
 
-        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp || fSystematicIndex == kMCStatistics){
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -420,7 +420,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
         // The configuration for PbPb
       if(fIsPbPbData){
 
-        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){ 
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp || fSystematicIndex == kMCStatistics){ 
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C
@@ -709,7 +709,7 @@ void EECUnfoldConfiguration::InitializeArrays(){
       // The configuration for pp
       } else {
 
-        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp){
+        if(fSystematicIndex == kNominalSmear || fSystematicIndex == kNumberOfIterationsDown || fSystematicIndex == kNumberOfIterationsUp || fSystematicIndex == kMCStatistics){
           // TODO: Response matrix updated, still need to double check number of iterations
           // Configuration for default response matrix
           // Macro from which the numbers are determined: drawUnfoldingChi2Test.C

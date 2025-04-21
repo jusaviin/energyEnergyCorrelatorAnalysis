@@ -4,7 +4,7 @@
 #include "JDrawer.h"
 
 /*
- * Reser underflow and overflow bins for a one-dimensional histogram
+ * Reset underflow and overflow bins for a one-dimensional histogram
  */
 void removeOutOfRange(TH1D* histogramInNeedOfTrimming){
    histogramInNeedOfTrimming->SetBinContent(0, 0);
@@ -12,7 +12,7 @@ void removeOutOfRange(TH1D* histogramInNeedOfTrimming){
 }
 
 /*
- * Reser underflow and overflow bins for a two-dimensional histogram
+ * Reset underflow and overflow bins for a two-dimensional histogram
  */
 void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
 {
@@ -29,6 +29,40 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
       histogramInNeedOfTrimming->SetBinContent(0, iY, 0);
       histogramInNeedOfTrimming->SetBinContent(NX+1, iY, 0);
    }
+}
+
+/*
+ * Randomize a one-dimensional histogram within the statistical uncertainties of the histogram
+ */
+void randomizeWithinUncertainties(TH1D* randomizedHistogram){
+  TRandom3* randomizer = new TRandom3();
+  randomizer->SetSeed(0);
+  double currentBinContent, currentBinError;
+  for(int iBin = 1; iBin <= randomizedHistogram->GetNbinsX(); iBin++){
+    currentBinContent = randomizedHistogram->GetBinContent(iBin);
+    if(currentBinContent == 0) continue;
+    currentBinError = randomizedHistogram->GetBinError(iBin);
+    randomizedHistogram->SetBinContent(iBin, randomizer->Gaus(currentBinContent, currentBinError));
+  }
+  delete randomizer;
+}
+
+/*
+ * Randomize a two-dimensional histogram within the statistical uncertainties of the histogram
+ */
+void randomizeWithinUncertainties(TH2D* randomizedHistogram){
+  TRandom3* randomizer = new TRandom3();
+  randomizer->SetSeed(0);
+  double currentBinContent, currentBinError;
+  for(int xBin = 1; xBin <= randomizedHistogram->GetNbinsX(); xBin++){
+    for(int yBin = 1; yBin <= randomizedHistogram->GetNbinsY(); yBin++){
+      currentBinContent = randomizedHistogram->GetBinContent(xBin, yBin);
+      if(currentBinContent == 0) continue;
+      currentBinError = randomizedHistogram->GetBinError(xBin, yBin);
+      randomizedHistogram->SetBinContent(xBin, yBin, randomizer->Gaus(currentBinContent, currentBinError));
+    }
+  }
+  delete randomizer;
 }
 
 /*
@@ -52,6 +86,7 @@ void removeOutOfRange(TH2D* histogramInNeedOfTrimming)
  *                           7: Evaluate systematic uncertainty from 6% centrality shift
  *                           8: Evaluate systematic uncertainty from fewer number of iterations in unfolding
  *                           9: Evaluate systematic uncertainty from larger number of iterations in unfolding
+ *                          10: Evaluate systematic uncertainty from finite statistics of the MC sample
  *   const int iEnergyEnergyCorrelator = Energy-energy correlator index for the unfolded correlator. Indices are explained in EECHistogramManager.h
  *.  int iWeightExponent = Exponent given for the energy weights for energy-energy correaltors. 
  *                               0: Read the used weight exponent from the input file
@@ -266,6 +301,15 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
       removeOutOfRange(hUnfoldingMeasured[iCentrality][iTrackPt]);
       removeOutOfRange(hUnfoldingTruth[iCentrality][iTrackPt]);
       removeOutOfRange(hUnfoldingResponse[iCentrality][iTrackPt]);
+
+      // If we are estimating systematic uncertainty due to limited statistics in MC randomize response matrix, fakes, and misses within their uncertainties
+      if(iSystematic == 10){
+        cout << "Going to randomize" << endl;
+        randomizeWithinUncertainties(hUnfoldingMeasured[iCentrality][iTrackPt]);
+        randomizeWithinUncertainties(hUnfoldingTruth[iCentrality][iTrackPt]);
+        randomizeWithinUncertainties(hUnfoldingResponse[iCentrality][iTrackPt]);
+        cout << "Done!" << endl;
+      }
 
       // Create the response object with trimmed histograms
       rooResponse[iCentrality][iTrackPt] = new RooUnfoldResponse(hUnfoldingMeasured[iCentrality][iTrackPt], hUnfoldingTruth[iCentrality][iTrackPt], hUnfoldingResponse[iCentrality][iTrackPt]);

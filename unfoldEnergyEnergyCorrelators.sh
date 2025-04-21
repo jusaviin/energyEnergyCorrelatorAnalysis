@@ -20,6 +20,7 @@ if [ "$#" -lt 1 ]; then
   echo "   7 = Centrality shift uncertainty from 6% shift"
   echo "   8 = Uncertainty from decreasing the number of iterations in unfolding"
   echo "   9 = Uncertainty from increasing the number of iterations in unfolding"
+  echo "  10 = Uncertainty from limited statistics in the Monte Carlo sample"
   echo "-e energyEnergyCorrelatorType = Index for energy-energy correlators. Default: 0."
   echo "   0 = Regular energy-energy correlator"
   echo "   1 = Energy-energy correlator with positive track efficiency variation"

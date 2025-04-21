@@ -11,9 +11,10 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 1;
+  const int nComparisonFiles = 2;
   TString fileName[nComparisonFiles];
-  fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
+  fileName[0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root";
+  fileName[1] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_consistencyCheck_processed_2025-04-21.root";
   
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root";
@@ -41,7 +42,7 @@ void compareEECinDefinedBins(){
 
   TString fileDescription[nComparisonFiles];
   fileDescription[0] = "PbPb data";
-  //fileDescription[1] = "Same data?";
+  fileDescription[1] = "MC stats";
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -97,7 +98,7 @@ void compareEECinDefinedBins(){
   comparedJetPtBin.push_back(std::make_pair(140,160));
   comparedJetPtBin.push_back(std::make_pair(160,180));
   comparedJetPtBin.push_back(std::make_pair(180,200));
-  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -118,7 +119,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -131,7 +132,7 @@ void compareEECinDefinedBins(){
   // EECHistograms::kReflectedSecondMixedConePair; 
   // EECHistograms::kMixedMixedConePair; 
   // EECHistograms::kSecondMixedConePair;
-  int iPairingType = EECHistograms::kSignalReflectedConePair;
+  int iPairingType = EECHistograms::kSameJetPair;
 
   // If we are dealing with pp data, reset the centrality vector
   if(card[0]->GetDataType().Contains("pp")){

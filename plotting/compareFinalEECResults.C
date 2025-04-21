@@ -10,8 +10,8 @@ void compareFinalEECResults(){
   // Files for comparison
   const int nComparisonFiles = 2;
   TString pbPbFileName[nComparisonFiles];
-  pbPbFileName[0] = "data/eecAnalysis_akFlowJet_wtaAxis_energyWeightSquared_nominalReflectedCone_processed_2023-12-01.root";
-  pbPbFileName[1] = "data/eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_noCovariance_processed_2024-01-17.root";
+  pbPbFileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
+  pbPbFileName[1] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedBackground_nominalResultReproduce_processed_2025-04-14.roo";
 
   TString ppFileName[nComparisonFiles];
   ppFileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_jet60or80triggers_firstFinalResults_processed_2023-10-26.root";

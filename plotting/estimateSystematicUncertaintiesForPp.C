@@ -9,6 +9,7 @@
 // Function definitions. Implementations after the main macro.
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
+TH1D* findStandardDeviation(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 void loadRelevantHistograms(EECHistogramManager* histograms);
@@ -42,6 +43,10 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     cout << "Please select one of these values for weight exponent." << endl;
     return;
   }
+
+  TString weightExponentString[2];
+  weightExponentString[0] = "nominalEnergyWeight";
+  weightExponentString[1] = "energyWeightSquared";
   
   // ==================================================================
   // ============================= Input ==============================
@@ -132,6 +137,22 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
   loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
 
+  // Results where the unfolding has been done with randomized response matrices to evaluate MC statistics uncertainty
+  const int nMCStatisticsRandomizations = 50;
+  TString mcStatisticsFileName[nMCStatisticsRandomizations];
+  for(int iVariation = 0; iVariation < nMCStatisticsRandomizations; iVariation++){
+    mcStatisticsFileName[iVariation] = Form("data/mcStatisticsRandomization/ppData_pfJets_wtaAxis_%s_optimizedUnfoldingBins_mcStatisticsUncertaintyRandom%d_jet60or80triggers_processed_2025-04-21.root", weightExponentString[weightExponent-1].Data(), iVariation+1);
+  }
+  TFile* mcStatisticsFile[nMCStatisticsRandomizations];
+  EECCard* mcStatisticsCard[nMCStatisticsRandomizations];
+  EECHistogramManager* mcStatisticsHistogramManager[nMCStatisticsRandomizations];
+  for(int iMonteCarloStatisticsFile = 0; iMonteCarloStatisticsFile < nMCStatisticsRandomizations; iMonteCarloStatisticsFile++){
+    mcStatisticsFile[iMonteCarloStatisticsFile] = TFile::Open(mcStatisticsFileName[iMonteCarloStatisticsFile]);
+    mcStatisticsCard[iMonteCarloStatisticsFile] = new EECCard(mcStatisticsFile[iMonteCarloStatisticsFile]);
+    mcStatisticsHistogramManager[iMonteCarloStatisticsFile] = new EECHistogramManager(mcStatisticsFile[iMonteCarloStatisticsFile], mcStatisticsCard[iMonteCarloStatisticsFile]);
+    loadRelevantHistograms(mcStatisticsHistogramManager[iMonteCarloStatisticsFile]);
+  }
+
   // File containing relative uncertainties resulting from Monte Carlo non-closure
   TString monteCarloNonClosureFileName[2] = {"systematicUncertainties/monteCarloNonClosureRelative_pp_nominalEnergyWeight_2024-01-29.root", "systematicUncertainties/monteCarloNonClosureRelative_pp_energyWeightSquared_2024-01-29.root"};
   TFile* monteCarloNonClosureFile = TFile::Open(monteCarloNonClosureFileName[weightExponent-1]);
@@ -167,7 +188,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TString today = optimusPrimeTheTransformer->GetToday();
   
   TString nameAdder[] = {"_nominalEnergyWeight","_energyWeightSquared"}; 
-  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_noMCnonClosure_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
+  TString outputFileName = Form("systematicUncertainties/systematicUncertainties_pp%s_includeMCstats_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   //TString outputFileName = Form("systematicUncertainties/systematicUncertaintiesForPp%s_justASillyDummyFile_%s.root", nameAdder[weightExponent-1].Data(), today.Data());
   
   // Option to skip evaluating some of the sources defined in SystematicUncertaintyOrganizer or not plotting examples of some
@@ -206,6 +227,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TH1D* trackSelectionUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* singleTrackEfficiencyUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
   TH1D* trackPairEfficiencyUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][2];
+  TH1D* monteCarloStatisticsUncertaintyCorrelators[nJetPtBinsEEC][nTrackPtBinsEEC][nMCStatisticsRandomizations];
 
   // Histograms to hold the systematic uncertainty results
   TH1D* energyEnergyCorrelatorSystematicUncertainties[nJetPtBinsEEC][nTrackPtBinsEEC][SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -223,6 +245,9 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
         trackSelectionUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         singleTrackEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
         trackPairEfficiencyUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
+      }
+      for(int iFile = 0; iFile < nMCStatisticsRandomizations; iFile++){
+        monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = NULL;
       }
       for(int iUncertainty = 0; iUncertainty < SystematicUncertaintyOrganizer::knUncertaintySources; iUncertainty++) {
         energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][iUncertainty] = NULL;
@@ -318,6 +343,18 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
 
       // Normalize the background subtraction histograms to one
       backgroundSubtractionUncertaintyCorrelators[iJetPt][iTrackPt]->Scale(1.0 / backgroundSubtractionUncertaintyCorrelators[iJetPt][iTrackPt]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+
+      // Read the Monte Carlo statistics uncertainty histograms
+      if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics]){
+        for(int iFile = 0; iFile < nMCStatisticsRandomizations; iFile++){
+          iTrackPtMatched = mcStatisticsCard[iFile]->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
+          iJetPtMatched = mcStatisticsCard[iFile]->FindBinIndexJetPtEEC(nominalResultCard->GetBinBordersJetPtEEC(iJetPt));
+          monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt][iFile] = mcStatisticsHistogramManager[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPtMatched, iTrackPtMatched, EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal);
+
+          // Normalize the Monte Carlo statistics histograms to one
+          monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Scale(1.0 / monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt][iFile]->Integral(lowAnalysisBin, highAnalysisBin, "width"));
+        } // Loop over different response matrix randomizations
+      } // Monte Carlo statistics uncertainty histograms
 
       // Read the relative uncertainty histograms for Monte Carlo non-closure uncertainty
       iTrackPtMatched = monteCarloNonClosureCard->FindBinIndexTrackPtEEC(nominalResultCard->GetBinBordersTrackPtEEC(iTrackPt));
@@ -555,6 +592,39 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     } // Jet pT loop
   } // Track selection uncertainty
 
+  // ======================================================================= //
+  //   Uncertainty coming from limited statistics in the Monte Carlo sample  //
+  // ======================================================================= //
+
+  if(!skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics]){
+    for(int iJetPt = firstStudiedJetPtBinEEC; iJetPt <= lastStudiedJetPtBinEEC; iJetPt++){
+      for(int iTrackPt = firstStudiedTrackPtBinEEC; iTrackPt <= lastStudiedTrackPtBinEEC; iTrackPt++){
+
+        energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloStatistics] = findStandardDeviation(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt], nMCStatisticsRandomizations);
+
+          // Draw example plots on how the uncertainty is obtained
+          /*if(plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+            legendNames[0] = "Low estimate for signal-to-bg ratio";
+            legendNames[1] = "High estimate for signal-to-bg ratio";
+
+            // Set reasonable ratio zoom
+            if(setAutomaticRatioZoom){
+              if(iCentrality == 0 && weightExponent == 2){
+                ratioZoom = std::make_pair(0.75,1.25);
+              } else if(iCentrality == 0 && weightExponent == 1){
+                ratioZoom = std::make_pair(0.88,1.12);
+              } else {
+                ratioZoom = std::make_pair(0.9,1.1);
+              }
+            }
+
+            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], signalToBackgroundRatioUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSignalToBackgroundRatio), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
+          }*/
+      
+      } // Track pT loop
+    } // Jet pT loop
+  } // Uncertainty from limited statistics in Monte Carlo
+
   // ===================================================== //
   //   Uncertainty coming from non-closure in Monte Carlo  //
   // ===================================================== //
@@ -738,6 +808,48 @@ TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult){
   // Enclose the single graph to an array and use the difference finder for graph array
   TH1D* comparisonArray[1] = {variedResult};
   return findTheDifference(nominalResult, comparisonArray, 1);
+  
+}
+
+/*
+ * Function for finding standard deviation from a set of varied results
+ *
+ *  TH1D* nominalResult = Histogram containing nominal results
+ *  TH1D* variedResult = Histograms containing varied results for systematic uncertainty estimation
+ *  const int nVariations = Number of variations used to estimate the systematic uncertainties
+ *
+ *  return: Histogram where the error bars in each point correspond to estimated systematic uncertainty
+ *
+ */
+TH1D* findStandardDeviation(TH1D* nominalResult, TH1D* variedResult[], const int nVariations){
+  
+  // Create an uncertainty histogram from the nominal results
+  TH1D* uncertaintyHistogram = (TH1D*) nominalResult->Clone(Form("uncertaintyFor%s", variedResult[0]->GetName()));
+  
+  // In each bin, assign the systematic uncertainty to be the standard deviation of varied results
+  double meanValue;
+  double standardDeviation;
+  for(int iBin = 1; iBin <= nominalResult->GetNbinsX(); iBin++){
+
+    // First, calculate the mean value of the varied results.
+    meanValue = 0;
+    for(int iVariation = 0; iVariation < nVariations; iVariation++){
+      meanValue += variedResult[iVariation]->GetBinContent(iBin);
+    }
+    meanValue /= nVariations;
+
+    // After we have the mean value, we can calculate stadard deviation
+    standardDeviation = 0;
+    for(int iVariation = 0; iVariation < nVariations; iVariation++){
+      standardDeviation += TMath::Power(variedResult[iVariation]->GetBinContent(iBin) - meanValue, 2);
+    }
+    standardDeviation = TMath::Sqrt(standardDeviation / nVariations);
+
+    uncertaintyHistogram->SetBinError(iBin, standardDeviation);
+  } // Histogram bin loop
+  
+  // Return the histogram where the errors represent the systematic uncertainties
+  return uncertaintyHistogram;
   
 }
 
