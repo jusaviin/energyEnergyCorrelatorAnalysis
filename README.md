@@ -1,5 +1,9 @@
 # Energy-energy correlators in PbPb and pp collisions
 
+## Producing final plots
+
+If you just want to generate all the plots that are in the paper, you can use the script `makeAllPaperPlots.sh` provided you have access to all necessary data files. Contact Jussi Viinikainen to get these files.
+
 ## General structure of the reposity
 
 The code is organized in folders, with different functionality in different folders. Below is a quick overview of this folder structure.

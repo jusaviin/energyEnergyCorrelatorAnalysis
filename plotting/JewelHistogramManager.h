@@ -69,6 +69,12 @@ public:
 
   // Getter for a nice legend name for the recoil configuration
   const char* GetRecoilName(const int iRecoil) const;
+
+  // Find bin indices from bin borders
+  int FindCentralityBinIndex(std::pair<int,int> centralityBin) const; // Get a centrality bin index from a given centrality bin borders
+  int FindJetPtBinIndex(std::pair<int,int> jetPtBin) const; // Get a jet pT bin index from a given jet pT bin borders
+  int FindTrackPtBinIndex(double trackPtBin) const; // Get a track pT bin index from a given track pT cut
+  int FindEnergyWeightIndex(double energyWeight) const; // Get an energy weight bin index from a given energy weight value
   
 private:
 
@@ -83,13 +89,6 @@ private:
 
   // Normalize all histograms
   void NormalizeHistograms();
-  
-  // Find bin indices from bin borders
-  int FindCentralityBinIndex(std::pair<int,int> centralityBin) const; // Get a centrality bin index from a given centrality bin borders
-  int FindJetPtBinIndex(std::pair<int,int> jetPtBin) const; // Get a jet pT bin index from a given jet pT bin borders
-  int FindTrackPtBinIndex(double trackPtBin) const; // Get a track pT bin index from a given track pT cut
-  int FindEnergyWeightIndex(double energyWeight) const; // Get an energy weight bin index from a given energy weight value
-
 
   
 };

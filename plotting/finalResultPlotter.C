@@ -32,7 +32,7 @@ void calculateCorrelatedBands(TH1D* correlatedHistogram, TH1D* correlatedBandUpH
 /*
  * Macro for making final result plots comparing energy-energy correlators between pp and PbPb
  */
-void finalResultPlotter(){
+void finalResultPlotter(bool drawOnlyPaperPlots = false){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
   enum enumSystematicUncertaintyType{kUncorrelatedUncertainty, kCorrelatedUncertainty, kCorrelatedUncertaintyShapeUp, kCorrelatedUncertaintyShapeDown, knSystematicUncertaintyTypes};
@@ -189,7 +189,7 @@ void finalResultPlotter(){
 
   // Preliminary/Supplementary tag
   enum enumTagType{kNoTag, kPreliminaryTag, kSupplementaryTag, knTagTypes};
-  int tagSelection = kSupplementaryTag;
+  int tagSelection = kNoTag;
   const char* tagName[knTagTypes];
   tagName[kNoTag] = "";
   tagName[kPreliminaryTag] = "Preliminary";
@@ -265,6 +265,36 @@ void finalResultPlotter(){
   TLine* lineDrawer = new TLine();
   lineDrawer->SetLineStyle(2);
   lineDrawer->SetLineColor(kBlack);
+
+  // If we are drawing only the paper plots, setup configuration for that
+  if(drawOnlyPaperPlots){
+    drawIndividualPlotsAllCentralities = false;
+    drawBigCanvasDistributions = false;
+    drawBigCanvasRatios = false;
+    drawDoubleRatios = false;
+    drawDoubleRatioToSingleCanvas = false;
+    drawBigCanvasAllDistributions = true; // Draw distributions with all defined weight exponents to the same figure
+    drawBigCanvasAllRatios = true; // Draw ratios with all defined energy weight exponents to the same figure
+    drawLetterPaperDistributions = false; // Draw the energy-energy correlator distribution for letter paper format
+    drawLetterPaperRatios = false; // Draw the energy-energy correlators ratios for letter paper format
+
+    // Supplementary plots
+    drawSupplementaryEECJetPt = false; // Draw all jet pT bins for selected centrality, track pT, and energy weight to the same plot
+    drawSupplementaryEECCentrality = false; // Draw all centrality bins for selected jet pT, track pT and energy weight to the smae plot
+    drawSupplementaryEECRatioCentrality = false; // Draw PbPb/pp ratios from all centrality bins to the same figure
+    drawSupplementaryEECRatioWeightExponent = false; // Draw PbPb/pp ratios from all weight exponents to the same figure
+    drawSupplementaryEECShiftIllustration = false; // Draw two pp distributions and one PbPb distribution to the same figure
+
+    // Save all the drawn histograms from HepData
+    saveHepDataFiles = false;
+
+    // No tags for the figures
+    tagSelection = kNoTag;
+
+    // Default figure naming
+    saveComment =  "";
+    figureFormat = "pdf";
+  }
 
   // Algorithm library for any useful manipulation
   AlgorithmLibrary* manipulator = new AlgorithmLibrary();

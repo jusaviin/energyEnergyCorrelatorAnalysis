@@ -48,8 +48,11 @@ void calculateCorrelatedBands(TH1D* correlatedHistogram, TH1D* correlatedBandUpH
  *       0 = Compare energy-energy correlator distributions to theory predictions
  *       1 = Compare PbPb/pp ratios to theory predictions
  *       2 = Compare double ratios to theory predictions
+ *   bool paperPlorMode = Use default configuration for drawing all the plots included in the paper
+ *       true = Force default paper plot configuration
+ *       false = Allow user to make their own configuration
  */
-void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int drawnPlots = 0){
+void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int drawnPlots = 0, bool paperPlotMode = false){
 
   enum enumDataType{kPbPb, kPp, kNDataTypes};
   enum enumSystematicUncertaintyType{kUncorrelatedUncertainty, kCorrelatedUncertainty, kCorrelatedUncertaintyShapeUp, kCorrelatedUncertaintyShapeDown, knSystematicUncertaintyTypes};
@@ -78,10 +81,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   inputFileName[kPp][0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_addLowPtBins_processed_2024-04-18.root";
   inputFileName[kPp][1] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root";
   TString uncertaintyFileName[kNDataTypes][nWeightExponents];
-  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root";
-  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_combinedMixedConeBackground_noMCnonClosure_2024-05-28.root";
-  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_noMCnonClosure_2024-05-02.root";
-  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_noMCnonClosure_2024-05-02.root";
+  uncertaintyFileName[kPbPb][0] = "systematicUncertainties/systematicUncertainties_PbPb_nominalEnergyWeight_combinedMxedConeBackground_includeMCstats_2025-04-18.root";
+  uncertaintyFileName[kPbPb][1] = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_combinedMxedConeBackground_includeMCstats_2025-04-18.root";
+  uncertaintyFileName[kPp][0] = "systematicUncertainties/systematicUncertainties_pp_nominalEnergyWeight_includeMCstats_2025-04-21.root";
+  uncertaintyFileName[kPp][1] = "systematicUncertainties/systematicUncertainties_pp_energyWeightSquared_includeMCstats_2025-04-21.root";
 
   // Input files for pp MC results
   TString ppMCFileName[knPpMCTypes][nWeightExponents];
@@ -167,22 +170,41 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // Select explicitly which bins from the files are compared:
   std::vector<std::pair<double,double>> drawnCentralityBin;
   drawnCentralityBin.push_back(std::make_pair(0,10));
-  //drawnCentralityBin.push_back(std::make_pair(10,30));
-  //drawnCentralityBin.push_back(std::make_pair(30,50));
-  //drawnCentralityBin.push_back(std::make_pair(50,90));
+  drawnCentralityBin.push_back(std::make_pair(10,30));
+  drawnCentralityBin.push_back(std::make_pair(30,50));
+  drawnCentralityBin.push_back(std::make_pair(50,90));
   
   std::vector<std::pair<double,double>> drawnJetPtBin;
   drawnJetPtBin.push_back(std::make_pair(120,140));
-  //drawnJetPtBin.push_back(std::make_pair(140,160));
-  //drawnJetPtBin.push_back(std::make_pair(160,180));
+  drawnJetPtBin.push_back(std::make_pair(140,160));
+  drawnJetPtBin.push_back(std::make_pair(160,180));
   drawnJetPtBin.push_back(std::make_pair(180,200));
 
   std::vector<double> drawnTrackPtBin;
   drawnTrackPtBin.push_back(1.0);
   //drawnTrackPtBin.push_back(1.5);
-  //drawnTrackPtBin.push_back(2.0);
+  drawnTrackPtBin.push_back(2.0);
   //drawnTrackPtBin.push_back(2.5);
   //drawnTrackPtBin.push_back(3.0);
+
+  // Always include all bins in the paper plot mode
+  if(paperPlotMode){
+    drawnCentralityBin.clear();
+    drawnCentralityBin.push_back(std::make_pair(0,10));
+    drawnCentralityBin.push_back(std::make_pair(10,30));
+    drawnCentralityBin.push_back(std::make_pair(30,50));
+    drawnCentralityBin.push_back(std::make_pair(50,90));
+ 
+    drawnJetPtBin.clear();
+    drawnJetPtBin.push_back(std::make_pair(120,140));
+    drawnJetPtBin.push_back(std::make_pair(140,160));
+    drawnJetPtBin.push_back(std::make_pair(160,180));
+    drawnJetPtBin.push_back(std::make_pair(180,200));
+
+    drawnTrackPtBin.clear();
+    drawnTrackPtBin.push_back(1.0);
+    drawnTrackPtBin.push_back(2.0);
+  }
 
   // Define which k-values to study for Holguin predictions
   std::vector<double> holguinKValue;
@@ -227,6 +249,14 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   TString energyWeightLegend[nWeightExponents] = {"n=1", "n=2"};
   TString saveComment =  "";
   TString figureFormat = "pdf";
+
+  if(paperPlotMode){
+    saveComment =  "";
+    figureFormat = "pdf";
+    addPreliminaryTag = false;
+    mainTextHighlightMode = false;
+  }
+
   saveComment.Prepend(energyWeightString[weightExponent-1]);
 
   // Ratio zoom settings
@@ -1091,6 +1121,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
     if(drawDoubleRatioDataToTheoryComparison){
       for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
         for(auto centralityBin : drawnCentralityBin){
+          if(jewelHistograms->FindCentralityBinIndex(centralityBin) < 0) continue; // Skip bins tht contain no data
           iCentrality = card[kPbPb][iWeightExponent]->FindBinIndexCentrality(centralityBin);
           for(auto jetPtBin : drawnJetPtBin){
             iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
@@ -1243,7 +1274,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         anotherLegend->SetFillStyle(0); anotherLegend->SetBorderSize(0); anotherLegend->SetTextSize(legendTextUpperCanvasSize); anotherLegend->SetTextFont(62);
         if(mainTextHighlightMode) anotherLegend->SetTextSize(legendTextUpperCanvasSize*2);
 
-        if(theoryComparisonIndex >= 5){
+        if(theoryComparisonIndex > 5){
           anotherLegend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
           anotherLegend->AddEntry((TObject*)0, trackPtString.Data(), "");
         } else {
@@ -1282,47 +1313,55 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
         // Pythia+Herwig+Hybrid
 
-        // Add legend for Pythia8 and Herwig7
-        legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kPythia], "Pythia8 CP5", "pl");
-        legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kHerwig], "Herwig7 CH3", "pl");
+        // Add legend for Pythia8 and Herwig7, unless we are drawing only JEWEL
+        if(theoryComparisonIndex != 5){
+          legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kPythia], "Pythia8 CP5", "pl");
+          legend->AddEntry(hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][kHerwig], "Herwig7 CH3", "pl");
     
-        // There is no wake in pp, so do only comparison with Hybrid without wake
-        if(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0] != NULL){
+          // There is no wake in pp, so do only comparison with Hybrid without wake
+          if(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0] != NULL){
 
-          // Give some nice styles for the predictions
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineColor(ppModelColor[kPpCompareHybrid]);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineWidth(0);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerColor(ppModelColor[kPpCompareHybrid]);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
+            // Give some nice styles for the predictions
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineColor(ppModelColor[kPpCompareHybrid]);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetLineWidth(0);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerColor(ppModelColor[kPpCompareHybrid]);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
 
-          // Draw the prediction to the same canvas as the data
-          energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("3,same");
+            // Draw the prediction to the same canvas as the data
+            energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("3,same");
 
-          // Add a legend for the theory prediction
-          legend->AddEntry(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0], "Hybrid model", "f");
-        }
+            // Add a legend for the theory prediction
+            legend->AddEntry(energyEnergyCorrelatorHybridModelPp[weightExponent-1][iJetPt][iTrackPt][0], "Hybrid model", "f");
+          }
 
-        // After hybrid model, add also Pythia8 and Herwig7 predictions
-        for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
+          // After hybrid model, add also Pythia8 and Herwig7 predictions
+          for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
 
-          // Give some nice styles for the predictions
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            // Give some nice styles for the predictions
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
             hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
 
-          // Draw the prediction to the same canvas as the data
-          hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->Draw("same,p");
+            // Draw the prediction to the same canvas as the data
+            hEnergyEnergyCorrelatorPpMC[weightExponent-1][iJetPt][iTrackPt][iMCType]->Draw("same,p");
+          }
         }
 
         if(theoryComparisonIndex >= 5){
           // Option to also draw JEWEL in addition to other vacuum models
 
           // Set a nice style for the JEWEL histograms
-          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kMagenta);
-          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
-          energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
+          if(theoryComparisonIndex == 5){
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kRed);
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kRed);
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+          } else {
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kMagenta);
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
+            energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
+          }
 
           // Draw the jewel histogram and add it to the legend
           energyEnergyCorrelatorJewelPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,pl");
@@ -1392,33 +1431,44 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintySystematic], "Data syst. unc.", "f");
         legend->AddEntry(hRelativeUncertaintyPp[weightExponent-1][iJetPt][iTrackPt][kRelativeUncertaintyStatisticalUp], "Data stat. unc.", "l");
 
-        // Set the style for MC to data comparison histograms
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerSize(0);
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
+        // Draw Pythia, Herwig, and Hybrid unless we require only JEWEL to be drawn
+        if(theoryComparisonIndex != 5){
 
-        // Set the style for pp MC simulation to data ratios
-        for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
-          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
+          // Set the style for MC to data comparison histograms
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerStyle(kFullCircle);
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetMarkerSize(0);
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->SetFillColorAlpha(ppModelColor[kPpCompareHybrid], 0.4);
+
+          // Set the style for pp MC simulation to data ratios
+          for(int iMCType = 0; iMCType < knPpMCTypes; iMCType++){
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerStyle(ppMCMarkerStyle[iMCType]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetMarkerColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetLineColor(ppModelColor[ppMCIndexToModelColorMap[iMCType]]);
+            hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][iMCType]->SetFillColorAlpha(ppModelColor[ppMCIndexToModelColorMap[iMCType]], 0.4);
+          }
+
+          // Draw the ratio with respect to hybrid model
+          hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("same,e3");
+
+          // Draw the ratio with respect to Pythia and Herwig simulations
+          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kPythia]->Draw("same,p");
+          hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kHerwig]->Draw("same,p");
+
         }
-
-        // Draw the ratio with respect to hybrid model
-        hybridModelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt][0]->Draw("same,e3");
-
-        // Draw the ratio with respect to Pythia and Herwig simulations
-        hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kPythia]->Draw("same,p");
-        hEnergyEnergyCorrelatorPpMCToDataRatio[weightExponent-1][iJetPt][iTrackPt][kHerwig]->Draw("same,p");
 
         if(theoryComparisonIndex >= 5){
           // Theory comparison index above 5: add JEWEL vacuum
 
           // Set the style for the histograms
-          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
-          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
-          jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kMagenta);
+          if(theoryComparisonIndex == 5){
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCircle);
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kRed);
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kRed);
+          } else {
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerStyle(kFullCross);
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetMarkerColor(kMagenta);
+            jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->SetLineColor(kMagenta);
+          }
 
           // Draw the histogram to the same canvas as data
           jewelToDataRatioPp[weightExponent-1][iJetPt][iTrackPt]->Draw("same,pl");
@@ -2342,7 +2392,12 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
         drawer->SetLogY(false);
 
         // Setup the legend for plots
-        legend = new TLegend(0.6, 0.05, 0.9, 0.2);
+        legendX1 = 0.6; legendX2 = 0.9;
+        if(theoryComparisonIndex >= 5){
+          legendX1 = 0.63; legendX2 = 0.93;
+        }
+
+        legend = new TLegend(legendX1, 0.05, legendX2, 0.2);
         legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(legendTextUpperCanvasSize); legend->SetTextFont(62);
         legend->AddEntry((TObject*)0, centralityString.Data(), "");
         legend->AddEntry((TObject*)0, energyWeightLegend[weightExponent-1].Data(), "");
@@ -2503,6 +2558,10 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
           // Theory comparison index >= 5: JEWEL
 
           for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
+
+            // There are some bins for which the prediction does not exist
+            if(jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil] == NULL) continue;
+
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->SetMarkerColor(color[iRecoil]);
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->SetLineColor(color[iRecoil]);
