@@ -128,10 +128,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = false;
+  const bool drawIndividualEnergyEnergyCorrelators = true;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = true;
+  bool drawEnergyEnergyCorrelatorsSubevent = false;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection
@@ -168,33 +168,11 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   // Create and setup a new histogram manager to project and handle the histograms
   EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
-  // Set which histograms to draw from the input file
-  histograms->SetLoadEventInformation(drawEventInformation);
-  histograms->SetLoadJetHistograms(drawJets);
-  histograms->SetLoadTracks(drawTracks);
-  histograms->SetLoadTracksUncorrected(drawUncorrectedTracks);
-  histograms->SetLoadMultiplicityInJets(drawMultiplicityHistograms);
-  histograms->SetLoadParticleDensityAroundJets(drawParticleDensityAroundJets);
-  histograms->SetLoadParticlePtDensityAroundJets(drawParticlePtDensityAroundJets);
-  histograms->SetLoadParticleDensityAroundJetsPtBinned(drawParticleDensityAroundJetsPtBinned);
-  histograms->SetLoadParticlePtDensityAroundJetsPtBinned(drawParticlePtDensityAroundJetsPtBinned);
-  histograms->SetLoadMaxParticlePtWithinJetCone(drawMaxParticlePtWithinJetCone || drawMaxBackgroundParticlePtWithinJetCone);
-  histograms->SetLoadEnergyEnergyCorrelators(drawEnergyEnergyCorrelators);
-  histograms->SetLoadJetPtUnfoldingCovariance(drawCovarianceMatrix);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
-  histograms->SetLoad2DHistograms(true);
-  
+  // Set the bin range we want to draw
   histograms->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
   histograms->SetTrackPtBinRange(firstDrawnTrackPtBin,lastDrawnTrackPtBin);
   histograms->SetJetPtBinRangeEEC(firstDrawnJetPtBinEEC,lastDrawnJetPtBinEEC);
   histograms->SetTrackPtBinRangeEEC(firstDrawnTrackPtBinEEC,lastDrawnTrackPtBinEEC);
-  
-  // Load the histograms from the file
-  histograms->LoadProcessedHistograms();
-  
   
   // ============================ //
   //           EECDrawer          //
