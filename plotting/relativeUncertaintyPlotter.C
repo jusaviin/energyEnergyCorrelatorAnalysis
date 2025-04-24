@@ -82,14 +82,14 @@ void relativeUncertaintyPlotter(){
   int lastDrawnJetPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedJetPtBin();
   
   int firstDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin();
-  int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetFirstUnfoldedTrackPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
+  int lastDrawnTrackPtBinEEC = uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin(); //uncertaintyCard[kPbPb]->GetLastUnfoldedTrackPtBin();
 
   //firstDrawnTrackPtBinEEC = 3;
   //lastDrawnTrackPtBinEEC = 5;
   
   // Save the plots
   const bool saveFigures = true;
-  TString saveComment = "_combinedMixedCone";
+  TString saveComment = "_includeMCstatistics";
 
   // Add a name describing the energy weight in the files
   if(uncertaintyCard[kPbPb]->GetWeightExponent() == 2){
