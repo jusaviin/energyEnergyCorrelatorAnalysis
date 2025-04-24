@@ -12,8 +12,7 @@ TH1D* findTheDifference(TH1D* nominalResult, TH1D* variedResult);
 TH1D* findStandardDeviation(TH1D* nominalResult, TH1D* variedResult[], const int nComparisonGraphs);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend[], TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
-void loadRelevantHistograms(EECHistogramManager* histograms);
-void loadTrackingSystematicsHistograms(EECHistogramManager* histograms);
+void drawIllustratingPlotsMonochrome(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom);
 
 /*
  * Macro for estimating systematic uncertainties for energy-energy correlators in pp collisions
@@ -57,7 +56,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TFile* nominalResultFile = TFile::Open(nominalResultFileName[weightExponent-1]);
   EECCard* nominalResultCard = new EECCard(nominalResultFile);
   EECHistogramManager* nominalHistogramManager = new EECHistogramManager(nominalResultFile, nominalResultCard);
-  loadRelevantHistograms(nominalHistogramManager);
   
   // Results unfolded with a response matrix smeared with jet energy resolution
   TString jetEnergyResolutionSmearDownFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithUncertaintySmearDown_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithUncertaintySmearDown_processed_2024-01-17.root"};
@@ -70,7 +68,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   for(int iJetEnergyResolutionFile = 0; iJetEnergyResolutionFile < 2; iJetEnergyResolutionFile++){
     jetEnergyResolutionCard[iJetEnergyResolutionFile] = new EECCard(jetEnergyResolutionFile[iJetEnergyResolutionFile]);
     jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile] = new EECHistogramManager(jetEnergyResolutionFile[iJetEnergyResolutionFile], jetEnergyResolutionCard[iJetEnergyResolutionFile]);
-    loadRelevantHistograms(jetEnergyResolutionHistogramManager[iJetEnergyResolutionFile]);
   }
   
   // Results unfolded with a response matrix smeared with jet energy scale
@@ -84,7 +81,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   for(int iJetEnergyScaleFile = 0; iJetEnergyScaleFile < 2; iJetEnergyScaleFile++){
     jetEnergyScaleCard[iJetEnergyScaleFile] = new EECCard(jetEnergyScaleFile[iJetEnergyScaleFile]);
     jetEnergyScaleHistogramManager[iJetEnergyScaleFile] = new EECHistogramManager(jetEnergyScaleFile[iJetEnergyScaleFile], jetEnergyScaleCard[iJetEnergyScaleFile]);
-    loadRelevantHistograms(jetEnergyScaleHistogramManager[iJetEnergyScaleFile]);
   }
 
   // Results unfolded with a response matrix where jet pT spectrum is weighted to match the data
@@ -92,7 +88,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TFile* jetPtPriorFile = TFile::Open(jetPtPriorFileName[weightExponent-1]);
   EECCard* jetPtPriorCard = new EECCard(jetPtPriorFile);
   EECHistogramManager* jetPtPriorHistogramManager = new EECHistogramManager(jetPtPriorFile, jetPtPriorCard);
-  loadRelevantHistograms(jetPtPriorHistogramManager);
 
   // Results unfolded with a different number of iterations compared to nominal results
   TString unfoldingIterationsMinusFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWith3Iterations_jet60or80triggers_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWith3Iterations_processed_2024-01-17.root"};
@@ -105,7 +100,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   for(int iUnfoldingIterationsFile = 0; iUnfoldingIterationsFile < 2; iUnfoldingIterationsFile++){
     unfoldingIterationsCard[iUnfoldingIterationsFile] = new EECCard(unfoldingIterationsFile[iUnfoldingIterationsFile]);
     unfoldingIterationsHistogramManager[iUnfoldingIterationsFile] = new EECHistogramManager(unfoldingIterationsFile[iUnfoldingIterationsFile], unfoldingIterationsCard[iUnfoldingIterationsFile]);
-    loadRelevantHistograms(unfoldingIterationsHistogramManager[iUnfoldingIterationsFile]);
   }
 
   // Results where background scaling factor is determined from peripheral Pythia+Hydjet instead of not subtracting background
@@ -113,7 +107,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TFile* backgroundSubtractionFile = TFile::Open(backgroundSubtractionFileName[weightExponent-1]);
   EECCard* backgroundSubtractionCard = new EECCard(backgroundSubtractionFile);
   EECHistogramManager* backgroundSubtractionHistogramManager = new EECHistogramManager(backgroundSubtractionFile, backgroundSubtractionCard);
-  loadRelevantHistograms(backgroundSubtractionHistogramManager);
 
   // Result with different track selections
   TString looseTrackSelectionFileName[2] = {"data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-04-18.root", "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_looseTrackCuts_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-18.root"};
@@ -126,7 +119,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   for(int iTrackSelectionFile = 0; iTrackSelectionFile < 2; iTrackSelectionFile++){
     trackSelectionCard[iTrackSelectionFile] = new EECCard(trackSelectionFile[iTrackSelectionFile]);
     trackSelectionHistogramManager[iTrackSelectionFile] = new EECHistogramManager(trackSelectionFile[iTrackSelectionFile], trackSelectionCard[iTrackSelectionFile]);
-    loadRelevantHistograms(trackSelectionHistogramManager[iTrackSelectionFile]);
   }
 
 
@@ -135,7 +127,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   TFile* trackEfficiencyFile = TFile::Open(trackEfficiencyFileName[weightExponent-1]);
   EECCard* trackEfficiencyCard = new EECCard(trackEfficiencyFile);
   EECHistogramManager* trackEfficiencyHistogramManager = new EECHistogramManager(trackEfficiencyFile, trackEfficiencyCard);
-  loadTrackingSystematicsHistograms(trackEfficiencyHistogramManager);
 
   // Results where the unfolding has been done with randomized response matrices to evaluate MC statistics uncertainty
   const int nMCStatisticsRandomizations = 50;
@@ -150,7 +141,6 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     mcStatisticsFile[iMonteCarloStatisticsFile] = TFile::Open(mcStatisticsFileName[iMonteCarloStatisticsFile]);
     mcStatisticsCard[iMonteCarloStatisticsFile] = new EECCard(mcStatisticsFile[iMonteCarloStatisticsFile]);
     mcStatisticsHistogramManager[iMonteCarloStatisticsFile] = new EECHistogramManager(mcStatisticsFile[iMonteCarloStatisticsFile], mcStatisticsCard[iMonteCarloStatisticsFile]);
-    loadRelevantHistograms(mcStatisticsHistogramManager[iMonteCarloStatisticsFile]);
   }
 
   // File containing relative uncertainties resulting from Monte Carlo non-closure
@@ -200,6 +190,7 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
   // SystematicUncertaintyOrganizer::kTrackSelection
   // SystematicUncertaintyOrganizer::kSingleTrackEfficiency
   // SystematicUncertaintyOrganizer::kTrackPairEfficiency
+  // SystematicUncertaintyOrganizer::kMonteCarloStatistics
   // SystematicUncertaintyOrganizer::kMonteCarloNonClosure
   bool skipUncertaintySource[SystematicUncertaintyOrganizer::knUncertaintySources];
   bool plotExample[SystematicUncertaintyOrganizer::knUncertaintySources];
@@ -207,7 +198,8 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
     skipUncertaintySource[iUncertainty] = false;
     plotExample[iUncertainty] = false;
   }
-  //plotExample[SystematicUncertaintyOrganizer::kTrackSelection] = true;
+  //plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] = true;
+  //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics] = false;
   skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
   
   // ==================================================================
@@ -602,24 +594,17 @@ void estimateSystematicUncertaintiesForPp(const int weightExponent = 1){
 
         energyEnergyCorrelatorSystematicUncertainties[iJetPt][iTrackPt][SystematicUncertaintyOrganizer::kMonteCarloStatistics] = findStandardDeviation(nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt], nMCStatisticsRandomizations);
 
-          // Draw example plots on how the uncertainty is obtained
-          /*if(plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] && std::binary_search(drawnCentralityBins.begin(), drawnCentralityBins.end(), iCentrality) && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
-            legendNames[0] = "Low estimate for signal-to-bg ratio";
-            legendNames[1] = "High estimate for signal-to-bg ratio";
+        // Draw example plots on how the uncertainty is obtained
+        if(plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] && std::binary_search(drawnJetPtBins.begin(), drawnJetPtBins.end(), iJetPt) && std::binary_search(drawnTrackPtBins.begin(), drawnTrackPtBins.end(), iTrackPt)){
+          legendNames[0] = "Response matrix variations";
 
-            // Set reasonable ratio zoom
-            if(setAutomaticRatioZoom){
-              if(iCentrality == 0 && weightExponent == 2){
-                ratioZoom = std::make_pair(0.75,1.25);
-              } else if(iCentrality == 0 && weightExponent == 1){
-                ratioZoom = std::make_pair(0.88,1.12);
-              } else {
-                ratioZoom = std::make_pair(0.9,1.1);
-              }
-            }
+          // Set reasonable ratio zoom
+          if(setAutomaticRatioZoom){
+            ratioZoom = std::make_pair(0.95,1.05);
+          }
 
-            drawIllustratingPlots(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], signalToBackgroundRatioUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], 2, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames, nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kSignalToBackgroundRatio), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
-          }*/
+          drawIllustratingPlotsMonochrome(drawer, nominalEnergyEnergyCorrelators[iJetPt][iTrackPt], monteCarloStatisticsUncertaintyCorrelators[iJetPt][iTrackPt], nMCStatisticsRandomizations, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kMonteCarloStatistics), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
+        }
       
       } // Track pT loop
     } // Jet pT loop
@@ -967,44 +952,90 @@ void drawIllustratingPlots(JDrawer* drawer, TH1D* nominalResult, TH1D* variedRes
 }
 
 /*
- * Load histograms relevant for systematic uncertainty analysis from the histogram manager 
+ * Draw plots illustrating how systematic uncertainties are estimated form a certain source
+ *
+ *  JDrawer* drawer = JDrawer doing the dirty work in drawing
+ *  TH1D* nominalResult = Histogram containing nominal results
+ *  TH1D* variedResult[] = Array of histograms containing variation of results around the nominal one
+ *  const int nVariations = Number of variations around the nominal result
+ *  const int iJetPt = Jet pT index of the considered bin
+ *  const int iTrackPt = Track pT index of the considered bin
+ *  EECCard* card = Card used to interpret the bin index
+ *  TString comparisonLegend = An array of strings describing each result variation
+ *  TString plotName = String added to saved plots. If left empty, the plots are not saved into files.
+ *  TString plotComment = Comment given to the saved plots
+ *  std::pair<double, double> drawingRange = Drawing range for x-axis
+ *  std::pair<double, double> ratioZoom = Y-axis zoom for the ratio
  */
-void loadSelectedHistograms(EECHistogramManager* histograms, bool loadRegular, bool loadTrackSystematics){
+void drawIllustratingPlotsMonochrome(JDrawer* drawer, TH1D* nominalResult, TH1D* variedResult[], const int nVariations, const int iJetPt, const int iTrackPt, EECCard* card, TString comparisonLegend, TString plotName, TString plotComment, std::pair<double, double> drawingRange, std::pair<double, double> ratioZoom){
+  
+  // Interpret the given binning information
+  TString jetPtString = Form("%.0f < jet p_{T} < %.0f GeV", card->GetLowBinBorderJetPtEEC(iJetPt), card->GetHighBinBorderJetPtEEC(iJetPt));
+  TString compactJetPtString = Form("_J=%.0f-%.0f", card->GetLowBinBorderJetPtEEC(iJetPt), card->GetHighBinBorderJetPtEEC(iJetPt));
+  TString trackPtString = Form("p_{T}^{ch} > %.1f GeV",card->GetLowBinBorderTrackPtEEC(iTrackPt));
+  TString compactTrackPtString = Form("_T>%.1f",card->GetLowBinBorderTrackPtEEC(iTrackPt));
+  compactTrackPtString.ReplaceAll(".","v");
 
-  // Load energy-energy correlators
-  histograms->SetLoadEnergyEnergyCorrelators(loadRegular);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(loadTrackSystematics);
-  histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadTrackSystematics);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadTrackSystematics);
-  histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadTrackSystematics);
+  // Calculate ratios between nominal and comparison graphs
+  TH1D *ratioHistogram[nVariations];
+  for(int iVariation = 0; iVariation < nVariations; iVariation++){
+    ratioHistogram[iVariation] = (TH1D*) variedResult[iVariation]->Clone(Form("ratio%d_%s", iVariation, comparisonLegend.Data()));
+    ratioHistogram[iVariation]->Divide(nominalResult);
+  } // Varied results loop
 
-  // Load all available bins
-  histograms->SetCentralityBinRange(0, histograms->GetCard()->GetNCentralityBins() - 1);
-  histograms->SetJetPtBinRangeEEC(0, histograms->GetCard()->GetNJetPtBinsEEC() - 1);
-  histograms->SetTrackPtBinRangeEEC(0, histograms->GetCard()->GetNTrackPtBinsEEC() - 1);
+  // Create a new canvas for the plot
+  drawer->CreateSplitCanvas();
 
-  // Load the histograms from the file
-  histograms->LoadProcessedHistograms();
+  // Use logarithmic axis for EEC
+  drawer->SetLogY(true);
 
+  // Check from plot comment if we need to also add another line to the legend
+  int weightExponent = (plotComment == "_energyWeightSquared") + 1;
+
+  // Setup the legend for plots
+  TLegend *legend = new TLegend(0.23,0.08,0.46,0.6);
+  legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+  legend->AddEntry((TObject*) 0, Form("%s 5.02 TeV",card->GetAlternativeDataType().Data()), "");
+  legend->AddEntry((TObject*) 0, Form("n = %d", weightExponent),"");
+  legend->AddEntry((TObject*) 0, jetPtString.Data(),"");
+  legend->AddEntry((TObject*) 0, trackPtString.Data(),"");
+
+  // Set the x-axis drawing range
+  nominalResult->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+
+  // Draw the nominal result to the upper canvas
+  nominalResult->SetLineColor(kBlack);
+  drawer->DrawHistogramToUpperPad(nominalResult, "#Deltar", "EEC Signal", " ");
+  legend->AddEntry(nominalResult, "Nominal", "l");
+
+  // Draw the variations to the same plot
+  for(int iVariation = 0; iVariation < nVariations; iVariation++) {
+    variedResult[iVariation]->SetLineColor(kBlue);
+    variedResult[iVariation]->Draw("same");
+  }
+  legend->AddEntry(variedResult[0], comparisonLegend, "l");
+
+  // Draw the legends to the upper pad
+  legend->Draw();
+
+  // Linear scale for the ratio
+  drawer->SetLogY(false);
+
+  // Set the x-axis drawing range
+  ratioHistogram[0]->GetXaxis()->SetRangeUser(drawingRange.first, drawingRange.second);
+
+  ratioHistogram[0]->SetLineColor(kBlue);
+  ratioHistogram[0]->GetYaxis()->SetRangeUser(ratioZoom.first, ratioZoom.second);
+  drawer->SetGridY(true);
+  drawer->DrawHistogramToLowerPad(ratioHistogram[0], "#Deltar", "#frac{Variation}{Nominal}", " ");
+  for(int iVariation = 1; iVariation < nVariations; iVariation++) {
+    ratioHistogram[iVariation]->SetLineColor(kBlue);
+    ratioHistogram[iVariation]->Draw("same");
+  }
+  drawer->SetGridY(false);
+  
+  // If a plot name is given, save the plot in a file
+  if(plotName != ""){
+    gPad->GetCanvas()->SaveAs(Form("figures/systematicUncertainty_%s_pp%s%s%s.pdf", plotName.Data(), plotComment.Data(), compactJetPtString.Data(), compactTrackPtString.Data()));
+  }
 }
-
-/*
- * Load histograms relevant for systematic uncertainty analysis from the histogram manager 
- */
-void loadRelevantHistograms(EECHistogramManager* histograms){
-
-  // Load only regular energy-energy correlators
-  loadSelectedHistograms(histograms, true, false);
-
-}
-
-/*
- * Load histograms related to tracking systematics from the histogram manager 
- */
-void loadTrackingSystematicsHistograms(EECHistogramManager* histograms){
-
-  // Load all energy-energy correlators
-  loadSelectedHistograms(histograms, true, true);
-
-}
-

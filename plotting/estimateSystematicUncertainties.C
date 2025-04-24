@@ -222,6 +222,8 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
     plotExample[iUncertainty] = false;
   }
   skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloNonClosure] = true;
+  //skipUncertaintySource[SystematicUncertaintyOrganizer::kMonteCarloStatistics] = false;
+  //plotExample[SystematicUncertaintyOrganizer::kMonteCarloStatistics] = true;
   
   // ==================================================================
   // ====================== Configuration done ========================
@@ -970,6 +972,9 @@ void estimateSystematicUncertainties(const int weightExponent = 1){
             // Set reasonable ratio zoom
             if(setAutomaticRatioZoom){
               ratioZoom = std::make_pair(0.9,1.1);
+              if(weightExponent == 2){
+                ratioZoom = std::make_pair(0.85,1.15);
+              }
             }
 
             drawIllustratingPlotsMonochrome(drawer, nominalEnergyEnergyCorrelators[iCentrality][iJetPt][iTrackPt], monteCarloStatisticsUncertaintyCorrelators[iCentrality][iJetPt][iTrackPt], nMCStatisticsRandomizations, iCentrality, iJetPt, iTrackPt, nominalResultCard, legendNames[0], nameGiver->GetSystematicUncertaintyName(SystematicUncertaintyOrganizer::kMonteCarloStatistics), nameAdder[weightExponent-1], analysisDeltaR, ratioZoom);
