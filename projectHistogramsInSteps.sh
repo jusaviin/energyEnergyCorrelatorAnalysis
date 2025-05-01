@@ -94,7 +94,15 @@ elif $NOMINAL; then
   root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",128,'${WEIGHTEXPONENT}')'
 
   # Project regular energy-energy correlator histograms
-  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}')'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',0,0)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',0,1)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',0,2)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',1,0)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',1,1)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',1,2)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',2,0)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',2,1)'
+  root -l -b -q 'plotting/projectEEChistograms.C("'${INPUT}'","'${OUTPUT}'",256,'${WEIGHTEXPONENT}',2,2)'
 
 fi
 

@@ -8,44 +8,111 @@
  */
 void compareJetAxesWithDeltaAxis(){
   
-  // Enumeration for different systems
-  enum enumSystem{kPp, kPbPb, knSystems};
-
-  // Enumeration for different predefined file comparison sets
+  // Enumeration for different jet axes
   enum enumJetAxis{kEscheme, kWTA, knJetAxes};
 
   // Enumeration for energy weight
   enum enumEnergyWeight{kNominalWeight, kSquaredWeight, knEnergyWeights};
 
-  // Define the file names for the studied files
-  TString fileName[knSystems][knEnergyWeights][knJetAxes];
+  // Enumeration for jet radius
+  enum enumJetRatios{kR0p4, kR0p8, knJetRadii};
 
-  // Naming for axes in figures
+  // Enumeration for vetoing jets in the region 0.4 < DeltaR < 0.8
+  enum enumJetVeto{kNoVeto, kJetVeto, knVetoTypes};
+
+  // Possibility to veto other jets within the extended radius around the jet axis
+  const bool vetoCloseJets = false;
+
+  // Define the file names for the studied files
+  TString fileName[knVetoTypes][knJetRadii][knEnergyWeights][knJetAxes];
+
+  // Naming for jet radii
+  TString jetRadiusDescription[knJetRadii];
+  jetRadiusDescription[kR0p4] = "R = 0.4";
+  jetRadiusDescription[kR0p8] = "R = 0.8";
+
+  TString jetRadiusSaveName[knJetRadii];
+  jetRadiusSaveName[kR0p4] = "_R0p4";
+  jetRadiusSaveName[kR0p8] = "_R0p8";
+
+  // Naming for energy weights
   TString energyWeightDescription[knEnergyWeights];
   energyWeightDescription[kNominalWeight] = "n = 1";
   energyWeightDescription[kSquaredWeight] = "n = 2";
 
-  // The manual configuration here is overwritten for predefined sets
+  TString compactEnergyWeightString[knEnergyWeights];
+  compactEnergyWeightString[kNominalWeight] = "_nominalEnergyWeight";
+  compactEnergyWeightString[kSquaredWeight] = "_energyWeightSquared";
+
+  // Naming for jet axes
   TString jetAxisDescription[knJetAxes];
   jetAxisDescription[kEscheme] = "E-scheme";
   jetAxisDescription[kWTA] = "WTA";
+
+  // Figure saving names for jet axes
+  TString jetAxisSaveName[knJetAxes];
+  jetAxisSaveName[kEscheme] = "_escheme";
+  jetAxisSaveName[kWTA] = "_WTA";
+
+  // Naming for veto types
+  TString vetoDescription[knVetoTypes];
+  vetoDescription[kNoVeto] = "";
+  vetoDescription[kJetVeto] = "No other jets within 0.8";
+
+  // Figure saving names for veto types
+  TString vetoSaveName[knVetoTypes];
+  vetoSaveName[kNoVeto] = "";
+  vetoSaveName[kJetVeto] = "_vetoCloseJets";
   
 
-  // Files for pp
-  fileName[kPp][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_processed_2025-03-03.root";
-  fileName[kPp][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_processed_2025-03-03.root";
-  fileName[kPp][kNominalWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_jetDeltaAxis_processed_2025-03-03.root";
-  fileName[kPp][kSquaredWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_jetDeltaAxis_processed_2025-03-03.root";
+  // Define files for each of these combinations. TODO: Update all files after merging in ACCRE is finished
 
-  // Files for Pythia+Hydjet TODO: These are old files for example! These do not contain DeltaAxis variables for jets!
-  fileName[kPbPb][kNominalWeight][kEscheme] = "data/eschemeAxis/PbPbMC2018_GenGen_akFlowJets_eschemeAxis_4pCentShift_cutBadPhi_nominalEnergyWeight_onlyReflectedCone_processed_2025-02-24.root";
-  fileName[kPbPb][kSquaredWeight][kEscheme] = "data/eschemeAxis/PbPbMC2018_GenGen_akFlowJets_eschemeAxis_4pCentShift_cutBadPhi_energyWeightSquared_onlyReflectedCone_processed_2025-02-24.root";
-  fileName[kPbPb][kNominalWeight][kWTA] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root";
-  fileName[kPbPb][kSquaredWeight][kWTA] = "data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-18.root";
+  // Files for R = 0.4, no other jet veto
+  fileName[kNoVeto][kR0p4][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p4][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p4][kNominalWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p4][kSquaredWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_jetDeltaAxis_leadingParticleFlag_processed_2025-03-10.root";
 
+  // Files for R = 0.8, no other jet veto
+  fileName[kNoVeto][kR0p8][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p8][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p8][kNominalWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
+  fileName[kNoVeto][kR0p8][kSquaredWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_processed_2025-03-10.root";
 
-  // Give a descriptions for the ratios depending on what is defined in the sets
-  TString ratioDescription = Form("#frac{%s}{%s}", jetAxisDescription[kWTA].Data(), jetAxisDescription[kEscheme].Data());
+  // Files for R = 0.4, veto if other jets within 0.8
+  fileName[kJetVeto][kR0p4][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p4_leadingParticleFlag_veto0p8Jets_processed_2025-03-16.root";
+  fileName[kJetVeto][kR0p4][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p4_leadingParticleFlag_veto0p8Jets_processed_2025-03-16.root";
+  fileName[kJetVeto][kR0p4][kNominalWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p4_leadingParticleFlag_veto0p8Jets_processed_2025-03-16.root";
+  fileName[kJetVeto][kR0p4][kSquaredWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p4_leadingParticleFlag_veto0p8Jets_processed_2025-03-16.root";
+
+  // Files for R = 0.8, veto if other jets within 0.8
+  fileName[kJetVeto][kR0p8][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_vetoCloseJets_processed_2025-03-14.root";
+  fileName[kJetVeto][kR0p8][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_vetoCloseJets_processed_2025-03-14.root";
+  fileName[kJetVeto][kR0p8][kNominalWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_vetoCloseJets_processed_2025-03-14.root";
+  fileName[kJetVeto][kR0p8][kSquaredWeight][kWTA] = "data/eschemeAxis/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p8_leadingParticleFlag_vetoCloseJets_processed_2025-03-14.root";
+  
+  // Open the files and check that they exist
+  TFile* inputFile[knVetoTypes][knJetRadii][knEnergyWeights][knJetAxes];
+  EECCard* card[knVetoTypes][knJetRadii][knEnergyWeights][knJetAxes];
+  for(int iVeto = 0; iVeto < knVetoTypes; iVeto++){
+    for(int iJetRadius = 0; iJetRadius < knJetRadii; iJetRadius++){
+      for(int iEnergyWeight = 0; iEnergyWeight < knEnergyWeights; iEnergyWeight++){
+        for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
+    
+          inputFile[iVeto][iJetRadius][iEnergyWeight][iJetAxis] = TFile::Open(fileName[iVeto][iJetRadius][iEnergyWeight][iJetAxis]);
+    
+          if(inputFile[iVeto][iJetRadius][iEnergyWeight][iJetAxis] == NULL){
+            cout << "Error! The file " << fileName[iVeto][iJetRadius][iEnergyWeight][iJetAxis].Data() << " does not exist!" << endl;
+            cout << "Maybe you forgot the data/ folder path?" << endl;
+            cout << "Will not execute the code" << endl;
+            return;
+          }
+
+          card[iVeto][iJetRadius][iEnergyWeight][iJetAxis]  = new EECCard(inputFile[iVeto][iJetRadius][iEnergyWeight][iJetAxis]);
+        } // Jet axis loop
+      } // Energy weight loop
+    } // Jet radius loop
+  } // Veto loop
   
   // Open the files and check that they exist
   TFile* inputFile[knSystems][knEnergyWeights][knJetAxes];
@@ -224,18 +291,6 @@ void compareJetAxesWithDeltaAxis(){
 
         histograms[iSystem][iEnergyWeight][iJetAxis] = new EECHistogramManager(inputFile[iSystem][iEnergyWeight][iJetAxis], card[iSystem][iEnergyWeight][iJetAxis]);
 
-        // Choose load jet and energy-energy correlator histograms
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetLoadJetHistograms(true);
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetLoadEnergyEnergyCorrelators(true);
-
-        // Choose the bin ranges
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetCentralityBinRange(0, card[iSystem][iEnergyWeight][iJetAxis]->GetNCentralityBins() - 1);
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetJetPtBinRangeEEC(0, card[iSystem][iEnergyWeight][iJetAxis]->GetNJetPtBinsEEC() - 1);
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetTrackPtBinRangeEEC(0, card[iSystem][iEnergyWeight][iJetAxis]->GetNTrackPtBinsEEC() - 1);
-        histograms[iSystem][iEnergyWeight][iJetAxis]->SetLoadedPairingType(pairingType, true);
-
-        // Load the histograms from the file
-        histograms[iSystem][iEnergyWeight][iJetAxis]->LoadProcessedHistograms();
       } // File in set loop for histogram loading
     } // File set loop for histogram loading
   } // System loop for histogram loading
@@ -313,11 +368,12 @@ void compareJetAxesWithDeltaAxis(){
                 hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][nCentralityBins][iJetPtReference][iTrackPtReference]->Add(hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][jJetDeltaR][nCentralityBins][iJetPtReference][iTrackPtReference]);
 
               } // Loop over all DeltaR between E-scheme and WTA axes bins
+
             } else {
 
               // Load the selected energy-energy correlator histograms for pp
               if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
-                hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][nCentralityBins][iJetPtReference][iTrackPtReference] = histograms[kPp][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(EECHistogramManager::kEnergyEnergyCorrelator, iJetDeltaR, 0, iJetPt, iTrackPt, pairingType);
+                hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][nCentralityBins][iJetPtReference][iTrackPtReference] = histograms[kPp][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(EECHistogramManager::kEnergyEnergyCorrelator, iJetDeltaR, 0, iJetPt, iTrackPt, EECHistograms::kLeadingParticleTypes, pairingType);
               } else {
                 // TODO: For processed histograms, I currently do not have the getter setup with JetDeltaR binning 
                 hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][nCentralityBins][iJetPtReference][iTrackPtReference] = histograms[kPp][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, 0, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);
@@ -346,7 +402,7 @@ void compareJetAxesWithDeltaAxis(){
 
                 // Load the selected energy-energy correlator histograms for PbPb
                 if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
-                  hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][iCentrality][iJetPtReference][iTrackPtReference] = histograms[kPbPb][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(EECHistogramManager::kEnergyEnergyCorrelator, iJetDeltaR, iCentrality, iJetPt, iTrackPt, pairingType, subevent);
+                  hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][iCentrality][iJetPtReference][iTrackPtReference] = histograms[kPbPb][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(EECHistogramManager::kEnergyEnergyCorrelator, iJetDeltaR, iCentrality, iJetPt, iTrackPt, EECHistograms::kLeadingParticleTypes, pairingType, subevent);
                 } else {
                   // TODO: For processed histograms, I currently do not have the getter setup with JetDeltaR binning 
                   hEnergyEnergyCorrelator[iEnergyWeight][iJetAxis][iJetDeltaR][iCentrality][iJetPtReference][iTrackPtReference] = histograms[kPbPb][iEnergyWeight][iJetAxis]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);

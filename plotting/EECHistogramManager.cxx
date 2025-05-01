@@ -64,6 +64,10 @@ EECHistogramManager::EECHistogramManager() :
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     fLoadPairingType[iPairingType] = false;
   }
+
+  for(int iLeadingParticle = 0; iLeadingParticle <= EECHistograms::kLeadingParticleTypes; iLeadingParticle++){
+    fLoadLeadingParticleType[iLeadingParticle] = false;
+  }
   
   // Default binning for centrality
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins + 1; iCentrality++){
@@ -401,6 +405,11 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     fLoadPairingType[iPairingType] = in.fLoadPairingType[iPairingType];
   }
+
+  for(int iLeadingParticle = 0; iLeadingParticle <= EECHistograms::kLeadingParticleTypes; iLeadingParticle++){
+    fLoadLeadingParticleType[iLeadingParticle] = in.fLoadLeadingParticleType[iLeadingParticle];
+  }
+  
   
   // Copy binning for centrality
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins + 1; iCentrality++){
@@ -814,6 +823,7 @@ void EECHistogramManager::StabilizeBackground(){
       for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
         // Do the stabilization only for background+background contributions, which are for sure not dependent of jet pT
         for(int iPairingType = EECHistograms::kReflectedConePair; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
+          if(!fLoadPairingType[iPairingType]) continue;
           if(iPairingType == EECHistograms::kSignalMixedConePair) continue;
           if(iPairingType == EECHistograms::kSignalSecondMixedConePair) continue;
           for(int iSubevent = 0; iSubevent <= EECHistograms::knSubeventCombinations; iSubevent++){
@@ -1712,6 +1722,8 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     // Loop over different leading particle flags
     for(int iLeadingParticle = 0; iLeadingParticle <= EECHistograms::kLeadingParticleTypes; iLeadingParticle++){
 
+      if(!fLoadLeadingParticleType[iLeadingParticle]) continue;
+
       // Reset the ranges for all the axes in the histogram array
       for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
         histogramArray->GetAxis(iAxis)->SetRange(0,0);
@@ -1729,7 +1741,9 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     
       // Loop over pairing types
       for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
-      
+
+        // Only load selected pairing type histograms
+        if(!fLoadPairingType[iPairingType]) continue;
 
         // If reflected cone histograms are not filled in the data file, do not try to load them
         if((iPairingType != EECHistograms::kSameJetPair) && !fCard->GetDoReflectedCone()) continue;
@@ -3189,12 +3203,18 @@ void EECHistogramManager::WriteEnergyEnergyCorrelatorHistograms(){
     // Loop over pairing types (same jet/reflected cone)
     for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
 
+      // Can only write histograms that are loaded
+      if(!fLoadPairingType[iPairingType]) continue;
+
       // Create a subdirectory for all pairing types. With mixed cone, there are too many histograms for a single folder
       if(!gDirectory->GetDirectory(fPairingTypeSaveName[iPairingType])) gDirectory->mkdir(fPairingTypeSaveName[iPairingType]);
       gDirectory->cd(fPairingTypeSaveName[iPairingType]);
 
       // Loop over leading particle flags
       for(int iLeadingParticle = 0; iLeadingParticle <= EECHistograms::kLeadingParticleTypes; iLeadingParticle++){
+
+        // Can only write histograms that are loaded
+        if(!fLoadLeadingParticleType[iLeadingParticle]) continue;
 
         if(iLeadingParticle == EECHistograms::kLeadingParticleTypes){
           leadingParticleName = "";
@@ -3910,7 +3930,12 @@ void EECHistogramManager::WriteCovarianceMatrixAfterUnfolding(const char* fileNa
 /*
  * Load the selected histograms from a file containing readily processed histograms
  */
+[[deprecated("EECHistogramManager::LoadProcessedHistograms is obsolete. It should not be anymore to improve memory usage!")]]
 void EECHistogramManager::LoadProcessedHistograms(){
+
+  cout << endl;
+  cout << "EECHistogramManager::LoadProcessedHistograms is obsolete. It should not be anymore to improve memory usage!" << endl;
+  cout << endl;
   
   // Helper variable for finding names of loaded histograms
   TString histogramNamer;
@@ -4476,6 +4501,20 @@ void EECHistogramManager::LoadProcessedHistograms(){
 }
 
 /*
+ * Load the event histogram
+ */
+void EECHistogramManager::LoadEventsHistogram(){
+  fhEvents = (TH1D*) fInputFile->Get("nEvents");
+}
+
+/*
+ * Load the jet pT histogram
+ */
+void EECHistogramManager::LoadJetPtHistogram(const int iCentrality){
+  fhJetPt[iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%sPt_C%d", fJetHistogramName, fJetHistogramName, iCentrality));
+}
+
+/*
  * Check that the weight exponent requested is present in the input data.
  */
 void EECHistogramManager::CheckWeightExponent(){
@@ -4842,7 +4881,7 @@ void EECHistogramManager::SetTrackPtBinRangeEEC(const int first, const int last)
   BinSanityCheck(fnTrackPtBinsEEC,fFirstLoadedTrackPtBinEEC,fLastLoadedTrackPtBinEEC);
 }
 
- // Set a flag if you want to load specific pairing types. Giving a index out of range applies this to all pairing types
+// Set a flag if you want to load specific pairing types. Giving a index out of range applies this to all pairing types
 void EECHistogramManager::SetLoadedPairingType(const int iPairingType, const bool loadOrNot){
   if(iPairingType < 0 || iPairingType >= EECHistograms::knPairingTypes){
     for(int jPairingType = 0; jPairingType < EECHistograms::knPairingTypes; jPairingType++){
@@ -4850,6 +4889,17 @@ void EECHistogramManager::SetLoadedPairingType(const int iPairingType, const boo
     }
   } else {
     fLoadPairingType[iPairingType] = loadOrNot;
+  }
+}
+
+// Set a flag if you want to load specific leading particle types. Giving a index out of range applies this to all pairing types
+void EECHistogramManager::SetLoadedLeadingParticleType(const int iLeadingParticle, const bool loadOrNot){
+  if(iLeadingParticle < 0 || iLeadingParticle > EECHistograms::kLeadingParticleTypes){
+    for(int jLeadingParticle = 0; jLeadingParticle <= EECHistograms::kLeadingParticleTypes; jLeadingParticle++){
+      fLoadLeadingParticleType[jLeadingParticle] = loadOrNot;
+    }
+  } else {
+    fLoadLeadingParticleType[iLeadingParticle] = loadOrNot;
   }
 }
 
@@ -5095,255 +5145,538 @@ double EECHistogramManager::GetMaxTrackPtWithinJetConeBinBorder(const int iTrack
 // Getters for event information histograms
 
 // Getter for z-vertex histogram
-TH1D* EECHistogramManager::GetHistogramVertexZ() const{
+TH1D* EECHistogramManager::GetHistogramVertexZ(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhVertexZ == NULL) fhVertexZ = (TH1D*) fInputFile->Get("vertexZ"); 
+
   return fhVertexZ;
 }
 
 // Getter for z-vertex histogram
-TH1D* EECHistogramManager::GetHistogramVertexZWeighted() const{
+TH1D* EECHistogramManager::GetHistogramVertexZWeighted(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhVertexZWeighted == NULL) fhVertexZWeighted = (TH1D*) fInputFile->Get("vertexZweighted"); 
+
   return fhVertexZWeighted;
 }
 
 // Getter for histogram for number of events surviving different event cuts
-TH1D* EECHistogramManager::GetHistogramEvents() const{
+TH1D* EECHistogramManager::GetHistogramEvents(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhEvents == NULL) LoadEventsHistogram();
+
   return fhEvents;
 }
 
 // Getter for histogram for trigger selection
-TH1D* EECHistogramManager::GetHistogramTriggers() const{
+TH1D* EECHistogramManager::GetHistogramTriggers(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTriggers == NULL) fhTriggers = (TH1D*) fInputFile->Get("triggers"); 
+
   return fhTriggers;
 }
 
 // Getter for histogram for number of tracks surviving different track cuts
-TH1D* EECHistogramManager::GetHistogramTrackCuts() const{
+TH1D* EECHistogramManager::GetHistogramTrackCuts(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTrackCuts == NULL) fhTrackCuts = (TH1D*) fInputFile->Get("trackCuts"); 
+
   return fhTrackCuts;
 }
 
 // Getter for centrality histogram in all events
-TH1D* EECHistogramManager::GetHistogramCentrality() const{
+TH1D* EECHistogramManager::GetHistogramCentrality(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhCentrality == NULL) fhCentrality = (TH1D*) fInputFile->Get("centrality"); 
+
   return fhCentrality;
 }
 
 // Getter for weighted centrality histogram in all events
-TH1D* EECHistogramManager::GetHistogramCentralityWeighted() const{
+TH1D* EECHistogramManager::GetHistogramCentralityWeighted(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhCentralityWeighted == NULL) fhCentralityWeighted = (TH1D*) fInputFile->Get("centralityWeighted"); 
+
   return fhCentralityWeighted;
 }
 
+// Getter for pT hat histogram
+TH1D* EECHistogramManager::GetHistogramPtHat(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhPtHat == NULL) fhPtHat = (TH1D*) fInputFile->Get("pthat");
+
+  return fhPtHat;
+}
+
+// Getter for pT hat histogram
+TH1D* EECHistogramManager::GetHistogramPtHatWeighted(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhPtHatWeighted == NULL) fhPtHatWeighted = (TH1D*) fInputFile->Get("pthatWeighted"); 
+
+  return fhPtHatWeighted;
+}
+
 // Getter for multiplicity histogram in all events
-TH1D* EECHistogramManager::GetHistogramMultiplicity(int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramMultiplicity(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMultiplicity[iCentrality] == NULL){
+    TString histogramNamer = "multiplicity/multiplicity";
+    if(iCentrality != fnCentralityBins) histogramNamer.Append(Form("_C%d", iCentrality));
+    fhMultiplicity[iCentrality] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhMultiplicity[iCentrality];
 }
 
 // Getter for track efficiency weighted multiplicity histogram in all events
-TH1D* EECHistogramManager::GetHistogramMultiplicityWeighted(int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramMultiplicityWeighted(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMultiplicityWeighted[iCentrality] == NULL){
+    TString histogramNamer = "multiplicity/multiplicityWeighted";
+    if(iCentrality != fnCentralityBins) histogramNamer.Append(Form("_C%d", iCentrality));
+    fhMultiplicity[iCentrality] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhMultiplicityWeighted[iCentrality];
 }
 
 // Getter for multiplicity vs. centrality map
-TH2D* EECHistogramManager::GetHistogramMultiplicityMap() const{
+TH2D* EECHistogramManager::GetHistogramMultiplicityMap(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMultiplicityMap == NULL) fhMultiplicityMap = (TH2D*) fInputFile->Get("multiplicity/multiplicityMap");
+
   return fhMultiplicityMap;
 }
 
-// Getter for multiplicity vs. centrality map
-TH2D* EECHistogramManager::GetHistogramWeightedMultiplicityMap() const{
+// Getter for weighted multiplicity vs. centrality map
+TH2D* EECHistogramManager::GetHistogramWeightedMultiplicityMap(){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMultiplicityMapWeighted == NULL) fhMultiplicityMapWeighted = (TH2D*) fInputFile->Get("multiplicity/multiplicityMapWeighted");
+
   return fhMultiplicityMapWeighted;
 }
 
 // Getters for jet histograms
 
 // Getter for jet pT histograms
-TH1D* EECHistogramManager::GetHistogramJetPt(int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramJetPt(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetPt[iCentrality] == NULL) LoadJetPtHistogram(iCentrality);
+
   return fhJetPt[iCentrality];
 }
 
 // Getter for jet phi histograms
-TH1D* EECHistogramManager::GetHistogramJetPhi(int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramJetPhi(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetPhi[iCentrality] == NULL) fhJetPhi[iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%sPhi_C%d", fJetHistogramName, fJetHistogramName, iCentrality));
+
   return fhJetPhi[iCentrality];
 }
 
 // Getter for jet eta histograms
-TH1D* EECHistogramManager::GetHistogramJetEta(int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramJetEta(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetEta[iCentrality] == NULL) fhJetEta[iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%sEta_C%d", fJetHistogramName, fJetHistogramName, iCentrality));
+
   return fhJetEta[iCentrality];
 }
 
 // Getter for 2D eta-phi histogram for jets
-TH2D* EECHistogramManager::GetHistogramJetEtaPhi(int iCentrality) const{
+TH2D* EECHistogramManager::GetHistogramJetEtaPhi(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetEtaPhi[iCentrality] == NULL) fhJetEtaPhi[iCentrality] = (TH2D*) fInputFile->Get(Form("%s/%sEtaPhi_C%d", fJetHistogramName, fJetHistogramName, iCentrality));
+
   return fhJetEtaPhi[iCentrality];
 }
 
 // Getter for DeltaR difference histograms between WTA and E-scheme axes
-TH1D* EECHistogramManager::GetHistogramJetDeltaAxis(int iCentrality, int iJetPt) const{
+TH1D* EECHistogramManager::GetHistogramJetDeltaAxis(int iCentrality, int iJetPt){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
-  return fhJetDeltaAxis[iCentrality][iJetPt];
-}
 
-// Getter for the leading charged particle pT distribution within jets
-TH1D* EECHistogramManager::GetHistogramLeadingParticleInJet(int iJetDeltaAxis, int iCentrality, int iJetPt) const{
-  if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
-  return fhLeadingParticleInJet[iJetDeltaAxis][iCentrality][iJetPt];
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetDeltaAxis[iCentrality][iJetPt] == NULL) fhJetDeltaAxis[iCentrality][iJetPt] = (TH1D*) fInputFile->Get(Form("%s/%sDeltaAxis_C%dJ%d", fJetHistogramName, fJetHistogramName, iCentrality, iJetPt));
+
+  return fhJetDeltaAxis[iCentrality][iJetPt];
 }
 
 // Getters for histograms for tracks
 
 // Getter for track pT histograms
-TH1D* EECHistogramManager::GetHistogramTrackPt(const int iTrackType, const int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramTrackPt(const int iTrackType, const int iCentrality){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTrackPt[iTrackType][iCentrality] == NULL) fhTrackPt[iTrackType][iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%sPt_C%d",fTrackHistogramNames[iTrackType], fTrackHistogramNames[iTrackType], iCentrality));
+
   return fhTrackPt[iTrackType][iCentrality];
 }
 
 // Getter for track phi histograms
-TH1D* EECHistogramManager::GetHistogramTrackPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramTrackPhi(const int iTrackType, const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTrackPhi[iTrackType][iCentrality][iTrackPt] == NULL) fhTrackPhi[iTrackType][iCentrality][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%sPhi_C%dT%d", fTrackHistogramNames[iTrackType], fTrackHistogramNames[iTrackType], iCentrality, iTrackPt));
+
   return fhTrackPhi[iTrackType][iCentrality][iTrackPt];
 }
 
 // Getter for track eta histograms
-TH1D* EECHistogramManager::GetHistogramTrackEta(const int iTrackType, const int iCentrality, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramTrackEta(const int iTrackType, const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTrackEta[iTrackType][iCentrality][iTrackPt] == NULL) fhTrackEta[iTrackType][iCentrality][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%sEta_C%dT%d", fTrackHistogramNames[iTrackType], fTrackHistogramNames[iTrackType], iCentrality, iTrackPt));
+
   return fhTrackEta[iTrackType][iCentrality][iTrackPt];
 }
 
 // Getter for 2D eta-phi histogram for track
-TH2D* EECHistogramManager::GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const{
+TH2D* EECHistogramManager::GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhTrackEtaPhi[iTrackType][iCentrality][iTrackPt] == NULL) fhTrackEtaPhi[iTrackType][iCentrality][iTrackPt] = (TH2D*) fInputFile->Get(Form("%s/%sEtaPhi_C%dT%d", fTrackHistogramNames[iTrackType], fTrackHistogramNames[iTrackType], iCentrality, iTrackPt));
+
   return fhTrackEtaPhi[iTrackType][iCentrality][iTrackPt];
 }
 
 // Getter for multiplicity histogram within the jet cone
-TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iMultiplicityType, const int iSubevent) const{
+TH1D* EECHistogramManager::GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int iMultiplicityType, const int iSubevent){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] == NULL){
+    TString histogramNamer = Form("%s/%s_C%dT%d", fMultiplicityInJetsHistogramNames[iMultiplicityType], fMultiplicityInJetsHistogramNames[iMultiplicityType], iCentrality, iTrackPt);
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
+    fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhMultiplicityInJetCone[iCentrality][iJetPt][iTrackPt][iMultiplicityType][iSubevent];
 }
 
 // Getter for particle density histogram around the jet cone
-TH1D* EECHistogramManager::GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType, const int iParticleDensityType, const int iSubevent) const{
+TH1D* EECHistogramManager::GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType, const int iParticleDensityType, const int iSubevent){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] == NULL){
+    TString histogramNamer = Form("%s/%s%s_C%dT%d", fParticleDensityAroundJetsSaveNames[iParticleDensityType], fParticleDensityAroundJetsSaveNames[iParticleDensityType], fJetConeTypeSaveName[iJetConeType], iCentrality, iTrackPt);
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
+    fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhParticleDensityAroundJetAxis[iCentrality][iJetPt][iTrackPt][iJetConeType][iParticleDensityType][iSubevent];
 }
 
 // Maximum particle pT in jet cone
-TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMaxParticlePtInJetConePtBin[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt] == NULL){
+    TString histogramNamer = Form("%s/%s_C%dJ%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtWithinJetConeType], fMaxParticlePtInJetConeSaveName[iMaxParticlePtWithinJetConeType], iCentrality, iJetPt);
+    if(iTrackPt != knProjectedMaxParticlePtBins) histogramNamer.Append(Form("T%d", iTrackPt));
+    fhMaxParticlePtInJetConePtBin[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhMaxParticlePtInJetConePtBin[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt];
 }
 
 // Maximum particle pT in jet cone with pT cut for background particles
-TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhMaxParticlePtInJetConePtCut[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt] == NULL){
+    TString histogramNamer = Form("%s/%sTrackPtCut_C%dJ%dT%d",fMaxParticlePtInJetConeSaveName[iMaxParticlePtWithinJetConeType], fMaxParticlePtInJetConeSaveName[iMaxParticlePtWithinJetConeType], iCentrality, iJetPt, iTrackPt);
+    fhMaxParticlePtInJetConePtCut[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhMaxParticlePtInJetConePtCut[iMaxParticlePtWithinJetConeType][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for maximum particle pT in jet cone
-TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt){
   return GetHistogramMaxParticlePtInJetCone(kMaxSignalParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for maximum particle pT in jet cone with pT cut for background particles
-TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt){
   return GetHistogramMaxParticlePtInJetConePtCut(kMaxSignalParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for maximum background particle pT in jet cone
-TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt){
   return GetHistogramMaxParticlePtInJetCone(kMaxBackgroundParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Maximum background particle pT in jet cone with pT cut for signal particles
-TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt){
   return GetHistogramMaxParticlePtInJetConePtCut(kMaxBackgroundParticlePt,iCentrality,iJetPt,iTrackPt);
 }
 
 // Getter for energy-energy correlator histograms
-TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType, const int iSubevent) const{
+TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType, const int iSubevent){
+
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iPairingType][iSubevent] == NULL){
+    TString histogramNamer = Form("%s/%s/%s%s_C%dT%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
+
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
+
+    fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iPairingType][iSubevent];
 }
 
 // Getter for energy-energy correlator histograms
-TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iLeadingParticle, const int iPairingType, const int iSubevent) const{
+TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iLeadingParticle, const int iPairingType, const int iSubevent){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iLeadingParticle][iPairingType][iSubevent] == NULL){
+
+    TString leadingParticleName = "";
+    TString folderNamer = Form("%s/%s/", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType]);
+    TString folderBase;
+
+    if(iLeadingParticle == EECHistograms::kLeadingParticleTypes){
+      leadingParticleName = "";
+      folderBase = folderNamer;
+    } else {
+      leadingParticleName = Form("L%d", iLeadingParticle);
+      folderBase = Form("%s%s/", folderNamer.Data(), fLeadingParticleSaveName[iLeadingParticle]);
+    }
+
+    TString histogramNamer = Form("%s%s%s_%s", folderBase.Data(), fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], leadingParticleName.Data());
+
+    if(iJetDeltaAxis != kMaxJetDeltaAxisBins) histogramNamer.Append(Form("A%d", iJetDeltaAxis));
+    histogramNamer.Append(Form("C%dT%d", iCentrality, iTrackPt));
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
+
+    fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iLeadingParticle][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iJetDeltaAxis][iCentrality][iJetPt][iTrackPt][iLeadingParticle][iPairingType][iSubevent];
 }
 
 // Getter for processed energy-energy correlator histograms
-TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const{
+TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iProcessingLevel] == NULL){
+    TString histogramNamer = Form("%sProcessed/%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[iProcessingLevel], iCentrality, iTrackPt);
+
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    
+    fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iProcessingLevel] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][kMaxJetDeltaAxisBins][iCentrality][iJetPt][iTrackPt][EECHistograms::kLeadingParticleTypes][iProcessingLevel];
 }
 
 // Getter for histograms showing number of jets above 25 GeV within the reflected cone
 TH1D* EECHistogramManager::GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhNumberOfJetsWithinReflectedCone[iCentrality] == NULL) {
+    fhNumberOfJetsWithinReflectedCone[iCentrality] = (TH1D*)fInputFile->Get(Form("%s/%s_C%d", fReflectedConeQAFolderName, fNumberOfJetsWithinReflectedConeName, iCentrality));
+  }
+
   return fhNumberOfJetsWithinReflectedCone[iCentrality];
 }
 
 // Getter for pT of the jets that are found from the reflected cone
 TH1D* EECHistogramManager::GetHistogramJetPtWithinReflectedCone(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtWithinReflectedCone[iCentrality] == NULL){
+    fhJetPtWithinReflectedCone[iCentrality] = (TH1D*)fInputFile->Get(Form("%s/%s_C%d", fReflectedConeQAFolderName, fJetPtWithinReflectedConeName, iCentrality));
+  }
+      
   return fhJetPtWithinReflectedCone[iCentrality];
 }
 
 // Getter for jet pT response matrix
-TH2D* EECHistogramManager::GetHistogramJetPtResponseMatrix(const int iCentrality) const{
+TH2D* EECHistogramManager::GetHistogramJetPtResponseMatrix(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtResponseMatrix[iCentrality] == NULL){
+    fhJetPtResponseMatrix[iCentrality] = (TH2D*)fInputFile->Get(Form("jetPtResponseMatrix/jetPtResponseMatrix_C%d", iCentrality));
+  }
+
   return fhJetPtResponseMatrix[iCentrality];
 }
 
 // Getter for jet pT closure histograms
-TH1D* EECHistogramManager::GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle) const{
+TH1D* EECHistogramManager::GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtClosure[iGenPtBin][iEtaBin][iPhiBin][iCentrality][iClosureParticle] == NULL){
+    TString histogramNamer = Form("jetPtClosure_%s/jetPtClosure_%s%s_C%d", fJetHistogramName, fJetHistogramName, fClosureParticleName[iClosureParticle], iCentrality);
+    if(iGenPtBin < knGenJetPtBins) histogramNamer.Append(Form("T%d",iGenPtBin));
+    if(iEtaBin < knJetEtaBins) histogramNamer.Append(Form("E%d",iEtaBin));
+    if(iPhiBin < knJetPhiBins) histogramNamer.Append(Form("P%d",iPhiBin));
+    fhJetPtClosure[iGenPtBin][iEtaBin][iPhiBin][iCentrality][iClosureParticle] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
+
   return fhJetPtClosure[iGenPtBin][iEtaBin][iPhiBin][iCentrality][iClosureParticle];
 }
 
 // Getter for measured jet pT unfolding distribution
-TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality][iTrackPt] == NULL){
+    fhJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%s_C%dT%d", fJetPtUnfoldingDistributionName[kUnfoldingMeasured], fJetPtUnfoldingDistributionName[kUnfoldingMeasured], iCentrality, iTrackPt));
+
+  }
+
   return fhJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality][iTrackPt];
 }
 
 // Getter for truth jet pT unfolding distribution
-TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality][iTrackPt] == NULL){
+    fhJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%s_C%dT%d", fJetPtUnfoldingDistributionName[kUnfoldingTruth], fJetPtUnfoldingDistributionName[kUnfoldingTruth], iCentrality, iTrackPt));
+
+  }
+
   return fhJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality][iTrackPt];
 }
 
 // Getter for jet pT unfolding response
-TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const{
+TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtUnfoldingResponse[iCentrality][iTrackPt] == NULL){
+    fhJetPtUnfoldingResponse[iCentrality][iTrackPt] = (TH2D*) fInputFile->Get(Form("%s/%s_C%dT%d", fJetPtResponseMatrixName, fJetPtResponseMatrixName, iCentrality, iTrackPt));
+  }
+
   return fhJetPtUnfoldingResponse[iCentrality][iTrackPt];
 }
 
 // Getter for jet pT unfolding covariance
-TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingCovariance(const int iCovarianceMatrixType, const int iCentrality, const int iTrackPt) const{
+TH2D* EECHistogramManager::GetHistogramJetPtUnfoldingCovariance(const int iCovarianceMatrixType, const int iCentrality, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhJetPtUnfoldingCovariance[iCovarianceMatrixType][iCentrality][iTrackPt] == NULL){
+    fhJetPtUnfoldingCovariance[iCovarianceMatrixType][iCentrality][iTrackPt] = (TH2D*) fInputFile->Get(Form("%s/%s_C%dT%d", fJetPtCovarianceMatrixName[iCovarianceMatrixType], fJetPtCovarianceMatrixName[iCovarianceMatrixType], iCentrality, iTrackPt));
+  }
+
   return fhJetPtUnfoldingCovariance[iCovarianceMatrixType][iCentrality][iTrackPt];
 }
 
 // Getter for measured one dimensional jet pT unfolding distribution
-TH1D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality] == NULL){
+    fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%s_C%d", fJetPtOneDimensionalUnfoldingDistributionName[kUnfoldingMeasured], fJetPtOneDimensionalUnfoldingDistributionName[kUnfoldingMeasured], iCentrality));
+  }
+
   return fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingMeasured][iCentrality];
 }
 
 // Getter for truth one dimensional jet pT unfolding distribution
-TH1D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality) const{
+TH1D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality] == NULL){
+    fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%s_C%d", fJetPtOneDimensionalUnfoldingDistributionName[kUnfoldingTruth], fJetPtOneDimensionalUnfoldingDistributionName[kUnfoldingTruth], iCentrality));
+  }
+
   return fhOneDimensionalJetPtUnfoldingDistribution[kUnfoldingTruth][iCentrality];
 }
 
 // Getter for one dimensional jet pT unfolding response
-TH2D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingResponse(const int iCentrality) const{
+TH2D* EECHistogramManager::GetHistogramJetPtOneDimensionalUnfoldingResponse(const int iCentrality){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhOneDimensionalJetPtUnfoldingResponse[iCentrality] == NULL){
+    fhOneDimensionalJetPtUnfoldingResponse[iCentrality] = (TH2D*) fInputFile->Get(Form("%s/%s_C%d", fJetPtOneDimensionalResponseMatrixName, fJetPtOneDimensionalResponseMatrixName, iCentrality));
+  }
+
   return fhOneDimensionalJetPtUnfoldingResponse[iCentrality];
 }
 
 
 // Getter for number of particles close to tracks
-TH1D* EECHistogramManager::GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhTrackParticleMatchQA[kNumberOfParticlesCloseToTrack][iCentrality][iJetPt][iTrackPt] == NULL){
+    fhTrackParticleMatchQA[kNumberOfParticlesCloseToTrack][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingQAName[kNumberOfParticlesCloseToTrack], fTrackParticleMatchingQAName[kNumberOfParticlesCloseToTrack], iCentrality, iJetPt, iTrackPt));
+  }
+
   return fhTrackParticleMatchQA[kNumberOfParticlesCloseToTrack][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for flag if a matching particle is found
-TH1D* EECHistogramManager::GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhTrackParticleMatchQA[kHasMatchingParticle][iCentrality][iJetPt][iTrackPt] == NULL){
+    fhTrackParticleMatchQA[kHasMatchingParticle][iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingQAName[kHasMatchingParticle], fTrackParticleMatchingQAName[kHasMatchingParticle], iCentrality, iJetPt, iTrackPt));
+  }
+
   return fhTrackParticleMatchQA[kHasMatchingParticle][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for deltaR response matrix between track pairs and matched particle pairs
-TH2D* EECHistogramManager::GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH2D* EECHistogramManager::GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhTrackParticleMatchQA[kTrackParticleMatchingDeltaRRresponse][iCentrality][iJetPt][iTrackPt] == NULL){
+    fhTrackParticleResponse[kTrackParticleMatchingDeltaRRresponse][iCentrality][iJetPt][iTrackPt] = (TH2D*) fInputFile->Get(Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingResponseName[kTrackParticleMatchingDeltaRRresponse], fTrackParticleMatchingResponseName[kTrackParticleMatchingDeltaRRresponse], iCentrality, iJetPt, iTrackPt));
+  }
+
   return fhTrackParticleResponse[kTrackParticleMatchingDeltaRRresponse][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for pT response matrix between pT1*pT2 from track pairs and particle pairs
-TH2D* EECHistogramManager::GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH2D* EECHistogramManager::GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhTrackParticleMatchQA[kTrackParticleMatchingPtResponse][iCentrality][iJetPt][iTrackPt] == NULL){
+    fhTrackParticleResponse[kTrackParticleMatchingPtResponse][iCentrality][iJetPt][iTrackPt] = (TH2D*) fInputFile->Get(Form("%s/%s_C%dJ%dT%d", fTrackParticleMatchingResponseName[kTrackParticleMatchingPtResponse], fTrackParticleMatchingResponseName[kTrackParticleMatchingPtResponse], iCentrality, iJetPt, iTrackPt));
+  }
+
   return fhTrackParticleResponse[kTrackParticleMatchingPtResponse][iCentrality][iJetPt][iTrackPt];
 }
 
 // Getter for track pT1*pT2 / particle pT1*pT2 histograms
-TH1D* EECHistogramManager::GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt) const{
+TH1D* EECHistogramManager::GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt){
+
+  // If the histogram is NULL, try to load it from the input file
+  if(fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt]){
+    fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt] = (TH1D*) fInputFile->Get(Form("%s/%s_C%dJ%dT%d", fTrackParticlePtClosureSaveName, fTrackParticlePtClosureSaveName, iCentrality, iJetPt, iTrackPt));
+  }
+
   return fhTrackParticlePtClosure[iCentrality][iJetPt][iTrackPt];
 }
 
@@ -5362,7 +5695,7 @@ TH1D* EECHistogramManager::GetHistogramTrackParticlePtClosure(const int iCentral
  *
  *   return: Histogram corresponding to given name and bins
  */
-TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, int bin2, int bin3, int bin4, int bin5, int bin6, int bin7) const{
+TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, int bin2, int bin3, int bin4, int bin5, int bin6, int bin7){
   if(name.EqualTo("vertexz",TString::kIgnoreCase) || name.EqualTo("fhvertexz",TString::kIgnoreCase)) return GetHistogramVertexZ();
   if(name.EqualTo("events",TString::kIgnoreCase) || name.EqualTo("fhevents",TString::kIgnoreCase)) return GetHistogramEvents();
   if(name.EqualTo("triggers",TString::kIgnoreCase) || name.EqualTo("fhtriggers",TString::kIgnoreCase)) return GetHistogramTriggers();
@@ -5397,7 +5730,7 @@ TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, in
  *
  *   return: Histogram corresponding to given name and bins
  */
-TH2D* EECHistogramManager::GetTwoDimensionalHistogram(TString name, int bin1, int bin2, int bin3, int bin4, int bin5) const{
+TH2D* EECHistogramManager::GetTwoDimensionalHistogram(TString name, int bin1, int bin2, int bin3, int bin4, int bin5){
   if(name.EqualTo("jetetaphi",TString::kIgnoreCase) || name.EqualTo("fhjetetaphi",TString::kIgnoreCase)) return GetHistogramJetEtaPhi(bin1);
   if(name.EqualTo("tracketaphi",TString::kIgnoreCase) || name.EqualTo("fhtracketaphi",TString::kIgnoreCase)) return GetHistogramTrackEtaPhi(bin1,bin2,bin3);
   if(name.EqualTo("multiplicitymap",TString::kIgnoreCase) || name.EqualTo("fhmultiplicitymap",TString::kIgnoreCase)) return GetHistogramMultiplicityMap();
@@ -5446,7 +5779,13 @@ int EECHistogramManager::GetLastTrackPtBinEEC() const{
 }
 
 // Getter for the number of events passing the cuts
-int EECHistogramManager::GetNEvents() const{
+int EECHistogramManager::GetNEvents(){
+
+  // If the events histogram is not loaded, load it first
+  if(fhEvents == NULL){
+    LoadEventsHistogram();
+  }
+
   return fhEvents->GetBinContent(fhEvents->FindBin(EECHistograms::kVzCut));
 }
 
@@ -5456,7 +5795,13 @@ EECCard* EECHistogramManager::GetCard() const{
 }
 
 // Getter for integral over inclusive jet pT. Include the overflow bin in the integral.
-double EECHistogramManager::GetJetPtIntegral(const int iCentrality) const{
+double EECHistogramManager::GetJetPtIntegral(const int iCentrality){
+
+  // If the jet pT histogram is not loaded, load it first
+  if(fhJetPt[iCentrality] == NULL){
+    LoadJetPtHistogram(iCentrality);
+  }
+
   return fhJetPt[iCentrality]->Integral(1,fhJetPt[iCentrality]->GetNbinsX()+1,"width");
 }
 
@@ -5467,6 +5812,12 @@ double EECHistogramManager::GetJetPtIntegral(const int iCentrality) const{
  *  const double minPt = Lower pT range for integral calculation
  *  const double maxPt = Higher pT range for integral calculation
  */
-double EECHistogramManager::GetJetPtIntegral(const int iCentrality, const double minPt, const double maxPt) const{
+double EECHistogramManager::GetJetPtIntegral(const int iCentrality, const double minPt, const double maxPt){
+
+  // If the jet pT histogram is not loaded, load it first
+  if(fhJetPt[iCentrality] == NULL){
+    LoadJetPtHistogram(iCentrality);
+  }
+
   return fhJetPt[iCentrality]->Integral(fhJetPt[iCentrality]->FindBin(minPt+0.001), fhJetPt[iCentrality]->FindBin(maxPt-0.001), "width");
 }

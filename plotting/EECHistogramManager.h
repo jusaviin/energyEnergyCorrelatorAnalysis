@@ -208,7 +208,8 @@ public:
   void SetTrackPtBinRange(const int first, const int last);             // Setter for track pT bin range
   void SetJetPtBinRangeEEC(const int first, const int last);            // Setter for jet pT bin range in energy-energy correlator histograms
   void SetTrackPtBinRangeEEC(const int first, const int last);          // Setter for track pT bin range in energy-energy correlator histograms
-  void SetLoadedPairingType(const int iPairingType, const bool loadOrNot);    // Set a flag if you want to load specific pairing types
+  void SetLoadedPairingType(const int iPairingType, const bool loadOrNot);         // Set a flag if you want to load specific pairing types
+  void SetLoadedLeadingParticleType(const int iPairingType, const bool loadOrNot); // Set a flag if you want to load specific leading particle types
   
   // Unfolding is done in a separate macro. Thus provide setter for unfolded energy-energy correlators so they can be stored in the histogram manager
   void SetUnfoldedEnergyEnergyCorrelator(const TH1D* unfoldedEnergyEnergyCorrelator, const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt);
@@ -262,80 +263,82 @@ public:
   TString GetSystem() const;  // Getter for collision system
   
   // Getters for event information histograms
-  TH1D* GetHistogramVertexZ() const;            // Getter for z-vertex histogram
-  TH1D* GetHistogramVertexZWeighted() const;    // Getter for weighted z-vertex histogram
-  TH1D* GetHistogramEvents() const;             // Getter for histogram for number of events surviving different event cuts
-  TH1D* GetHistogramTriggers() const;           // Getter for histogram for trigger selection
-  TH1D* GetHistogramTrackCuts() const;          // Getter for histogram for number of tracks surviving different track cuts
-  TH1D* GetHistogramCentrality() const;         // Getter for centrality histogram in all events
-  TH1D* GetHistogramCentralityWeighted() const; // Getter for weighted centrality histogram in all events
+  TH1D* GetHistogramVertexZ();            // Getter for z-vertex histogram
+  TH1D* GetHistogramVertexZWeighted();    // Getter for weighted z-vertex histogram
+  TH1D* GetHistogramEvents();             // Getter for histogram for number of events surviving different event cuts
+  TH1D* GetHistogramTriggers();           // Getter for histogram for trigger selection
+  TH1D* GetHistogramTrackCuts();          // Getter for histogram for number of tracks surviving different track cuts
+  TH1D* GetHistogramCentrality();         // Getter for centrality histogram in all events
+  TH1D* GetHistogramCentralityWeighted(); // Getter for weighted centrality histogram in all events
+  TH1D* GetHistogramPtHat();              // Getter for the pThat histogram
+  TH1D* GetHistogramPtHatWeighted();      // Getter for the weighted pThat histogram
   
-  TH1D* GetHistogramMultiplicity(int iCentrality) const;               // Getter for multiplicity from all events
-  TH1D* GetHistogramMultiplicityWeighted(int iCentrality) const;       // Getter for efficiency weighted multiplicity from all events
-  TH2D* GetHistogramMultiplicityMap() const;                           // Getter for multiplicity vs. centrality map
-  TH2D* GetHistogramWeightedMultiplicityMap() const;                   // Getter for efficiency weighted multiplicity vs. centrality map
+  TH1D* GetHistogramMultiplicity(int iCentrality);               // Getter for multiplicity from all events
+  TH1D* GetHistogramMultiplicityWeighted(int iCentrality);       // Getter for efficiency weighted multiplicity from all events
+  TH2D* GetHistogramMultiplicityMap();                           // Getter for multiplicity vs. centrality map
+  TH2D* GetHistogramWeightedMultiplicityMap();                   // Getter for efficiency weighted multiplicity vs. centrality map
   
   // Getters for jet histograms
-  TH1D* GetHistogramJetPt(int iCentrality) const;     // Jet pT histograms
-  TH1D* GetHistogramJetPhi(int iCentrality) const;    // Jet phi histograms
-  TH1D* GetHistogramJetEta(int iCentrality) const;    // Jet eta histograms
-  TH2D* GetHistogramJetEtaPhi(int iCentrality) const; // 2D eta-phi histogram for jets
-  TH1D* GetHistogramJetDeltaAxis(int iCentrality, int iJetPt) const; // DeltaR between E-scheme and WTA axes
-  TH1D* GetHistogramLeadingParticleInJet(int iJetDeltaAxis, int iCentrality, int iJetPt) const; // Leading particle pT inside a jet
+  TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
+  TH1D* GetHistogramJetPhi(int iCentrality);    // Jet phi histograms
+  TH1D* GetHistogramJetEta(int iCentrality);    // Jet eta histograms
+  TH2D* GetHistogramJetEtaPhi(int iCentrality); // 2D eta-phi histogram for jets
+  TH1D* GetHistogramJetDeltaAxis(int iCentrality, int iJetPt); // DeltaR between E-scheme and WTA axes
+  TH1D* GetHistogramLeadingParticleInJet(int iJetDeltaAxis, int iCentrality, int iJetPt); // Leading particle pT inside a jet
   
   // Getters for histograms for tracks
-  TH1D* GetHistogramTrackPt(const int iTrackType, const int iCentrality) const;                      // Track pT histograms
-  TH1D* GetHistogramTrackPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const;    // Track phi histograms
-  TH1D* GetHistogramTrackEta(const int iTrackType, const int iCentrality, const int iTrackPt) const;    // Track eta histograms
-  TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt) const; // 2D eta-phi histogram for track
+  TH1D* GetHistogramTrackPt(const int iTrackType, const int iCentrality);                      // Track pT histograms
+  TH1D* GetHistogramTrackPhi(const int iTrackType, const int iCentrality, const int iTrackPt);    // Track phi histograms
+  TH1D* GetHistogramTrackEta(const int iTrackType, const int iCentrality, const int iTrackPt);    // Track eta histograms
+  TH2D* GetHistogramTrackEtaPhi(const int iTrackType, const int iCentrality, const int iTrackPt); // 2D eta-phi histogram for track
   
   // Getters for multiplicity and particle density histograms within the jet cones
-  TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes) const; // Multiplicity within the jet cone
-  TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes) const; // Particle density around the jet axis
+  TH1D* GetHistogramMultiplicityInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt, const int MultiplicityType = kMultiplicityInJetCone, const int iSubevent = EECHistograms::knSubeventTypes); // Multiplicity within the jet cone
+  TH1D* GetHistogramParticleDensityAroundJetAxis(const int iCentrality, const int iJetPt, const int iTrackPt, const int iJetConeType = EECHistograms::kSignalCone, const int iParticleDensityType = kParticleDensityAroundJetAxis, const int iSubevent = EECHistograms::knSubeventTypes); // Particle density around the jet axis
   
   // Getters for the maximum particle pT histograms within the jet cone
-  TH1D* GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum particle pT in jet cone
-  TH1D* GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum particle pT in jet cone with pT cut for background particles
-  TH1D* GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum signal particle pT in jet cone
-  TH1D* GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum signal particle pT in jet cone with pT cut for background particles
-  TH1D* GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins) const; // Maximum background particle pT in jet cone
-  TH1D* GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Maximum background particle pT in jet cone with pT cut for signal particles
+  TH1D* GetHistogramMaxParticlePtInJetCone(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins); // Maximum particle pT in jet cone
+  TH1D* GetHistogramMaxParticlePtInJetConePtCut(const int iMaxParticlePtWithinJetConeType, const int iCentrality, const int iJetPt, const int iTrackPt); // Maximum particle pT in jet cone with pT cut for background particles
+  TH1D* GetHistogramMaxSignalParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins); // Maximum signal particle pT in jet cone
+  TH1D* GetHistogramMaxSignalParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt); // Maximum signal particle pT in jet cone with pT cut for background particles
+  TH1D* GetHistogramMaxBackgroundParticlePtInJetCone(const int iCentrality, const int iJetPt, const int iTrackPt = knProjectedMaxParticlePtBins); // Maximum background particle pT in jet cone
+  TH1D* GetHistogramMaxBackgroundParticlePtInJetConePtCut(const int iCentrality, const int iJetPt, const int iTrackPt); // Maximum background particle pT in jet cone with pT cut for signal particles
   
   // Getters for energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iLeadingParticle = EECHistograms::kLeadingParticleTypes, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations) const;  // Energy-energy correlator histograms
-  TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel) const;  // Processed energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelatorJetDeltaAxis(const int iEnergyEnergyCorrelatorType, const int iJetDeltaAxis, const int iCentrality, const int iJetPt, const int iTrackPt, const int iLeadingParticle = EECHistograms::kLeadingParticleTypes, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel);  // Processed energy-energy correlator histograms
 
   // Getters for reflected cone QA histograms
   TH1D* GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality);
   TH1D* GetHistogramJetPtWithinReflectedCone(const int iCentrality);
   
   // Getter for jet pT response matrix
-  TH2D* GetHistogramJetPtResponseMatrix(const int iCentrality) const;
+  TH2D* GetHistogramJetPtResponseMatrix(const int iCentrality);
 
   // Getter for jet pT closure histograms
-  TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle) const; // Jet pT closure
+  TH1D* GetHistogramJetPtClosure(const int iGenPtBin, const int iEtaBin, const int iPhiBin, const int iCentrality, const int iClosureParticle); // Jet pT closure
   
   // Getters for jet pT unfolding histograms
-  TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt) const; // Getter for measured jet pT unfolding distribution
-  TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt) const;    // Getter for truth jet pT unfolding distribution
-  TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding response
-  TH2D* GetHistogramJetPtUnfoldingCovariance(const int iCovarianceMatrixType, const int iCentrality, const int iTrackPt) const; // Getter for jet pT unfolding covariance
+  TH1D* GetHistogramJetPtUnfoldingMeasured(const int iCentrality, const int iTrackPt); // Getter for measured jet pT unfolding distribution
+  TH1D* GetHistogramJetPtUnfoldingTruth(const int iCentrality, const int iTrackPt);    // Getter for truth jet pT unfolding distribution
+  TH2D* GetHistogramJetPtUnfoldingResponse(const int iCentrality, const int iTrackPt); // Getter for jet pT unfolding response
+  TH2D* GetHistogramJetPtUnfoldingCovariance(const int iCovarianceMatrixType, const int iCentrality, const int iTrackPt); // Getter for jet pT unfolding covariance
 
-  TH1D* GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality) const; // Getter for measured jet pT one dimensional unfolding distribution
-  TH1D* GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality) const;    // Getter for truth jet pT one dimensional unfolding distribution
-  TH2D* GetHistogramJetPtOneDimensionalUnfoldingResponse(const int iCentrality) const; // Getter for one dimensional jet pT unfolding response
+  TH1D* GetHistogramJetPtOneDimensionalUnfoldingMeasured(const int iCentrality); // Getter for measured jet pT one dimensional unfolding distribution
+  TH1D* GetHistogramJetPtOneDimensionalUnfoldingTruth(const int iCentrality);    // Getter for truth jet pT one dimensional unfolding distribution
+  TH2D* GetHistogramJetPtOneDimensionalUnfoldingResponse(const int iCentrality); // Getter for one dimensional jet pT unfolding response
 
   // Getters for track/particle matching histograms
-  TH1D* GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for number of particles close to tracks
-  TH1D* GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for flag if a matching particle is found
-  TH2D* GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for deltaR response matrix between track pairs and matched particle pairs
-  TH2D* GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for pT response matrix between pT1*pT2 from track pairs and particle pairs
-  TH1D* GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt) const; // Getter for track pT1*pT2 / particle pT1*pT2 histograms
+  TH1D* GetHistogramParticlesCloseToTrack(const int iCentrality, const int iJetPt, const int iTrackPt); // Getter for number of particles close to tracks
+  TH1D* GetHistogramHasMatchingParticle(const int iCentrality, const int iJetPt, const int iTrackPt); // Getter for flag if a matching particle is found
+  TH2D* GetHistogramTrackParticleDeltaRResponse(const int iCentrality, const int iJetPt, const int iTrackPt); // Getter for deltaR response matrix between track pairs and matched particle pairs
+  TH2D* GetHistogramTrackParticlePtResponse(const int iCentrality, const int iJetPt, const int iTrackPt); // Getter for pT response matrix between pT1*pT2 from track pairs and particle pairs
+  TH1D* GetHistogramTrackParticlePtClosure(const int iCentrality, const int iJetPt, const int iTrackPt); // Getter for track pT1*pT2 / particle pT1*pT2 histograms
 
   // Generic getters for one and two dimensional histograms
-  TH1D* GetOneDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0, int bin6 = 0, int bin7 = 0) const; // Getter for any one-dimensional histogram based on input string
-  TH2D* GetTwoDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0) const; // Getter for any two-dimensional histogram based on input string
+  TH1D* GetOneDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0, int bin6 = 0, int bin7 = 0); // Getter for any one-dimensional histogram based on input string
+  TH2D* GetTwoDimensionalHistogram(TString name, int bin1 = 0, int bin2 = 0, int bin3 = 0, int bin4 = 0, int bin5 = 0); // Getter for any two-dimensional histogram based on input string
   
   
   // Getters for the loaded centrality and track pT bins
@@ -349,9 +352,9 @@ public:
   int GetLastTrackPtBinEEC() const;           // Get the last loaded energy-energy correlator track pT bin
   
   // Getters for normalization information
-  int GetNEvents() const;                      // Getter for the number of events passing the cuts
-  double GetJetPtIntegral(const int iCentrality) const; // Getter for integral over inclusive jet pT in a given centrality
-  double GetJetPtIntegral(int iCentrality, const double minPt, const double maxPt) const; // Getter for integral over inclusive jet pT in a given pT range within a given centrality bin
+  int GetNEvents();                      // Getter for the number of events passing the cuts
+  double GetJetPtIntegral(const int iCentrality); // Getter for integral over inclusive jet pT in a given centrality
+  double GetJetPtIntegral(int iCentrality, const double minPt, const double maxPt); // Getter for integral over inclusive jet pT in a given pT range within a given centrality bin
   
   // Getter for the card
   EECCard* GetCard() const;  // Getter for the JCard
@@ -391,6 +394,7 @@ private:
   double fLoadedWeightExponent;                            // Value for weight exponent in energy-energy correlators that is searched from the files
   bool fLoadPairingType[EECHistograms::knPairingTypes];    // Set which pairing types are loaded for the energy-energy correlators
   bool fLoadDeltaJetAxisBins;                              // Flag for loading energy-energy correlators in bins of DeltaR between E-scheme and WTA jet axes
+  bool fLoadLeadingParticleType[EECHistograms::kLeadingParticleTypes+1]; // Flag for the leading particle types to be loaded
   
   // ==============================================
   // ======== Ranges of histograms to load ========
@@ -525,6 +529,9 @@ private:
   void LoadJetPtOneDimensionalUnfoldingHistograms(); // Loader for one dimensional jet pT unfolding histograms
   void LoadTrackParticleMatchingHistograms(); // Loader for track/particle matching histograms
   void StabilizeBackground(); // Stabilize the background histograms by combining all jet pT bins for histograms that do not depend on jet pT
+
+  void LoadEventsHistogram();
+  void LoadJetPtHistogram(const int iCentrality);
 
   // Handling of weight exponents
   void CheckWeightExponent(); // Check that the weight exponent requested is present in the input data

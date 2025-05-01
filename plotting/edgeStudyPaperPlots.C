@@ -145,7 +145,7 @@ void edgeStudyPaperPlots(){
   enum edgeLossTypeType{kRelativeEdgeLoss, kAbsoluteEdgeLoss, knEdgeLossMethods};
 
   // Select which edge loss method is used
-  int edgeLossMethod = kAbsoluteEdgeLoss;
+  int edgeLossMethod = kRelativeEdgeLoss;
 
   TString edgeLossString[knEdgeLossMethods];
   edgeLossString[kRelativeEdgeLoss] = "Relative";
@@ -272,19 +272,7 @@ void edgeStudyPaperPlots(){
         for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
 
           histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis] = new EECHistogramManager(inputFile[iVeto][iJetRadius][iEnergyWeight][iJetAxis], card[iVeto][iJetRadius][iEnergyWeight][iJetAxis]);
-
-          // Choose the energy-energy correlator and jet histograms to load
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetLoadJetHistograms(true);
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetLoadEnergyEnergyCorrelators(true);
-
-          // Choose the bin ranges
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetCentralityBinRange(0, card[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->GetNCentralityBins() - 1);
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetJetPtBinRangeEEC(0, card[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->GetNJetPtBinsEEC() - 1);
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetTrackPtBinRangeEEC(0, card[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->GetNTrackPtBinsEEC() - 1);
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->SetLoadedPairingType(pairingType, true);
-
-          // Load the histograms from the file
-          histograms[iVeto][iJetRadius][iEnergyWeight][iJetAxis]->LoadProcessedHistograms();
+          
         } // Jet axis loop for histogram loading
       } // Energy weight loop for histogram loading
     } // Jet radius loop  for histogram loading
@@ -438,7 +426,7 @@ void edgeStudyPaperPlots(){
                 iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
                 // Do the same for all the selected centrality bins for PbPb
                 for(auto centralityBin : comparedCentralityBin){
-                  iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+                  iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
 
                   // Find the first and last bin in the region where we normalize the distribution
                   lowNormalizationBin = hEnergyEnergyCorrelator[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.first + epsilon);
@@ -490,7 +478,7 @@ void edgeStudyPaperPlots(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
             for(auto centralityBin: comparedCentralityBin){
-              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
               for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
 
                 hEnergyEnergyCorrelatorAxisRatio[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecAxisRatio%d%d%d%d%d%d%d", iVeto, iJetRadius, iEnergyWeight, iJetAxis, iCentrality, iJetPt, iTrackPt));
@@ -512,7 +500,7 @@ void edgeStudyPaperPlots(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
             for(auto centralityBin: comparedCentralityBin){
-              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
               for(int iJetRadius = 0; iJetRadius < knJetRadii; iJetRadius++){
 
                 hEnergyEnergyCorrelatorRadiusRatio[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecRadiusRatio%d%d%d%d%d%d%d", iVeto, iJetRadius, iEnergyWeight, iJetAxis, iCentrality, iJetPt, iTrackPt));
@@ -534,7 +522,7 @@ void edgeStudyPaperPlots(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
             for(auto centralityBin: comparedCentralityBin){
-              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
               for(int iJetRadius = 0; iJetRadius < knJetRadii; iJetRadius++){
 
                 hEnergyEnergyCorrelatorVetoBiasCheck[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt] = (TH1D*) hEnergyEnergyCorrelator[iVeto][iJetRadius][iEnergyWeight][iJetAxis][iCentrality][iJetPt][iTrackPt]->Clone(Form("eecVetoBiasCheck%d%d%d%d%d%d%d", iVeto, iJetRadius, iEnergyWeight, iJetAxis, iCentrality, iJetPt, iTrackPt));
@@ -566,7 +554,7 @@ void edgeStudyPaperPlots(){
   // Create the histograms
   for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
     for(auto centralityBin : comparedCentralityBin){
-      iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+      iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
       
       // Make a new histogram with the x-axis defined by the determined jet pT bins
       hAverageDeltaJetAxisVsPt[iJetAxis][iCentrality] = new TH1D(Form("averageDeltaJetAxis%d%d", iJetAxis, iCentrality), Form("averageDeltaJetAxis%d%d", iJetAxis, iCentrality), nJetPtBins, jetPtBinBorderArray);
@@ -604,7 +592,7 @@ void edgeStudyPaperPlots(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
             for(auto centralityBin: comparedCentralityBin){
-              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
               
               // First calculate the relative edge loss
 
@@ -645,7 +633,7 @@ void edgeStudyPaperPlots(){
         for(auto trackPtBin : comparedTrackPtBin){
           iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
           for(auto centralityBin: comparedCentralityBin){
-            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
 
             // Make a new histogram with the x-axis defined by the determined jet pT bins
             hEdgeLossVsPt[iVeto][iEnergyWeight][iJetAxis][iCentrality][iTrackPt] = new TH1D(Form("edgeLoassVsPt%d%d%d%d%d", iVeto, iEnergyWeight, iJetAxis, iCentrality, iTrackPt), Form("edgeLossVsPt%d%d%d%d%d", iVeto, iEnergyWeight, iJetAxis, iCentrality, iTrackPt), nJetPtBins, jetPtBinBorderArray);
@@ -723,7 +711,7 @@ void edgeStudyPaperPlots(){
   if(drawDeltaJetAxisWithPt){
     for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
       for(auto centralityBin : comparedCentralityBin){
-        iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+        iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
         systemForLegend = card[vetoCloseJets][kR0p4][kNominalWeight][iJetAxis]->GetAlternativeDataType(false);
 
         // Create the legend and add binning information to it
@@ -773,7 +761,7 @@ void edgeStudyPaperPlots(){
         for(auto trackPtBin : comparedTrackPtBin){
           iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
           for(auto centralityBin : comparedCentralityBin){
-            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
             systemForLegend = card[vetoCloseJets][kR0p4][iEnergyWeight][iJetAxis]->GetAlternativeDataType(false);
 
             // Create vectors for histograms to be drawn
@@ -821,7 +809,7 @@ void edgeStudyPaperPlots(){
           for(auto trackPtBin : comparedTrackPtBin){
             iTrackPt = card[0][0][0][0]->GetBinIndexTrackPtEEC(trackPtBin);
             for(auto centralityBin : comparedCentralityBin){
-              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+              iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
               systemForLegend = card[kNoVeto][iJetRadius][iEnergyWeight][iJetAxis]->GetAlternativeDataType(false);
 
               // Create vectors for histograms to be drawn
@@ -869,7 +857,7 @@ void edgeStudyPaperPlots(){
           compactTrackPtString = Form("_T>%.1f",trackPtBin);
           compactTrackPtString.ReplaceAll(".","v");
           for(auto centralityBin: comparedCentralityBin){
-            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
 
             systemForLegend = card[vetoCloseJets][kR0p4][iEnergyWeight][iJetAxis]->GetAlternativeDataType(false);
 
@@ -928,7 +916,7 @@ void edgeStudyPaperPlots(){
           compactTrackPtString = Form("_T>%.1f",trackPtBin);
           compactTrackPtString.ReplaceAll(".","v");
           for(auto centralityBin: comparedCentralityBin){
-            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexJetPtEEC(centralityBin);
+            iCentrality = centralityBin.first < 0 ? 0 : card[0][0][0][0]->FindBinIndexCentrality(centralityBin);
 
             systemForLegend = card[vetoCloseJets][kR0p4][iEnergyWeight][iJetAxis]->GetAlternativeDataType(false);
 
