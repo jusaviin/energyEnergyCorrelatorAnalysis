@@ -1418,7 +1418,7 @@ void EECAnalyzer::RunAnalysis(){
 
         // Skip energy-energy correlation for this jet if there is another jet with > 25 GeV in the vicinity
         vetoJet = false;
-        for(auto aJetLocation : jetAxisLocations){
+        /*for(auto aJetLocation : jetAxisLocations){
           jetDistance = GetDeltaR(jetEta, jetPhi, aJetLocation.first, aJetLocation.second);
 
           // For very small deltaR we are looking at the same jet. Do not use the jet to veto itself!
@@ -1426,7 +1426,7 @@ void EECAnalyzer::RunAnalysis(){
 
           // Otherwise, if there is another jet within the cone size that is used for the analysis, veto this jet from the analysis
           if(jetDistance < 0.8) vetoJet = true;
-        }
+        }*/
 
         //************************************************
         //   Do energy-energy correlation within jets
