@@ -318,8 +318,6 @@ void edgeStudyQAplots(){
     } // Jet radius loop
   } // Energy weight loop
 
-  cout << "LOADED" << endl;
-
   // ====================================================
   //               Normalize distributions
   // ====================================================
@@ -388,8 +386,6 @@ void edgeStudyQAplots(){
       } // Jet axis type loop
     } // Energy weight loop
   } // Normalizing distributions
-
-  cout << "NORMALIZED" << endl;
 
   // ====================================================
   //                 Calculating ratios

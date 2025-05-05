@@ -220,9 +220,9 @@ void compareJetAxesWithDeltaAxis(){
 
   bool drawPp = true; // Include pp comparisons for single ratio histograms
   bool excludePbPb = comparedCentralityBin.size() == 0; // If no centrality bins are defined, exclude PbPb
-  bool drawSingleRatios = true; // Draw the single ratio histograms
+  bool drawSingleRatios = false; // Draw the single ratio histograms
   bool drawDoubleRatios = false; // Draw the double ratio histograms
-  bool drawTrends = true; // Draw edge effect trend as a function of DeltaR between E-scheme and WTA
+  bool drawTrends = false; // Draw edge effect trend as a function of DeltaR between E-scheme and WTA
   bool drawConsistencyCheck = false; // Compare summed DeltaR distributions to those projected without DeltaR cuts
   bool drawDeltaAxis = true; // Draw the DeltaR between E-scheme and WTA axis distributions themselves
   
