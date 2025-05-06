@@ -331,8 +331,12 @@ void HighForestReader::Initialize(){
   fHeavyIonTree->SetBranchStatus("*",0);
   fHeavyIonTree->SetBranchStatus("vz",1);
   fHeavyIonTree->SetBranchAddress("vz",&fVertexZ,&fHiVzBranch);
-  fHeavyIonTree->SetBranchStatus("hiBin",1);
-  fHeavyIonTree->SetBranchAddress("hiBin",&fHiBin,&fHiBinBranch);
+  if(fDataType == kPbPb || fDataType == kPbPbMC){
+    fHeavyIonTree->SetBranchStatus("hiBin",1);
+    fHeavyIonTree->SetBranchAddress("hiBin",&fHiBin,&fHiBinBranch);
+  } else {
+    fHiBin = -1;  // No centrality definition for pp or pPb
+  }
   if(fDataType == kPpMC || fDataType == kPbPbMC){
     fHeavyIonTree->SetBranchStatus("pthat",1);
     fHeavyIonTree->SetBranchAddress("pthat",&fPtHat,&fPtHatBranch); // pT hat only for MC
@@ -361,8 +365,12 @@ void HighForestReader::Initialize(){
   } else {
   
     fJetTree->SetBranchStatus("*",0);
-    fJetTree->SetBranchStatus("jtpt",1);
-    fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
+
+    // The corrected jet pT does not exist in the pPb forest
+    if(fDataType != kPPb_pgoing && fDataType != kPPb_pgoing){
+      fJetTree->SetBranchStatus("jtpt",1);
+      fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
+    }
   
     // If specified, select WTA axis for jet phi
     branchName = Form("%sphi",jetAxis[fJetAxis]);
@@ -382,7 +390,7 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchAddress("trackMax",&fJetMaxTrackPtArray,&fJetMaxTrackPtBranch);
   
     // If we are looking at Monte Carlo, connect the reference pT and parton arrays
-    if(fDataType > kPbPb){
+    if(fDataType == kPpMC || fDataType == kPbPbMC){
       fJetTree->SetBranchStatus("refpt",1);
       fJetTree->SetBranchAddress("refpt",&fJetRefPtArray,&fJetRefPtBranch);
       fJetTree->SetBranchStatus("refeta",1);
@@ -440,6 +448,20 @@ void HighForestReader::Initialize(){
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1",1);
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
       
+    } else if(fDataType == kPPb_pgoing || fDataType == kPPb_Pbgoing) { // pPb data
+
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet60_Eta5p1_v3", 1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet60_Eta5p1_v3",&fCaloJet60FilterBit,&fCaloJet60FilterBranch);
+
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet80_Eta5p1_v3",1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet80_Eta5p1_v3",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      
+      // Calo jet 100 trigger
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet100_Eta5p1_v3",1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet100_Eta5p1_v3",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
+
     } else { // PbPb data or MC
 
       // Calo jet 80 trigger
@@ -488,6 +510,23 @@ void HighForestReader::Initialize(){
       }
       fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
+      fPileupFilterBit = 1; // No pileup filter for pp
+
+    } else if(fDataType == kPPb_pgoing || fDataType == kPPb_Pbgoing){ // pPb data
+
+      fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
+      fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
+      fSkimTree->SetBranchStatus("pBeamScrapingFilter",1);
+      fSkimTree->SetBranchAddress("pBeamScrapingFilter",&fBeamScrapingFilterBit,&fBeamScrapingBranch);
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose",1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&fHBHENoiseFilterBit,&fHBHENoiseBranch);
+      fSkimTree->SetBranchStatus("phfCoincFilter",1);
+      fSkimTree->SetBranchAddress("phfCoincFilter", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      fSkimTree->SetBranchStatus("pVertexFilterCutdz1p0",1);
+      fSkimTree->SetBranchAddress("pVertexFilterCutdz1p0", &fPileupFilterBit, &fPileupFilterBranch);
+
+      fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pPb
+
     } else { // PbPb data or MC
     
       // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
@@ -517,6 +556,7 @@ void HighForestReader::Initialize(){
       fSkimTree->SetBranchAddress("pclusterCompatibilityFilter",&fClusterCompatibilityFilterBit,&fClusterCompatibilityBranch);
     
       fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
+      fPileupFilterBit = 1;        // No pile-up filter for PbPb
     }
   }
   
@@ -584,24 +624,28 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchAddress("trkDxy1",&fTrackVertexDistanceXYArray,&fTrackVertexDistanceXYBranch);
         fTrackTree->SetBranchStatus("trkDxyError1",1);
         fTrackTree->SetBranchAddress("trkDxyError1",&fTrackVertexDistanceXYErrorArray,&fTrackVertexDistanceXYErrorBranch);
-        fTrackTree->SetBranchStatus("trkChi2",1);
-        fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
-        fTrackTree->SetBranchStatus("trkNdof",1);
-        fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
-        fTrackTree->SetBranchStatus("trkNlayer",1);
-        fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
-        fTrackTree->SetBranchStatus("trkNHit",1);
-        fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
         fTrackTree->SetBranchStatus("pfEcal",1);
         fTrackTree->SetBranchAddress("pfEcal",&fTrackEnergyEcalArray,&fTrackEnergyEcalBranch);
         fTrackTree->SetBranchStatus("pfHcal",1);
         fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
+
+        // Branches that do not exist for the pPb forest
+        if(fDataType != kPPb_pgoing && fDataType != kPPb_Pbgoing){
+          fTrackTree->SetBranchStatus("trkChi2",1);
+          fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
+          fTrackTree->SetBranchStatus("trkNdof",1);
+          fTrackTree->SetBranchAddress("trkNdof",&fnTrackDegreesOfFreedomArray,&fnTrackDegreesOfFreedomBranch);
+          fTrackTree->SetBranchStatus("trkNlayer",1);
+          fTrackTree->SetBranchAddress("trkNlayer",&fnHitsTrackerLayerArray,&fnHitsTrackerLayerBranch);
+          fTrackTree->SetBranchStatus("trkNHit",1);
+          fTrackTree->SetBranchAddress("trkNHit",&fnHitsTrackArray,&fnHitsTrackBranch);
       
-        // Additional information for track cuts
-        fTrackTree->SetBranchStatus("trkAlgo",1);
-        fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
-        fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
-        fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
+          // Additional information for track cuts
+          fTrackTree->SetBranchStatus("trkAlgo",1);
+          fTrackTree->SetBranchAddress("trkAlgo",&fTrackAlgorithmArray,&fTrackAlgorithmBranch);
+          fTrackTree->SetBranchStatus("trkOriginalAlgo",1);
+          fTrackTree->SetBranchAddress("trkOriginalAlgo",&fTrackOriginalAlgorithmArray,&fTrackOriginalAlgorithmBranch);
+        }
       
         // Track MVA only in PbPb trees
         if(fDataType == kPbPb || fDataType == kPbPbMC){
@@ -666,15 +710,16 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
   if(fUseJetTrigger) fHltTree = new TChain("hltanalysis/HltTree");
   if(!fMegaSkimMode) fSkimTree = new TChain("skimanalysis/HltTree"); // Mega skims have all event selection built-in
 
-  // The jet tree has different name in different datasets
-  if(fDataType == kPp || fDataType == kPpMC){
-    treeName[0] = "ak4CaloJetAnalyzer/t"; // Tree for calo jets
-    treeName[1] = "ak4PFJetAnalyzer/t";   // Tree for PF jets
-  } else { // PbPb data or MC
+  // The jet tree has different name for PbPb data and other datasets
+  if(fDataType == kPbPb || fDataType == kPbPbMC){
     treeName[0] = "akPu4CaloJetAnalyzer/t";     // Tree for calo jets
     treeName[1] = "akCs4PFJetAnalyzer/t";       // Tree for csPF jets
     treeName[2] = "akPu4PFJetAnalyzer/t";       // Tree for puPF jets
     treeName[3] = "akFlowPuCs4PFJetAnalyzer/t"; // Tree for flow subtracted csPF jets
+  } else { // pp or pPb data or MC
+    treeName[0] = "ak4CaloJetAnalyzer/t"; // Tree for calo jets
+    treeName[1] = "ak4PFJetAnalyzer/t";   // Tree for PF jets
+    treeName[2] = "akCs4PFJetAnalyzer/t"; // Tree for constituent subtracted PF jets
   }
 
   if(!fMixingMode) fJetTree = new TChain(treeName[fJetType]);

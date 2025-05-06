@@ -59,15 +59,16 @@ EECAnalyzer::EECAnalyzer() :
   fMultiplicityWeightFunction(0),
   fPtWeightFunction(0),
   fSmearingFunction(0),
-  fTrackEfficiencyCorrector2018(),
-  fJetCorrector2018(),
-  fJetUncertainty2018(),
+  fTrackEfficiencyCorrector(),
+  fJetCorrector(),
+  fJetUncertainty(),
   fRng(0),
   fDataType(-1),
   fTriggerSelection(0),
   fJetType(0),
   fMatchJets(0),
   fDebugLevel(0),
+  fIsRealData(true),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -162,8 +163,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
-  fJetCorrector2018(),
-  fJetUncertainty2018(),
+  fJetCorrector(),
+  fJetUncertainty(),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -197,7 +198,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
     
     // Track correction for 2017 pp data
-    fTrackEfficiencyCorrector2018 = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
+    fTrackEfficiencyCorrector = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
     
     // Weight function for 2017 MC
     fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
@@ -233,10 +234,49 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyWeightSmearer = NULL;
     } 
     
+  } else if(fDataType == ForestReader::kPPb_pgoing || fDataType == ForestReader::kPPb_Pbgoing){
+    
+    // Track correction for 2016 pPb data
+    fTrackEfficiencyCorrector = new TrkEff2016pPb(false, "trackCorrectionTables/pPb2016/");
+    
+    // Weight function for 2017 MC TODO: Weight function currently copied from pp!
+    fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
+    fVzWeightFunction->SetParameters(0.973805, 0.00339418, 0.000757544, -1.37331e-06, -2.82953e-07, -3.06778e-10, 3.48615e-09);
+    fCentralityWeightFunctionCentral = NULL;
+    fCentralityWeightFunctionPeripheral = NULL;
+    fMultiplicityWeightFunction = NULL;
+    
+    // Track pair efficiency corrector for pp TODO: Pair efficiency correction copied from pp!
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-07-11.root", false, false);
+
+    // Jet energy resolution smearing scale factor manager
+    if(fJetUncertaintyMode > 0){
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(false, fJetUncertaintyMode-3);
+    } else {
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
+    }
+
+    // Smearing configuration for DeltaR and energy weight in energy-energy correlators TODO: Smearing here copied from pp
+    if(fSmearDeltaR){
+      const char* deltaRFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
+      fDeltaRSmearer = new SmearingProvider(Form("smearingFiles/%s", deltaRFileName), "particleDeltaRResponseMatrix", false, false);
+      cout << "Smearing DeltaR in energy-energy correlators using the file " << deltaRFileName << endl;
+    } else {
+      fDeltaRSmearer = NULL;
+    }
+
+    if(fSmearEnergyWeight){
+      const char* energyWeightFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
+      fEnergyWeightSmearer = new SmearingProvider(Form("smearingFiles/%s", energyWeightFileName), "particlePairPtClosure", true, false);
+      cout << "Smearing energy weights for energy-energy correlators using the file " << energyWeightFileName << endl;
+    } else {
+      fEnergyWeightSmearer = NULL;
+    } 
+    
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
     // Track correction for 2018 PbPb data
-    fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", fTrackSelectionVariation, false, "trackCorrectionTables/PbPb2018/");
+    fTrackEfficiencyCorrector = new TrkEff2018PbPb("general", fTrackSelectionVariation, false, "trackCorrectionTables/PbPb2018/");
     
     // The vz weight function is rederived from the miniAOD dataset.
     // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: d4eab1cd188da72f5a81b8902cb6cc55ea1baf23
@@ -347,6 +387,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetType(in.fJetType),
   fMatchJets(in.fMatchJets),
   fDebugLevel(in.fDebugLevel),
+  fIsRealData(in.fIsRealData),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -444,6 +485,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetType = in.fJetType;
   fMatchJets = in.fMatchJets;
   fDebugLevel = in.fDebugLevel;
+  fIsRealData = in.fIsRealData;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -520,9 +562,9 @@ EECAnalyzer::~EECAnalyzer(){
   // destructor
   delete fHistograms;
   if(fVzWeightFunction) delete fVzWeightFunction;
-  if(fTrackEfficiencyCorrector2018) delete fTrackEfficiencyCorrector2018;
-  if(fJetCorrector2018) delete fJetCorrector2018;
-  if(fJetUncertainty2018) delete fJetUncertainty2018;
+  if(fTrackEfficiencyCorrector) delete fTrackEfficiencyCorrector;
+  if(fJetCorrector) delete fJetCorrector;
+  if(fJetUncertainty) delete fJetUncertainty;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
   if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
@@ -546,6 +588,11 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   fDataType = fCard->Get("DataType");
   fTriggerSelection = fCard->Get("TriggerSelection");
+
+  fIsRealData = true;
+  if(fDataType == ForestReader::kPpMC || fDataType == ForestReader::kPbPbMC){
+    fIsRealData = false;
+  }
   
   //****************************************
   //         Event selection cuts
@@ -608,7 +655,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   //    Correlation type for Monte Carlo
   //****************************************
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) {
+  if(fIsRealData) {
     fMcCorrelationType = -100;
   } else {
     fMcCorrelationType = fCard->Get("McCorrelationType");         // Correlation type for Monte Carlo
@@ -626,7 +673,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //    Turn off certain track cuts for generated tracks and pp
   //*************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fDataType == ForestReader::kPPb_pgoing || fDataType == ForestReader::kPPb_Pbgoing){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -810,10 +857,30 @@ void EECAnalyzer::RunAnalysis(){
   Double_t fillerReflectedConeQA[nFillReflectedConeQA];
   Double_t fillerUnfoldingCovariance[nFillUnfoldingCovariance];
   
-  // For 2018 PbPb and 2017 pp data, we need to correct jet pT
-  std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
-  std::string correctionFileResidual[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt", "CorrectionNotAppliedPF.txt", "CorrectionNotAppliedPF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt"};
-  std::string uncertaintyFile[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt"};
+  // Setup the jet energy correction files based on the analyzed data type
+  std::string correctionFileRelative[ForestReader::knDataTypes];
+  correctionFileRelative[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
+
+  std::string correctionFileResidual[ForestReader::knDataTypes];
+  correctionFileResidual[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPpMC] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPbPbMC] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+
+  std::string uncertaintyFile[ForestReader::knDataTypes];
+  uncertaintyFile[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   
   // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
   if(fJetType == 0){
@@ -831,19 +898,19 @@ void EECAnalyzer::RunAnalysis(){
   
   vector<string> correctionFiles;
   correctionFiles.push_back(correctionFileRelative[fDataType]);
-  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp)  correctionFiles.push_back(correctionFileResidual[fDataType]);
+  if(fIsRealData)  correctionFiles.push_back(correctionFileResidual[fDataType]);
   
-  fJetCorrector2018 = new JetCorrector(correctionFiles);
-  fJetUncertainty2018 = new JetUncertainty(uncertaintyFile[fDataType]);
+  fJetCorrector = new JetCorrector(correctionFiles);
+  fJetUncertainty = new JetUncertainty(uncertaintyFile[fDataType]);
   
   //************************************************
   //      Find forest readers for data files
   //************************************************
   
   if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
-      fJetReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
+    fJetReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   } else {
-      fJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
+    fJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   }
   
   // Select the reader for tracks based on forest and MC correlation type
@@ -1203,7 +1270,7 @@ void EECAnalyzer::RunAnalysis(){
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
-          if((fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) && vz > 0) jetFlavor = 1;
+          if((fIsRealData) && vz > 0) jetFlavor = 1;
           
           //  ========================================
           //  ======== Apply jet quality cuts ========
@@ -1288,16 +1355,16 @@ void EECAnalyzer::RunAnalysis(){
           //  ======= Jet quality cuts applied =======
           //  ========================================
           
-          // For 2018 data: do a correction for the jet pT
-          fJetCorrector2018->SetJetPT(jetPt);
-          fJetCorrector2018->SetJetEta(jetEta);
-          fJetCorrector2018->SetJetPhi(jetPhi);
+          // Do a correction for the jet pT
+          fJetCorrector->SetJetPT(jetPt);
+          fJetCorrector->SetJetEta(jetEta);
+          fJetCorrector->SetJetPhi(jetPhi);
           
-          fJetUncertainty2018->SetJetPT(jetPt);
-          fJetUncertainty2018->SetJetEta(jetEta);
-          fJetUncertainty2018->SetJetPhi(jetPhi);
+          fJetUncertainty->SetJetPT(jetPt);
+          fJetUncertainty->SetJetEta(jetEta);
+          fJetUncertainty->SetJetPhi(jetPhi);
           
-          jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
+          jetPtCorrected = fJetCorrector->GetCorrectedPT();
           
           // No jet pT correction for generator level jets
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
@@ -1312,8 +1379,8 @@ void EECAnalyzer::RunAnalysis(){
 
             // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
             // Notice that we still need to apply the nominal jet pT smearing in MC before varying the scale
-            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
             
           }
           
@@ -1558,11 +1625,11 @@ void EECAnalyzer::RunAnalysis(){
               }
 
               // For non-generator level jet pT: do a correction for the jet pT
-              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco) || fUseRecoJetsForReflectedCone){              fJetCorrector2018->SetJetPT(reflectedConeJetPt);
-                fJetCorrector2018->SetJetEta(reflectedConeJetEta);
-                fJetCorrector2018->SetJetPhi(reflectedConeJetPhi);
+              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco) || fUseRecoJetsForReflectedCone){              fJetCorrector->SetJetPT(reflectedConeJetPt);
+                fJetCorrector->SetJetEta(reflectedConeJetEta);
+                fJetCorrector->SetJetPhi(reflectedConeJetPhi);
 
-                reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
+                reflectedConeJetPt = fJetCorrector->GetCorrectedPT();
               }
 
               // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
@@ -2135,10 +2202,10 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   Double_t smearingFactor;
   
   // For 2018 data, we need to correct the reconstructed pT with jet energy correction
-  fJetCorrector2018->SetJetPT(recoPt);
-  fJetCorrector2018->SetJetEta(jetEta);
-  fJetCorrector2018->SetJetPhi(jetPhi);
-  recoPt = fJetCorrector2018->GetCorrectedPT();
+  fJetCorrector->SetJetPT(recoPt);
+  fJetCorrector->SetJetEta(jetEta);
+  fJetCorrector->SetJetPhi(jetPhi);
+  recoPt = fJetCorrector->GetCorrectedPT();
   
   // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
   if(fJetUncertaintyMode > 0){
@@ -2224,15 +2291,15 @@ void EECAnalyzer::FillUnfoldingResponse(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector2018->SetJetPT(jetPt);
-    fJetCorrector2018->SetJetEta(jetEta);
-    fJetCorrector2018->SetJetPhi(jetPhi);
+    fJetCorrector->SetJetPT(jetPt);
+    fJetCorrector->SetJetEta(jetEta);
+    fJetCorrector->SetJetPhi(jetPhi);
 
-    fJetUncertainty2018->SetJetPT(jetPt);
-    fJetUncertainty2018->SetJetEta(jetEta);
-    fJetUncertainty2018->SetJetPhi(jetPhi);
+    fJetUncertainty->SetJetPT(jetPt);
+    fJetUncertainty->SetJetEta(jetEta);
+    fJetUncertainty->SetJetPhi(jetPhi);
 
-    jetPt = fJetCorrector2018->GetCorrectedPT();
+    jetPt = fJetCorrector->GetCorrectedPT();
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     // Note that for MC, we need to smear the jet pT to match the resolution in data
@@ -2243,8 +2310,8 @@ void EECAnalyzer::FillUnfoldingResponse(){
 
     // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
     // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
-    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
     if(jetPt < fReconstructedJetMinimumPtCut) continue;
@@ -2603,15 +2670,15 @@ void EECAnalyzer::ConstructParticleResponses(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector2018->SetJetPT(jetPt);
-    fJetCorrector2018->SetJetEta(jetEta);
-    fJetCorrector2018->SetJetPhi(jetPhi);
+    fJetCorrector->SetJetPT(jetPt);
+    fJetCorrector->SetJetEta(jetEta);
+    fJetCorrector->SetJetPhi(jetPhi);
 
-    fJetUncertainty2018->SetJetPT(jetPt);
-    fJetUncertainty2018->SetJetEta(jetEta);
-    fJetUncertainty2018->SetJetPhi(jetPhi);
+    fJetUncertainty->SetJetPT(jetPt);
+    fJetUncertainty->SetJetEta(jetEta);
+    fJetUncertainty->SetJetPhi(jetPhi);
 
-    jetPt = fJetCorrector2018->GetCorrectedPT();
+    jetPt = fJetCorrector->GetCorrectedPT();
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     if(fJetUncertaintyMode > 0) {
@@ -2621,8 +2688,8 @@ void EECAnalyzer::ConstructParticleResponses(){
 
     // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
     // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
-    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
     if(jetPt < fReconstructedJetMinimumPtCut) continue;
@@ -2816,7 +2883,7 @@ void EECAnalyzer::ConstructParticleResponses(){
  *   return: Multiplicative correction factor for vz
  */
 Double_t EECAnalyzer::GetVzWeight(const Double_t vz) const{
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) return 1;  // No correction for real data
+  if(fIsRealData) return 1;  // No correction for real data
   if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPpMC) return fVzWeightFunction->Eval(vz); // Weight for 2018 MC
   return -1; // Return crazy value for unknown data types, so user will not miss it
 }
@@ -2861,7 +2928,7 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
   if(fJetPtWeightConfiguration == 0) return 1.0; // If jet weighting is disabled, apply no weight
-  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
+  if(fIsRealData) return 1.0;  // No weight for data
 
   return fPtWeightFunction->Eval(jetPt);
 }
@@ -2970,6 +3037,10 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader* eventReader, const Bool_t fillHi
   // Cut for beam scraping. Only applied for pp data.
   if(eventReader->GetBeamScrapingFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kBeamScraping);
+
+  // Cut for pile-up.
+  if(eventReader->GetPileupFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kPileup);
   
   // Cut for vertex z-position
   if(TMath::Abs(eventReader->GetVz()) > fVzCut) return false;
@@ -3021,7 +3092,13 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kEtaCut);
   
   // New cut for 2018 data based on track algorithm and MVA
-  if(trackReader->GetTrackAlgorithm(iTrack) == 6 && trackReader->GetTrackMVA(iTrack) < 0.98 && (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC)) return false; // Only apply this cut for PbPb
+  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
+    if(trackReader->GetTrackAlgorithm(iTrack) == 6){
+      if(trackReader->GetTrackMVA(iTrack) < 0.98){
+        return false;
+      }
+    }
+  }
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kTrackAlgorithm);
   
   // Cut for high purity
@@ -3036,6 +3113,13 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
   if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kVertexDistance);
+
+  // The final cuts are applied only for PbPb data
+  if(fDataType != ForestReader::kPbPb && fDataType != ForestReader::kPbPbMC){
+    if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
+    if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
+    return true;
+  }
   
   // Cut for energy deposition in calorimeters for high pT tracks
   if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
@@ -3204,7 +3288,7 @@ Double_t EECAnalyzer::GetTrackEfficiencyCorrection(const Float_t trackPt, const 
   if(fDataType == ForestReader::kPpMC) preWeight = 0.979;
   
   // For PbPb2018 and pp2017, there is an efficiency table from which the correction comes
-  return preWeight * fTrackEfficiencyCorrector2018->getCorrection(trackPt, trackEta, hiBin);
+  return preWeight * fTrackEfficiencyCorrector->getCorrection(trackPt, trackEta, hiBin);
   
 }
 

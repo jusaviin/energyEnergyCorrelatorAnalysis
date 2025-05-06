@@ -42,6 +42,7 @@ ForestReader::ForestReader() :
   fHBHENoiseBranch(0),
   fHfCoincidenceBranch(0),
   fClusterCompatibilityBranch(0),
+  fPileupFilterBranch(0),
   fTrackPtBranch(0),
   fTrackPtErrorBranch(0),
   fTrackPhiBranch(0),
@@ -71,6 +72,7 @@ ForestReader::ForestReader() :
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
+  fPileupFilterBit(0),
   fnTracks(0)
 
 {
@@ -126,6 +128,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fHBHENoiseBranch(0),
   fHfCoincidenceBranch(0),
   fClusterCompatibilityBranch(0),
+  fPileupFilterBranch(0),
   fTrackPtBranch(0),
   fTrackPtErrorBranch(0),
   fTrackPhiBranch(0),
@@ -155,6 +158,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fHBHENoiseFilterBit(0),
   fHfCoincidenceFilterBit(0),
   fClusterCompatibilityFilterBit(0),
+  fPileupFilterBit(0),
   fnTracks(0)
 {
   // Custom constructor
@@ -205,6 +209,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fHBHENoiseBranch(in.fHBHENoiseBranch),
   fHfCoincidenceBranch(in.fHfCoincidenceBranch),
   fClusterCompatibilityBranch(in.fClusterCompatibilityBranch),
+  fPileupFilterBranch(in.fPileupFilterBranch),
   fTrackPtBranch(in.fTrackPtBranch),
   fTrackPtErrorBranch(in.fTrackPtErrorBranch),
   fTrackPhiBranch(in.fTrackPhiBranch),
@@ -234,6 +239,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fHBHENoiseFilterBit(in.fHBHENoiseFilterBit),
   fHfCoincidenceFilterBit(in.fHfCoincidenceFilterBit),
   fClusterCompatibilityFilterBit(in.fClusterCompatibilityFilterBit),
+  fPileupFilterBit(in.fPileupFilterBit),
   fnTracks(in.fnTracks)
 {
   // Copy constructor
@@ -282,6 +288,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fHBHENoiseBranch = in.fHBHENoiseBranch;
   fHfCoincidenceBranch = in.fHfCoincidenceBranch;
   fClusterCompatibilityBranch = in.fClusterCompatibilityBranch;
+  fPileupFilterBranch = in.fPileupFilterBranch;
   fTrackPtBranch = in.fTrackPtBranch;
   fTrackPtErrorBranch = in.fTrackPtErrorBranch;
   fTrackPhiBranch = in.fTrackPhiBranch;
@@ -311,6 +318,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fHBHENoiseFilterBit = in.fHBHENoiseFilterBit;
   fHfCoincidenceFilterBit = in.fHfCoincidenceFilterBit;
   fClusterCompatibilityFilterBit = in.fClusterCompatibilityFilterBit;
+  fPileupFilterBit = in.fPileupFilterBit;
   fnTracks = in.fnTracks;
   
   return *this;
@@ -415,6 +423,11 @@ Int_t ForestReader::GetHfCoincidenceFilterBit() const{
 // Getter for cluster compatibility filter bit. Always 1 for MC and pp (set in the initializer).
 Int_t ForestReader::GetClusterCompatibilityFilterBit() const{
   return fClusterCompatibilityFilterBit;
+}
+
+// Getter for cluster pile-up filter bit.
+Int_t ForestReader::GetPileupFilterBit() const{
+  return fPileupFilterBit;
 }
 
 // Getter for number of tracks in an event

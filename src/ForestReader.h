@@ -30,7 +30,7 @@ class ForestReader{
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, knDataTypes};
+  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pgoing, kPPb_Pbgoing, knDataTypes};
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
@@ -73,6 +73,7 @@ public:
   Int_t GetHBHENoiseFilterBit() const;               // Getter for HB/HE noise filter bit
   Int_t GetHfCoincidenceFilterBit() const;           // Getter for hadronic forward coincidence filter bit
   Int_t GetClusterCompatibilityFilterBit() const;    // Getter for cluster compatibility filter bit
+  Int_t GetPileupFilterBit() const;                  // Getter for pileup filter bit
   
   // Specific functions for jet closure plots
   virtual Bool_t HasMatchingJet(Int_t iJet) const = 0; // Check if generator level jet has a matching reconstructed jet
@@ -165,6 +166,7 @@ protected:
   TBranch* fHBHENoiseBranch;               // Branch for HB/HE noise filter bit
   TBranch* fHfCoincidenceBranch;           // Branch for energy recorded in at least 3 HF calorimeter towers
   TBranch* fClusterCompatibilityBranch;    // Branch for cluster compatibility
+  TBranch* fPileupFilterBranch;            // Branch for pileup
   
   // Branches for track tree
   TBranch* fTrackPtBranch;                    // Branch for track pT
@@ -204,6 +206,7 @@ protected:
   Int_t fHBHENoiseFilterBit;               // Filter bit for HB/HE noise
   Int_t fHfCoincidenceFilterBit;           // Filter bit for energy recorded in at least 3 HF calorimeter towers
   Int_t fClusterCompatibilityFilterBit;    // Filter bit for cluster compatibility
+  Int_t fPileupFilterBit;                  // Filter events with pile-up
   
   // Leaves for the track tree
   Int_t fnTracks;  // Number of tracks

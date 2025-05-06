@@ -266,6 +266,7 @@ void GeneratorLevelForestReader::Initialize(){
     fHBHENoiseFilterBit = 1;
     fHfCoincidenceFilterBit = 1;
     fClusterCompatibilityFilterBit = 1;
+    fPileupFilterBit = 1;
 
   } else {
 
@@ -285,6 +286,7 @@ void GeneratorLevelForestReader::Initialize(){
     
       fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
+      fPileupFilterBit = 1;        // No pile-up filter for pp
     } else { // PbPb MC
     
       // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction
@@ -316,6 +318,7 @@ void GeneratorLevelForestReader::Initialize(){
       fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
     
       fBeamScrapingFilterBit = 1;  // No beam scraping filter for PbPb
+      fPileupFilterBit = 1;        // No pile-up filter for PbPb
     }
   }
   

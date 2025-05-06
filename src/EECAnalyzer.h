@@ -26,6 +26,7 @@
 #include "JetUncertainty.h"
 #include "trackingEfficiency2018PbPb.h"
 #include "trackingEfficiency2017pp.h"
+#include "trackingEfficiency2016pPb.h"
 #include "TrackingEfficiencyInterface.h"
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
@@ -108,9 +109,9 @@ public:
   TF1* fMultiplicityWeightFunction;              // Track multiplicity based weighting function. Can be done instead of centrality weight.
   TF1* fPtWeightFunction;                        // Weighting function for jet pT. Needed for MC.
   TF1* fSmearingFunction;                        // Additional smearing for jets. Needed in systematic uncertainty study.
-  TrackingEfficiencyInterface* fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
-  JetCorrector* fJetCorrector2018;               // Class for making jet energy correction for 2018 data
-  JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
+  TrackingEfficiencyInterface* fTrackEfficiencyCorrector;  // Tracking efficiency corrector
+  JetCorrector* fJetCorrector;                   // Class for making jet energy correction
+  JetUncertainty* fJetUncertainty;               // Class for finding uncertainty for jet pT
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
@@ -126,6 +127,7 @@ public:
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
   Int_t fMatchJets;                  // Jet matching flag. 0 = Do not match jets, 1 = Match jets, 2 = Anti-match jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
+  Bool_t fIsRealData;                // Simplification from fData type: True = any measured data, False = any simulation
   
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC
