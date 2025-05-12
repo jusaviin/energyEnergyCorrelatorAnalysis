@@ -5100,6 +5100,20 @@ TH1D* EECHistogramManager::GetHistogramEnergyEnergyCorrelator(const int iEnergyE
     if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
 
     fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+  }
+
+  // If the histogram is still NULL, we might be dealing with files that have old naming convention. Try that name instead.
+  if(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] == NULL){
+    TString histogramNamer = Form("%s/%s", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
+
+    if(iPairingType != EECHistograms::kSameJetPair) histogramNamer.Append(fPairingTypeSaveName[iPairingType]);
+    histogramNamer.Append(Form("_C%dT%d", iCentrality, iTrackPt));
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));
+    if(iSubevent != EECHistograms::knSubeventCombinations) histogramNamer.Append(Form("S%d", iSubevent));
+
+    fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
   }
 
   return fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent];

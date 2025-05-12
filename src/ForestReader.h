@@ -63,6 +63,9 @@ public:
   virtual Float_t GetJetMaxTrackPt(Int_t iJet) const = 0; // Getter for maximum track pT inside a jet
   
   // Getters for leaves in HLT tree
+  Int_t GetCaloJet15FilterBit() const;           // Getter for calorimeter jet 15 filter bit
+  Int_t GetCaloJet30FilterBit() const;           // Getter for calorimeter jet 30 filter bit
+  Int_t GetCaloJet40FilterBit() const;           // Getter for calorimeter jet 40 filter bit
   Int_t GetCaloJet60FilterBit() const;           // Getter for calorimeter jet 60 filter bit
   Int_t GetCaloJet80FilterBit() const;           // Getter for calorimeter jet 80 filter bit
   Int_t GetCaloJet100FilterBit() const;          // Getter for calorimeter jet 100 filter bit
@@ -156,6 +159,9 @@ protected:
   TBranch* fEventWeightBranch;     // Branch for jet weight in MC
   
   // Branches for HLT tree
+  TBranch* fCaloJet15FilterBranch;         // Branch for calo jet 15 filter bit
+  TBranch* fCaloJet30FilterBranch;         // Branch for calo jet 30 filter bit
+  TBranch* fCaloJet40FilterBranch;         // Branch for calo jet 40 filter bit
   TBranch* fCaloJet60FilterBranch;         // Branch for calo jet 60 filter bit
   TBranch* fCaloJet80FilterBranch;         // Branch for calo jet 80 filter bit
   TBranch* fCaloJet100FilterBranch;        // Branch for calo jet 100 filter bit
@@ -196,6 +202,9 @@ protected:
   Float_t fEventWeight;  // jet weight in the MC tree
   
   // Leaves for the HLT tree
+  Int_t fCaloJet15FilterBit;         // Filter bit for calorimeter jets with 15 GeV threshold
+  Int_t fCaloJet30FilterBit;         // Filter bit for calorimeter jets with 30 GeV threshold
+  Int_t fCaloJet40FilterBit;         // Filter bit for calorimeter jets with 40 GeV threshold
   Int_t fCaloJet60FilterBit;         // Filter bit for calorimeter jets with 60 GeV threshold
   Int_t fCaloJet80FilterBit;         // Filter bit for calorimeter jets with 80 GeV threshold
   Int_t fCaloJet100FilterBit;        // Filter bit for calorimeter jets with 100 GeV threshold

@@ -13,7 +13,7 @@ void compareEEChistograms(){
   
   // Define the used data files, and a comment describing the data in each file
   const int nDatasets = 2;
-  TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_nominalEnergyWeight_processed_2025-02-19.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-11.root"};
+  TString inputFileName[] = {"data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root", "data/pPb/pPbData_pgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root"};
   //TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_processed_2025-02-19.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
@@ -22,7 +22,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"E-scheme", "WTA"};
+  TString legendComment[] = {"pPb p #rightarrow +#eta", "pPb p #rightarrow -#eta"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];
@@ -42,7 +42,7 @@ void compareEEChistograms(){
   
   // Choose which figure sets to draw
   bool drawEventInformation = false;
-  bool drawJets = false;
+  bool drawJets = true;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -59,7 +59,7 @@ void compareEEChistograms(){
   bool drawParticlePtDensityAroundJetsPtBinned = false;
   
   // Energy-energy correlators
-  bool drawEnergyEnergyCorrelators = true;
+  bool drawEnergyEnergyCorrelators = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationPlus = false;
   bool drawEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
@@ -113,7 +113,7 @@ void compareEEChistograms(){
   double maxZoom = 1.1;
   TString ratioLabel = "#frac{WTA}{E-scheme}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
-  bool addSystemToLegend = true;  // Add the collision system from first file to legend. Useful if all files are from same system
+  bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system
   bool addEnergyToLegend = false;  // Add the collision energy from the first file to legend. Useful if all files are from same system
   
@@ -165,7 +165,7 @@ void compareEEChistograms(){
     histograms[iDataset] = new EECHistogramManager(inputFile[iDataset]);
 
     // Set which histograms to draw from the input file
-    histograms[iDataset]->SetLoadEventInformation(drawEventInformation);
+    /*histograms[iDataset]->SetLoadEventInformation(drawEventInformation);
     histograms[iDataset]->SetLoadJetHistograms(drawJets);
     histograms[iDataset]->SetLoadTracks(drawTracks);
     histograms[iDataset]->SetLoadTracksUncorrected(drawUncorrectedTracks);
@@ -178,7 +178,7 @@ void compareEEChistograms(){
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsEfficiencyVariationPlus);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsEfficiencyVariationMinus);
     histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
-    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
+    histograms[iDataset]->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(drawEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);*/
     
     histograms[iDataset]->SetCentralityBinRange(firstDrawnCentralityBin,lastDrawnCentralityBin);
     histograms[iDataset]->SetTrackPtBinRange(firstDrawnTrackPtBin,lastDrawnTrackPtBin);
@@ -186,7 +186,7 @@ void compareEEChistograms(){
     histograms[iDataset]->SetTrackPtBinRangeEEC(firstDrawnTrackPtBinEEC,lastDrawnTrackPtBinEEC);
     
     // Load the histograms from the file
-    histograms[iDataset]->LoadProcessedHistograms();
+    //histograms[iDataset]->LoadProcessedHistograms();
 
   } // Loop over datasets
   

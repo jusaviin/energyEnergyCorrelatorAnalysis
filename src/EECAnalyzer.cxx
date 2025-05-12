@@ -745,6 +745,9 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t useDifferentReaderForJetsAndTracks = (fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenReco); // Use different forest reader for jets and tracks
   
   // Variables for trigger flags
+  Bool_t caloJet15Trigger;
+  Bool_t caloJet30Trigger;
+  Bool_t caloJet40Trigger;
   Bool_t caloJet60Trigger;
   Bool_t caloJet80Trigger;
   Bool_t caloJet100Trigger;
@@ -1158,6 +1161,9 @@ void EECAnalyzer::RunAnalysis(){
       //  ============================================
       
       // Jet trigger combinations
+      caloJet15Trigger = (fJetReader->GetCaloJet15FilterBit() == 1);
+      caloJet30Trigger = (fJetReader->GetCaloJet30FilterBit() == 1);
+      caloJet40Trigger = (fJetReader->GetCaloJet40FilterBit() == 1);
       caloJet60Trigger = (fJetReader->GetCaloJet60FilterBit() == 1);
       caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
       caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
@@ -1182,6 +1188,9 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
       if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
       if(fTriggerSelection == 7 && (!caloJet60Trigger && !caloJet80Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 triggers
+      if(fTriggerSelection == 15 && !caloJet15Trigger) continue; // Select events with CaloJet15 trigger
+      if(fTriggerSelection == 30 && !caloJet30Trigger) continue; // Select events with CaloJet30 trigger
+      if(fTriggerSelection == 40 && !caloJet40Trigger) continue; // Select events with CaloJet40 trigger
 
       // Fill the histogram for triggered events
       fHistograms->fhEvents->Fill(EECHistograms::kTriggered);

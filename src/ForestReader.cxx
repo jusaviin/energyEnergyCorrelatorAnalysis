@@ -64,6 +64,9 @@ ForestReader::ForestReader() :
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
+  fCaloJet15FilterBit(0),
+  fCaloJet30FilterBit(0),
+  fCaloJet40FilterBit(0),
   fCaloJet60FilterBit(0),
   fCaloJet80FilterBit(0),
   fCaloJet100FilterBit(0),
@@ -150,6 +153,9 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
+  fCaloJet15FilterBit(0),
+  fCaloJet30FilterBit(0),
+  fCaloJet40FilterBit(0),
   fCaloJet60FilterBit(0),
   fCaloJet80FilterBit(0),
   fCaloJet100FilterBit(0),
@@ -231,6 +237,9 @@ ForestReader::ForestReader(const ForestReader& in) :
   fnJets(in.fnJets),
   fnMatchedJets(in.fnMatchedJets),
   fEventWeight(in.fEventWeight),
+  fCaloJet15FilterBit(in.fCaloJet15FilterBit),
+  fCaloJet30FilterBit(in.fCaloJet30FilterBit),
+  fCaloJet40FilterBit(in.fCaloJet40FilterBit),
   fCaloJet60FilterBit(in.fCaloJet60FilterBit),
   fCaloJet80FilterBit(in.fCaloJet80FilterBit),
   fCaloJet100FilterBit(in.fCaloJet100FilterBit),
@@ -310,6 +319,9 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fnJets = in.fnJets;
   fnMatchedJets = in.fnMatchedJets;
   fEventWeight = in.fEventWeight;
+  fCaloJet15FilterBit = in.fCaloJet15FilterBit;
+  fCaloJet30FilterBit = in.fCaloJet30FilterBit;
+  fCaloJet40FilterBit = in.fCaloJet40FilterBit;
   fCaloJet60FilterBit = in.fCaloJet60FilterBit;
   fCaloJet80FilterBit = in.fCaloJet80FilterBit;
   fCaloJet100FilterBit = in.fCaloJet100FilterBit;
@@ -383,6 +395,21 @@ Float_t ForestReader::GetPtHat() const{
 // Getter for pT hat
 Float_t ForestReader::GetEventWeight() const{
   return fEventWeight;
+}
+
+// Getter for calorimeter jet filter bit with threshold 15 GeV.
+Int_t ForestReader::GetCaloJet15FilterBit() const{
+  return fCaloJet15FilterBit;
+}
+
+// Getter for calorimeter jet filter bit with threshold 30 GeV.
+Int_t ForestReader::GetCaloJet30FilterBit() const{
+  return fCaloJet30FilterBit;
+}
+
+// Getter for calorimeter jet filter bit with threshold 40 GeV.
+Int_t ForestReader::GetCaloJet40FilterBit() const{
+  return fCaloJet40FilterBit;
 }
 
 // Getter for calorimeter jet filter bit with threshold 60 GeV. Always 1 for MC (set in the initializer).
