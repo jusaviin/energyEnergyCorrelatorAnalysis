@@ -30,7 +30,7 @@ class ForestReader{
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pgoing, kPPb_Pbgoing, knDataTypes};
+  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pToMinusEta, kPPb_pToPlusEta, knDataTypes};
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor

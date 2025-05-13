@@ -367,7 +367,7 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchStatus("*",0);
 
     // The corrected jet pT does not exist in the pPb forest
-    if(fDataType != kPPb_pgoing && fDataType != kPPb_pgoing){
+    if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta){
       fJetTree->SetBranchStatus("jtpt",1);
       fJetTree->SetBranchAddress("jtpt",&fJetPtArray,&fJetPtBranch);
     }
@@ -460,7 +460,7 @@ void HighForestReader::Initialize(){
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1",1);
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
       
-    } else if(fDataType == kPPb_pgoing || fDataType == kPPb_Pbgoing) { // pPb data
+    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta) { // pPb data
 
       // No low jet pT triggers in pPb forests
       fCaloJet15FilterBit = 1;
@@ -543,7 +543,7 @@ void HighForestReader::Initialize(){
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
       fPileupFilterBit = 1; // No pileup filter for pp
 
-    } else if(fDataType == kPPb_pgoing || fDataType == kPPb_Pbgoing){ // pPb data
+    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta){ // pPb data
 
       fSkimTree->SetBranchStatus("pPAprimaryVertexFilter",1);
       fSkimTree->SetBranchAddress("pPAprimaryVertexFilter",&fPrimaryVertexFilterBit,&fPrimaryVertexBranch);
@@ -661,7 +661,7 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchAddress("pfHcal",&fTrackEnergyHcalArray,&fTrackEnergyHcalBranch);
 
         // Branches that do not exist for the pPb forest
-        if(fDataType != kPPb_pgoing && fDataType != kPPb_Pbgoing){
+        if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta){
           fTrackTree->SetBranchStatus("trkChi2",1);
           fTrackTree->SetBranchAddress("trkChi2",&fTrackChi2Array,&fTrackChi2Branch);
           fTrackTree->SetBranchStatus("trkNdof",1);

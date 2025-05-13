@@ -1579,7 +1579,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
       
 
       // If reflected cone histograms are not filled in the data file, do not try to load them
-      if((iPairingType != EECHistograms::kSameJetPair) && !fCard->GetDoReflectedCone()) continue;
+      //if((iPairingType != EECHistograms::kSameJetPair) && !fCard->GetDoReflectedCone()) continue;
       
       // Setup axes with restrictions, (4 = pairing type)
       axisIndices[weightRestricted] = 4; 

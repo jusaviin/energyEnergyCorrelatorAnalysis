@@ -63,7 +63,8 @@ public:
     kCentralityBinEdges,          // Centrality bin edges
     kTrackPtBinEdges,             // Track pT bin edges
     kPtHatBinEdges,               // pT hat bin edges
-    kDoReflectedCone,             // 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Include reflected cone QA histograms
+    kBackgroundMethods,           // Bit 0 = Estimate reflected cone, Bit 1 = Estimate perpendicular cone, Bit 2 = Estimate mixed cone
+    kMegaSkimMixing,              // 0 = Regular mixing files, 1 = Megaskimmed micing files 
     kAllowJetsInReflectedCone,    // 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
     kFirstUnfoldedCentralityBin,  // Index of the first centrality bin that has been unfolded
     kLastUnfoldedCentralityBin,   // Index of the last centrality bin that has been unfolded
@@ -81,7 +82,7 @@ public:
 private:
   
   // Names for each entry read from the configuration card
-  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","SkipCovarianceMatrix","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","DoReflectedCone","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin","BackgroundSubtractionMethod","BackgroundSubtractionSystematic"};
+  const char* fCardEntryNames[knEntries] = {"DataType","McCorrelationType","MatchJets","TriggerSelection","JetType","JetAxis","JetEtaCut","MinJetPtCut","MaxJetPtCut","CutBadPhi","MinMaxTrackPtFraction","MaxMaxTrackPtFraction","JetUncertainty","TrackEtaCut","MinTrackPtCut","MaxTrackPtCut","MaxTrackPtRelativeError","VertexMaxDistance","CalorimeterSignalLimitPt","HighPtEtFraction","Chi2QualityCut","MinimumTrackHits","SubeventCut","TrackEfficiencyVariation","JetPtWeight","DisableTrackPairEfficiencyCorrection","ZVertexCut","LowPtHatCut","HighPtHatCut","MultiplicityMode","JetRadius","WeightExponent","JetPtBinEdgesEEC","TrackPtBinEdgesEEC","SkipCovarianceMatrix","MinJetPtUnfoldingReco","MinJetPtUnfoldingTruth","CentralityBinEdges","TrackPtBinEdges","PtHatBinEdges","BackgroundMethods","MegaSkimMixing","AllowJetsInReflectedCone","FirstUnfoldedCentralityBin","LastUnfoldedCentralityBin","FirstUnfoldedTrackPtBin","LastUnfoldedTrackPtBin","FirstUnfoldedJetPtBin","LastUnfoldedJetPtBin","BackgroundSubtractionMethod","BackgroundSubtractionSystematic"};
   const char* fFileNameType[knFileNames] = {"input", "response matrix"};
   const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
@@ -163,8 +164,6 @@ public:
   int GetSubeventCut() const;      // Get the index for used subevent cut
   int GetJetType() const;          // Get the jet type index
   double GetJetPtCut() const;      // Get the minimum jet pT cut
-  bool GetDoReflectedCone() const; // Get the information if reflected cone histograms are filled
-  bool GetDoReflectedConeQA() const; // Get the information if reflected cone QA hsitograms are filled
   int GetWeightExponent(int index = 1) const; // Get the weight exponent used in energy-energy correlators
   int FindWeightExponentIndex(double weightExponent) const; // Find the index in card for the input weight exponent
   int GetNWeightExponents() const;  // Get the number of weight exponents that are defined in the file

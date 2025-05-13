@@ -108,6 +108,7 @@ EECAnalyzer::EECAnalyzer() :
   fDoReflectedCone(false),
   fDoMixedCone(false),
   fMegaSkimMode(false),
+  fDoPerpendicularCone(false),
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
   fLocalRun(0),
@@ -234,7 +235,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyWeightSmearer = NULL;
     } 
     
-  } else if(fDataType == ForestReader::kPPb_pgoing || fDataType == ForestReader::kPPb_Pbgoing){
+  } else if(fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
     
     // Track correction for 2016 pPb data
     fTrackEfficiencyCorrector = new TrkEff2016pPb(false, "trackCorrectionTables/pPb2016/");
@@ -427,6 +428,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fDoReflectedCone(in.fDoReflectedCone),
   fDoMixedCone(in.fDoMixedCone),
   fMegaSkimMode(in.fMegaSkimMode),
+  fDoPerpendicularCone(in.fDoPerpendicularCone),
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fLocalRun(in.fLocalRun),
@@ -525,6 +527,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fDoReflectedCone = in.fDoReflectedCone;
   fDoMixedCone = in.fDoMixedCone;
   fMegaSkimMode = in.fMegaSkimMode;
+  fDoPerpendicularCone = in.fDoPerpendicularCone;
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fLocalRun = in.fLocalRun;
@@ -673,7 +676,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //    Turn off certain track cuts for generated tracks and pp
   //*************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fDataType == ForestReader::kPPb_pgoing || fDataType == ForestReader::kPPb_Pbgoing){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -685,11 +688,6 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fJetRadius = fCard->Get("JetRadius");
   fSmearDeltaR = (fCard->Get("SmearDeltaR") == 1);
   fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
-  fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
-  fDoMixedCone = (fCard->Get("DoReflectedCone") >= 2);
-  fMegaSkimMode = (fCard->Get("DoReflectedCone") == 3);
-  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
-  fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   fSkipCovarianceMatrix = (fCard->Get("SkipCovarianceMatrix") == 1);
 
   const Int_t nWeightExponents = fCard->GetN("WeightExponent");
@@ -697,6 +695,18 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   for(Int_t iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     fWeightExponent.push_back(fCard->Get("WeightExponent", iWeightExponent));
   }
+
+  //******************************************************************
+  //   Variables for energy-energy correlator background evaluation
+  //******************************************************************
+  int backgroundMethods = fCard->Get("BackgroundMethods");
+  std::bitset<3> backgroundBitChecker(backgroundMethods);
+  fDoReflectedCone = backgroundBitChecker.test(0);
+  fDoPerpendicularCone = backgroundBitChecker.test(1);
+  fDoMixedCone = backgroundBitChecker.test(2);
+  fMegaSkimMode = (fCard->Get("MegaSkimMixing") == 1);
+  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
+  fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   
   //************************************************
   //         Read which histograms to fill
@@ -825,11 +835,12 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t checkForDuplicates;             // Flag for checking duplicate events in the mixing list
   
   // Variables for energy-energy correlators
-  vector<double> selectedTrackPt[4];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackEta[4];    // Track eta relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackPhi[4];    // Track phi relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<int> selectedTrackSubevent[4];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<double> selectedTrackPt[EECHistograms::knJetConeTypes];     // Track pT for tracks selected for energy-energy correlator analysis
+  vector<double> relativeTrackEta[EECHistograms::knJetConeTypes];    // Track eta relative to the jet axis
+  vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes];    // Track phi relative to the jet axis
+  vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes];  // Track subevent for tracks selected for energy-energy correlator analysis
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
+  Double_t jetPerpendicularPhi = 0;      // Perpendicular jet phi to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
   // File name helper variables
@@ -866,24 +877,24 @@ void EECAnalyzer::RunAnalysis(){
   correctionFileRelative[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt";
-  correctionFileRelative[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
-  correctionFileRelative[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
 
   std::string correctionFileResidual[ForestReader::knDataTypes];
   correctionFileResidual[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPpMC] = "CorrectionNotAppliedPF.txt";
   correctionFileResidual[ForestReader::kPbPbMC] = "CorrectionNotAppliedPF.txt";
-  correctionFileResidual[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
-  correctionFileResidual[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
 
   std::string uncertaintyFile[ForestReader::knDataTypes];
   uncertaintyFile[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt";
   uncertaintyFile[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt";
   uncertaintyFile[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt";
   uncertaintyFile[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt";
-  uncertaintyFile[ForestReader::kPPb_pgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
-  uncertaintyFile[ForestReader::kPPb_Pbgoing] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   
   // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
   if(fJetType == 0){
@@ -1118,7 +1129,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // Print to console how the analysis is progressing
       if(fDebugLevel > 1 && iEvent % 1000 == 0) cout << "Analyzing event " << iEvent << endl;
-      
+
       // Read the event to memory
       fJetReader->GetEvent(iEvent);
       
@@ -1478,11 +1489,11 @@ void EECAnalyzer::RunAnalysis(){
         if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
-          for(int iPairingType = 0; iPairingType < 4; iPairingType++){
-            selectedTrackPt[iPairingType].clear();
-            relativeTrackEta[iPairingType].clear();
-            relativeTrackPhi[iPairingType].clear();
-            selectedTrackSubevent[iPairingType].clear();
+          for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+            selectedTrackPt[iJetConeType].clear();
+            relativeTrackEta[iJetConeType].clear();
+            relativeTrackPhi[iJetConeType].clear();
+            selectedTrackSubevent[iJetConeType].clear();
           }
           
           // Clear the multiplicity arrays
@@ -1513,12 +1524,12 @@ void EECAnalyzer::RunAnalysis(){
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
             if(deltaRTrackJet < fJetRadius){
-              relativeTrackPhi[0].push_back(trackPhi-jetPhi);
-              relativeTrackEta[0].push_back(trackEta-jetEta);
+              relativeTrackPhi[EECHistograms::kSignalCone].push_back(trackPhi-jetPhi);
+              relativeTrackEta[EECHistograms::kSignalCone].push_back(trackEta-jetEta);
               
               // Also remember track pT and subevent
-              selectedTrackPt[0].push_back(trackPt);
-              selectedTrackSubevent[0].push_back(trackSubevent);
+              selectedTrackPt[EECHistograms::kSignalCone].push_back(trackPt);
+              selectedTrackSubevent[EECHistograms::kSignalCone].push_back(trackSubevent);
               
               // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
               if(fFillJetConeHistograms){
@@ -1562,12 +1573,12 @@ void EECAnalyzer::RunAnalysis(){
             if(fDoReflectedCone){
               deltaRTrackJet = GetDeltaR(jetReflectedEta, jetPhi, trackEta, trackPhi);
               if(deltaRTrackJet < fJetRadius){
-                relativeTrackPhi[1].push_back(trackPhi-jetPhi);
-                relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
+                relativeTrackPhi[EECHistograms::kReflectedCone].push_back(trackPhi-jetPhi);
+                relativeTrackEta[EECHistograms::kReflectedCone].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
-                selectedTrackPt[1].push_back(trackPt);
-                selectedTrackSubevent[1].push_back(trackSubevent);
+                selectedTrackPt[EECHistograms::kReflectedCone].push_back(trackPt);
+                selectedTrackSubevent[EECHistograms::kReflectedCone].push_back(trackSubevent);
                 
                 // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
                 if(fFillJetConeHistograms){
@@ -1597,6 +1608,38 @@ void EECAnalyzer::RunAnalysis(){
                 }
               }
             } // Search for track from reflected cone
+
+            // Collect the selected track information for ALICE-style perpendicular cones
+            if(fDoPerpendicularCone){
+
+              for(int iPerpendicularCone = 0; iPerpendicularCone <= 1; iPerpendicularCone++){
+
+                jetPerpendicularPhi = GetPerpendicularPhi(jetPhi, iPerpendicularCone);
+
+                deltaRTrackJet = GetDeltaR(jetEta, jetPerpendicularPhi, trackEta, trackPhi);
+                if(deltaRTrackJet < fJetRadius){
+                  relativeTrackPhi[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPhi-jetPerpendicularPhi);
+                  relativeTrackEta[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackEta-jetEta);
+                
+                  // Also remember track pT and subevent
+                  selectedTrackPt[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPt);
+                  selectedTrackSubevent[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackSubevent);
+                
+                  // If we are calculating multiplicity within the perpendicular cone, update the multiplicity arrays
+                  if(fFillJetConeHistograms){
+                    for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                      if(trackPt < trackPtBinsEEC[iTrackPt]) break;
+                      uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes]++;
+                      multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                      if(trackSubeventIndex >= 0){
+                        uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex]++;
+                        multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                      }
+                    } // Track pT loop
+                  } // Fill jet cone histograms
+                } // Found track to add to vectors
+              } // Loop over two perpendicular cones
+            } // Search for track from perpendicular cone
             
           } // Track loop
 
@@ -1681,12 +1724,12 @@ void EECAnalyzer::RunAnalysis(){
             multiplicityTolerance = 0.01;   // Starting tolerance for multiplicity in percentage: 1%
             vzTolerance = 0.5;    // Starting tolerance for vz position: 0.5 cm
             allEventsWentThrough = false;
-            mixedEventFillIndex = 2; // First filled index is 2
+            mixedEventFillIndex = EECHistograms::kMixedCone; // First filled index is 2
             checkForDuplicates = false; // We do not need to check for duplicate events if we have not gone through all event yet
             mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
 
             // Find events to mix until we have found two matching events
-            while(mixedEventFillIndex < 4){
+            while(mixedEventFillIndex <= EECHistograms::kSecondMixedCone){
 
               // By default, do not skip events
               skipEvent = false;
@@ -1963,22 +2006,22 @@ void EECAnalyzer::RunAnalysis(){
 /*
  * Method for calculating the energy-energy correlators for tracks within the jets
  *
- *  const vector<double> selectedTrackPt[4] = pT array for tracks selected for the analysis
- *  const vector<double> relativeTrackEta[4] = relative eta array for tracks selected for the analysis
- *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
- *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
+ *  const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes] = pT array for tracks selected for the analysis
+ *  const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes] = relative eta array for tracks selected for the analysis
+ *  const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes] = relative phi array for tracks selected for the analysis
+ *  const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes] = subevent array for tracks selected for the analysis
  *  const double jetPt = pT of the jet the tracks are close to
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt){
   
   // Define a filler for THnSparse
   Double_t fillerEnergyEnergyCorrelator[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
-  // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
-  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone};
-  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone};
+  // Indices for different pairing types
+  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSignalCone, EECHistograms::kPerpendicularCone, EECHistograms::kSignalCone, EECHistograms::kPerpendicularCone, EECHistograms::kSecondPerpendicularCone};
+  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kPerpendicularCone, EECHistograms::kPerpendicularCone, EECHistograms::kSecondPerpendicularCone, EECHistograms::kSecondPerpendicularCone, EECHistograms::kSecondPerpendicularCone};
   
   // Event information
   Double_t centrality = fTrackReader->GetCentrality();
@@ -2025,9 +2068,27 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   // Loop over the pairing types (same jet/reflected cone jet)
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     
-    // Only do reflected and mixed cone pairings if specified in the configuration
-    if((iPairingType != EECHistograms::kSameJetPair) && !fDoReflectedCone) continue;
-    if((iPairingType > EECHistograms::kReflectedConePair) && !fDoMixedCone) continue;
+    // Skip all the pairing types that are not specified in the configuration
+    if(!fDoReflectedCone){
+      if(iPairingType == EECHistograms::kSignalReflectedConePair) continue;
+      if(iPairingType == EECHistograms::kReflectedConePair) continue;
+    }
+
+    if(!fDoMixedCone){
+      if(iPairingType == EECHistograms::kSignalMixedConePair) continue;
+      if(iPairingType == EECHistograms::kMixedConePair) continue;
+      if(iPairingType == EECHistograms::kSignalSecondMixedConePair) continue;
+      if(iPairingType == EECHistograms::kMixedMixedConePair) continue;
+      if(iPairingType == EECHistograms::kSecondMixedConePair) continue;
+    }
+
+    if(!fDoPerpendicularCone){
+      if(iPairingType == EECHistograms::kSignalPenpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kSignalSecondPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kPerpendicularPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kSecondPerpendicularConePair) continue;
+    }
     
     // Find the numbers of tracks for the track loops
     nTracks1 = selectedTrackPt[firstParticleType[iPairingType]].size();
@@ -3523,6 +3584,37 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
   
   // Now eta must be positive. Subtract twice the jet radius from the value to avoid overlapping cones
   return eta - 2*fJetRadius;
+}
+
+/*
+ * Get perpendicular jet phi coordinate in a defined direction
+ *
+ *  Arguments:
+ *   const Double_t phi = Eta of the jet
+ *   const Int_t direction = 0: Positive phi direction, 1: Negative phi direction
+ *
+ * return: Perpendicular phi coordinate
+ */
+Double_t EECAnalyzer::GetPerpendicularPhi(const Double_t phi, const Int_t direction) const{
+
+  // Make sure direction index is 0 or 1. Give a snarky comment if not.
+  if(direction < 0 || direction > 1){
+    std::cout << "EECAnalyzer::ERROR! Direction index in GetPerpendicularPhi out of bounds!" << std::endl;
+    std::cout << "Fix the error in your code. Now it crashes because of your mistakes..." << std::endl;
+    assert(0);
+  }
+
+  // Move the phi by 90 degrees to the defined direction
+  Double_t adder[2] = {TMath::Pi()/2.0, -TMath::Pi()/2.0};
+  Double_t perpendicularPhi = phi + adder[direction];
+
+  // Make sure that the reflected phi index is in the range [-pi, pi]
+  if(perpendicularPhi < TMath::Pi()) perpendicularPhi += 2*TMath::Pi();
+  if(perpendicularPhi > TMath::Pi()) perpendicularPhi -= 2*TMath::Pi();
+
+  // Return perpendicularized phi
+  return perpendicularPhi;
+
 }
 
 /*

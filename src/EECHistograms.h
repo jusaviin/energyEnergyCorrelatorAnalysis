@@ -20,8 +20,8 @@ public:
   enum enumTriggerBits {kNoTrigger, kOnlyCaloJet60, kOnlyCaloJet80, kOnlyCaloJet100, kCaloJet60And80, kCaloJet60And100, kCaloJet80And100, kCaloJet60And80And100, knTriggerCombinations};
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
-  enum enumJetConeTypes{kSignalCone, kReflectedCone, kMixedCone, kSecondMixedCone, knJetConeTypes};
-  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kReflectedMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kReflectedSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, knPairingTypes}; // Pair tracks between different cones
+  enum enumJetConeTypes{kSignalCone, kReflectedCone, kMixedCone, kSecondMixedCone, kPerpendicularCone, kSecondPerpendicularCone, knJetConeTypes};
+  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kSignalPenpendicularConePair, kPerpendicularConePair, kSignalSecondPerpendicularConePair, kPerpendicularPerpendicularConePair, kSecondPerpendicularConePair, knPairingTypes}; // Pair tracks between different cones
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
   enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations};
     

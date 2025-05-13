@@ -8,7 +8,7 @@ McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 
 # Select if you want to use the jet trigger
-TriggerSelection 30   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80, 15 = CaloJet15, 30 = CaloJet30, 40 = CaloJet40
+TriggerSelection 15   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80, 15 = CaloJet15, 30 = CaloJet30, 40 = CaloJet40
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
@@ -76,8 +76,12 @@ CentralityBinEdges -0.75 -0.25 9.75 29.75 49.75 100.25  # Centrality binning
 TrackPtBinEdges     0.7 1 2 3 4 8 12 300                # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
-# Background estimation using eta-reflected jet cone
-DoReflectedCone 1  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background
+# Choose which background estimation methods are evaluated and parameters for them
+BackgroundMethods 3  # Bit 0 = Reflected-eta cone       (to set: 1)
+                     # Bit 1 = Perpendicular cone       (to set: 2)
+                     # Bit 2 = Mixed cones              (to set: 4)
+                     # Examples: All = 7, Everything but no mixing = 3
+MegaSkimMixing 1 # 0 = If doing mixing, use regular mixing files. 1 = Use megaskimmed mixing files
 AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug

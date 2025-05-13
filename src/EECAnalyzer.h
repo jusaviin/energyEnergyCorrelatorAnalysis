@@ -59,7 +59,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -90,6 +90,7 @@ public:
   Int_t GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent combination type from two track subevents
   Int_t GetSubeventIndex(const Int_t subevent) const; // Get the subevent index for a track
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
+  Double_t GetPerpendicularPhi(const Double_t phi, const Int_t direction) const; // Get perpendicular jet phi coordinate in a defined direction
   Double_t TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const; // Transform the deltaR value to the unfolding axis
   Double_t SimpleSmearDeltaR(const Double_t deltaR); // Simple smearing for deltaR to see if it affects the final distributions
 
@@ -179,6 +180,7 @@ public:
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
   Bool_t fMegaSkimMode;      // Use mega skimmed mixing files, that contain bare minimum information for mixing
+  Bool_t fDoPerpendicularCone;         // Estimate background from perpendicular cones
   Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 

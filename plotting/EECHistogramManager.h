@@ -102,7 +102,7 @@ private:
   const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Pythia", "Hydjet-Hydjet"};
   
   // Naming for pairing types
-  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "ReflectedMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "ReflectedSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair"};
+  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair", "SignalPerpendicularConePair", "PerpendicularConePair", "SignalSecondPerpendicularConePair", "PerpendicularPerpendicularConePair", "SecondPerpendicularConePair"};
   
   // Naming for jet cone types
   const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone", "MixedCone"};

@@ -11,15 +11,19 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 3;
-  TString fileName[nComparisonFiles];
-  fileName[0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root";
-  fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root";
-  fileName[2] = "data/pPb/pPbData_pgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root";
+  std::vector<TString> fileName;
+  //fileName.push_back("data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root");
+  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_energyWeightSquared_jet15Trigger_processed_2025-05-12.root");
+  fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-12.root");
+  fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-12.root");
+  fileName.push_back("data/pPb/pPbData_5TeV_pgoing_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-13.root");
 
   //fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root";
   //fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
   //fileName[2] = "data/pPb/pPbData_pgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
+
+  //fileName.push_back("data/pPb/ppData_pfJets_wtaAxis_allEnergyWeights_jet15Trigger_processed_2025-05-12.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_wtaAxis_allEnergyWeights_jet30Trigger_processed_2025-05-12.root");
   
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root";
@@ -40,29 +44,41 @@ void compareEECinDefinedBins(){
   // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
 
+  const int nComparisonFiles = fileName.size();
+
   TString uncertaintyFileName = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root";
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-08.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root
 
 
-  TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "pp 5.02 TeV";
-  fileDescription[1] = "pPb 8.16 TeV (p #rightarrow +#eta)";
-  fileDescription[2] = "pPb 8.16 TeV (p #rightarrow -#eta) ";
+  std::vector<TString> fileDescription;
+  //fileDescription.push_back("pp Jet 60||80 Trigger");
+  fileDescription.push_back("pp 5.02 TeV, Jet 15 Trigger");
+  //fileDescription.push_back("pp Jet 30 Trigger");
+  //fileDescription.push_back("pp 5.02 TeV");
+  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
+  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
+  fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
   //fileDescription[4] = "20 iterations";
+
+  // Check that a description exists for each file
+  if(fileDescription.size() < fileName.size()){
+    cout << "ERROR! Not enough file descriptions given. Please give a description for all your files!" << endl;
+    return;
+  }
   
   // Open the files and check that they exist
   TFile* inputFile[nComparisonFiles];
   EECCard* card[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     
-    inputFile[iFile] = TFile::Open(fileName[iFile]);
+    inputFile[iFile] = TFile::Open(fileName.at(iFile));
     
     if(inputFile[iFile] == NULL){
-      cout << "Error! The file " << fileName[iFile].Data() << " does not exist!" << endl;
+      cout << "Error! The file " << fileName.at(iFile).Data() << " does not exist!" << endl;
       cout << "Maybe you forgot the data/ folder path?" << endl;
       cout << "Will not execute the code" << endl;
       return;
@@ -100,10 +116,10 @@ void compareEECinDefinedBins(){
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(40,50));
+  comparedJetPtBin.push_back(std::make_pair(50,60));
+  comparedJetPtBin.push_back(std::make_pair(60,80));
+  comparedJetPtBin.push_back(std::make_pair(80,100));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -159,9 +175,9 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_nominalEnergyWeight_backgroundComparison";   // Comment given for this specific file
-  const char* figureFormat = "pdf"; // Format given for the figures
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_energyWeightSquared_pPbComparison";   // Comment given for this specific file
+  const char* figureFormat = "png"; // Format given for the figures
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
@@ -374,7 +390,7 @@ void compareEECinDefinedBins(){
   
   
   // Helper histograms
-  std::pair<double, double> drawingRange = std::make_pair(0.006, 0.39);
+  std::pair<double, double> drawingRange = std::make_pair(0.008, 0.39);
   double epsilon = 0.0001;
   int lowNormalizationBin, highNormalizationBin;
   int iCentrality, iCentralityReference, iCentralityUncertainty;
@@ -655,7 +671,7 @@ void compareEECinDefinedBins(){
     legendTrackPtIndex = 0;
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
       if(nComparisonFiles > 1){
-        individualLegend = fileDescription[iFile];
+        individualLegend = fileDescription.at(iFile);
       } else {
         individualLegend = "";
       }
@@ -693,7 +709,7 @@ void compareEECinDefinedBins(){
     // Draw the histograms
     drawer->SetGridY(true);
     if(nComparisonFiles > 1){
-      ratioName = fileDescription[0];
+      ratioName = fileDescription.at(0);
     } else if (colorWithCentrality){
       ratioName = Form("Cent: %.0f-%.0f%%", comparedCentralityBin.at(0).first, comparedCentralityBin.at(0).second);
     } else if (colorWithTrackPt){
