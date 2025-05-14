@@ -458,7 +458,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderMultiplicityInJets[nAxesMultiplicityInJets];
   Double_t highBinBorderMultiplicityInJets[nAxesMultiplicityInJets];
   
-  const Int_t nAxesJet = 5;
+  const Int_t nAxesJet = 6;
   Int_t nBinsJet[nAxesJet];
   Double_t lowBinBorderJet[nAxesJet];
   Double_t highBinBorderJet[nAxesJet];
@@ -627,36 +627,41 @@ void EECHistograms::CreateHistograms(){
   
   // ======== THnSparse for all jets ========
   
-  // Axis 0 for the any jet histogram: jet pT
-  nBinsJet[0] = nPtBinsJet;         // nBins for any jet pT
-  lowBinBorderJet[0] = minPtJet;    // low bin border for any jet pT
-  highBinBorderJet[0] = maxPtJet;   // high bin border for any jet pT
+  // Axis 0 for the inclusive jet histogram: jet pT
+  nBinsJet[0] = nPtBinsJet;         // nBins for inclusive jet pT
+  lowBinBorderJet[0] = minPtJet;    // low bin border for inclusive jet pT
+  highBinBorderJet[0] = maxPtJet;   // high bin border for inclusive jet pT
   
-  // Axis 1 for the any jet histogram: jet phi
-  nBinsJet[1] = nPhiBins;        // nBins for any jet phi
-  lowBinBorderJet[1] = minPhi;   // low bin border for any jet phi
-  highBinBorderJet[1] = maxPhi;  // high bin border for any jet phi
+  // Axis 1 for the inclusive jet histogram: jet phi
+  nBinsJet[1] = nPhiBins;        // nBins for inclusive jet phi
+  lowBinBorderJet[1] = minPhi;   // low bin border for inclusive jet phi
+  highBinBorderJet[1] = maxPhi;  // high bin border for inclusive jet phi
   
-  // Axis 2 for the any jet histogram: jet eta
-  nBinsJet[2] = nEtaBins;        // nBins for any jet eta
-  lowBinBorderJet[2] = minEta;   // low bin border for any jet eta
-  highBinBorderJet[2] = maxEta;  // high bin border for any jet eta
+  // Axis 2 for the inclusive jet histogram: jet eta
+  nBinsJet[2] = nEtaBins;        // nBins for inclusive jet eta
+  lowBinBorderJet[2] = minEta;   // low bin border for inclusive jet eta
+  highBinBorderJet[2] = maxEta;  // high bin border for inclusive jet eta
+
+  // Axis 3 for the inclusive jet histogram: jet eta_CM
+  nBinsJet[3] = nEtaBins;        // nBins for inclusive jet eta_CM
+  lowBinBorderJet[3] = minEta;   // low bin border for inclusive jet eta_CM
+  highBinBorderJet[3] = maxEta;  // high bin border for inclusive jet eta_CM
   
-  // Axis 3 for the any jet histogram: centrality
-  nBinsJet[3] = nWideCentralityBins;   // nBins for wide centrality bins
-  lowBinBorderJet[3] = minCentrality;  // low bin border for centrality
-  highBinBorderJet[3] = maxCentrality; // high bin border for centrality
+  // Axis 3 for the inclusive jet histogram: centrality
+  nBinsJet[4] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderJet[4] = minCentrality;  // low bin border for centrality
+  highBinBorderJet[4] = maxCentrality; // high bin border for centrality
   
   // Axis 4 for the jet histogram: jet flavor (quark/gluon)
-  nBinsJet[4] = nClosureParticleTypeBins;        // nBins for jet flavor
-  lowBinBorderJet[4] = minClosureParticleType;   // low bin border for jet flavor
-  highBinBorderJet[4] = maxClosureParticleType;  // high bin border for jet flavor
+  nBinsJet[5] = nClosureParticleTypeBins;        // nBins for jet flavor
+  lowBinBorderJet[5] = minClosureParticleType;   // low bin border for jet flavor
+  highBinBorderJet[5] = maxClosureParticleType;  // high bin border for jet flavor
   
   // Create the histogram for all jets using the above binning information
   fhInclusiveJet = new THnSparseF("inclusiveJet","inclusiveJet",nAxesJet,nBinsJet,lowBinBorderJet,highBinBorderJet); fhInclusiveJet->Sumw2();
 
   // Set custom centrality bins for histograms
-  fhInclusiveJet->SetBinEdges(3,wideCentralityBins);
+  fhInclusiveJet->SetBinEdges(4,wideCentralityBins);
   
   // ======== THnSparses for tracks and uncorrected tracks ========
   

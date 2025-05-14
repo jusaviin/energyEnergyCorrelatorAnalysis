@@ -110,6 +110,7 @@ EECHistogramManager::EECHistogramManager() :
     fhJetPt[iCentrality] = NULL;      // Jet pT histograms
     fhJetPhi[iCentrality] = NULL;     // Jet phi histograms
     fhJetEta[iCentrality] = NULL;     // Jet eta histograms
+    fhJetEtaCM[iCentrality] = NULL;   // Jet eta_CM histograms
     fhJetEtaPhi[iCentrality] = NULL;  // 2D eta-phi histogram for jets
     
     // Track histograms
@@ -452,6 +453,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
     fhJetPt[iCentrality] = in.fhJetPt[iCentrality];         // Jet pT histograms
     fhJetPhi[iCentrality] = in.fhJetPhi[iCentrality];       // Jet phi histograms
     fhJetEta[iCentrality] = in.fhJetEta[iCentrality];       // Jet eta histograms
+    fhJetEtaCM[iCentrality] = in.fhJetEtaCM[iCentrality];   // Jet eta_CM histograms
     fhJetEtaPhi[iCentrality] = in.fhJetEtaPhi[iCentrality]; // 2D eta-phi histogram for jets
 
     
@@ -1081,8 +1083,9 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
  *       Axis 0                 Jet pT
  *       Axis 1                 Jet phi
  *       Axis 2                 Jet eta
- *       Axis 3               Centrality
- *       Axis 4   Jet flavor (for MC) 1 = Quark, 2 = Gluon
+ *       Axis 3               Jet eta_CM
+ *       Axis 4               Centrality
+ *       Axis 5   Jet flavor (for MC) 1 = Quark, 2 = Gluon
  *
  */
 void EECHistogramManager::LoadJetHistograms(){
@@ -1102,6 +1105,10 @@ void EECHistogramManager::LoadJetHistograms(){
   
   // Open the multidimensional histogram from which the histograms are projected
   histogramArray = (THnSparseD*) fInputFile->Get(fJetHistogramName);
+
+  // Backwards compatibility: older files only have 4 axes in jet histogram
+  int backwardCompatibilityGiver = 0;
+  if(histogramArray->GetNdimensions() == 4) backwardCompatibilityGiver = -1;
   
   for(int iCentralityBin = fFirstLoadedCentralityBin; iCentralityBin <= fLastLoadedCentralityBin; iCentralityBin++){
     
@@ -1109,12 +1116,12 @@ void EECHistogramManager::LoadJetHistograms(){
     lowerCentralityBin = fCentralityBinIndices[iCentralityBin];
     higherCentralityBin = fCentralityBinIndices[iCentralityBin+1]+duplicateRemoverCentrality;
     
-    axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;  // Centrality
+    axisIndices[0] = 4+backwardCompatibilityGiver; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;  // Centrality
     
     // If jet flavor is specified, only read jets of specific flavor
     if(fJetFlavor == 1 || fJetFlavor == 2){
       nAxes++;
-      axisIndices[1] = 4; lowLimits[1] = fJetFlavor; highLimits[1] = fJetFlavor;  // Jet flavor
+      axisIndices[1] = 5+backwardCompatibilityGiver; lowLimits[1] = fJetFlavor; highLimits[1] = fJetFlavor;  // Jet flavor
     }
     
     // Always load jet pT histograms
@@ -1124,6 +1131,7 @@ void EECHistogramManager::LoadJetHistograms(){
     
     fhJetPhi[iCentralityBin] = FindHistogram(histogramArray,1,nAxes,axisIndices,lowLimits,highLimits);
     fhJetEta[iCentralityBin] = FindHistogram(histogramArray,2,nAxes,axisIndices,lowLimits,highLimits);
+    if(backwardCompatibilityGiver == 0) fhJetEtaCM[iCentralityBin] = FindHistogram(histogramArray,3,nAxes,axisIndices,lowLimits,highLimits);
     if(fLoad2DHistograms) fhJetEtaPhi[iCentralityBin] = FindHistogram2D(histogramArray,1,2,nAxes,axisIndices,lowLimits,highLimits);
     
   } // Loop over centrality bins
@@ -2740,6 +2748,10 @@ void EECHistogramManager::WriteJetHistograms(){
     // Jet eta
     histogramNamer = Form("%sEta_C%d",fJetHistogramName,iCentralityBin);
     if(fhJetEta[iCentralityBin]) fhJetEta[iCentralityBin]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+    // Jet eta_CM
+    histogramNamer = Form("%sEtaCM_C%d",fJetHistogramName,iCentralityBin);
+    if(fhJetEtaCM[iCentralityBin]) fhJetEtaCM[iCentralityBin]->Write(histogramNamer.Data(), TObject::kOverwrite);
     
     // Jet eta-phi
     histogramNamer = Form("%sEtaPhi_C%d",fJetHistogramName,iCentralityBin);
@@ -3784,6 +3796,10 @@ void EECHistogramManager::LoadProcessedHistograms(){
     // Jet eta
     histogramNamer = Form("%s/%sEta_C%d", fJetHistogramName, fJetHistogramName, iCentralityBin);
     fhJetEta[iCentralityBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+
+    // Jet eta_CM
+    histogramNamer = Form("%s/%sEtaCM_C%d", fJetHistogramName, fJetHistogramName, iCentralityBin);
+    fhJetEtaCM[iCentralityBin] = (TH1D*) fInputFile->Get(histogramNamer.Data());
     
     // Jet eta-phi
     histogramNamer = Form("%s/%sEtaPhi_C%d", fJetHistogramName, fJetHistogramName, iCentralityBin);
@@ -5006,6 +5022,16 @@ TH1D* EECHistogramManager::GetHistogramJetEta(int iCentrality){
   return fhJetEta[iCentrality];
 }
 
+// Getter for jet eta_CM histograms
+TH1D* EECHistogramManager::GetHistogramJetEtaCM(int iCentrality){
+  if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhJetEtaCM[iCentrality] == NULL) fhJetEtaCM[iCentrality] = (TH1D*) fInputFile->Get(Form("%s/%sEtaCM_C%d", fJetHistogramName, fJetHistogramName, iCentrality));
+
+  return fhJetEtaCM[iCentrality];
+}
+
 // Getter for 2D eta-phi histogram for jets
 TH2D* EECHistogramManager::GetHistogramJetEtaPhi(int iCentrality){
   if(fCard->GetDataType().Contains("pp",TString::kIgnoreCase)) iCentrality = 0;  // No centrality selection for pp
@@ -5382,6 +5408,7 @@ TH1D* EECHistogramManager::GetOneDimensionalHistogram(TString name, int bin1, in
   if(name.EqualTo("jetpt",TString::kIgnoreCase) || name.EqualTo("fhjetpt",TString::kIgnoreCase)) return GetHistogramJetPt(bin1);
   if(name.EqualTo("jetphi",TString::kIgnoreCase) || name.EqualTo("fhjetphi",TString::kIgnoreCase)) return GetHistogramJetPhi(bin1);
   if(name.EqualTo("jeteta",TString::kIgnoreCase) || name.EqualTo("fhjeteta",TString::kIgnoreCase)) return GetHistogramJetEta(bin1);
+  if(name.EqualTo("jetetacm",TString::kIgnoreCase) || name.EqualTo("fhjetetacm",TString::kIgnoreCase)) return GetHistogramJetEtaCM(bin1);
   if(name.EqualTo("trackpt",TString::kIgnoreCase) || name.EqualTo("fhtrackpt",TString::kIgnoreCase)) return GetHistogramTrackPt(bin1,bin2);
   if(name.EqualTo("trackphi",TString::kIgnoreCase) || name.EqualTo("fhtrackphi",TString::kIgnoreCase)) return GetHistogramTrackPhi(bin1,bin2,bin3);
   if(name.EqualTo("tracketa",TString::kIgnoreCase) || name.EqualTo("fhtracketa",TString::kIgnoreCase)) return GetHistogramTrackEta(bin1,bin2,bin3);

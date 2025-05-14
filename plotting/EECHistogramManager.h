@@ -278,6 +278,7 @@ public:
   TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
   TH1D* GetHistogramJetPhi(int iCentrality);    // Jet phi histograms
   TH1D* GetHistogramJetEta(int iCentrality);    // Jet eta histograms
+  TH1D* GetHistogramJetEtaCM(int iCentrality);  // Jet eta_CM histograms
   TH2D* GetHistogramJetEtaPhi(int iCentrality); // 2D eta-phi histogram for jets
   
   // Getters for histograms for tracks
@@ -441,6 +442,7 @@ private:
   TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms
   TH1D* fhJetPhi[kMaxCentralityBins];     // Jet phi histograms
   TH1D* fhJetEta[kMaxCentralityBins];     // Jet eta histograms
+  TH1D* fhJetEtaCM[kMaxCentralityBins];   // Jet eta_CM histograms
   TH2D* fhJetEtaPhi[kMaxCentralityBins];  // 2D eta-phi histogram for jets
 
   // Histograms for tracks

@@ -861,8 +861,8 @@ void EECAnalyzer::RunAnalysis(){
   }
   
   // Fillers for THnSparses
-  const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
-  const Int_t nFillMultiplicity = 3; // 3 is nominal
+  const Int_t nFillJet = 6;
+  const Int_t nFillMultiplicity = 3;
   const Int_t nFillMultiplicityInJetCone = 5;
   const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
@@ -1484,11 +1484,12 @@ void EECAnalyzer::RunAnalysis(){
           jetPtWeight = GetJetPtWeight(jetPtCorrected);
           
           // Fill the axes in correct order
-          fillerJet[0] = jetPtCorrected;          // Axis 0 = any jet pT
-          fillerJet[1] = jetPhi;                  // Axis 1 = any jet phi
-          fillerJet[2] = jetEta;                  // Axis 2 = any jet eta
-          fillerJet[3] = centrality;              // Axis 3 = centrality
-          fillerJet[4] = jetFlavor;               // Axis 4 = flavor of the jet
+          fillerJet[0] = jetPtCorrected;          // Axis 0 = inclusive jet pT
+          fillerJet[1] = jetPhi;                  // Axis 1 = inclusive jet phi
+          fillerJet[2] = jetEta;                  // Axis 2 = inclusive jet eta
+          fillerJet[3] = jetEtaCM;                // Axis 3 = inclusive jet eta_CM
+          fillerJet[4] = centrality;              // Axis 4 = centrality
+          fillerJet[5] = jetFlavor;               // Axis 5 = flavor of the jet
           
           fHistograms->fhInclusiveJet->Fill(fillerJet,fTotalEventWeight*jetPtWeight); // Fill the data point to histogram
           
