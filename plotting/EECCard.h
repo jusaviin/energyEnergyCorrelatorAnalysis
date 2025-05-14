@@ -161,9 +161,10 @@ public:
   int GetLastUnfoldedTrackPtBin() const;     // Getter for the last unfolded track pT bin index
   int GetFirstUnfoldedJetPtBin() const;      // Getter for the first unfolded jet pT bin index
   int GetLastUnfoldedJetPtBin() const;       // Getter for the last unfolded jet pT bin index
-  int GetSubeventCut() const;      // Get the index for used subevent cut
-  int GetJetType() const;          // Get the jet type index
-  double GetJetPtCut() const;      // Get the minimum jet pT cut
+  int GetSubeventCut() const;       // Get the index for used subevent cut
+  int GetJetType() const;           // Get the jet type index
+  double GetJetPtCut() const;       // Get the minimum jet pT cut
+  int GetBackgroundMethods() const; // Get infprmation which backgorund methods are included in the file
   int GetWeightExponent(int index = 1) const; // Get the weight exponent used in energy-energy correlators
   int FindWeightExponentIndex(double weightExponent) const; // Find the index in card for the input weight exponent
   int GetNWeightExponents() const;  // Get the number of weight exponents that are defined in the file

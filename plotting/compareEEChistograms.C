@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 2;
-  TString inputFileName[] = {"data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root", "data/pPb/pPbData_pgoing_pfJets_wtaAxis_nominalEnergyWeight_minimumBias_fewMissing_processed_2025-05-07.root"};
+  const int nDatasets = 3;
+  TString inputFileName[] = {"data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root", "data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_processed_2025-05-13.root",  "data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root"};
   //TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_processed_2025-02-19.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
@@ -22,7 +22,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"pPb p #rightarrow +#eta", "pPb p #rightarrow -#eta"};
+  TString legendComment[] = {"pPb 8.16 TeV p #rightarrow -#eta", "pPb 8.16 TeV p #rightarrow +#eta", "pPb 5.02 TeV p #rightarrow -#eta"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];

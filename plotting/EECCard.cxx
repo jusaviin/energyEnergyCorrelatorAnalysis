@@ -169,6 +169,13 @@ double EECCard::GetJetPtCut() const{
 }
 
 /*
+ *  Getter for information which background methods are included in the file
+ */
+int EECCard::GetBackgroundMethods() const{
+  return (*fCardEntries[kBackgroundMethods])[1];
+}
+
+/*
  * Get the number of bins for internal index
  * If no vector is found in the index, return 0.
  */

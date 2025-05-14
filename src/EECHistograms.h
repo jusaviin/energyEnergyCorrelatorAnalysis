@@ -21,7 +21,7 @@ public:
   enum enumTrackCuts {kAllTracks, kMcCharge, kMcSube, kMcStatus, kPtCuts, kEtaCut, kTrackAlgorithm, kHighPurity, kPtError, kVertexDistance, kCaloSignal, kReconstructionQuality, knTrackCuts};
   enum enumClosureParticleType {kQuark,kGluon,knClosureParticleTypes};
   enum enumJetConeTypes{kSignalCone, kReflectedCone, kMixedCone, kSecondMixedCone, kPerpendicularCone, kSecondPerpendicularCone, knJetConeTypes};
-  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kSignalPenpendicularConePair, kPerpendicularConePair, kSignalSecondPerpendicularConePair, kPerpendicularPerpendicularConePair, kSecondPerpendicularConePair, knPairingTypes}; // Pair tracks between different cones
+  enum enumPairingType{kSameJetPair, kSignalReflectedConePair, kReflectedConePair, kSignalMixedConePair, kMixedConePair, kSignalSecondMixedConePair, kMixedMixedConePair, kSecondMixedConePair, kSignalPerpendicularConePair, kPerpendicularConePair, kSignalSecondPerpendicularConePair, kPerpendicularPerpendicularConePair, kSecondPerpendicularConePair, knPairingTypes}; // Pair tracks between different cones
   enum enumSubeventTypes{kPythia, kHydjet, knSubeventTypes};
   enum enumSubeventCombinations{kPythiaPythia, kPythiaHydjet, kHydjetPythia, kHydjetHydjet, knSubeventCombinations};
     

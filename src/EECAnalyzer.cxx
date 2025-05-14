@@ -2083,7 +2083,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
     }
 
     if(!fDoPerpendicularCone){
-      if(iPairingType == EECHistograms::kSignalPenpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kSignalPerpendicularConePair) continue;
       if(iPairingType == EECHistograms::kPerpendicularConePair) continue;
       if(iPairingType == EECHistograms::kSignalSecondPerpendicularConePair) continue;
       if(iPairingType == EECHistograms::kPerpendicularPerpendicularConePair) continue;

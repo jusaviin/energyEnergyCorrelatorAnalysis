@@ -13,10 +13,11 @@ void compareEECinDefinedBins(){
   // Files for comparison
   std::vector<TString> fileName;
   //fileName.push_back("data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_energyWeightSquared_jet15Trigger_processed_2025-05-12.root");
-  fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-12.root");
-  fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-12.root");
-  fileName.push_back("data/pPb/pPbData_5TeV_pgoing_pfJets_eschemeAxis_energyWeightSquared_minimumBias_processed_2025-05-13.root");
+  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_noBackgroundSubtraction_processed_2025-05-13.root");
+  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_perpendicularConeBackground_processed_2025-05-13.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_processed_2025-05-13.root");
+  //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root");
 
   //fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root";
   //fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
@@ -53,12 +54,12 @@ void compareEECinDefinedBins(){
 
   std::vector<TString> fileDescription;
   //fileDescription.push_back("pp Jet 60||80 Trigger");
-  fileDescription.push_back("pp 5.02 TeV, Jet 15 Trigger");
-  //fileDescription.push_back("pp Jet 30 Trigger");
+  fileDescription.push_back("pp 5.02 TeV, No sub");
+  fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
   //fileDescription.push_back("pp 5.02 TeV");
-  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
-  fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
+  //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -119,7 +120,7 @@ void compareEECinDefinedBins(){
   comparedJetPtBin.push_back(std::make_pair(40,50));
   comparedJetPtBin.push_back(std::make_pair(50,60));
   comparedJetPtBin.push_back(std::make_pair(60,80));
-  comparedJetPtBin.push_back(std::make_pair(80,100));
+  comparedJetPtBin.push_back(std::make_pair(120,140));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -141,7 +142,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -175,9 +176,9 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_energyWeightSquared_pPbComparison";   // Comment given for this specific file
-  const char* figureFormat = "png"; // Format given for the figures
+  const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
   std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
@@ -186,7 +187,8 @@ void compareEECinDefinedBins(){
 
   // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
   // This check is only needed for unfolded bins, so skip it if only raw distribution is drawn.
-  if(drawnEnergyEnergyCorrelator != EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+  if(drawnEnergyEnergyCorrelator > EECHistogramManager::kEnergyEnergyCorrelatorSignal && drawnEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
 
       // Sanity check for centrality bins

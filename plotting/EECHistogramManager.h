@@ -3,6 +3,7 @@
 
 // Deprecation message
 #include <iostream>
+#include <bitset>
 
 // Root includes
 #include <TFile.h>
@@ -414,6 +415,7 @@ private:
   int fnTrackPtBins;                                         // Number of track pT bins in the JCard of the data file
   int fnJetPtBinsEEC;                                        // Number of jet pT bins for the energy-energy correlator histograms
   int fnTrackPtBinsEEC;                                      // Number of track pT bins for the energy-energy correlator histograms
+  std::vector<int>* fIncludedPairingTypes;                   // Vector for pairing types that are included in the data file
 
   // =============================================
   // ===== Histograms for the dijet analysis =====
