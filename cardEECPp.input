@@ -29,6 +29,7 @@ JetEtaCut 1.6              # Region in eta around midrapidity taken into account
 MinJetPtCut 20            # Minimum pT of a leading jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
+CutWithEtaCM 0             # Cut jets that are outside of symmetric eta CM acceptance for pPb collisions within the defined jet eta cut in lab frame
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
 MaxMaxTrackPtFraction 0.98 # Maximum fraction of jet pT taken by the highest pT track in jet
 JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Uncertainty smear down, 5 = Uncertainty smear up

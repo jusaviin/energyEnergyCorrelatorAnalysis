@@ -81,6 +81,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetMinimumPtCut(0),
   fJetMaximumPtCut(0),
   fCutBadPhiRegion(false),
+  fCutWithJetEtaCM(false),
   fMinimumMaxTrackPtFraction(0),
   fMaximumMaxTrackPtFraction(0),
   fJetUncertaintyMode(0),
@@ -401,6 +402,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetMinimumPtCut(in.fJetMinimumPtCut),
   fJetMaximumPtCut(in.fJetMaximumPtCut),
   fCutBadPhiRegion(in.fCutBadPhiRegion),
+  fCutWithJetEtaCM(in.fCutWithJetEtaCM),
   fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
   fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
   fJetUncertaintyMode(in.fJetUncertaintyMode),
@@ -500,6 +502,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetMinimumPtCut = in.fJetMinimumPtCut;
   fJetMaximumPtCut = in.fJetMaximumPtCut;
   fCutBadPhiRegion = in.fCutBadPhiRegion;
+  fCutWithJetEtaCM = in.fCutWithJetEtaCM;
   fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
   fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
   fJetUncertaintyMode = in.fJetUncertaintyMode;
@@ -615,6 +618,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
+  fCutWithJetEtaCM = (fCard->Get("CutWithEtaCM") == 1);   // Flag for cutting symmetric region in center-of-mass jet eta that is within defined jet eta acceptence
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
   
   //****************************************
@@ -767,6 +771,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetPtCorrected = 0;      // Jet pT corrected with the JFF correction
   Double_t jetPhi = 0;              // phi of the i:th jet in the event
   Double_t jetEta = 0;              // eta of the i:th jet in the event
+  Double_t jetEtaCM = 0;            // eta of the i:th jet in the center-of-mass frame
   Int_t jetFlavor = 0;              // Flavor of the jet. 0 = Quark jet. 1 = Gluon jet.
   Double_t jetPtWeight = 1;         // Weighting for jet pT
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
@@ -1287,6 +1292,13 @@ void EECAnalyzer::RunAnalysis(){
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
           jetFlavor = 0;
+
+          // For symmetric systems, eta in center-of-mass frame is the same as eta in the lab frame
+          jetEtaCM = jetEta;
+
+          // For asymmetric systems, we will need to boost to get to center-of-mass frame
+          if(fDataType == ForestReader::kPPb_pToMinusEta) jetEtaCM += 0.465; 
+          if(fDataType == ForestReader::kPPb_pToPlusEta) jetEtaCM -= 0.465; 
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
@@ -1297,6 +1309,7 @@ void EECAnalyzer::RunAnalysis(){
           //  ========================================
           
           if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
+          if(fCutWithJetEtaCM && TMath::Abs(jetEtaCM) >= fJetEtaCut - 0.465) continue;
           if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
           
           // No jet quality cuts for generator level jets
