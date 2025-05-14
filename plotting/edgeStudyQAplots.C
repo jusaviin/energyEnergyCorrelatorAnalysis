@@ -175,7 +175,7 @@ void edgeStudyQAplots(){
   //comparedCentralityBin.push_back(std::make_pair(0,10));
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(120,140));
+  comparedJetPtBin.push_back(std::make_pair(60,80));
   //comparedJetPtBin.push_back(std::make_pair(140,160));
   //comparedJetPtBin.push_back(std::make_pair(160,180));
   //comparedJetPtBin.push_back(std::make_pair(180,200));
@@ -278,7 +278,7 @@ void edgeStudyQAplots(){
 
   
   // Helper variables
-  std::pair<double, double> drawingRange = std::make_pair(0.008, 0.75);
+  std::pair<double, double> drawingRange = std::make_pair(0.008, 0.39);
   double epsilon = 0.0001;
   int iTrackPt, iTrackPtReference;
   int iJetPt, iJetPtReference;

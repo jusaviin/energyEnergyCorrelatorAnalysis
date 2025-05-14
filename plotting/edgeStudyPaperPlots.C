@@ -279,14 +279,14 @@ void edgeStudyPaperPlots(){
   // Paper plot selection
   bool drawDeltaJetAxisWithPt = false;        // Draw DeltaR between E-scheme and WTA jet axes as a function of pT
   bool fitOneOverPt = false;                  // Fit 1/pT function to average DeltaR between E-scheme and WTA jet axes as a function of pT histograms
-  bool drawEdgeLossIllustration = false;      // Draw an illustration about edge loss
+  bool drawEdgeLossIllustration = true;      // Draw an illustration about edge loss
   bool drawEdgeLossWithPt = false;            // Draw the amount of edge-loss as a function of jet pT
   bool drawEdgeLossWithDeltaJetAxis = false;  // Draw the amount of edge-loss as a function of DeltaR between E-scheme and WTA jet axes 
-  bool fitLinearToEdgeLoss = true;
+  bool fitLinearToEdgeLoss = false;
 
   // QA plots
   bool drawJetVetoBiasIllustration = false;    // Draw plots illustrating how much vetoing close jets biases the distributions
-  bool drawEdgeLossDefinition = true;         // Illustrate the definition of edge loss
+  bool drawEdgeLossDefinition = false;         // Illustrate the definition of edge loss
   bool drawJetDeltaAxis = false;                // Draw the delta R distributions between jet axes
   
   // Figure saving
@@ -453,10 +453,13 @@ void edgeStudyPaperPlots(){
   } // Simulation loop
 
   // Load the DeltaR between E-scheme and WTA axes histograms
+  int vetoFlag = vetoCloseJets;
   for(int iSimulation = 0; iSimulation < knSimulations; iSimulation++){
+    vetoFlag = vetoCloseJets;
+    if(iSimulation == kHerwig) vetoFlag = 0;
     for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
       for(auto jetPtBin : comparedJetPtBin){ 
-        iJetPt = card[iSimulation][vetoCloseJets][kR0p4][kNominalWeight][iJetAxis]->FindBinIndexJetPtEEC(jetPtBin);
+        iJetPt = card[iSimulation][vetoFlag][kR0p4][kNominalWeight][iJetAxis]->FindBinIndexJetPtEEC(jetPtBin);
         iJetPtReference = card[0][0][0][0][0]->FindBinIndexJetPtEEC(jetPtBin);
         for(auto centralityBin : comparedCentralityBin){
 
@@ -464,11 +467,11 @@ void edgeStudyPaperPlots(){
             iCentrality = 0;
             iCentralityReference = 0;
           } else {
-            iCentrality = card[iSimulation][vetoCloseJets][kR0p4][kNominalWeight][iJetAxis]->FindBinIndexCentrality(centralityBin);
+            iCentrality = card[iSimulation][vetoFlag][kR0p4][kNominalWeight][iJetAxis]->FindBinIndexCentrality(centralityBin);
             iCentralityReference = card[0][0][0][0][0]->FindBinIndexCentrality(centralityBin);
           } 
 
-          hDeltaJetAxis[iSimulation][iJetAxis][iCentralityReference][iJetPtReference] = histograms[iSimulation][vetoCloseJets][kR0p4][kNominalWeight][iJetAxis]->GetHistogramJetDeltaAxis(iCentrality, iJetPt);
+          hDeltaJetAxis[iSimulation][iJetAxis][iCentralityReference][iJetPtReference] = histograms[iSimulation][vetoFlag][kR0p4][kNominalWeight][iJetAxis]->GetHistogramJetDeltaAxis(iCentrality, iJetPt);
         } // Centrality loop
       } // Jet pT loop
     } // Jet axis loop
@@ -768,6 +771,8 @@ void edgeStudyPaperPlots(){
       } // Energy weight loop
     } // Jet veto loop
   } // Simulation loop
+
+  cout << "SURVIE" << endl;
   
   // ====================================================================
   //                Drawing the selected distributions
@@ -861,6 +866,7 @@ void edgeStudyPaperPlots(){
   if(drawEdgeLossIllustration){
 
     for(int iSimulation = 0; iSimulation < knSimulations; iSimulation++){
+      if(iSimulation == kHerwig && vetoCloseJets) continue; // Herwig does not contain jets with veto
       for(int iEnergyWeight = 0; iEnergyWeight < knEnergyWeights; iEnergyWeight++){
         for(int iJetAxis = 0; iJetAxis < knJetAxes; iJetAxis++){
           for(auto trackPtBin : comparedTrackPtBin){
