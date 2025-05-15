@@ -16,6 +16,7 @@ EECCard::EECCard(TFile *inFile):
   fDataType(-1),
   fDataTypeString(""),
   fAlternativeDataTypeString(""),
+  fBackgroundLegacyMode(false),
   fGitHash(0),
   fProjectionGitHash(0),
   fProcessGitHash(0),
@@ -59,6 +60,14 @@ void EECCard::ReadVectors(){
   // Read the TVectorT<float>:s
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
     fCardEntries[iEntry] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[iEntry]);
+  }
+
+  // Naming for variable defining which background methods are used has changed over time
+  // Define a legacy mode in order to be able to function with the old naming convention
+  if((fCardEntries[kBackgroundMethods]) == NULL){
+    fCardEntryNames[kBackgroundMethods] = "DoReflectedCone";
+    fCardEntries[kBackgroundMethods] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[kBackgroundMethods]);
+    fBackgroundLegacyMode = true;
   }
   
   // Read the file names
@@ -172,6 +181,15 @@ double EECCard::GetJetPtCut() const{
  *  Getter for information which background methods are included in the file
  */
 int EECCard::GetBackgroundMethods() const{
+
+  // In legacy mode, we need to decode the information the old DoReflectedCone variable included
+  if(fBackgroundLegacyMode){
+    int doReflectedCone = (*fCardEntries[kBackgroundMethods])[1];
+    if(doReflectedCone <= 1) return doReflectedCone;
+    if(doReflectedCone > 1) return 5;
+  }
+
+  // For newer files, read the actual value
   return (*fCardEntries[kBackgroundMethods])[1];
 }
 

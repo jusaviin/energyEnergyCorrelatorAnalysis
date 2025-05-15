@@ -86,13 +86,14 @@ private:
   const char* fFileNameType[knFileNames] = {"input", "response matrix"};
   const char* fFileNameSaveName[knFileNames] = {"InputFile", "ResponseMatrixFile"};
   
-  TFile* fInputFile;         // Input file from which all the data is read
-  TString fCardDirectory;    // Path to the ConfigurationCard directory
-  int fDataType;             // Total number of centrality bins in the analysis
-  int fMonteCarloType;       // Type of Monte Carlo used for jet-track correlations
-  TString fDataTypeString;   // Total number of eta gaps in the analysis
+  TFile* fInputFile;          // Input file from which all the data is read
+  TString fCardDirectory;     // Path to the ConfigurationCard directory
+  int fDataType;              // Total number of centrality bins in the analysis
+  int fMonteCarloType;        // Type of Monte Carlo used for jet-track correlations
+  TString fDataTypeString;    // Total number of eta gaps in the analysis
   TString fAlternativeDataTypeString; // Alternative data type string
   TString fDataTypeStringWithoutMCType; // Data type string without the MC type appended to it
+  bool fBackgroundLegacyMode; // Legacy naming for background subtraction methods
   
   void FindDataTypeString(); // Construct a data type string based on information on the card
   void ReadVectors();        // Read the vectors from the file
