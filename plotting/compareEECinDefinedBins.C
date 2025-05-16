@@ -13,11 +13,11 @@ void compareEECinDefinedBins(){
   // Files for comparison
   std::vector<TString> fileName;
   //fileName.push_back("data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_noBackgroundSubtraction_processed_2025-05-13.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_perpendicularConeBackground_processed_2025-05-13.root");
-  //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root");
-  //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_processed_2025-05-13.root");
-  //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_noBackgroundSubtraction_processed_2025-05-13.root");
+  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
+  fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
 
   //fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root";
   //fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
@@ -54,12 +54,12 @@ void compareEECinDefinedBins(){
 
   std::vector<TString> fileDescription;
   //fileDescription.push_back("pp Jet 60||80 Trigger");
-  fileDescription.push_back("pp 5.02 TeV, No sub");
-  fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
-  //fileDescription.push_back("pp 5.02 TeV");
-  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
-  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
-  //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
+  //fileDescription.push_back("pp 5.02 TeV, No sub");
+  //fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
+  fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
+  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
+  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
+  fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
   //fileDescription[2] = "Mixed cone";
   //fileDescription[2] = "New: mixed";
   //fileDescription[3] = "10 iterations";
@@ -117,10 +117,10 @@ void compareEECinDefinedBins(){
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
+  comparedJetPtBin.push_back(std::make_pair(30,40));
   comparedJetPtBin.push_back(std::make_pair(40,50));
   comparedJetPtBin.push_back(std::make_pair(50,60));
   comparedJetPtBin.push_back(std::make_pair(60,80));
-  comparedJetPtBin.push_back(std::make_pair(120,140));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
