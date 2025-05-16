@@ -14,10 +14,11 @@ submission = Submission()
 
 # Add basic paper info to the submission object
 submission.read_abstract("abstract.txt")
-submission.add_link("Webpage with preliminary figures and tables", "https://cms-results.web.cern.ch/cms-results/public-results/preliminary-results/HIN-23-004/index.html")
-#submission.add_link("Webpage with all figures and tables", "https://cms-results.web.cern.ch/cms-results/public-results/publications/HIN-19-013/")
-#submission.add_link("arXiv", "http://arxiv.org/abs/arXiv:2101.04720")
-#submission.add_record_id(1840683, "inspire")
+#submission.add_link("Webpage with preliminary figures and tables", "https://cms-results.web.cern.ch/cms-results/public-results/preliminary-results/HIN-23-004/index.html")
+submission.add_link("Webpage with all figures and tables", "https://cms-results.web.cern.ch/cms-results/public-results/publications/HIN-23-004")
+submission.add_link("DOI", "https://doi.org/10.1016/j.physletb.2025.139556")
+submission.add_link("arXiv", "https://arxiv.org/abs/2503.19993")
+submission.add_record_id(2904406, "inspire")
 
 # All the figures are inserted as table objects to HepData
 from hepdata_lib import Table
