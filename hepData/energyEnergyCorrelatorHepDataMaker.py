@@ -199,6 +199,11 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
     for iCentrality in range(firstCentralityBin,lastCentralityBin):
         myVariable = Variable(yAxisName, is_independent=False, is_binned=False, units="")
         myVariable.values = valueHistogram[(iCentrality-firstCentralityBin)]["y"]
+        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5.02 GeV")
+        if includePp:
+            myVariable.add_qualifier("RE", reactionLabel[iCentrality])
+        else:
+            myVariable.add_qualifier("RE", "{}  /  {}".format(pbpbReactionLabel, ppReactionLabel))
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
         myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[jetPtBin])
         myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
@@ -317,6 +322,8 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
     for iJetPt in range(0, len(jetPtLabel)):
         myVariable = Variable("$\\frac{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 2 \\mathrm{GeV})}{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 1 \\mathrm{GeV})}$", is_independent=False, is_binned=False, units="")
         myVariable.values = valueHistogram[iJetPt]["y"]
+        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5.02 GeV")
+        myVariable.add_qualifier("RE", "{}  /  {}".format(pbpbReactionLabel, ppReactionLabel))
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
         myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
         myVariable.add_qualifier("Centrality",centralityLabel[centralityBin])
@@ -389,6 +396,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
         table1.location = "Data from figure 2, {:s}.".format(jetPtLocation[iJetPt])
         table1.keywords["observables"] = ["Energy-energy correlator"]
         table1.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
+        table1.keywords["phrases"] = ["CMS", "jet", "energy", "correlator", "EEC", "E2C", "PbPb", "pp", "QGP"]
         #table1.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
         # Extract x- and y-axis information from the histograms
@@ -414,6 +422,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
         table2.location = "Data from figure 3, {:s}.".format(jetPtLocation[iJetPt])
         table2.keywords["observables"] = ["Energy-energy correlator"]
         table2.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
+        table2.keywords["phrases"] = ["CMS", "jet", "energy", "correlator", "EEC", "E2C", "PbPb", "pp", "QGP"]
         #table2.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
         # Extract x- and y-axis information from the histograms
@@ -442,6 +451,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
         table3.location = "Data from figure 4, {:s}.".format(jetPtLocation[iJetPt])
         table3.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table3.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
+        table3.keywords["phrases"] = ["CMS", "jet", "energy", "correlator", "EEC", "E2C", "PbPb", "pp", "QGP"]
         #table3.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
         # Extract x- and y-axis information from the histograms
@@ -467,6 +477,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
         table4.location = "Data from figure 5, {:s}.".format(jetPtLocation[iJetPt])
         table4.keywords["observables"] = ["Energy-energy correlator PbPb to pp ratio"]
         table4.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
+        table4.keywords["phrases"] = ["CMS", "jet", "energy", "correlator", "EEC", "E2C", "PbPb", "pp", "QGP"]
         #table4.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
         # Extract x- and y-axis information from the histograms
@@ -492,6 +503,7 @@ for iCentrality in range(nCentrality-1, -1, -1):
         table5.location = "Data from figure A{:d}, {:s}.".format(30 - iCentrality, energyWeightLocation[iEnergyWeight])
         table5.keywords["observables"] = ["Energy-energy correlator double ratio"]
         table5.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
+        table5.keywords["phrases"] = ["CMS", "jet", "energy", "correlator", "EEC", "E2C", "PbPb", "pp", "QGP"]
         # #table5.add_image("example_inputs/CMS-B2G-17-009_Figure_004-a.pdf") # Possibility to add image
 
         # Extract x- and y-axis information from the histograms
