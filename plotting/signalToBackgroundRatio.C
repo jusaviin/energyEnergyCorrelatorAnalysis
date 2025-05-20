@@ -9,7 +9,9 @@
 void signalToBackgroundRatio(){
   
   // Input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_allBackgrounds_matchMultiplicity_someMissing_processed_2024-04-24.root";
+  TString inputFileName = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
+  // eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root
+  // eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root
   // eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // PbPbMC2018_RecoReco_eecAnalysis_akFlowJets_4pCentShift_cutBadPhi_nominalEnergyWeight_optimizedUnfoldingBins_nominalSmear_processed_2024-01-19.root
@@ -139,7 +141,7 @@ void signalToBackgroundRatio(){
 
         // Load the energy-energy correlator and reflected cone histograms
         hEnergyEnergyCorrelator[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt);
-        hReflectedCone[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair);
+        hReflectedCone[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalMixedConePair);
 
         // Calculate the signal and background integrals
         lowIntegralBin = 1;
@@ -227,7 +229,7 @@ void signalToBackgroundRatio(){
   // Draw each graph to separate canvas
   for(auto centralityBin : comparedCentralityBin){
     iCentrality = card->FindBinIndexCentrality(centralityBin);
-    centralityString = Form("Pythia+Hydjet: %.0f-%.0f%%", centralityBin.first-4, centralityBin.second-4);
+    centralityString = Form("PbPb: %.0f-%.0f%%", centralityBin.first, centralityBin.second);
     compactCentralityString = Form("_C=%.0f-%.0f", centralityBin.first, centralityBin.second);
     for(auto trackPtBin : comparedTrackPtBin){
       iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
