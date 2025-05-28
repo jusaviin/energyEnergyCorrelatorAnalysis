@@ -43,11 +43,27 @@ SYSTEMATIC=${SYSTEMATIC:-0}
 # Find the git hash of the current commit
 GITHASH=`git rev-parse HEAD`
 
+# Check which operating system we are using
+# The sed command takes different arguments for Mac and Linux, so we need to adjust that accordingly
+OS=$(uname)
+
 # Replace the placeholder string in the projection code by git hash
-sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/processEEChistograms.C
+if [ "$OS" == "Darwin" ]; then
+  # For Mac, we specify that no backup file is needed with the argument ''
+  sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/processEEChistograms.C
+else
+  # For Linux, '' is not a valid argument, so it needs to be removed from command
+  sed -i 's/GITHASHHERE/'${GITHASH}'/' plotting/processEEChistograms.C
+fi
 
 # Process the energy-energy correlator histograms
 root -l -b -q 'plotting/processEEChistograms.C("'${FILENAME}'","'${OUTPUTFILE}'",'${BACKGROUND}','${SYSTEMATIC}')'
 
 # Put the placeholder string back to the histogram projection file
-sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/processEEChistograms.C
+if [ "$OS" == "Darwin" ]; then
+  # For Mac, we specify that no backup file is needed with the argument ''
+  sed -i '' 's/'${GITHASH}'/GITHASHHERE/' plotting/processEEChistograms.C
+else
+  # For Linux, '' is not a valid argument, so it needs to be removed from command
+  sed -i 's/'${GITHASH}'/GITHASHHERE/' plotting/processEEChistograms.C
+fi

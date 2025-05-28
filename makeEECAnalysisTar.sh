@@ -11,6 +11,10 @@ exit 1
 esac
 done
 
+# Check which operating system we are using
+# The sed command takes different arguments for Mac and Linux, so we need to adjust that accordingly
+OS=$(uname)
+
 # Set the default value if optional argument is not given
 SMEARING=${SMEARING:-false}
 
@@ -26,7 +30,14 @@ rm $OUTPUTTAR
 fi
 
 # Replace the placeholder string in the main analysis file by git hash
-sed -i '' 's/GITHASHHERE/'${GITHASH}'/' eecAnalysis.cxx
+if [ "$OS" == "Darwin" ]; then
+  # For Mac, we specify that no backup file is needed with the argument ''
+  sed -i '' 's/GITHASHHERE/'${GITHASH}'/' eecAnalysis.cxx
+else
+  # For Linux, '' is not a valid argument, so it needs to be removed from command
+  sed -i 's/GITHASHHERE/'${GITHASH}'/' eecAnalysis.cxx
+fi
+
 
 # Make sure there are no object files going to the tar
 make clean
@@ -39,4 +50,10 @@ else
 fi
 
 # Put placeholder string back to the main analysis file
-sed -i '' 's/'${GITHASH}'/GITHASHHERE/' eecAnalysis.cxx
+if [ "$OS" == "Darwin" ]; then
+  # For Mac, we specify that no backup file is needed with the argument ''
+  sed -i '' 's/'${GITHASH}'/GITHASHHERE/' eecAnalysis.cxx
+else
+  # For Linux, '' is not a valid argument, so it needs to be removed from command
+  sed -i 's/'${GITHASH}'/GITHASHHERE/' eecAnalysis.cxx
+fi
