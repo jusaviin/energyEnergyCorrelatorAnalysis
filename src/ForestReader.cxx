@@ -19,6 +19,7 @@ ForestReader::ForestReader() :
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
+  fEventNumberBranch(0),
   fJetPtBranch(0),
   fJetPhiBranch(0),
   fJetWTAPhiBranch(0),
@@ -61,6 +62,7 @@ ForestReader::ForestReader() :
   fVertexZ(-100),
   fHiBin(-1),
   fPtHat(0),
+  fEventNumber(0),
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
@@ -108,6 +110,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fHiVzBranch(0),
   fHiBinBranch(0),
   fPtHatBranch(0),
+  fEventNumberBranch(0),
   fJetPtBranch(0),
   fJetPhiBranch(0),
   fJetWTAPhiBranch(0),
@@ -150,6 +153,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fVertexZ(-100),
   fHiBin(-1),
   fPtHat(0),
+  fEventNumber(0),
   fnJets(0),
   fnMatchedJets(0),
   fEventWeight(1),
@@ -192,6 +196,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
   fPtHatBranch(in.fPtHatBranch),
+  fEventNumberBranch(in.fEventNumberBranch),
   fJetPtBranch(in.fJetPtBranch),
   fJetPhiBranch(in.fJetPhiBranch),
   fJetWTAPhiBranch(in.fJetWTAPhiBranch),
@@ -234,6 +239,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fVertexZ(in.fVertexZ),
   fHiBin(in.fHiBin),
   fPtHat(in.fPtHat),
+  fEventNumber(in.fEventNumber),
   fnJets(in.fnJets),
   fnMatchedJets(in.fnMatchedJets),
   fEventWeight(in.fEventWeight),
@@ -274,6 +280,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
   fPtHatBranch = in.fPtHatBranch;
+  fEventNumberBranch = in.fEventNumberBranch;
   fJetPtBranch = in.fJetPtBranch;
   fJetPhiBranch = in.fJetPhiBranch;
   fJetWTAPhiBranch = in.fJetWTAPhiBranch;
@@ -316,6 +323,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fVertexZ = in.fVertexZ;
   fHiBin = in.fHiBin;
   fPtHat = in.fPtHat;
+  fEventNumber = in.fEventNumber;
   fnJets = in.fnJets;
   fnMatchedJets = in.fnMatchedJets;
   fEventWeight = in.fEventWeight;
@@ -390,6 +398,11 @@ Int_t ForestReader::GetHiBin() const{
 // Getter for pT hat
 Float_t ForestReader::GetPtHat() const{
   return fPtHat;
+}
+
+// Getter for event number
+ULong64_t ForestReader::GetEventNumber() const{
+  return fEventNumber;
 }
 
 // Getter for pT hat

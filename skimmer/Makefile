@@ -1,4 +1,4 @@
-PROGRAM       = megaSkimmer
+PROGRAM       = megaSkimmerPPb
 
 version       = skimming
 CXX           = g++
@@ -17,12 +17,16 @@ LDFLAGS  += $(shell root-config --libs)
         
 # Use the following form if you have classes inherit TObject
 # HDRS += $(HDRSDICT) src/Class.h ... nanoDict.h       
+HDRS += TrackingEfficiencyInterface.h trackingEfficiency2016pPb.h
+
+SRCS = $(HDRS:.h=.cxx)
+OBJS = $(HDRS:.h=.o)
 
 all:            $(PROGRAM)
 
-$(PROGRAM):     $(PROGRAM).cxx
+$(PROGRAM):     $(OBJS) $(PROGRAM).cxx
 		@echo "Linking $(PROGRAM) ..."
-		$(CXX) -lEG -L$(PWD) $(PROGRAM).cxx $(CXXFLAGS) $(LDFLAGS) -o $(PROGRAM)
+		$(CXX) -lEG -L$(PWD) $(PROGRAM).cxx $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM)
 		@echo "done"
 
 %.cxx:
@@ -37,7 +41,7 @@ $(PROGRAM):     $(PROGRAM).cxx
 
 # If dictionaries built, need to clean also them: *Dict*
 clean:
-		rm -rf $(PROGRAM).o *.dSYM $(PROGRAM)
+		rm -rf $(OBJS) $(PROGRAM).o *.dSYM $(PROGRAM)
 
 cl:  clean $(PROGRAM)
 

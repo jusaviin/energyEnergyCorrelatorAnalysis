@@ -68,6 +68,8 @@ public:
   void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
+  void FindMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t iEvent); // Find the mixed events that are matched with the signal event
+  void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
@@ -194,6 +196,8 @@ public:
   std::vector<Double_t> fMixedEventVz;  // vz values in mixed events
   std::vector<Int_t> fMixedEventHiBin;  // HiBin values in mixed events
   std::vector<Int_t> fMixedEventMultiplicity; // Multiplicity in the mixed event
+  std::vector<Double_t> fMixedEventCorrectedMultiplicity; // Corrected multiplicity in the mixed event
+  std::vector<ULong64_t> fMixedEventEventNumber; // Event number of the mixed event
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

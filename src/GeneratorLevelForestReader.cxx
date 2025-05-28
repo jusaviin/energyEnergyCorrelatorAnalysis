@@ -147,6 +147,8 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchStatus("*",0);
   fHeavyIonTree->SetBranchStatus("vz",1);
   fHeavyIonTree->SetBranchAddress("vz",&fVertexZ,&fHiVzBranch);
+  fHeavyIonTree->SetBranchStatus("evt",1);
+  fHeavyIonTree->SetBranchAddress("evt", &fEventNumber, &fEventNumberBranch);
   fHeavyIonTree->SetBranchStatus("hiBin",1);
   fHeavyIonTree->SetBranchAddress("hiBin",&fHiBin,&fHiBinBranch);
   fHeavyIonTree->SetBranchStatus("pthat",1);

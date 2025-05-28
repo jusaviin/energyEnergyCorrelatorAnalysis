@@ -330,7 +330,9 @@ void HighForestReader::Initialize(){
   // Connect the branches of the heavy ion tree
   fHeavyIonTree->SetBranchStatus("*",0);
   fHeavyIonTree->SetBranchStatus("vz",1);
-  fHeavyIonTree->SetBranchAddress("vz",&fVertexZ,&fHiVzBranch);
+  fHeavyIonTree->SetBranchAddress("vz", &fVertexZ, &fHiVzBranch);
+  fHeavyIonTree->SetBranchStatus("evt",1);
+  fHeavyIonTree->SetBranchAddress("evt", &fEventNumber, &fEventNumberBranch);
   if(fDataType == kPbPb || fDataType == kPbPbMC){
     fHeavyIonTree->SetBranchStatus("hiBin",1);
     fHeavyIonTree->SetBranchAddress("hiBin",&fHiBin,&fHiBinBranch);

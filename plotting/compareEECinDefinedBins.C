@@ -14,10 +14,13 @@ void compareEECinDefinedBins(){
   std::vector<TString> fileName;
   //fileName.push_back("data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_noBackgroundSubtraction_processed_2025-05-13.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
-  fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
-  fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
-  fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+
+  fileName.push_back("data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root");
+  fileName.push_back("data/sanityCheck/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_unfoldedResults_sanityCheck_processed_2025-05-20.root");
 
   //fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root";
   //fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
@@ -56,14 +59,14 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pp Jet 60||80 Trigger");
   //fileDescription.push_back("pp 5.02 TeV, No sub");
   //fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
-  fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
-  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
-  fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  //fileDescription[2] = "Mixed cone";
-  //fileDescription[2] = "New: mixed";
-  //fileDescription[3] = "10 iterations";
-  //fileDescription[4] = "20 iterations";
+  //fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
+  //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
+  fileDescription.push_back("Mixed cone");
+  fileDescription.push_back("Perpendicular cone");
+  //fileDescription.push_back("Mixed cone sanity check");
+  //fileDescription.push_back("Perpendicular cone sanity check");
 
   // Check that a description exists for each file
   if(fileDescription.size() < fileName.size()){
@@ -117,10 +120,10 @@ void compareEECinDefinedBins(){
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(30,40));
-  comparedJetPtBin.push_back(std::make_pair(40,50));
-  comparedJetPtBin.push_back(std::make_pair(50,60));
-  comparedJetPtBin.push_back(std::make_pair(60,80));
+  comparedJetPtBin.push_back(std::make_pair(120,140));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -134,6 +137,9 @@ void compareEECinDefinedBins(){
   // Draw relative uncertaintyon the ratio plot
   const bool includeRelativeUncertainty = false; 
 
+  // Option to disable normalization of distributions
+  const bool normalizeDistributions = false;
+
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorBackground = Estimated background
@@ -142,7 +148,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -181,7 +187,7 @@ void compareEECinDefinedBins(){
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
+  std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -437,10 +443,12 @@ void compareEECinDefinedBins(){
           }
 
           // Normalize the distributions to one in the drawingRange
-          lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
-          highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+          if(normalizeDistributions){
+            lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
+            highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          }
 
           // Uncertainty histograms
           if(iFile == 0 && includeRelativeUncertainty){
