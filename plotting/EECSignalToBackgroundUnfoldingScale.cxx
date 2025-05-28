@@ -79,7 +79,9 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
   // Git hash: 580ee453881f757c251e4352e15edf1b964a4bf8
   //
   // Used configuration for step 2, determining the signal to background trends in data
-  // Macro: signalToBackgroundRatio
+  // Macro: signalToBackgroundRatio.C
+  //
+  // For results with reflected cone:
   // Input for nominal weight: eecAnalysis_akFlowJet_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // Input for squared weight: eecAnalysis_akFlowJet_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_unfoldingWithCovariance_processed_2024-01-23.root
   // Git hash: 580ee453881f757c251e4352e15edf1b964a4bf8
@@ -91,7 +93,37 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
   //    First part of the array is for nominal energy weights, pT1*pT2    //
   // ==================================================================== //
   {
+
+   // Numbers using mixed cone method from file eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root
    // Centrality 0-10%
+  {{0.212828,0.0102745,-6.82336e-06}, // track pT > 1.0 GeV
+  {0.0176997,0.0168176,-6.2929e-06}, // track pT > 1.5 GeV
+  {-0.433117,0.0297341,-2.22067e-06}, // track pT > 2.0 GeV
+  {-1.37505,0.0544879,1.16051e-05}, // track pT > 2.5 GeV
+  {-2.90534,0.0950086,6.19311e-05}}, // track pT > 3.0 GeV
+   // Centrality 10-30%
+  {{0.226719,0.01518,-5.91267e-06}, // track pT > 1.0 GeV
+  {0.0300126,0.0250262,-2.05179e-06}, // track pT > 1.5 GeV
+  {-0.377559,0.0432069,1.26082e-05}, // track pT > 2.0 GeV
+  {-1.18232,0.0765366,4.77449e-05}, // track pT > 2.5 GeV
+  {-3.74227,0.14793,6.87683e-05}}, // track pT > 3.0 GeV
+   // Centrality 30-50%
+  {{-0.057911,0.0346047,-1.02305e-05}, // track pT > 1.0 GeV
+  {-0.687454,0.0617439,-1.10006e-05}, // track pT > 1.5 GeV
+  {-1.24756,0.102603,3.05721e-05}, // track pT > 2.0 GeV
+  {-1.64531,0.164534,0.000142551}, // track pT > 2.5 GeV
+  {0.044957,0.22323,0.000502884}}, // track pT > 3.0 GeV
+   // Centrality 50-90%
+  {{-1.0163,0.11513,0}, // track pT > 1.0 GeV
+  {-3.05475,0.215313,0}, // track pT > 1.5 GeV
+  {-9.89126,0.418568,0}, // track pT > 2.0 GeV
+  {-20.9565,0.750403,0}, // track pT > 2.5 GeV
+  {-45.7433,1.30478,0}} // track pT > 3.0 GeV
+  },
+
+  // Old numbers from reflected cone method
+  /*
+  // Centrality 0-10%
   {{0.227696,0.00970569,-4.76595e-06}, // track pT > 1.0 GeV
    {0.0299163,0.0157925,-3.4004e-06}, // track pT > 1.5 GeV
    {-0.423722,0.028125,2.84121e-07}, // track pT > 2.0 GeV
@@ -115,7 +147,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {2.566,0.221488,0}, // track pT > 2.0 GeV
    {6.56557,0.317407,0}, // track pT > 2.5 GeV
    {13.2054,0.417227,0}} // track pT > 3.0 GeV
-  },
+  },*/
 
   // RecoReco MC. To be used only with MC test configuration
    // Centrality 4-14%
@@ -149,8 +181,37 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
   // ===================================================================== //
 
   {
+
+    // Results with mixed cone method from file eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root
+    // Centrality 0-10%
+  {{0.506507,-0.00870152,0.000440677}, // track pT > 1.0 GeV
+  {0.346352,-0.0126094,0.000650555}, // track pT > 1.5 GeV
+  {-0.0851027,-0.0187053,0.0010397}, // track pT > 2.0 GeV
+  {-0.23249,-0.0395869,0.00175816}, // track pT > 2.5 GeV
+  {1.45974,-0.103526,0.00301874}}, // track pT > 3.0 GeV
+   // Centrality 10-30%
+  {{1.27033,-0.0192395,0.000760692}, // track pT > 1.0 GeV
+  {2.08461,-0.0368002,0.00113573}, // track pT > 1.5 GeV
+  {4.53884,-0.0841682,0.00186867}, // track pT > 2.0 GeV
+  {8.50917,-0.163061,0.00308987}, // track pT > 2.5 GeV
+  {10.5392,-0.227489,0.00473014}}, // track pT > 3.0 GeV
+   // Centrality 30-50%
+  {{6.05941,-0.110548,0.00212843}, // track pT > 1.0 GeV
+  {10.3371,-0.18996,0.00318678}, // track pT > 1.5 GeV
+  {21.081,-0.379161,0.00520371}, // track pT > 2.0 GeV
+  {40.7054,-0.707387,0.00839907}, // track pT > 2.5 GeV
+  {85.1368,-1.44112,0.0139829}}, // track pT > 3.0 GeV
+   // Centrality 50-90%
+  {{-117.002,1.69224,0}, // track pT > 1.0 GeV
+  {-167.144,2.41799,0}, // track pT > 1.5 GeV
+  {-251.738,3.60534,0}, // track pT > 2.0 GeV
+  {-350.32,5.13027,0}, // track pT > 2.5 GeV
+  {-492.506,7.22929,0}} // track pT > 3.0 GeV
+  }
+
+   // Old numbers from reflected cone method
    // Centrality 0-10%
-  {{0.499383,-0.00837629,0.000428108}, // track pT > 1.0 GeV
+  /*{{0.499383,-0.00837629,0.000428108}, // track pT > 1.0 GeV
    {0.263944,-0.0106703,0.000616011}, // track pT > 1.5 GeV
    {-0.357668,-0.0125132,0.000952519}, // track pT > 2.0 GeV
    {-2.01522,-0.00733771,0.00148347}, // track pT > 2.5 GeV
@@ -173,7 +234,7 @@ void EECSignalToBackgroundUnfoldingScale::InitializeFunctions(const int iWeightE
    {-51.1867,1.25769,0}, // track pT > 2.0 GeV
    {-36.5242,1.33926,0}, // track pT > 2.5 GeV
    {-15.7122,1.35529,0}} // track pT > 3.0 GeV
-  }
+  }*/
 
   // RecoReco MC. To be used only with MC test configuration
    // Centrality 4-14%

@@ -9,8 +9,9 @@
 void validateBackgroundSubtraction(){
 
   // Open the input file
-  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_energyWeightSquared_allBackgrounds_matchMultiplicity_someMissing_processed_2024-04-24.root";
-  // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
+  TString inputFileName = "data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_semiOkStats_processed_2024-04-12.root";
+  // data/PbPbMC2018_GenGen_eecAnalysis_4pCentShift_cutBadPhi_nominalEnergyWeight_mixedConeBackground_matchMultiplicity_semiOkStats_processed_2024-04-12.root
+  // pPb/PbPbMC2018_GenGen_akFlowJets_wtaAxis_4pCentShift_cutBadPhi_nominalEnergyWeight_perpendicularConeBackground_processed_2025-05-14.root
   // data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_finalMcWeight_matchJets_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_cutBadPhi_moreLowPtBins_truthReferenceForUnfolding_part2_processed_2023-05-20.root
   // data/PbPbMC2018_GenGen_akFlowJets_4pCentShift_cutBadPhi_optimizedUnfoldingBins_nominalSmear_truthReference_processed_2024-01-16.root
@@ -80,7 +81,7 @@ void validateBackgroundSubtraction(){
   const bool simulationTag = false;
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_energyWeightSquared_mixedEventBackgroundGenMatched";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
   
@@ -89,7 +90,7 @@ void validateBackgroundSubtraction(){
   histograms = new EECHistogramManager(inputFile,card);
     
   // Choose the energy-energy correlator types to load
-  histograms->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
+  /*histograms->SetLoadEnergyEnergyCorrelators(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelator]);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus]);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus]);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(studyEnergyEnergyCorrelator[EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus]);
@@ -101,8 +102,8 @@ void validateBackgroundSubtraction(){
   histograms->SetTrackPtBinRangeEEC(0,nTrackPtBinsEEC-1);
     
   // Load the histograms from the file
-  histograms->LoadProcessedHistograms();
-  
+  histograms->LoadProcessedHistograms();*/
+
   // Energy-energy correlator histograms
   TH1D* hEnergyEnergyCorrelatorSignal[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC][2]; // Last bin, true signal/extracted signal
   TH1D* hEnergyEnergyCorrelatorSignalRatio[EECHistogramManager::knEnergyEnergyCorrelatorTypes][nCentralityBins][nJetPtBinsEEC+1][nTrackPtBinsEEC]; // Ratio between true and extracted signal
@@ -144,7 +145,7 @@ void validateBackgroundSubtraction(){
           
           // Read the true energy-energy correlator signal
           hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][0] = histograms->GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaPythia);
-          
+
           // The extracted energy-energy correlator signal
           hEnergyEnergyCorrelatorSignal[iEnergyEnergyCorrelator][iCentrality][iJetPt][iTrackPt][1] = histograms->GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelator, iCentrality, iJetPt, iTrackPt, EECHistogramManager::kEnergyEnergyCorrelatorSignal);
           

@@ -59,15 +59,16 @@ EECAnalyzer::EECAnalyzer() :
   fMultiplicityWeightFunction(0),
   fPtWeightFunction(0),
   fSmearingFunction(0),
-  fTrackEfficiencyCorrector2018(),
-  fJetCorrector2018(),
-  fJetUncertainty2018(),
+  fTrackEfficiencyCorrector(),
+  fJetCorrector(),
+  fJetUncertainty(),
   fRng(0),
   fDataType(-1),
   fTriggerSelection(0),
   fJetType(0),
   fMatchJets(0),
   fDebugLevel(0),
+  fIsRealData(true),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -80,6 +81,7 @@ EECAnalyzer::EECAnalyzer() :
   fJetMinimumPtCut(0),
   fJetMaximumPtCut(0),
   fCutBadPhiRegion(false),
+  fCutWithJetEtaCM(false),
   fMinimumMaxTrackPtFraction(0),
   fMaximumMaxTrackPtFraction(0),
   fJetUncertaintyMode(0),
@@ -107,6 +109,7 @@ EECAnalyzer::EECAnalyzer() :
   fDoReflectedCone(false),
   fDoMixedCone(false),
   fMegaSkimMode(false),
+  fDoPerpendicularCone(false),
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
   fLocalRun(0),
@@ -117,6 +120,8 @@ EECAnalyzer::EECAnalyzer() :
   fMixedEventVz(0),
   fMixedEventHiBin(0),
   fMixedEventMultiplicity(0),
+  fMixedEventCorrectedMultiplicity(0),
+  fMixedEventEventNumber(0),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -162,8 +167,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fFileNames(fileNameVector),
   fCard(newCard),
   fHistograms(0),
-  fJetCorrector2018(),
-  fJetUncertainty2018(),
+  fJetCorrector(),
+  fJetUncertainty(),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -197,7 +202,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
     
     // Track correction for 2017 pp data
-    fTrackEfficiencyCorrector2018 = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
+    fTrackEfficiencyCorrector = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
     
     // Weight function for 2017 MC
     fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
@@ -233,10 +238,49 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyWeightSmearer = NULL;
     } 
     
+  } else if(fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+    
+    // Track correction for 2016 pPb data
+    fTrackEfficiencyCorrector = new TrkEff2016pPb(false, "trackCorrectionTables/pPb2016/");
+    
+    // Weight function for 2017 MC TODO: Weight function currently copied from pp!
+    fVzWeightFunction = new TF1("fvz","pol6",-15,15);  // Weight function for 2017 MC
+    fVzWeightFunction->SetParameters(0.973805, 0.00339418, 0.000757544, -1.37331e-06, -2.82953e-07, -3.06778e-10, 3.48615e-09);
+    fCentralityWeightFunctionCentral = NULL;
+    fCentralityWeightFunctionPeripheral = NULL;
+    fMultiplicityWeightFunction = NULL;
+    
+    // Track pair efficiency corrector for pp TODO: Pair efficiency correction copied from pp!
+    fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector("trackCorrectionTables/trackPairEfficiencyCorrection_pp2017_32DeltaRBins_2023-07-11.root", false, false);
+
+    // Jet energy resolution smearing scale factor manager
+    if(fJetUncertaintyMode > 0){
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager(false, fJetUncertaintyMode-3);
+    } else {
+      fEnergyResolutionSmearingFinder = new JetMetScalingFactorManager();
+    }
+
+    // Smearing configuration for DeltaR and energy weight in energy-energy correlators TODO: Smearing here copied from pp
+    if(fSmearDeltaR){
+      const char* deltaRFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
+      fDeltaRSmearer = new SmearingProvider(Form("smearingFiles/%s", deltaRFileName), "particleDeltaRResponseMatrix", false, false);
+      cout << "Smearing DeltaR in energy-energy correlators using the file " << deltaRFileName << endl;
+    } else {
+      fDeltaRSmearer = NULL;
+    }
+
+    if(fSmearEnergyWeight){
+      const char* energyWeightFileName = "ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_energyWeightSquared_trackParticleResponseMatrixWithTrackPairEfficiency_processed_2023-10-30.root";
+      fEnergyWeightSmearer = new SmearingProvider(Form("smearingFiles/%s", energyWeightFileName), "particlePairPtClosure", true, false);
+      cout << "Smearing energy weights for energy-energy correlators using the file " << energyWeightFileName << endl;
+    } else {
+      fEnergyWeightSmearer = NULL;
+    } 
+    
   } else if (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
     
     // Track correction for 2018 PbPb data
-    fTrackEfficiencyCorrector2018 = new TrkEff2018PbPb("general", fTrackSelectionVariation, false, "trackCorrectionTables/PbPb2018/");
+    fTrackEfficiencyCorrector = new TrkEff2018PbPb("general", fTrackSelectionVariation, false, "trackCorrectionTables/PbPb2018/");
     
     // The vz weight function is rederived from the miniAOD dataset.
     // Macro used for derivation: deriveMonteCarloWeights.C, Git hash: d4eab1cd188da72f5a81b8902cb6cc55ea1baf23
@@ -347,6 +391,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetType(in.fJetType),
   fMatchJets(in.fMatchJets),
   fDebugLevel(in.fDebugLevel),
+  fIsRealData(in.fIsRealData),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -359,6 +404,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fJetMinimumPtCut(in.fJetMinimumPtCut),
   fJetMaximumPtCut(in.fJetMaximumPtCut),
   fCutBadPhiRegion(in.fCutBadPhiRegion),
+  fCutWithJetEtaCM(in.fCutWithJetEtaCM),
   fMinimumMaxTrackPtFraction(in.fMinimumMaxTrackPtFraction),
   fMaximumMaxTrackPtFraction(in.fMaximumMaxTrackPtFraction),
   fJetUncertaintyMode(in.fJetUncertaintyMode),
@@ -386,6 +432,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fDoReflectedCone(in.fDoReflectedCone),
   fDoMixedCone(in.fDoMixedCone),
   fMegaSkimMode(in.fMegaSkimMode),
+  fDoPerpendicularCone(in.fDoPerpendicularCone),
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fLocalRun(in.fLocalRun),
@@ -396,6 +443,8 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMixedEventVz(in.fMixedEventVz),
   fMixedEventHiBin(in.fMixedEventHiBin),
   fMixedEventMultiplicity(in.fMixedEventMultiplicity),
+  fMixedEventCorrectedMultiplicity(in.fMixedEventCorrectedMultiplicity),
+  fMixedEventEventNumber(in.fMixedEventEventNumber),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -444,6 +493,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetType = in.fJetType;
   fMatchJets = in.fMatchJets;
   fDebugLevel = in.fDebugLevel;
+  fIsRealData = in.fIsRealData;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -456,6 +506,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fJetMinimumPtCut = in.fJetMinimumPtCut;
   fJetMaximumPtCut = in.fJetMaximumPtCut;
   fCutBadPhiRegion = in.fCutBadPhiRegion;
+  fCutWithJetEtaCM = in.fCutWithJetEtaCM;
   fMinimumMaxTrackPtFraction = in.fMinimumMaxTrackPtFraction;
   fMaximumMaxTrackPtFraction = in.fMaximumMaxTrackPtFraction;
   fJetUncertaintyMode = in.fJetUncertaintyMode;
@@ -483,6 +534,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fDoReflectedCone = in.fDoReflectedCone;
   fDoMixedCone = in.fDoMixedCone;
   fMegaSkimMode = in.fMegaSkimMode;
+  fDoPerpendicularCone = in.fDoPerpendicularCone;
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fLocalRun = in.fLocalRun;
@@ -493,6 +545,8 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMixedEventVz = in.fMixedEventVz;
   fMixedEventHiBin = in.fMixedEventHiBin;
   fMixedEventMultiplicity = in.fMixedEventMultiplicity;
+  fMixedEventCorrectedMultiplicity = in.fMixedEventCorrectedMultiplicity;
+  fMixedEventEventNumber = in.fMixedEventEventNumber;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -520,9 +574,9 @@ EECAnalyzer::~EECAnalyzer(){
   // destructor
   delete fHistograms;
   if(fVzWeightFunction) delete fVzWeightFunction;
-  if(fTrackEfficiencyCorrector2018) delete fTrackEfficiencyCorrector2018;
-  if(fJetCorrector2018) delete fJetCorrector2018;
-  if(fJetUncertainty2018) delete fJetUncertainty2018;
+  if(fTrackEfficiencyCorrector) delete fTrackEfficiencyCorrector;
+  if(fJetCorrector) delete fJetCorrector;
+  if(fJetUncertainty) delete fJetUncertainty;
   if(fTrackPairEfficiencyCorrector) delete fTrackPairEfficiencyCorrector;
   if(fEnergyResolutionSmearingFinder) delete fEnergyResolutionSmearingFinder;
   if(fCentralityWeightFunctionCentral) delete fCentralityWeightFunctionCentral;
@@ -546,6 +600,11 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   fDataType = fCard->Get("DataType");
   fTriggerSelection = fCard->Get("TriggerSelection");
+
+  fIsRealData = true;
+  if(fDataType == ForestReader::kPpMC || fDataType == ForestReader::kPbPbMC){
+    fIsRealData = false;
+  }
   
   //****************************************
   //         Event selection cuts
@@ -565,6 +624,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fMinimumMaxTrackPtFraction = fCard->Get("MinMaxTrackPtFraction");  // Cut for jets consisting only from soft particles
   fMaximumMaxTrackPtFraction = fCard->Get("MaxMaxTrackPtFraction");  // Cut for jets consisting only from one high pT particle
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
+  fCutWithJetEtaCM = (fCard->Get("CutWithEtaCM") == 1);   // Flag for cutting symmetric region in center-of-mass jet eta that is within defined jet eta acceptence
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
   
   //****************************************
@@ -608,7 +668,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   //    Correlation type for Monte Carlo
   //****************************************
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) {
+  if(fIsRealData) {
     fMcCorrelationType = -100;
   } else {
     fMcCorrelationType = fCard->Get("McCorrelationType");         // Correlation type for Monte Carlo
@@ -626,7 +686,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //    Turn off certain track cuts for generated tracks and pp
   //*************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -638,11 +698,6 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fJetRadius = fCard->Get("JetRadius");
   fSmearDeltaR = (fCard->Get("SmearDeltaR") == 1);
   fSmearEnergyWeight = (fCard->Get("SmearEnergyWeight") == 1);
-  fDoReflectedCone = (fCard->Get("DoReflectedCone") >= 1);
-  fDoMixedCone = (fCard->Get("DoReflectedCone") >= 2);
-  fMegaSkimMode = (fCard->Get("DoReflectedCone") == 3);
-  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
-  fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   fSkipCovarianceMatrix = (fCard->Get("SkipCovarianceMatrix") == 1);
 
   const Int_t nWeightExponents = fCard->GetN("WeightExponent");
@@ -650,6 +705,18 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   for(Int_t iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
     fWeightExponent.push_back(fCard->Get("WeightExponent", iWeightExponent));
   }
+
+  //******************************************************************
+  //   Variables for energy-energy correlator background evaluation
+  //******************************************************************
+  int backgroundMethods = fCard->Get("BackgroundMethods");
+  std::bitset<3> backgroundBitChecker(backgroundMethods);
+  fDoReflectedCone = backgroundBitChecker.test(0);
+  fDoPerpendicularCone = backgroundBitChecker.test(1);
+  fDoMixedCone = backgroundBitChecker.test(2);
+  fMegaSkimMode = (fCard->Get("MegaSkimMixing") == 1);
+  fCutJetsFromReflectedCone = (fCard->Get("AllowJetsInReflectedCone") <= 0);
+  fUseRecoJetsForReflectedCone = (fCard->Get("AllowJetsInReflectedCone") == -1);
   
   //************************************************
   //         Read which histograms to fill
@@ -698,6 +765,9 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t useDifferentReaderForJetsAndTracks = (fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenReco); // Use different forest reader for jets and tracks
   
   // Variables for trigger flags
+  Bool_t caloJet15Trigger;
+  Bool_t caloJet30Trigger;
+  Bool_t caloJet40Trigger;
   Bool_t caloJet60Trigger;
   Bool_t caloJet80Trigger;
   Bool_t caloJet100Trigger;
@@ -707,6 +777,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetPtCorrected = 0;      // Jet pT corrected with the JFF correction
   Double_t jetPhi = 0;              // phi of the i:th jet in the event
   Double_t jetEta = 0;              // eta of the i:th jet in the event
+  Double_t jetEtaCM = 0;            // eta of the i:th jet in the center-of-mass frame
   Int_t jetFlavor = 0;              // Flavor of the jet. 0 = Quark jet. 1 = Gluon jet.
   Double_t jetPtWeight = 1;         // Weighting for jet pT
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
@@ -762,24 +833,17 @@ void EECAnalyzer::RunAnalysis(){
 
   // Event mixing variables
   std::vector<TString> mixingFiles;      // List of mixing files
-  Int_t mixedEventIndex;                 // Current index for mixed event file
-  Bool_t allEventsWentThrough;           // Flag telling if we have gone through all the events in mixing file without finding a matching event
-  Double_t vzTolerance;                  // Difference in vz values that we allow between current and mixed events
-  Int_t hiBinTolerance;                  // Difference in hiBin values that we allow between current and mixed events
-  Int_t lowMultiplicityTolerance;        // Multiplicity tolerance for events with low multiplicity
-  Double_t multiplicityTolerance;        // Difference in multiplicity values that we allow between current and mixed events
   Int_t currentMultiplicity;             // Multiplicity in the current event
   Int_t mixedEventFillIndex;             // Index used to fill mixed event track information into vectors
   std::vector<Int_t> mixedEventIndices;  // Vector for holding the events we have already mixed with
-  Bool_t skipEvent;                      // Flag for skipping unwanted miked events
-  Bool_t checkForDuplicates;             // Flag for checking duplicate events in the mixing list
   
   // Variables for energy-energy correlators
-  vector<double> selectedTrackPt[4];     // Track pT for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackEta[4];    // Track eta relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<double> relativeTrackPhi[4];    // Track phi relative to the jet axis (same jet/reflected cone/mixed cone/second mixed cone)
-  vector<int> selectedTrackSubevent[4];  // Track subevent for tracks selected for energy-energy correlator analysis (same jet/reflected cone/mixed cone/second mixed cone)
+  vector<double> selectedTrackPt[EECHistograms::knJetConeTypes];     // Track pT for tracks selected for energy-energy correlator analysis
+  vector<double> relativeTrackEta[EECHistograms::knJetConeTypes];    // Track eta relative to the jet axis
+  vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes];    // Track phi relative to the jet axis
+  vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes];  // Track subevent for tracks selected for energy-energy correlator analysis
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
+  Double_t jetPerpendicularPhi = 0;      // Perpendicular jet phi to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
   
   // File name helper variables
@@ -795,8 +859,8 @@ void EECAnalyzer::RunAnalysis(){
   }
   
   // Fillers for THnSparses
-  const Int_t nFillJet = 5;         // 5 is nominal, 8 used for smearing study
-  const Int_t nFillMultiplicity = 3; // 3 is nominal
+  const Int_t nFillJet = 6;
+  const Int_t nFillMultiplicity = 3;
   const Int_t nFillMultiplicityInJetCone = 5;
   const Int_t nFillParticleDensityInJetCone = 6;
   const Int_t nFillMaxParticlePtInJetCone = 4;
@@ -810,10 +874,30 @@ void EECAnalyzer::RunAnalysis(){
   Double_t fillerReflectedConeQA[nFillReflectedConeQA];
   Double_t fillerUnfoldingCovariance[nFillUnfoldingCovariance];
   
-  // For 2018 PbPb and 2017 pp data, we need to correct jet pT
-  std::string correctionFileRelative[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt"};
-  std::string correctionFileResidual[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt", "CorrectionNotAppliedPF.txt", "CorrectionNotAppliedPF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt"};
-  std::string uncertaintyFile[5] = {"jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt", "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt"};
+  // Setup the jet energy correction files based on the analyzed data type
+  std::string correctionFileRelative[ForestReader::knDataTypes];
+  correctionFileRelative[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
+
+  std::string correctionFileResidual[ForestReader::knDataTypes];
+  correctionFileResidual[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPpMC] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPbPbMC] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+
+  std::string uncertaintyFile[ForestReader::knDataTypes];
+  uncertaintyFile[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPpMC] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_MC_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt";
+  uncertaintyFile[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   
   // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
   if(fJetType == 0){
@@ -831,19 +915,19 @@ void EECAnalyzer::RunAnalysis(){
   
   vector<string> correctionFiles;
   correctionFiles.push_back(correctionFileRelative[fDataType]);
-  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp)  correctionFiles.push_back(correctionFileResidual[fDataType]);
+  if(fIsRealData)  correctionFiles.push_back(correctionFileResidual[fDataType]);
   
-  fJetCorrector2018 = new JetCorrector(correctionFiles);
-  fJetUncertainty2018 = new JetUncertainty(uncertaintyFile[fDataType]);
+  fJetCorrector = new JetCorrector(correctionFiles);
+  fJetUncertainty = new JetUncertainty(uncertaintyFile[fDataType]);
   
   //************************************************
   //      Find forest readers for data files
   //************************************************
   
   if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
-      fJetReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
+    fJetReader = new GeneratorLevelForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   } else {
-      fJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
+    fJetReader = new HighForestReader(fDataType,fTriggerSelection,fJetType,fJetAxis,fMatchJets,readTrackTree);
   }
   
   // Select the reader for tracks based on forest and MC correlation type
@@ -873,7 +957,7 @@ void EECAnalyzer::RunAnalysis(){
   }
 
   // Prepare mixed event files and a forest reader for reflected cone mixing
-  const char* fileListName[2][4][2];
+  const char* fileListName[2][ForestReader::knDataTypes][2];
 
   // Transform the CRAB job index into a accepted range of mixing job indices
   if(fMixingListIndex < 0){
@@ -892,74 +976,91 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[0][1][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
   fileListName[0][2][0] = "none";  // No mixing for pp MC
   fileListName[0][3][0] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+  fileListName[0][4][0] = "none"; // only mega skimmed mixing available for pPb pToMinusEta
+  fileListName[0][5][0] = "none"; // only mega skimmed mixing available for pPb pToPlusEta
 
   // Local test, regular mixing forest
   fileListName[1][0][0] = "none";  // No mixing for pp
   fileListName[1][1][0] = "mixingFileList/mixingFilesPbPb.txt"; // PbPb data for local test
   fileListName[1][2][0] = "none";  // No mixing for pp MC
   fileListName[1][3][0] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
+  fileListName[1][4][0] = "none"; // only mega skimmed mixing available for pPb pToMinusEta
+  fileListName[1][5][0] = "none"; // only mega skimmed mixing available for pPb pToPlusEta
 
   // CRAB running, mega skimmed mixing forest
   fileListName[0][0][1] = "none";  // No mixing for pp
   fileListName[0][1][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
   fileListName[0][2][1] = "none";  // No mixing for pp MC
   fileListName[0][3][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetMegaSkims_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+  fileListName[0][4][1] = "none"; // will be added after skimming is complete for pPb pToMinusEta
+  fileListName[0][5][1] = "none"; // will be added after skimming is complete  for pPb pToPlusEta
 
   // Local test, mega skimmed mixing forest
   fileListName[1][0][1] = "none";  // No mixing for pp
   fileListName[1][1][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
   fileListName[1][2][1] = "none";  // No mixing for pp MC
   fileListName[1][3][1] = "mixingFileList/mixingFilesPbPbMC_megaSkim.txt";  // PbPb MC for local test
+  fileListName[1][4][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb pToMinusEta
+  fileListName[1][5][1] = "mixingFileList/mixingFilesPPb_pToPlusEta_megaSkim.txt";  // pPb pToPlusEta
         
-  // Read the mixing files only for PbPb data and MC
-  if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
-    std::string lineInFile;
-    std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType][fMegaSkimMode]);
-    while (std::getline(mixingFileStream,lineInFile)) {
-      mixingFiles.push_back(lineInFile);
-    }
+  // Read the mixing files if defined and a file list exists
+  if(fDoMixedCone){
+    if(std::string(fileListName[fLocalRun][fDataType][fMegaSkimMode]) == "none"){
 
-    // Check that all the mixing files we are supposed to read exist and can be opened
-    for(auto currentFile : mixingFiles){
-      testFile = TFile::Open(currentFile);
-
-      // Check that the file exists
-      if(!testFile){
-        cout << "Error! Could not find the file: " << currentFile.Data() << endl;
-        assert(0);
-      }
-
-      // Check that the file is open
-      if(!testFile->IsOpen()){
-        cout << "Error! Could not open the file: " << currentFile.Data() << endl;
-        assert(0);
-      }
+      cout << "EECAnalyzer::Warning! You are trying to do mixed cone background estimation for a dataset for which no mixed event file list is defined in the code! The code will run, but no mixed events will be generated." << endl;
+      fDoMixedCone = false;
     
-      // Check that the file is not zombie
-      if(testFile->IsZombie()){
-        cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
-        assert(0);
+    } else {
+
+      std::string lineInFile;
+      std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType][fMegaSkimMode]);
+      while (std::getline(mixingFileStream,lineInFile)) {
+        mixingFiles.push_back(lineInFile);
       }
 
-      // Close the test file after the test 
-      testFile->Close();
-    }
+      // Check that all the mixing files we are supposed to read exist and can be opened
+      for(auto currentFile : mixingFiles){
+        testFile = TFile::Open(currentFile);
 
-    // If everything is fine, we can read the mixing information from the minimum bias files
-    fMixedEventReader->ReadForestFromFileList(mixingFiles);
+        // Check that the file exists
+        if(!testFile){
+          cout << "Error! Could not find the file: " << currentFile.Data() << endl;
+          assert(0);
+        }
 
-    // Print the used mixing files
-    if(fDebugLevel > 0){
-      cout << "Mixing files: " << endl;
-      for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
-        cout << *mixIterator << endl;
+        // Check that the file is open
+        if(!testFile->IsOpen()){
+          cout << "Error! Could not open the file: " << currentFile.Data() << endl;
+          assert(0);
+        }
+    
+        // Check that the file is not zombie
+        if(testFile->IsZombie()){
+          cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
+          assert(0);
+        }
+
+        // Close the test file after the test 
+        testFile->Close();
       }
-      cout << endl;
-    }
 
-    // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
-    fnEventsInMixingFile = fMixedEventReader->GetNEvents();
-    PrepareMixingVectors();
+      // If everything is fine, we can read the mixing information from the minimum bias files
+      fMixedEventReader->ReadForestFromFileList(mixingFiles);
+
+      // Print the used mixing files
+      if(fDebugLevel > 0){
+        cout << "Mixing files: " << endl;
+        for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
+          cout << *mixIterator << endl;
+        }
+        cout << endl;
+      }
+
+      // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
+      fnEventsInMixingFile = fMixedEventReader->GetNEvents();
+      PrepareMixingVectors();
+
+    } // Mixing file list exists 
   } // Prepare event mixing for PbPb data and MC 
   
   //************************************************
@@ -1048,7 +1149,7 @@ void EECAnalyzer::RunAnalysis(){
       
       // Print to console how the analysis is progressing
       if(fDebugLevel > 1 && iEvent % 1000 == 0) cout << "Analyzing event " << iEvent << endl;
-      
+
       // Read the event to memory
       fJetReader->GetEvent(iEvent);
       
@@ -1091,6 +1192,9 @@ void EECAnalyzer::RunAnalysis(){
       //  ============================================
       
       // Jet trigger combinations
+      caloJet15Trigger = (fJetReader->GetCaloJet15FilterBit() == 1);
+      caloJet30Trigger = (fJetReader->GetCaloJet30FilterBit() == 1);
+      caloJet40Trigger = (fJetReader->GetCaloJet40FilterBit() == 1);
       caloJet60Trigger = (fJetReader->GetCaloJet60FilterBit() == 1);
       caloJet80Trigger = (fJetReader->GetCaloJet80FilterBit() == 1);
       caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
@@ -1115,6 +1219,9 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
       if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
       if(fTriggerSelection == 7 && (!caloJet60Trigger && !caloJet80Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 triggers
+      if(fTriggerSelection == 15 && !caloJet15Trigger) continue; // Select events with CaloJet15 trigger
+      if(fTriggerSelection == 30 && !caloJet30Trigger) continue; // Select events with CaloJet30 trigger
+      if(fTriggerSelection == 40 && !caloJet40Trigger) continue; // Select events with CaloJet40 trigger
 
       // Fill the histogram for triggered events
       fHistograms->fhEvents->Fill(EECHistograms::kTriggered);
@@ -1200,16 +1307,24 @@ void EECAnalyzer::RunAnalysis(){
           jetEta = fJetReader->GetJetEta(jetIndex);
           jetReflectedEta = GetReflectedEta(jetEta);
           jetFlavor = 0;
+
+          // For symmetric systems, eta in center-of-mass frame is the same as eta in the lab frame
+          jetEtaCM = jetEta;
+
+          // For asymmetric systems, we will need to boost to get to center-of-mass frame
+          if(fDataType == ForestReader::kPPb_pToMinusEta) jetEtaCM += 0.465; 
+          if(fDataType == ForestReader::kPPb_pToPlusEta) jetEtaCM -= 0.465; 
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
-          if((fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) && vz > 0) jetFlavor = 1;
+          if((fIsRealData) && vz > 0) jetFlavor = 1;
           
           //  ========================================
           //  ======== Apply jet quality cuts ========
           //  ========================================
           
           if(TMath::Abs(jetEta) >= fJetEtaCut) continue; // Cut for jet eta
+          if(fCutWithJetEtaCM && TMath::Abs(jetEtaCM) >= fJetEtaCut - 0.465) continue;
           if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
           
           // No jet quality cuts for generator level jets
@@ -1288,16 +1403,16 @@ void EECAnalyzer::RunAnalysis(){
           //  ======= Jet quality cuts applied =======
           //  ========================================
           
-          // For 2018 data: do a correction for the jet pT
-          fJetCorrector2018->SetJetPT(jetPt);
-          fJetCorrector2018->SetJetEta(jetEta);
-          fJetCorrector2018->SetJetPhi(jetPhi);
+          // Do a correction for the jet pT
+          fJetCorrector->SetJetPT(jetPt);
+          fJetCorrector->SetJetEta(jetEta);
+          fJetCorrector->SetJetPhi(jetPhi);
           
-          fJetUncertainty2018->SetJetPT(jetPt);
-          fJetUncertainty2018->SetJetEta(jetEta);
-          fJetUncertainty2018->SetJetPhi(jetPhi);
+          fJetUncertainty->SetJetPT(jetPt);
+          fJetUncertainty->SetJetEta(jetEta);
+          fJetUncertainty->SetJetPhi(jetPhi);
           
-          jetPtCorrected = fJetCorrector2018->GetCorrectedPT();
+          jetPtCorrected = fJetCorrector->GetCorrectedPT();
           
           // No jet pT correction for generator level jets
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
@@ -1312,8 +1427,8 @@ void EECAnalyzer::RunAnalysis(){
 
             // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
             // Notice that we still need to apply the nominal jet pT smearing in MC before varying the scale
-            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+            if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+            if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
             
           }
           
@@ -1384,11 +1499,12 @@ void EECAnalyzer::RunAnalysis(){
           jetPtWeight = GetJetPtWeight(jetPtCorrected);
           
           // Fill the axes in correct order
-          fillerJet[0] = jetPtCorrected;          // Axis 0 = any jet pT
-          fillerJet[1] = jetPhi;                  // Axis 1 = any jet phi
-          fillerJet[2] = jetEta;                  // Axis 2 = any jet eta
-          fillerJet[3] = centrality;              // Axis 3 = centrality
-          fillerJet[4] = jetFlavor;               // Axis 4 = flavor of the jet
+          fillerJet[0] = jetPtCorrected;          // Axis 0 = inclusive jet pT
+          fillerJet[1] = jetPhi;                  // Axis 1 = inclusive jet phi
+          fillerJet[2] = jetEta;                  // Axis 2 = inclusive jet eta
+          fillerJet[3] = jetEtaCM;                // Axis 3 = inclusive jet eta_CM
+          fillerJet[4] = centrality;              // Axis 4 = centrality
+          fillerJet[5] = jetFlavor;               // Axis 5 = flavor of the jet
           
           fHistograms->fhInclusiveJet->Fill(fillerJet,fTotalEventWeight*jetPtWeight); // Fill the data point to histogram
           
@@ -1402,11 +1518,11 @@ void EECAnalyzer::RunAnalysis(){
         if(fFillEnergyEnergyCorrelators || fFillEnergyEnergyCorrelatorsSystematics || fFillJetConeHistograms){
           
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
-          for(int iPairingType = 0; iPairingType < 4; iPairingType++){
-            selectedTrackPt[iPairingType].clear();
-            relativeTrackEta[iPairingType].clear();
-            relativeTrackPhi[iPairingType].clear();
-            selectedTrackSubevent[iPairingType].clear();
+          for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
+            selectedTrackPt[iJetConeType].clear();
+            relativeTrackEta[iJetConeType].clear();
+            relativeTrackPhi[iJetConeType].clear();
+            selectedTrackSubevent[iJetConeType].clear();
           }
           
           // Clear the multiplicity arrays
@@ -1421,6 +1537,8 @@ void EECAnalyzer::RunAnalysis(){
           
           // Loop over tracks and check which are within the jet radius
           nTracks = fTrackReader->GetNTracks();
+          trackMultiplicity = 0;
+          trackMultiplicityWeighted = 0;
           for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
             
             // Check that all the track cuts are passed
@@ -1433,16 +1551,19 @@ void EECAnalyzer::RunAnalysis(){
             trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
             trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
             trackSubeventIndex = GetSubeventIndex(trackSubevent);
+
+            trackMultiplicity += 1;
+            trackMultiplicityWeighted += trackEfficiencyCorrection;
             
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
             if(deltaRTrackJet < fJetRadius){
-              relativeTrackPhi[0].push_back(trackPhi-jetPhi);
-              relativeTrackEta[0].push_back(trackEta-jetEta);
+              relativeTrackPhi[EECHistograms::kSignalCone].push_back(trackPhi-jetPhi);
+              relativeTrackEta[EECHistograms::kSignalCone].push_back(trackEta-jetEta);
               
               // Also remember track pT and subevent
-              selectedTrackPt[0].push_back(trackPt);
-              selectedTrackSubevent[0].push_back(trackSubevent);
+              selectedTrackPt[EECHistograms::kSignalCone].push_back(trackPt);
+              selectedTrackSubevent[EECHistograms::kSignalCone].push_back(trackSubevent);
               
               // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
               if(fFillJetConeHistograms){
@@ -1486,12 +1607,12 @@ void EECAnalyzer::RunAnalysis(){
             if(fDoReflectedCone){
               deltaRTrackJet = GetDeltaR(jetReflectedEta, jetPhi, trackEta, trackPhi);
               if(deltaRTrackJet < fJetRadius){
-                relativeTrackPhi[1].push_back(trackPhi-jetPhi);
-                relativeTrackEta[1].push_back(trackEta-jetReflectedEta);
+                relativeTrackPhi[EECHistograms::kReflectedCone].push_back(trackPhi-jetPhi);
+                relativeTrackEta[EECHistograms::kReflectedCone].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
-                selectedTrackPt[1].push_back(trackPt);
-                selectedTrackSubevent[1].push_back(trackSubevent);
+                selectedTrackPt[EECHistograms::kReflectedCone].push_back(trackPt);
+                selectedTrackSubevent[EECHistograms::kReflectedCone].push_back(trackSubevent);
                 
                 // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
                 if(fFillJetConeHistograms){
@@ -1521,6 +1642,38 @@ void EECAnalyzer::RunAnalysis(){
                 }
               }
             } // Search for track from reflected cone
+
+            // Collect the selected track information for ALICE-style perpendicular cones
+            if(fDoPerpendicularCone){
+
+              for(int iPerpendicularCone = 0; iPerpendicularCone <= 1; iPerpendicularCone++){
+
+                jetPerpendicularPhi = GetPerpendicularPhi(jetPhi, iPerpendicularCone);
+
+                deltaRTrackJet = GetDeltaR(jetEta, jetPerpendicularPhi, trackEta, trackPhi);
+                if(deltaRTrackJet < fJetRadius){
+                  relativeTrackPhi[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPhi-jetPerpendicularPhi);
+                  relativeTrackEta[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackEta-jetEta);
+                
+                  // Also remember track pT and subevent
+                  selectedTrackPt[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPt);
+                  selectedTrackSubevent[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackSubevent);
+                
+                  // If we are calculating multiplicity within the perpendicular cone, update the multiplicity arrays
+                  if(fFillJetConeHistograms){
+                    for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+                      if(trackPt < trackPtBinsEEC[iTrackPt]) break;
+                      uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes]++;
+                      multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                      if(trackSubeventIndex >= 0){
+                        uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex]++;
+                        multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                      }
+                    } // Track pT loop
+                  } // Fill jet cone histograms
+                } // Found track to add to vectors
+              } // Loop over two perpendicular cones
+            } // Search for track from perpendicular cone
             
           } // Track loop
 
@@ -1558,11 +1711,11 @@ void EECAnalyzer::RunAnalysis(){
               }
 
               // For non-generator level jet pT: do a correction for the jet pT
-              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco) || fUseRecoJetsForReflectedCone){              fJetCorrector2018->SetJetPT(reflectedConeJetPt);
-                fJetCorrector2018->SetJetEta(reflectedConeJetEta);
-                fJetCorrector2018->SetJetPhi(reflectedConeJetPhi);
+              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco) || fUseRecoJetsForReflectedCone){              fJetCorrector->SetJetPT(reflectedConeJetPt);
+                fJetCorrector->SetJetEta(reflectedConeJetEta);
+                fJetCorrector->SetJetPhi(reflectedConeJetPhi);
 
-                reflectedConeJetPt = fJetCorrector2018->GetCorrectedPT();
+                reflectedConeJetPt = fJetCorrector->GetCorrectedPT();
               }
 
               // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
@@ -1592,84 +1745,22 @@ void EECAnalyzer::RunAnalysis(){
           //***********************************************
 
           // Estimate background from cones dropped to mixed events. This is done only for PbPb
-          if((fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPbPb) && fDoMixedCone){
+          if(fDoMixedCone){
 
+            currentMultiplicity = trackMultiplicity;
             if(fDataType == ForestReader::kPbPbMC){
               currentMultiplicity = GetGenMultiplicity(fTrackReader, kSubeventNonZero, false);
+            } else if (fDataType == ForestReader::kPbPb){
+              currentMultiplicity = hiBin;
             }
 
-            // Starting from the mixing start index, go over vz and hiBin vector values until a matching event is found
-            mixedEventIndex = fMixingStartIndex;
-            hiBinTolerance = 0;   // Starting tolerance for hiBin: match the bin value
-            lowMultiplicityTolerance = 1;   // Starting tolerance for low multiplicity: 1 
-            multiplicityTolerance = 0.01;   // Starting tolerance for multiplicity in percentage: 1%
-            vzTolerance = 0.5;    // Starting tolerance for vz position: 0.5 cm
-            allEventsWentThrough = false;
-            mixedEventFillIndex = 2; // First filled index is 2
-            checkForDuplicates = false; // We do not need to check for duplicate events if we have not gone through all event yet
-            mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+            // Find indices for the events that are mixed with the current event
+            FindMatchedEvents(mixedEventIndices, 2, vz, currentMultiplicity, iEvent); 
 
-            // Find events to mix until we have found two matching events
-            while(mixedEventFillIndex < 4){
+            // Fill the pairing arrays with the found mixed event indices
+            mixedEventFillIndex = EECHistograms::kMixedCone;
 
-              // By default, do not skip events
-              skipEvent = false;
-
-              // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
-              if(allEventsWentThrough){
-                if(fDebugLevel > 0){
-                  cout << "Could not find matching mixed events for event " << iEvent << endl;
-                  if(fDataType == ForestReader::kPbPb){
-                    cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
-                  } else {
-                    cout << "Increasing vz tolerance by 0.5 and multiplicity tolerance by 0.01" << endl;
-                  }
-                }
-      
-                multiplicityTolerance += 0.01;
-                lowMultiplicityTolerance++;
-                hiBinTolerance += 1;
-                vzTolerance += 0.5;
-                allEventsWentThrough = false;
-                checkForDuplicates = true;
-              }
-    
-              // Increment the counter for event index to be mixed with the current event
-              mixedEventIndex++;
-    
-              // If we are out of bounds from the event in data file, reset the counter
-              if(mixedEventIndex == fnEventsInMixingFile) {
-                mixedEventIndex = -1;
-                continue;
-              }
-
-              // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
-              if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
-
-              // Do not mix with events used in the previous iteration over the file
-              if(checkForDuplicates){
-                for(Int_t iMixedEvent : mixedEventIndices) {
-                  if(iMixedEvent == mixedEventIndex) skipEvent = true;
-                }
-              }
-
-              // If we have already used the current mixed event, do not use the same event
-              if(skipEvent) continue;
-
-              // Match vz between the current event and mixed event
-              if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
-
-              // For data, match the hiBin between the current event and mixed event.
-              // For MC, match hydjet multiplicity instead
-              if(fDataType == ForestReader::kPbPb){
-                if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > hiBinTolerance + 1e-4) continue;
-              } else {
-                if(currentMultiplicity > 100){
-                  if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > (currentMultiplicity * multiplicityTolerance)) continue;
-                } else {
-                  if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > lowMultiplicityTolerance) continue;
-                }
-              }
+            for(int mixedEventIndex : mixedEventIndices){
 
               // If match vz and hiBin, then load the event from the mixed event tree and find particles from jet cone region
               fMixedEventReader->GetEvent(mixedEventIndex);
@@ -1700,19 +1791,10 @@ void EECAnalyzer::RunAnalysis(){
                 } // Track is close to a jet
               } // Mixed event track loop
 
-              // Mark that this event has already been used for mixing
-              mixedEventIndices.push_back(mixedEventIndex);
-
-              // Increment the index of event that we have found for mixing purposes
-              mixedEventFillIndex++;
+              // Currently there are two events we mix with, fill the second mixed cone to the second index
+              mixedEventFillIndex = EECHistograms::kSecondMixedCone;
       
-            } // While loop for searching for a good event to mix with
-
-            // For the next event, start mixing the events from where we were left with in the previous event
-            //fMixingStartIndex = mixedEventIndex;
-
-            // For the next event, randomize the starting event again
-            fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+            } // Loop over good events to mix with
 
           } // Event mixing for PbPb data and MC
 
@@ -1887,22 +1969,22 @@ void EECAnalyzer::RunAnalysis(){
 /*
  * Method for calculating the energy-energy correlators for tracks within the jets
  *
- *  const vector<double> selectedTrackPt[4] = pT array for tracks selected for the analysis
- *  const vector<double> relativeTrackEta[4] = relative eta array for tracks selected for the analysis
- *  const vector<double> relativeTrackPhi[4] = relative phi array for tracks selected for the analysis
- *  const vector<int> selectedTrackSubevent[4] = subevent array for tracks selected for the analysis
+ *  const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes] = pT array for tracks selected for the analysis
+ *  const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes] = relative eta array for tracks selected for the analysis
+ *  const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes] = relative phi array for tracks selected for the analysis
+ *  const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes] = subevent array for tracks selected for the analysis
  *  const double jetPt = pT of the jet the tracks are close to
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt){
   
   // Define a filler for THnSparse
   Double_t fillerEnergyEnergyCorrelator[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
-  // Indices for different pairing types (signal cone + signal cone), (signal cone + reflected cone) and (reflected cone + reflected cone)
-  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone};
-  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone};
+  // Indices for different pairing types
+  Int_t firstParticleType[EECHistograms::knPairingTypes] =  {EECHistograms::kSignalCone, EECHistograms::kSignalCone,    EECHistograms::kReflectedCone, EECHistograms::kSignalCone, EECHistograms::kMixedCone, EECHistograms::kSignalCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSignalCone, EECHistograms::kPerpendicularCone, EECHistograms::kSignalCone, EECHistograms::kPerpendicularCone, EECHistograms::kSecondPerpendicularCone};
+  Int_t secondParticleType[EECHistograms::knPairingTypes] = {EECHistograms::kSignalCone, EECHistograms::kReflectedCone, EECHistograms::kReflectedCone, EECHistograms::kMixedCone, EECHistograms::kMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kSecondMixedCone, EECHistograms::kPerpendicularCone, EECHistograms::kPerpendicularCone, EECHistograms::kSecondPerpendicularCone, EECHistograms::kSecondPerpendicularCone, EECHistograms::kSecondPerpendicularCone};
   
   // Event information
   Double_t centrality = fTrackReader->GetCentrality();
@@ -1949,9 +2031,27 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
   // Loop over the pairing types (same jet/reflected cone jet)
   for(int iPairingType = 0; iPairingType < EECHistograms::knPairingTypes; iPairingType++){
     
-    // Only do reflected and mixed cone pairings if specified in the configuration
-    if((iPairingType != EECHistograms::kSameJetPair) && !fDoReflectedCone) continue;
-    if((iPairingType > EECHistograms::kReflectedConePair) && !fDoMixedCone) continue;
+    // Skip all the pairing types that are not specified in the configuration
+    if(!fDoReflectedCone){
+      if(iPairingType == EECHistograms::kSignalReflectedConePair) continue;
+      if(iPairingType == EECHistograms::kReflectedConePair) continue;
+    }
+
+    if(!fDoMixedCone){
+      if(iPairingType == EECHistograms::kSignalMixedConePair) continue;
+      if(iPairingType == EECHistograms::kMixedConePair) continue;
+      if(iPairingType == EECHistograms::kSignalSecondMixedConePair) continue;
+      if(iPairingType == EECHistograms::kMixedMixedConePair) continue;
+      if(iPairingType == EECHistograms::kSecondMixedConePair) continue;
+    }
+
+    if(!fDoPerpendicularCone){
+      if(iPairingType == EECHistograms::kSignalPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kSignalSecondPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kPerpendicularPerpendicularConePair) continue;
+      if(iPairingType == EECHistograms::kSecondPerpendicularConePair) continue;
+    }
     
     // Find the numbers of tracks for the track loops
     nTracks1 = selectedTrackPt[firstParticleType[iPairingType]].size();
@@ -2135,10 +2235,10 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   Double_t smearingFactor;
   
   // For 2018 data, we need to correct the reconstructed pT with jet energy correction
-  fJetCorrector2018->SetJetPT(recoPt);
-  fJetCorrector2018->SetJetEta(jetEta);
-  fJetCorrector2018->SetJetPhi(jetPhi);
-  recoPt = fJetCorrector2018->GetCorrectedPT();
+  fJetCorrector->SetJetPT(recoPt);
+  fJetCorrector->SetJetEta(jetEta);
+  fJetCorrector->SetJetPhi(jetPhi);
+  recoPt = fJetCorrector->GetCorrectedPT();
   
   // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
   if(fJetUncertaintyMode > 0){
@@ -2224,15 +2324,15 @@ void EECAnalyzer::FillUnfoldingResponse(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector2018->SetJetPT(jetPt);
-    fJetCorrector2018->SetJetEta(jetEta);
-    fJetCorrector2018->SetJetPhi(jetPhi);
+    fJetCorrector->SetJetPT(jetPt);
+    fJetCorrector->SetJetEta(jetEta);
+    fJetCorrector->SetJetPhi(jetPhi);
 
-    fJetUncertainty2018->SetJetPT(jetPt);
-    fJetUncertainty2018->SetJetEta(jetEta);
-    fJetUncertainty2018->SetJetPhi(jetPhi);
+    fJetUncertainty->SetJetPT(jetPt);
+    fJetUncertainty->SetJetEta(jetEta);
+    fJetUncertainty->SetJetPhi(jetPhi);
 
-    jetPt = fJetCorrector2018->GetCorrectedPT();
+    jetPt = fJetCorrector->GetCorrectedPT();
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     // Note that for MC, we need to smear the jet pT to match the resolution in data
@@ -2243,8 +2343,8 @@ void EECAnalyzer::FillUnfoldingResponse(){
 
     // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
     // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
-    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
     if(jetPt < fReconstructedJetMinimumPtCut) continue;
@@ -2603,15 +2703,15 @@ void EECAnalyzer::ConstructParticleResponses(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector2018->SetJetPT(jetPt);
-    fJetCorrector2018->SetJetEta(jetEta);
-    fJetCorrector2018->SetJetPhi(jetPhi);
+    fJetCorrector->SetJetPT(jetPt);
+    fJetCorrector->SetJetEta(jetEta);
+    fJetCorrector->SetJetPhi(jetPhi);
 
-    fJetUncertainty2018->SetJetPT(jetPt);
-    fJetUncertainty2018->SetJetEta(jetEta);
-    fJetUncertainty2018->SetJetPhi(jetPhi);
+    fJetUncertainty->SetJetPT(jetPt);
+    fJetUncertainty->SetJetEta(jetEta);
+    fJetUncertainty->SetJetPhi(jetPhi);
 
-    jetPt = fJetCorrector2018->GetCorrectedPT();
+    jetPt = fJetCorrector->GetCorrectedPT();
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     if(fJetUncertaintyMode > 0) {
@@ -2621,8 +2721,8 @@ void EECAnalyzer::ConstructParticleResponses(){
 
     // If we are making runs using variation of jet pT within uncertainties, modify the jet pT here
     // Notice that we still need to use nominal jet pT smearing in MC before applying the shift
-    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty2018->GetUncertainty().first);
-    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty2018->GetUncertainty().second);
+    if(fJetUncertaintyMode == 1) jetPt = jetPt * (1 - fJetUncertainty->GetUncertainty().first);
+    if(fJetUncertaintyMode == 2) jetPt = jetPt * (1 + fJetUncertainty->GetUncertainty().second);
 
     // After the jet pT can been corrected, apply analysis jet pT cuts
     if(jetPt < fReconstructedJetMinimumPtCut) continue;
@@ -2816,7 +2916,7 @@ void EECAnalyzer::ConstructParticleResponses(){
  *   return: Multiplicative correction factor for vz
  */
 Double_t EECAnalyzer::GetVzWeight(const Double_t vz) const{
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPbPb) return 1;  // No correction for real data
+  if(fIsRealData) return 1;  // No correction for real data
   if(fDataType == ForestReader::kPbPbMC || fDataType == ForestReader::kPpMC) return fVzWeightFunction->Eval(vz); // Weight for 2018 MC
   return -1; // Return crazy value for unknown data types, so user will not miss it
 }
@@ -2861,7 +2961,7 @@ Double_t EECAnalyzer::GetMultiplicityWeight(const Double_t multiplicity) const{
  */
 Double_t EECAnalyzer::GetJetPtWeight(const Double_t jetPt) const{
   if(fJetPtWeightConfiguration == 0) return 1.0; // If jet weighting is disabled, apply no weight
-  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPp) return 1.0;  // No weight for data
+  if(fIsRealData) return 1.0;  // No weight for data
 
   return fPtWeightFunction->Eval(jetPt);
 }
@@ -2970,6 +3070,10 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader* eventReader, const Bool_t fillHi
   // Cut for beam scraping. Only applied for pp data.
   if(eventReader->GetBeamScrapingFilterBit() == 0) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kBeamScraping);
+
+  // Cut for pile-up.
+  if(eventReader->GetPileupFilterBit() == 0) return false;
+  if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kPileup);
   
   // Cut for vertex z-position
   if(TMath::Abs(eventReader->GetVz()) > fVzCut) return false;
@@ -3021,7 +3125,13 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kEtaCut);
   
   // New cut for 2018 data based on track algorithm and MVA
-  if(trackReader->GetTrackAlgorithm(iTrack) == 6 && trackReader->GetTrackMVA(iTrack) < 0.98 && (fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC)) return false; // Only apply this cut for PbPb
+  if(fDataType == ForestReader::kPbPb || fDataType == ForestReader::kPbPbMC){
+    if(trackReader->GetTrackAlgorithm(iTrack) == 6){
+      if(trackReader->GetTrackMVA(iTrack) < 0.98){
+        return false;
+      }
+    }
+  }
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kTrackAlgorithm);
   
   // Cut for high purity
@@ -3036,6 +3146,13 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
   if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kVertexDistance);
+
+  // The final cuts are applied only for PbPb data
+  if(fDataType != ForestReader::kPbPb && fDataType != ForestReader::kPbPbMC){
+    if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
+    if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kReconstructionQuality);
+    return true;
+  }
   
   // Cut for energy deposition in calorimeters for high pT tracks
   if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
@@ -3204,7 +3321,7 @@ Double_t EECAnalyzer::GetTrackEfficiencyCorrection(const Float_t trackPt, const 
   if(fDataType == ForestReader::kPpMC) preWeight = 0.979;
   
   // For PbPb2018 and pp2017, there is an efficiency table from which the correction comes
-  return preWeight * fTrackEfficiencyCorrector2018->getCorrection(trackPt, trackEta, hiBin);
+  return preWeight * fTrackEfficiencyCorrector->getCorrection(trackPt, trackEta, hiBin);
   
 }
 
@@ -3430,6 +3547,37 @@ Double_t EECAnalyzer::GetReflectedEta(const Double_t eta) const{
   
   // Now eta must be positive. Subtract twice the jet radius from the value to avoid overlapping cones
   return eta - 2*fJetRadius;
+}
+
+/*
+ * Get perpendicular jet phi coordinate in a defined direction
+ *
+ *  Arguments:
+ *   const Double_t phi = Eta of the jet
+ *   const Int_t direction = 0: Positive phi direction, 1: Negative phi direction
+ *
+ * return: Perpendicular phi coordinate
+ */
+Double_t EECAnalyzer::GetPerpendicularPhi(const Double_t phi, const Int_t direction) const{
+
+  // Make sure direction index is 0 or 1. Give a snarky comment if not.
+  if(direction < 0 || direction > 1){
+    std::cout << "EECAnalyzer::ERROR! Direction index in GetPerpendicularPhi out of bounds!" << std::endl;
+    std::cout << "Fix the error in your code. Now it crashes because of your mistakes..." << std::endl;
+    assert(0);
+  }
+
+  // Move the phi by 90 degrees to the defined direction
+  Double_t adder[2] = {TMath::Pi()/2.0, -TMath::Pi()/2.0};
+  Double_t perpendicularPhi = phi + adder[direction];
+
+  // Make sure that the reflected phi index is in the range [-pi, pi]
+  if(perpendicularPhi < TMath::Pi()) perpendicularPhi += 2*TMath::Pi();
+  if(perpendicularPhi > TMath::Pi()) perpendicularPhi -= 2*TMath::Pi();
+
+  // Return perpendicularized phi
+  return perpendicularPhi;
+
 }
 
 /*
@@ -3666,6 +3814,186 @@ Double_t EECAnalyzer::SimpleSmearDeltaR(const Double_t deltaR){
 }
 
 /*
+ * Find matching events for the current event
+ *
+ *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
+ *  const Int_t nEventsToMatch = Number of matched events that are searched for
+ *  const Double_t vz = Vertex z-position of the event
+ *  const Int_t currentMultiplicity = Multiplicity of the event. HiBin in case of PbPb collisions
+ *  const Int_t iEvent = Number of the current event
+ *
+ */
+void EECAnalyzer::FindMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t currentMultiplicity, const Int_t iEvent){
+
+  // For PbPb data, the matching is done using HiBin
+  if(fDataType == ForestReader::kPbPb){
+    FindHiBinMatchedEvents(mixedEventIndices, nEventsToMatch, vz, currentMultiplicity, iEvent);
+    return;
+  }
+
+  // For PbPb MC and pPb data, the matching is done using multiplicity
+
+  // Event matching for pPb
+  Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
+  Bool_t allEventsWentThrough  = false;          // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Double_t vzTolerance = 0.5;                    // Starting tolerance for vz position: 0.5 cm
+  Int_t lowMultiplicityTolerance = 1;            // Multiplicity tolerance for events with low multiplicity start from 1
+  Double_t multiplicityTolerance = 0.01;         // Percentage difference in multiplicity values that we allow between current and mixed events, starts from 1%.
+  Int_t mixedEventFillIndex = 0;                 // Index telling how many mixed events have been found already
+  Bool_t skipEvent = false;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
+
+  mixedEventIndices.clear();                     // Reset the previously found event index vector from previous events
+
+  // Find events to mix until we have found defined number of matching events
+  while(mixedEventFillIndex < nEventsToMatch){
+
+    // By default, do not skip events
+    skipEvent = false;
+
+    // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
+    if(allEventsWentThrough){
+      if(fDebugLevel > 0){
+        cout << "Could not find matching mixed events for event " << iEvent << endl;
+        cout << "Increasing vz tolerance by 0.5 and multiplicity tolerance by 0.01" << endl;
+      }
+      
+      multiplicityTolerance += 0.01;
+      lowMultiplicityTolerance++;
+      vzTolerance += 0.5;
+      allEventsWentThrough = false;
+      checkForDuplicates = true;
+    }
+    
+    // Increment the counter for event index to be mixed with the current event
+    mixedEventIndex++;
+    
+    // If we are out of bounds from the event in data file, reset the counter
+    if(mixedEventIndex == fnEventsInMixingFile) {
+      mixedEventIndex = -1;
+      continue;
+    }
+
+    // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
+    if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+    // Do not mix with events used in the previous iteration over the file
+    if(checkForDuplicates){
+      for(Int_t iMixedEvent : mixedEventIndices) {
+        if(iMixedEvent == mixedEventIndex) skipEvent = true;
+      }
+    }
+
+    // If we have already used the current mixed event, do not use the same event
+    if(skipEvent) continue;
+
+    // Match vz between the current event and mixed event
+    if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
+
+    // Match multiplicity between the current eent and mixed event
+    if(currentMultiplicity > 100){
+      if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > (currentMultiplicity * multiplicityTolerance)) continue;
+    } else {
+      if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > lowMultiplicityTolerance) continue;
+    }
+
+    // Mark that this event is good to use for mixing
+    mixedEventIndices.push_back(mixedEventIndex);
+
+    // Increment the index of event that we have found for mixing purposes
+    mixedEventFillIndex++;
+      
+  } // While loop for searching for a good event to mix with
+
+  // For the next event, randomize the starting event again
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+
+}
+
+/*
+ * Find matching events for the current event based on hiBin
+ *
+ *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
+ *  const Int_t nEventsToMatch = Number of matched events that are searched for
+ *  const Double_t vz = Vertex z-position of the event
+ *  const Int_t hiBin = HiBin index of the current event
+ *  const Int_t iEvent = Number of the current event
+ *
+ */
+void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hiBin, const Int_t iEvent){
+
+  // Event matching for PbPb
+  Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
+  Bool_t allEventsWentThrough  = false;          // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Double_t vzTolerance = 0.5;                    // Starting tolerance for vz position: 0.5 cm
+  Int_t hiBinTolerance = 0;                      // Starting tolerance for hiBin: match the bin value
+  Int_t mixedEventFillIndex = 0;                 // Index telling how many mixed events have been found already
+  Bool_t skipEvent = false;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
+
+  mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+
+  // Find events to mix until we have found defined number of matching events
+  while(mixedEventFillIndex < nEventsToMatch){
+
+    // By default, do not skip events
+    skipEvent = false;
+
+    // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
+    if(allEventsWentThrough){
+      if(fDebugLevel > 0){
+        cout << "Could not find matching mixed events for event " << iEvent << endl;
+        cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
+      }
+      
+      hiBinTolerance++;
+      vzTolerance += 0.5;
+      allEventsWentThrough = false;
+      checkForDuplicates = true;
+    }
+    
+    // Increment the counter for event index to be mixed with the current event
+    mixedEventIndex++;
+    
+    // If we are out of bounds from the event in data file, reset the counter
+    if(mixedEventIndex == fnEventsInMixingFile) {
+      mixedEventIndex = -1;
+      continue;
+    }
+
+    // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
+    if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+    // Do not mix with events used in the previous iteration over the file
+    if(checkForDuplicates){
+      for(Int_t iMixedEvent : mixedEventIndices) {
+        if(iMixedEvent == mixedEventIndex) skipEvent = true;
+      }
+    }
+
+    // If we have already used the current mixed event, do not use the same event
+    if(skipEvent) continue;
+
+    // Match vz between the current event and mixed event
+    if(TMath::Abs(fMixedEventVz.at(mixedEventIndex) - vz) > (vzTolerance + 1e-4)) continue;
+
+    // Match hiBin between the current eent and mixed event
+    if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > (hiBinTolerance + 1e-4)) continue;
+
+    // Mark that this event is good to use for mixing
+    mixedEventIndices.push_back(mixedEventIndex);
+
+    // Increment the index of event that we have found for mixing purposes
+    mixedEventFillIndex++;
+      
+  } // While loop for searching for a good event to mix with
+
+  // For the next event, randomize the starting event again
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+
+}
+
+/*
  * In case we are doing mixing without the pool, prepare vectors for vz and hiBin from the mixing file for faster event matching
  */
 void EECAnalyzer::PrepareMixingVectors(){
@@ -3678,9 +4006,11 @@ void EECAnalyzer::PrepareMixingVectors(){
 
   // Read vz and hiBin from each event in event mixing file to memory.
   // This way we avoid loading different mixed events in a loop several times
-  fMixedEventVz.clear();     // Clear the vectors for any 
-  fMixedEventHiBin.clear();  // possible contents they 
-  fMixedEventMultiplicity.clear(); // might have
+  fMixedEventVz.clear();                       // Clear the vectors  
+  fMixedEventHiBin.clear();                    // for any
+  fMixedEventMultiplicity.clear();             // possible
+  fMixedEventCorrectedMultiplicity.clear();    // contents they
+  fMixedEventEventNumber.clear();              // might have
 
   // For data, fill the vz and hiBin arrays
   if(fDataType == ForestReader::kPbPb){
@@ -3717,5 +4047,21 @@ void EECAnalyzer::PrepareMixingVectors(){
       }
     } // Loop over all mixed events
   }
+
+  // For pPb, we want to fill vz and multiplicity. To be determined if corrected on uncorrected works better.
+  // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
+  if(fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+    if(!fMegaSkimMode){
+      // Only mega skim mode implemented for pPb. If not doing it, complain to user.
+      throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
+    }
+
+    for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
+      fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventVz.push_back(fMixedEventReader->GetVz());
+      fMixedEventMultiplicity.push_back(fMixedEventReader->GetNTracks());
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+    } // Loop over all mixed events
+  } // Mixing for pPb
   
 }

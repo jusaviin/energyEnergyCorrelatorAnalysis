@@ -11,10 +11,23 @@
 void compareEECinDefinedBins(){
   
   // Files for comparison
-  const int nComparisonFiles = 2;
-  TString fileName[nComparisonFiles];
-  fileName[0] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root";
-  fileName[1] = "data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_jet60or80triggers_consistencyCheck_processed_2025-04-21.root";
+  std::vector<TString> fileName;
+  //fileName.push_back("data/ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_unfoldingWithNominalSmear_jet60or80triggers_processed_2024-04-18.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_lowPtJets_jet15Trigger_noBackgroundSubtraction_processed_2025-05-13.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+
+  fileName.push_back("data/eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root");
+  fileName.push_back("data/sanityCheck/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_unfoldedResults_sanityCheck_processed_2025-05-20.root");
+
+  //fileName[0] = "data/ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_jet60or80triggers_unfoldingWithNominalSmear_processed_2024-01-17.root";
+  //fileName[1] = "data/pPb/pPbData_Pbgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
+  //fileName[2] = "data/pPb/pPbData_pgoing_pfJets_wtaAxis_energyWeightSquared_minimumBias_fewMissing_processed_2025-05-07.root";
+
+  //fileName.push_back("data/pPb/ppData_pfJets_wtaAxis_allEnergyWeights_jet15Trigger_processed_2025-05-12.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_wtaAxis_allEnergyWeights_jet30Trigger_processed_2025-05-12.root");
   
   //fileName[0] = "data/eecAnalysis_akFlowJet_nominalEnergyWeight_reflectedConeBackground_unfoldingWithNominalSmear_processed_2024-05-28.root";
   //fileName[0] = "data/eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root";
@@ -35,28 +48,41 @@ void compareEECinDefinedBins(){
   // ppData_pfJets_wtaAxis_nominalEnergyWeight_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
   // ppData_pfJets_wtaAxis_energyWeightSquared_optimizedUnfoldingBins_fixedCovarianceMatrix_jet60or80triggers_unfoldingWithCovariance_processed_2024-01-23.root
 
+  const int nComparisonFiles = fileName.size();
+
   TString uncertaintyFileName = "systematicUncertainties/systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root";
   // systematicUncertainties_PbPb_nominalEnergyWeight_includeMCnonClosure_2024-03-08.root
   // systematicUncertainties_PbPb_energyWeightSquared_includeMCnonClosure_2024-03-08.root
 
 
-  TString fileDescription[nComparisonFiles];
-  fileDescription[0] = "PbPb data";
-  fileDescription[1] = "MC stats";
-  //fileDescription[2] = "Mixed cone";
-  //fileDescription[2] = "New: mixed";
-  //fileDescription[3] = "10 iterations";
-  //fileDescription[4] = "20 iterations";
+  std::vector<TString> fileDescription;
+  //fileDescription.push_back("pp Jet 60||80 Trigger");
+  //fileDescription.push_back("pp 5.02 TeV, No sub");
+  //fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
+  //fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
+  //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
+  //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
+  fileDescription.push_back("Mixed cone");
+  fileDescription.push_back("Perpendicular cone");
+  //fileDescription.push_back("Mixed cone sanity check");
+  //fileDescription.push_back("Perpendicular cone sanity check");
+
+  // Check that a description exists for each file
+  if(fileDescription.size() < fileName.size()){
+    cout << "ERROR! Not enough file descriptions given. Please give a description for all your files!" << endl;
+    return;
+  }
   
   // Open the files and check that they exist
   TFile* inputFile[nComparisonFiles];
   EECCard* card[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     
-    inputFile[iFile] = TFile::Open(fileName[iFile]);
+    inputFile[iFile] = TFile::Open(fileName.at(iFile));
     
     if(inputFile[iFile] == NULL){
-      cout << "Error! The file " << fileName[iFile].Data() << " does not exist!" << endl;
+      cout << "Error! The file " << fileName.at(iFile).Data() << " does not exist!" << endl;
       cout << "Maybe you forgot the data/ folder path?" << endl;
       cout << "Will not execute the code" << endl;
       return;
@@ -111,6 +137,9 @@ void compareEECinDefinedBins(){
   // Draw relative uncertaintyon the ratio plot
   const bool includeRelativeUncertainty = false; 
 
+  // Option to disable normalization of distributions
+  const bool normalizeDistributions = false;
+
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorBackground = Estimated background
@@ -119,7 +148,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -135,7 +164,7 @@ void compareEECinDefinedBins(){
   int iPairingType = EECHistograms::kSameJetPair;
 
   // If we are dealing with pp data, reset the centrality vector
-  if(card[0]->GetDataType().Contains("pp")){
+  if(card[0]->GetDataType().Contains("pp") || card[0]->GetDataType().Contains("pPb")){
     comparedCentralityBin.clear();
     comparedCentralityBin.push_back(std::make_pair(-1,100));
   }
@@ -154,17 +183,18 @@ void compareEECinDefinedBins(){
   
   // Figure saving
   const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_nominalEnergyWeight_backgroundComparison";   // Comment given for this specific file
+  const char* saveComment = "_energyWeightSquared_pPbComparison";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.5, 1.5);
+  std::pair<double, double> ratioZoom = std::make_pair(0.9, 1.1);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
   // Sanity checks for input. Ensure that all the selected bins actually exist in the input files.
   // This check is only needed for unfolded bins, so skip it if only raw distribution is drawn.
-  if(drawnEnergyEnergyCorrelator != EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+  if(drawnEnergyEnergyCorrelator > EECHistogramManager::kEnergyEnergyCorrelatorSignal && drawnEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
 
       // Sanity check for centrality bins
@@ -343,17 +373,6 @@ void compareEECinDefinedBins(){
   EECHistogramManager* histograms[nComparisonFiles];
   for(int iFile = 0; iFile < nComparisonFiles; iFile++){
     histograms[iFile] = new EECHistogramManager(inputFile[iFile], card[iFile]);
-
-    // Choose the energy-energy correlator types to load
-    histograms[iFile]->SetLoadEnergyEnergyCorrelators(true);
-
-    // Choose the bin ranges
-    histograms[iFile]->SetCentralityBinRange(0, card[iFile]->GetNCentralityBins() - 1);
-    histograms[iFile]->SetJetPtBinRangeEEC(0, card[iFile]->GetNJetPtBinsEEC() - 1);
-    histograms[iFile]->SetTrackPtBinRangeEEC(0, card[iFile]->GetNTrackPtBinsEEC() - 1);
-
-    // Load the histograms from the file
-    histograms[iFile]->LoadProcessedHistograms();
   }
 
   // Create systematic uncertainty organizer to illustrate to draw the pp systematic uncertainties to plots
@@ -379,7 +398,7 @@ void compareEECinDefinedBins(){
   
   
   // Helper histograms
-  std::pair<double, double> drawingRange = std::make_pair(0.006, 0.39);
+  std::pair<double, double> drawingRange = std::make_pair(0.008, 0.39);
   double epsilon = 0.0001;
   int lowNormalizationBin, highNormalizationBin;
   int iCentrality, iCentralityReference, iCentralityUncertainty;
@@ -424,10 +443,12 @@ void compareEECinDefinedBins(){
           }
 
           // Normalize the distributions to one in the drawingRange
-          lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
-          highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+          if(normalizeDistributions){
+            lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
+            highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          }
 
           // Uncertainty histograms
           if(iFile == 0 && includeRelativeUncertainty){
@@ -516,6 +537,7 @@ void compareEECinDefinedBins(){
   int legendTrackPtIndex = 0;
   double minimumCandidate, maximumCandidate;
   TString individualLegend;
+  TString yAxisName = "EEC (raw)";
 
   for(auto plottedBin : binningInformation){
 
@@ -561,7 +583,7 @@ void compareEECinDefinedBins(){
 
     // Add common legend variables and define figure naming in case figures are saved
     if(!colorWithCentrality){ 
-      if(card[0]->GetDataType().Contains("pp")){
+      if(card[0]->GetDataType().Contains("pp") || card[0]->GetDataType().Contains("pPb")){
         compactCentralityString = "";
       } else {
         legend->AddEntry((TObject*) 0, Form("Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(0).first, std::get<kCentrality>(plottedBin).at(0).second), "");
@@ -573,7 +595,7 @@ void compareEECinDefinedBins(){
     }
 
     if(!colorWithJetPt) {
-      legend->AddEntry((TObject*) 0, Form("%.0f < jet p_{T} < %.0f", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second), "");
+      legend->AddEntry((TObject*) 0, Form("%.0f < jet p_{T} < %.0f GeV", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second), "");
       compactJetPtString = Form("_J=%.0f-%.0f", std::get<kJetPt>(plottedBin).at(0).first, std::get<kJetPt>(plottedBin).at(0).second);
     } else {
       compactJetPtString = "";
@@ -581,7 +603,7 @@ void compareEECinDefinedBins(){
     }
 
     if(!colorWithTrackPt){ 
-      legend->AddEntry((TObject*) 0, Form("%.1f < track p_{T}", std::get<kTrackPt>(plottedBin).at(0)), "");
+      legend->AddEntry((TObject*) 0, Form("p_{T}^{ch} > %.1f GeV", std::get<kTrackPt>(plottedBin).at(0)), "");
       compactTrackPtString = Form("_T>%.1f",std::get<kTrackPt>(plottedBin).at(0));
       compactTrackPtString.ReplaceAll(".","v");
     } else {
@@ -637,7 +659,10 @@ void compareEECinDefinedBins(){
     hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->GetYaxis()->SetRangeUser(eecZoom.first, eecZoom.second);
           
     // Draw the histograms to the upper canvas
-    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("EEC %s", histograms[0]->GetEnergyEnergyCorrelatorProcessSaveName(drawnEnergyEnergyCorrelator)), " ");
+    if(drawnEnergyEnergyCorrelator < EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
+      yAxisName = Form("EEC %s", histograms[0]->GetEnergyEnergyCorrelatorProcessSaveName(drawnEnergyEnergyCorrelator));
+    }
+    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", yAxisName, " ");
 
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
@@ -656,7 +681,7 @@ void compareEECinDefinedBins(){
     legendTrackPtIndex = 0;
     for(int iFile = 0; iFile < nComparisonFiles; iFile++){
       if(nComparisonFiles > 1){
-        individualLegend = fileDescription[iFile];
+        individualLegend = fileDescription.at(iFile);
       } else {
         individualLegend = "";
       }
@@ -694,7 +719,7 @@ void compareEECinDefinedBins(){
     // Draw the histograms
     drawer->SetGridY(true);
     if(nComparisonFiles > 1){
-      ratioName = fileDescription[0];
+      ratioName = fileDescription.at(0);
     } else if (colorWithCentrality){
       ratioName = Form("Cent: %.0f-%.0f%%", comparedCentralityBin.at(0).first, comparedCentralityBin.at(0).second);
     } else if (colorWithTrackPt){

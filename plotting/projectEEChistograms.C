@@ -155,7 +155,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
 
   // If we are loading energy-energy correlator histograms and reflected cone QA histograms are included, load them
   if(loadEnergyEnergyCorrelators){
-    if(card->GetDoReflectedConeQA()) loadReflectedConeQAHistograms = true;
+    loadReflectedConeQAHistograms = true;
   }
 
   // If we manually define bin borders, check that they match with the ones on the file or give a warning

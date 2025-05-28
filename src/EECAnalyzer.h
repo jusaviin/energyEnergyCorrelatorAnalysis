@@ -26,6 +26,7 @@
 #include "JetUncertainty.h"
 #include "trackingEfficiency2018PbPb.h"
 #include "trackingEfficiency2017pp.h"
+#include "trackingEfficiency2016pPb.h"
 #include "TrackingEfficiencyInterface.h"
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
@@ -58,7 +59,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[4], const vector<double> relativeTrackEta[4], const vector<double> relativeTrackPhi[4], const vector<int> selectedTrackSubevent[4], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -67,6 +68,8 @@ public:
   void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
   void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
+  void FindMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t iEvent); // Find the mixed events that are matched with the signal event
+  void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin
   
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
@@ -89,6 +92,7 @@ public:
   Int_t GetSubeventCombination(const Int_t subevent1, const Int_t subevent2) const; // Get the subevent combination type from two track subevents
   Int_t GetSubeventIndex(const Int_t subevent) const; // Get the subevent index for a track
   Double_t GetReflectedEta(const Double_t eta) const; // Get jet eta reflected around zero, avoiding overlapping jet cones
+  Double_t GetPerpendicularPhi(const Double_t phi, const Int_t direction) const; // Get perpendicular jet phi coordinate in a defined direction
   Double_t TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const; // Transform the deltaR value to the unfolding axis
   Double_t SimpleSmearDeltaR(const Double_t deltaR); // Simple smearing for deltaR to see if it affects the final distributions
 
@@ -108,9 +112,9 @@ public:
   TF1* fMultiplicityWeightFunction;              // Track multiplicity based weighting function. Can be done instead of centrality weight.
   TF1* fPtWeightFunction;                        // Weighting function for jet pT. Needed for MC.
   TF1* fSmearingFunction;                        // Additional smearing for jets. Needed in systematic uncertainty study.
-  TrackingEfficiencyInterface* fTrackEfficiencyCorrector2018;  // Tracking efficiency corrector for 2018 PbPb and 2017 pp data.
-  JetCorrector* fJetCorrector2018;               // Class for making jet energy correction for 2018 data
-  JetUncertainty* fJetUncertainty2018;           // Class for finding uncertainty for jet pT for 2018 data
+  TrackingEfficiencyInterface* fTrackEfficiencyCorrector;  // Tracking efficiency corrector
+  JetCorrector* fJetCorrector;                   // Class for making jet energy correction
+  JetUncertainty* fJetUncertainty;               // Class for finding uncertainty for jet pT
   TrackPairEfficiencyCorrector* fTrackPairEfficiencyCorrector; // Track pair efficiency corrector
   JetMetScalingFactorManager* fEnergyResolutionSmearingFinder; // Manager to find proper jet energy resolution scaling factors provided by the JetMet group
   SmearingProvider* fDeltaRSmearer;              // Realistic smearing for DeltaR done from response matrices
@@ -126,6 +130,7 @@ public:
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
   Int_t fMatchJets;                  // Jet matching flag. 0 = Do not match jets, 1 = Match jets, 2 = Anti-match jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
+  Bool_t fIsRealData;                // Simplification from fData type: True = any measured data, False = any simulation
   
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC
@@ -142,6 +147,7 @@ public:
   Double_t fJetMinimumPtCut;           // Minimum pT cut for jets
   Double_t fJetMaximumPtCut;           // Maximum pT accepted for jets (and tracks)
   Bool_t fCutBadPhiRegion;             // Cut the phi region with bad tracker performance from the analysis
+  Bool_t fCutWithJetEtaCM;             // Cut symmetric region in center-of-mass jet eta that is within defined jet eta acceptence
   Double_t fMinimumMaxTrackPtFraction; // Cut for jets consisting only from soft particles
   Double_t fMaximumMaxTrackPtFraction; // Cut for jets consisting only from one high pT
   Int_t fJetUncertaintyMode;           // Use uncertainty for jet pT. 0 = Nominal, 1 = Minus uncertainty, 2 = Plus uncertainty
@@ -177,6 +183,7 @@ public:
   Bool_t fDoReflectedCone;   // Estimate background from eta-reflected cones
   Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
   Bool_t fMegaSkimMode;      // Use mega skimmed mixing files, that contain bare minimum information for mixing
+  Bool_t fDoPerpendicularCone;         // Estimate background from perpendicular cones
   Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 
@@ -189,6 +196,8 @@ public:
   std::vector<Double_t> fMixedEventVz;  // vz values in mixed events
   std::vector<Int_t> fMixedEventHiBin;  // HiBin values in mixed events
   std::vector<Int_t> fMixedEventMultiplicity; // Multiplicity in the mixed event
+  std::vector<Double_t> fMixedEventCorrectedMultiplicity; // Corrected multiplicity in the mixed event
+  std::vector<ULong64_t> fMixedEventEventNumber; // Event number of the mixed event
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

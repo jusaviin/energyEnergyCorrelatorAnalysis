@@ -3,6 +3,7 @@
 
 // Deprecation message
 #include <iostream>
+#include <bitset>
 
 // Root includes
 #include <TFile.h>
@@ -102,7 +103,7 @@ private:
   const char* fSubeventCombinationName[EECHistograms::knSubeventCombinations] = {"Pythia-Pythia", "Pythia-Hydjet", "Hydjet-Pythia", "Hydjet-Hydjet"};
   
   // Naming for pairing types
-  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "ReflectedMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "ReflectedSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair"};
+  const char* fPairingTypeSaveName[EECHistograms::knPairingTypes] = {"SignalConePair", "SignalReflectedConePair", "ReflectedConePair", "SignalMixedConePair", "MixedConePair", "SignalSecondMixedConePair", "MixedMixedConePair", "SecondMixedConePair", "SignalPerpendicularConePair", "PerpendicularConePair", "SignalSecondPerpendicularConePair", "PerpendicularPerpendicularConePair", "SecondPerpendicularConePair"};
   
   // Naming for jet cone types
   const char* fJetConeTypeSaveName[EECHistograms::knJetConeTypes] = {"", "ReflectedCone", "MixedCone"};
@@ -277,6 +278,7 @@ public:
   TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
   TH1D* GetHistogramJetPhi(int iCentrality);    // Jet phi histograms
   TH1D* GetHistogramJetEta(int iCentrality);    // Jet eta histograms
+  TH1D* GetHistogramJetEtaCM(int iCentrality);  // Jet eta_CM histograms
   TH2D* GetHistogramJetEtaPhi(int iCentrality); // 2D eta-phi histogram for jets
   
   // Getters for histograms for tracks
@@ -414,6 +416,7 @@ private:
   int fnTrackPtBins;                                         // Number of track pT bins in the JCard of the data file
   int fnJetPtBinsEEC;                                        // Number of jet pT bins for the energy-energy correlator histograms
   int fnTrackPtBinsEEC;                                      // Number of track pT bins for the energy-energy correlator histograms
+  std::vector<int>* fIncludedPairingTypes;                   // Vector for pairing types that are included in the data file
 
   // =============================================
   // ===== Histograms for the dijet analysis =====
@@ -439,6 +442,7 @@ private:
   TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms
   TH1D* fhJetPhi[kMaxCentralityBins];     // Jet phi histograms
   TH1D* fhJetEta[kMaxCentralityBins];     // Jet eta histograms
+  TH1D* fhJetEtaCM[kMaxCentralityBins];   // Jet eta_CM histograms
   TH2D* fhJetEtaPhi[kMaxCentralityBins];  // 2D eta-phi histogram for jets
 
   // Histograms for tracks

@@ -29,6 +29,7 @@ JetEtaCut 1.6              # Region in eta around midrapidity taken into account
 MinJetPtCut 80             # Minimum pT of a jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a jet accepted in the analysis
 CutBadPhi 0                # Cut the problematic phi region. 0 = No cut, 1 = crude cut
+CutWithEtaCM 0             # Cut jets that are outside of symmetric eta CM acceptance for pPb collisions within the defined jet eta cut in lab frame
 MinMaxTrackPtFraction 0.01 # Minimum fraction of jet pT taken by the highest pT track in jet
 MaxMaxTrackPtFraction 0.98 # Maximum fraction of jet pT taken by the highest pT track in jet
 JetUncertainty 0           # 0 = Nominal jet pT, 1 = Minus uncertainty, 2 = Plus uncertainty, 3 = Nominal smear for MC, 4 = Less smearing for MC, 5 = More smearing for MC
@@ -76,8 +77,12 @@ CentralityBinEdges  0 10 30 50 90  # Centrality binning
 TrackPtBinEdges     0.7 1 2 3 4 8 12 300                   # Track pT binning
 PtHatBinEdges       0 30 50 80 120 170 220 280 370 460  # pT hat binning
 
-# Background estimation using eta-reflected jet cone
-DoReflectedCone 3  # 0 = No background estimation, 1 = Estimate background using reflected cone, 2 = Do also mixed event background, 3 = Use megaskimmed files for mixed event background
+# Choose which background estimation methods are evaluated and parameters for them
+BackgroundMethods 3  # Bit 0 = Reflected-eta cone       (to set: 1)
+                     # Bit 1 = Perpendicular cone       (to set: 2)
+                     # Bit 2 = Mixed cones              (to set: 4)
+                     # Examples: All = 7, Everything but no mixing = 3
+MegaSkimMixing 1 # 0 = If doing mixing, use regular mixing files. 1 = Use megaskimmed mixing files
 AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
 
 # Debug

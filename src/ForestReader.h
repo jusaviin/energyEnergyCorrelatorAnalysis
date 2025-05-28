@@ -30,7 +30,7 @@ class ForestReader{
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, knDataTypes};
+  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pToMinusEta, kPPb_pToPlusEta, knDataTypes};
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
@@ -52,6 +52,7 @@ public:
   Float_t GetCentrality() const;      // Getter for centrality
   Int_t GetHiBin() const;             // Getter for CMS hiBin
   Float_t GetPtHat() const;           // Getter for pT hat
+  ULong64_t GetEventNumber() const;   // Getter for event number
   Float_t GetEventWeight() const;     // Getter for jet weight in MC
   
   // Getters for leaves in jet tree
@@ -63,6 +64,9 @@ public:
   virtual Float_t GetJetMaxTrackPt(Int_t iJet) const = 0; // Getter for maximum track pT inside a jet
   
   // Getters for leaves in HLT tree
+  Int_t GetCaloJet15FilterBit() const;           // Getter for calorimeter jet 15 filter bit
+  Int_t GetCaloJet30FilterBit() const;           // Getter for calorimeter jet 30 filter bit
+  Int_t GetCaloJet40FilterBit() const;           // Getter for calorimeter jet 40 filter bit
   Int_t GetCaloJet60FilterBit() const;           // Getter for calorimeter jet 60 filter bit
   Int_t GetCaloJet80FilterBit() const;           // Getter for calorimeter jet 80 filter bit
   Int_t GetCaloJet100FilterBit() const;          // Getter for calorimeter jet 100 filter bit
@@ -73,6 +77,7 @@ public:
   Int_t GetHBHENoiseFilterBit() const;               // Getter for HB/HE noise filter bit
   Int_t GetHfCoincidenceFilterBit() const;           // Getter for hadronic forward coincidence filter bit
   Int_t GetClusterCompatibilityFilterBit() const;    // Getter for cluster compatibility filter bit
+  Int_t GetPileupFilterBit() const;                  // Getter for pileup filter bit
   
   // Specific functions for jet closure plots
   virtual Bool_t HasMatchingJet(Int_t iJet) const = 0; // Check if generator level jet has a matching reconstructed jet
@@ -133,9 +138,10 @@ protected:
   Bool_t fMegaSkimMode;   // Flag for mega skim mode (false = regular micing files, true = mega skimmed mixing files)
   
   // Branches for heavy ion tree
-  TBranch* fHiVzBranch;                   // Branch for vertex z-position
-  TBranch* fHiBinBranch;                  // Branch for centrality
-  TBranch* fPtHatBranch;                  // Branch for pT hat
+  TBranch* fHiVzBranch;          // Branch for vertex z-position
+  TBranch* fHiBinBranch;         // Branch for centrality
+  TBranch* fPtHatBranch;         // Branch for pT hat
+  TBranch* fEventNumberBranch;   // Branch for the event number         
   
   // Branches for jet tree
   TBranch* fJetPtBranch;         // Branch for jet pT
@@ -155,6 +161,9 @@ protected:
   TBranch* fEventWeightBranch;     // Branch for jet weight in MC
   
   // Branches for HLT tree
+  TBranch* fCaloJet15FilterBranch;         // Branch for calo jet 15 filter bit
+  TBranch* fCaloJet30FilterBranch;         // Branch for calo jet 30 filter bit
+  TBranch* fCaloJet40FilterBranch;         // Branch for calo jet 40 filter bit
   TBranch* fCaloJet60FilterBranch;         // Branch for calo jet 60 filter bit
   TBranch* fCaloJet80FilterBranch;         // Branch for calo jet 80 filter bit
   TBranch* fCaloJet100FilterBranch;        // Branch for calo jet 100 filter bit
@@ -165,6 +174,7 @@ protected:
   TBranch* fHBHENoiseBranch;               // Branch for HB/HE noise filter bit
   TBranch* fHfCoincidenceBranch;           // Branch for energy recorded in at least 3 HF calorimeter towers
   TBranch* fClusterCompatibilityBranch;    // Branch for cluster compatibility
+  TBranch* fPileupFilterBranch;            // Branch for pileup
   
   // Branches for track tree
   TBranch* fTrackPtBranch;                    // Branch for track pT
@@ -184,9 +194,10 @@ protected:
   TBranch* fTrackEnergyHcalBranch;            // Branch for track energy in HCal
     
   // Leaves for heavy ion tree
-  Float_t fVertexZ;    // Vertex z-position
-  Int_t fHiBin;        // HiBin = Centrality percentile * 2
-  Float_t fPtHat;      // pT hat
+  Float_t fVertexZ;       // Vertex z-position
+  Int_t fHiBin;           // HiBin = Centrality percentile * 2
+  Float_t fPtHat;         // pT hat
+  ULong64_t fEventNumber; // Number of the analyzed event
   
   // Leaves for jet tree
   Int_t fnJets;          // number of jets in an event
@@ -194,6 +205,9 @@ protected:
   Float_t fEventWeight;  // jet weight in the MC tree
   
   // Leaves for the HLT tree
+  Int_t fCaloJet15FilterBit;         // Filter bit for calorimeter jets with 15 GeV threshold
+  Int_t fCaloJet30FilterBit;         // Filter bit for calorimeter jets with 30 GeV threshold
+  Int_t fCaloJet40FilterBit;         // Filter bit for calorimeter jets with 40 GeV threshold
   Int_t fCaloJet60FilterBit;         // Filter bit for calorimeter jets with 60 GeV threshold
   Int_t fCaloJet80FilterBit;         // Filter bit for calorimeter jets with 80 GeV threshold
   Int_t fCaloJet100FilterBit;        // Filter bit for calorimeter jets with 100 GeV threshold
@@ -204,6 +218,7 @@ protected:
   Int_t fHBHENoiseFilterBit;               // Filter bit for HB/HE noise
   Int_t fHfCoincidenceFilterBit;           // Filter bit for energy recorded in at least 3 HF calorimeter towers
   Int_t fClusterCompatibilityFilterBit;    // Filter bit for cluster compatibility
+  Int_t fPileupFilterBit;                  // Filter events with pile-up
   
   // Leaves for the track tree
   Int_t fnTracks;  // Number of tracks

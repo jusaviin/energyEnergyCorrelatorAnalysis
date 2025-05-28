@@ -16,6 +16,7 @@ EECCard::EECCard(TFile *inFile):
   fDataType(-1),
   fDataTypeString(""),
   fAlternativeDataTypeString(""),
+  fBackgroundLegacyMode(false),
   fGitHash(0),
   fProjectionGitHash(0),
   fProcessGitHash(0),
@@ -60,6 +61,14 @@ void EECCard::ReadVectors(){
   for(int iEntry = 0; iEntry < knEntries; iEntry++){
     fCardEntries[iEntry] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[iEntry]);
   }
+
+  // Naming for variable defining which background methods are used has changed over time
+  // Define a legacy mode in order to be able to function with the old naming convention
+  if((fCardEntries[kBackgroundMethods]) == NULL){
+    fCardEntryNames[kBackgroundMethods] = "DoReflectedCone";
+    fCardEntries[kBackgroundMethods] = (TVectorT<float>*) gDirectory->Get(fCardEntryNames[kBackgroundMethods]);
+    fBackgroundLegacyMode = true;
+  }
   
   // Read the file names
   for(int iFileName = 0; iFileName < knFileNames; iFileName++){
@@ -74,9 +83,9 @@ void EECCard::ReadVectors(){
 void EECCard::FindDataTypeString(){
   
   // Define the different data types corresponding to certain indices
-  TString dataTypes[5] = {"pp","PbPb","pp MC","PbPb MC","localTest"};
-  TString alternativeDataTypes[5] = {"pp","PbPb","Pythia8","Pythia+Hydjet","localTest"};
-  if(fDataType < 0 || fDataType > 4){
+  TString dataTypes[6] = {"pp","PbPb","pp MC","PbPb MC","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta"};
+  TString alternativeDataTypes[6] = {"pp","PbPb","Pythia8","Pythia+Hydjet","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta"};
+  if(fDataType < 0 || fDataType > 5){
     fDataTypeString = "Unknown";
     fAlternativeDataTypeString = "Unknown";
     fDataTypeStringWithoutMCType = "Unknown";
@@ -168,16 +177,21 @@ double EECCard::GetJetPtCut() const{
   return (*fCardEntries[kMinPtCut])[1];
 }
 
-// Getter for the information if reflected cone histograms are filled
-bool EECCard::GetDoReflectedCone() const{
-  return !((*fCardEntries[kDoReflectedCone])[1] == 0);
-}
+/*
+ *  Getter for information which background methods are included in the file
+ */
+int EECCard::GetBackgroundMethods() const{
 
-// Getter for the information if reflected cone QA histograms are filled
-bool EECCard::GetDoReflectedConeQA() const{
-  return ((*fCardEntries[kDoReflectedCone])[1] >= 2);
-}
+  // In legacy mode, we need to decode the information the old DoReflectedCone variable included
+  if(fBackgroundLegacyMode){
+    int doReflectedCone = (*fCardEntries[kBackgroundMethods])[1];
+    if(doReflectedCone <= 1) return doReflectedCone;
+    if(doReflectedCone > 1) return 5;
+  }
 
+  // For newer files, read the actual value
+  return (*fCardEntries[kBackgroundMethods])[1];
+}
 
 /*
  * Get the number of bins for internal index
