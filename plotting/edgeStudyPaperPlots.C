@@ -279,14 +279,14 @@ void edgeStudyPaperPlots(){
   // Paper plot selection
   bool drawDeltaJetAxisWithPt = false;        // Draw DeltaR between E-scheme and WTA jet axes as a function of pT
   bool fitOneOverPt = false;                  // Fit 1/pT function to average DeltaR between E-scheme and WTA jet axes as a function of pT histograms
-  bool drawEdgeLossIllustration = true;      // Draw an illustration about edge loss
+  bool drawEdgeLossIllustration = false;      // Draw an illustration about edge loss
   bool drawEdgeLossWithPt = false;            // Draw the amount of edge-loss as a function of jet pT
   bool drawEdgeLossWithDeltaJetAxis = false;  // Draw the amount of edge-loss as a function of DeltaR between E-scheme and WTA jet axes 
   bool fitLinearToEdgeLoss = false;
 
   // QA plots
   bool drawJetVetoBiasIllustration = false;    // Draw plots illustrating how much vetoing close jets biases the distributions
-  bool drawEdgeLossDefinition = false;         // Illustrate the definition of edge loss
+  bool drawEdgeLossDefinition = true;         // Illustrate the definition of edge loss
   bool drawJetDeltaAxis = false;                // Draw the delta R distributions between jet axes
   
   // Figure saving
@@ -771,8 +771,6 @@ void edgeStudyPaperPlots(){
       } // Energy weight loop
     } // Jet veto loop
   } // Simulation loop
-
-  cout << "SURVIE" << endl;
   
   // ====================================================================
   //                Drawing the selected distributions
@@ -1168,6 +1166,16 @@ void edgeStudyPaperPlots(){
     drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt], "#Deltar", "#frac{R = 0.4}{R = 0.8}", " ", "p");
 
     drawer->SetGridY(false);
+
+    /*TFile* carlotaFile = new TFile("histogramsForCarlota.root","RECREATE");
+    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
+    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
+    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
+    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
+    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecHistogramR0p4");
+    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p8][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecHistogramR0p8");
+    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecRadiusRatio");
+    carlotaFile->Close();*/
 
   } // Drawing illustration of edge loss definition
 
