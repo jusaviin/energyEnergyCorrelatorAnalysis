@@ -155,10 +155,10 @@ from hepdata_lib import Variable, Uncertainty
 def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHistogram, yAxisName, includePp, energyWeightBin, jetPtBin, trackPtBin):
 
     # Define reaction and centrality labels.
-    centralityLabel = ["0-10%", "10-30%", "30-50%", "50-90%", "pp"]
+    centralityLabel = ["0-10%", "10-30%", "30-50%", "50-90%", ""]
     jetPtLabel = ["$120 < p_{\\mathrm{T,jet}} < 140$ GeV", "$140 < p_{\\mathrm{T,jet}} < 160$ GeV", "$160 < p_{\\mathrm{T,jet}} < 180$ GeV", "$180 < p_{\\mathrm{T,jet}} < 200$ GeV"]
     trackPtLabel = ["$> 1$ GeV", "$> 2$ GeV"]
-    energyWeightLabel = ["$n=1$","n=2"]
+    energyWeightLabel = ["1","2"]
         
     # Figure out the centrality bin range based on if separate histogram exists for pp
     firstCentralityBin = 0
@@ -199,15 +199,16 @@ def findVariables(valueHistogram, correlatedErrorHistogram, uncorrelatedErrorHis
     for iCentrality in range(firstCentralityBin,lastCentralityBin):
         myVariable = Variable(yAxisName, is_independent=False, is_binned=False, units="")
         myVariable.values = valueHistogram[(iCentrality-firstCentralityBin)]["y"]
-        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5.02 GeV")
+        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5020 GeV")
+        myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
+        myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[jetPtBin])
+        myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "$< 1.6$")
+        myVariable.add_qualifier("$p_{\\mathrm{T}}^{\\mathrm{ch}}$",trackPtLabel[trackPtBin])
+        myVariable.add_qualifier("$n$",energyWeightLabel[energyWeightBin])
         if includePp:
             myVariable.add_qualifier("RE", reactionLabel[iCentrality])
         else:
             myVariable.add_qualifier("RE", "{}  /  {}".format(pbpbReactionLabel, ppReactionLabel))
-        myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
-        myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[jetPtBin])
-        myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
-        myVariable.add_qualifier("$p_{\\mathrm{T}}^{\\mathrm{ch}}$",trackPtLabel[trackPtBin])
         myVariable.add_qualifier("Centrality",centralityLabel[iCentrality])
 
         # If there are points outside of the analysis range, remove them from the values table:
@@ -320,12 +321,12 @@ def findVariablesDoubleRatio(valueHistogram, errorHistogram, energyWeightBin, ce
 
     # Loop is over all jet pT bins and read the variables
     for iJetPt in range(0, len(jetPtLabel)):
-        myVariable = Variable("$\\frac{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 2 \\mathrm{GeV})}{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 1 \\mathrm{GeV})}$", is_independent=False, is_binned=False, units="")
+        myVariable = Variable("$\\frac{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 2 \\, \\mathrm{GeV})}{\\mathrm{PbPb/pp} (p_{\\mathrm{T}}^{\\mathrm{ch}} > 1 \\, \\mathrm{GeV})}$", is_independent=False, is_binned=False, units="")
         myVariable.values = valueHistogram[iJetPt]["y"]
-        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5.02 GeV")
+        myVariable.add_qualifier("SQRT(S)/NUCLEON", "5020 GeV")
         myVariable.add_qualifier("RE", "{}  /  {}".format(pbpbReactionLabel, ppReactionLabel))
         myVariable.add_qualifier("Jet algorithm", "Anti-k$_{\\mathrm{T}}$ R = 0.4")
-        myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "< 1.6")
+        myVariable.add_qualifier("$|\\eta^{\\mathrm{jet}}|$", "$< 1.6$")
         myVariable.add_qualifier("Centrality",centralityLabel[centralityBin])
         myVariable.add_qualifier("$n$",energyWeightLabel[energyWeightBin])
         myVariable.add_qualifier("Inclusive jet $p_{\\mathrm{T}}$", jetPtLabel[iJetPt])
@@ -499,7 +500,7 @@ for iEnergyWeight in range(0, nEnergyWeight):
 for iCentrality in range(nCentrality-1, -1, -1):
     for iEnergyWeight in range(0, nEnergyWeight):   
         table5 = Table("Figure A{:d}-{:d}".format(30 - iCentrality, iEnergyWeight))
-        table5.description = "The double ratios of PbPb to pp single ratios with $p_{\\mathrm{T}}^{\\mathrm{ch}}$ > 2 GeV and $p_{\\mathrm{T}}^{\\mathrm{ch}}$ > 1 GeV."
+        table5.description = "The double ratios of PbPb to pp single ratios with $p_{\\mathrm{T}}^{\\mathrm{ch}} > 2$ GeV and $p_{\\mathrm{T}}^{\\mathrm{ch}} > 1$ GeV."
         table5.location = "Data from figure A{:d}, {:s}.".format(30 - iCentrality, energyWeightLocation[iEnergyWeight])
         table5.keywords["observables"] = ["Energy-energy correlator double ratio"]
         table5.keywords["reactions"] = [pbpbReactionLabel, ppReactionLabel]
