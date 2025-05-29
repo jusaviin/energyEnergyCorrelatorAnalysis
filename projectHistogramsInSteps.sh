@@ -69,7 +69,7 @@ OS=$(uname)
 # Replace the placeholder string in the projection code by git hash
 if [ "$OS" == "Darwin" ]; then
   # For Mac, we specify that no backup file is needed with the argument ''
-  sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/ptojectEEChistograms.C
+  sed -i '' 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
 else
   # For Linux, '' is not a valid argument, so it needs to be removed from command
   sed -i 's/GITHASHHERE/'${GITHASH}'/' plotting/projectEEChistograms.C
