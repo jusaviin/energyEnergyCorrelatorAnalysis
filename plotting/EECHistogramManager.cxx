@@ -610,6 +610,12 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
   std::pair<double,double> jetPtBinBorders;
   double trackPtLowBorder;  // We only care about the lower border in track pT bins
 
+  // Helper histograms to help that we do not need to load all histograms to memory
+  TH1D* rawHistogram;
+  TH1D* signalFakeHistogram;
+  TH1D* sameConeFakeFakeHistogram;
+  TH1D* mixedConeFakeFakeHistogram;
+
   bool isPbPb = fSystemAndEnergy.Contains("PbPb");
   
   // Loop over the energy-energy correlator histograms from the input file
@@ -631,24 +637,33 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
         // =================================== //
         
         // First find the correct histogram and normalize it to one
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt));
+        rawHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventCombinations);
+        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt));
         
         normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
 
         // Mixed and perpendicular cone background subtraction methods. In these method, jet cone is placed on the location of the original jet in a minimum bias events, or the jet cone is rotated 90 degrees in phi. Particles from original jet cone are paired with particles in the mixed/perpendicular cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we find another mixed event/perpendicular cone, subtract the pairing between two different mixed/perpendicular cones, and add back pairings from a single mixed/perpendicular cone. This gives the most accurate estimation of the background.
         if(iMethod < 2){
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]);
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kMixedMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations],-1);
+ 
+          signalFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSignalMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+          sameConeFakeFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+          mixedConeFakeFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kMixedMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) signalFakeHistogram->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(sameConeFakeFakeHistogram);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(mixedConeFakeFakeHistogram, -1);
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
         } 
          
         // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake+fake background is negligible.
         else if (iMethod == 2){
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
-         fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
+
+          signalFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
+
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) signalFakeHistogram->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
 
         }
         
@@ -668,22 +683,31 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
           jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
           // First find the correct histogram and normalize it to one
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt, iJetPt));
+          rawHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventCombinations);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorNormalized], iCentrality, iTrackPt, iJetPt));
           
           normalizationFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Integral("width");
           fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorNormalized]->Scale(1/normalizationFactor);
           
           // Mixed and perpendicular cone background subtraction methods. In these method, jet cone is placed on the location of the original jet in a minimum bias events, or the jet cone is rotated 90 degrees in phi. Particles from original jet cone are paired with particles in the mixed/perpendicular cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we find another mixed event/perpendicular cone, subtract the pairing between two different mixed/perpendicular cones, and add back pairings from a single mixed/perpendicular cone. This gives the most accurate estimation of the background.
           if(iMethod < 2){
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations],-1);
+
+            signalFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            sameConeFakeFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            mixedConeFakeFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kMixedMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) signalFakeHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(sameConeFakeFakeHistogram);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(mixedConeFakeFakeHistogram, -1);
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
           } 
          
           // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake+fake background is negligible.
           else if (iMethod == 2){
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+
+            signalFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
+
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = (TH1D*) signalFakeHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/normalizationFactor);
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
 
@@ -734,6 +758,15 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
   double trackPtLowBorder;  // We only care about the lower border in track pT bins
   TH1D* trueFakeBackground; // Properly estimated fake-fake background
 
+  // Helper histograms to help that we do not need to load all histograms to memory
+  TH1D* rawHistogram;
+  TH1D* unfoldedHistogram;
+  TH1D* signalFakeHistogram1;
+  TH1D* signalFakeHistogram2;
+  TH1D* sameConeFakeFakeHistogram1;
+  TH1D* sameConeFakeFakeHistogram2;
+  TH1D* mixedConeFakeFakeHistogram;
+
   // Loop over the energy-energy correlator histograms from the input file
   for(int iEnergyEnergyCorrelatorType = 0; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){
     
@@ -749,32 +782,44 @@ void EECHistogramManager::SubtractBackgroundFromUnfolded(int iMethod, const int 
           jetPtBinBorders = fCard->GetBinBordersJetPtEEC(iJetPt);
           
           // First, clone the unfolded distribution
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
+          unfoldedHistogram = GetHistogramEnergyEnergyCorrelatorProcessed(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, kEnergyEnergyCorrelatorUnfolded);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfoldedSignal] = (TH1D*) unfoldedHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorUnfoldedSignal], iCentrality, iTrackPt, iJetPt));
           
           // Next, find the scaling factor for background from integrals of the unfolded, and the non-unfolded distributions
-          scalingFactor = fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorUnfolded]->Integral("width") / fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSameJetPair][EECHistograms::knSubeventCombinations]->Integral("width");
+          rawHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::knSubeventCombinations);
+          scalingFactor = unfoldedHistogram->Integral("width") / rawHistogram->Integral("width");
           
           // Mixed and perpendicular cone background subtraction methods. In these method, jet cone is placed on the location of the original jet in a minimum bias events, or the jet cone is rotated 90 degrees in phi. Particles from original jet cone are paired with particles in the mixed/perpendicular cone. For this pairing, the fake+fake pairs will be mistreated since local correlations there are killed, and pairs are double counted. To correct for this, we find another mixed event/perpendicular cone, subtract the pairing between two different mixed/perpendicular cones, and add back pairings from a single mixed/perpendicular cone. This gives the most accurate estimation of the background.
           if(iMethod < 2){
 
+            // Load the necessary histograms to memory
+            signalFakeHistogram1 = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            signalFakeHistogram2 = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalSecondMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            sameConeFakeFakeHistogram1 = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            sameConeFakeFakeHistogram2 = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSecondMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+            mixedConeFakeFakeHistogram = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kMixedMixedConePair + 5*iMethod, EECHistograms::knSubeventCombinations);
+
             // Since pairing signal particles with mixed cone particles should give the same results regardless if we use the first or second mixed cones to do the pairing, average these two in order to suppress fluctuations
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalSecondMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) signalFakeHistogram1->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(signalFakeHistogram2);
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(0.5);
 
             // Since mixed/perpendicular cone pairs in two used mixed events/perpendicular cones both have the same information, get the average of them to suppress fluctuations in the background
-            trueFakeBackground = (TH1D*)fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]->Clone(Form("trueFakeBackground_%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt));
-            trueFakeBackground->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSecondMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations]);
+            trueFakeBackground = (TH1D*) sameConeFakeFakeHistogram1->Clone(Form("trueFakeBackground_%d%d%d%d", iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt));
+            trueFakeBackground->Add(sameConeFakeFakeHistogram2);
             trueFakeBackground->Scale(0.5);
 
             // Add the true fake background and subtract the fake fake background
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(trueFakeBackground);
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kMixedMixedConePair + 5*iMethod][EECHistograms::knSubeventCombinations],-1);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Add(mixedConeFakeFakeHistogram, -1);
           }
 
           // Reflected cone background subtraction method. In this method, background is estimated by placing another jet cone in the event with reflecting the eta-value. Around midrapidity, the jet cone is shifted by 2R instead of reflecting to avoid overlap of the cone. Particles from signal cone are paired with the reflected eta cone. We know from simulation that the shape of the background distribution is correct in case where fake+fake background is negligible. We can correct for the normalization of the background by MC-based scaling factor. This gives a good background subtraction in a kinematic region where fake+fake background is negligible.
           else if (iMethod == 2){
-            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][EECHistograms::kSignalReflectedConePair][EECHistograms::knSubeventCombinations]->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
+
+            signalFakeHistogram1 = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSignalReflectedConePair, EECHistograms::knSubeventCombinations);
+
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding] = (TH1D*) signalFakeHistogram1->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackgroundAfterUnfolding], iCentrality, iTrackPt, iJetPt));
             fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackgroundAfterUnfolding]->Scale(1/scaleProvider->GetEECBackgroundScale(centralityBinBorders, jetPtBinBorders, trackPtLowBorder, isPbPb));
           }
 

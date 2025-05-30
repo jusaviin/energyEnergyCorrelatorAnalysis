@@ -238,25 +238,11 @@ void unfoldEEChistograms(TString dataFileName, TString outputFileName, const int
   //    Create histogram managers and load the needed histograms
   // ***************************************************************
 
-  // Load the histograms needed for unfolding from the unfolding histogram manager
+  // Define a histogram manager for unfolding response histograms
   EECHistogramManager* responseHistograms = new EECHistogramManager(responseInputFile, responseCard);
-  responseHistograms->SetLoadJetPtUnfoldingHistograms(true);
-  responseHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
-  responseHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
-  responseHistograms->LoadProcessedHistograms();
 
-  // Load the data histograms to be unfolded from the data histogram manager
+  // Define a histogram manager for the data histograms that are unfolded
   EECHistogramManager* dataHistograms = new EECHistogramManager(dataInputFile, dataCard);
-  dataHistograms->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationPlus);
-  dataHistograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorPairEfficiencyVariationMinus);
-  dataHistograms->SetCentralityBinRange(firstStudiedCentralityBin,lastStudiedCentralityBin);
-  dataHistograms->SetTrackPtBinRangeEEC(firstStudiedTrackPtBinEEC,lastStudiedTrackPtBinEEC);
-  dataHistograms->SetJetPtBinRangeEEC(0, dataCard->GetNJetPtBinsEEC());
-  dataHistograms->SetLoadJetPtUnfoldingCovariance(true);
-  dataHistograms->LoadProcessedHistograms();
 
   // Histograms that are needed to create the unfolding response
   TH1D* hUnfoldingMeasured[nCentralityBins][nTrackPtBins];

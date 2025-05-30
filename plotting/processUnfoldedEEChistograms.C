@@ -60,7 +60,7 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   // Create and setup a new histogram manager to project and handle the histograms
   EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
   
-  // Load all energy-energy correlators
+  // Select for which energy-energy correlators the background subtraction is performed
   histograms->SetLoadEnergyEnergyCorrelators(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelator);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(iEnergyEnergyCorrelator == EECHistogramManager::kEnergyEnergyCorrelatorEfficiencyVariationMinus);
@@ -71,9 +71,6 @@ void processUnfoldedEEChistograms(TString fileName, TString outputFileName, cons
   histograms->SetCentralityBinRange(card->GetFirstUnfoldedCentralityBin(), card->GetLastUnfoldedCentralityBin());
   histograms->SetTrackPtBinRangeEEC(card->GetFirstUnfoldedTrackPtBin(), card->GetLastUnfoldedTrackPtBin());
   histograms->SetJetPtBinRangeEEC(card->GetFirstUnfoldedJetPtBin(), card->GetLastUnfoldedJetPtBin());
-
-  // Load the histograms from the file
-  histograms->LoadProcessedHistograms();
   
   // Subtract the background from the unfolded energy-energy correlator histograms
   histograms->SubtractBackgroundFromUnfolded(iBackgroundMethod, iSystematic);

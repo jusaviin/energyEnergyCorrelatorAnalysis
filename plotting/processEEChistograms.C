@@ -64,9 +64,6 @@ void processEEChistograms(TString fileName, TString outputFileName, const int iB
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(false);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(false);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(false);
-
-  // Load the histograms from the file
-  histograms->LoadProcessedHistograms();
   
   // Subtract the background from the energy-energy correlator histograms
   histograms->SubtractBackground(iBackgroundMethod, iSystematic);
