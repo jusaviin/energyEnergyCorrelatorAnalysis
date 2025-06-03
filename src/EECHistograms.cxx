@@ -22,6 +22,9 @@ EECHistograms::EECHistograms() :
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
+  fhHFPlus(0),
+  fhHFMinus(0),
+  fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
   fhMultiplicity(0),
@@ -72,6 +75,9 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
+  fhHFPlus(0),
+  fhHFMinus(0),
+  fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
   fhMultiplicity(0),
@@ -122,6 +128,9 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhTrackCuts(in.fhTrackCuts),
   fhCentrality(in.fhCentrality),
   fhCentralityWeighted(in.fhCentralityWeighted),
+  fhHFPlus(in.fhHFPlus),
+  fhHFMinus(in.fhHFMinus),
+  fhHFSum(in.fhHFSum),
   fhPtHat(in.fhPtHat),
   fhPtHatWeighted(in.fhPtHatWeighted),
   fhMultiplicity(in.fhMultiplicity),
@@ -176,6 +185,9 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhTrackCuts = in.fhTrackCuts;
   fhCentrality = in.fhCentrality;
   fhCentralityWeighted = in.fhCentralityWeighted;
+  fhHFPlus = in.fhHFPlus;
+  fhHFMinus = in.fhHFMinus;
+  fhHFSum = in.fhHFSum;
   fhPtHat = in.fhPtHat;
   fhPtHatWeighted = in.fhPtHatWeighted;
   fhMultiplicity = in.fhMultiplicity;
@@ -226,6 +238,9 @@ EECHistograms::~EECHistograms(){
   delete fhTrackCuts;
   delete fhCentrality;
   delete fhCentralityWeighted;
+  delete fhHFPlus;
+  delete fhHFMinus;
+  delete fhHFSum;
   delete fhPtHat;
   delete fhPtHatWeighted;
   delete fhMultiplicity;
@@ -381,6 +396,11 @@ void EECHistograms::CreateHistograms(){
   const Double_t minNumberOfJetsReflectedCone = -0.5;
   const Double_t maxNumberOfJetsReflectedCone = 4.5;
   const Int_t nNumberOfJetsReflectedConeBins = 5;
+
+  // Bins for HF energy
+  const Double_t minHFenergy = 0;
+  const Double_t maxHFenergy = 300;
+  const Int_t nHFenergyBins = 60;
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
@@ -538,6 +558,9 @@ void EECHistograms::CreateHistograms(){
   fhTrackCuts = new TH1F("trackCuts","trackCuts",knTrackCuts,-0.5,knTrackCuts-0.5); fhTrackCuts->Sumw2();
   fhCentrality = new TH1F("centrality","centrality",nCentralityBins,minCentrality,maxCentrality); fhCentrality->Sumw2();
   fhCentralityWeighted = new TH1F("centralityWeighted","centralityWeighted",nCentralityBins,minCentrality,maxCentrality); fhCentralityWeighted->Sumw2();
+  fhHFPlus = new TH1F("HFPlus","HFPlus",nHFenergyBins,minHFenergy,maxHFenergy); fhHFPlus->Sumw2();
+  fhHFMinus = new TH1F("HFMinus","HFMinus",nHFenergyBins,minHFenergy,maxHFenergy); fhHFMinus->Sumw2();
+  fhHFSum = new TH1F("HFSum","HFSum",nHFenergyBins*2,minHFenergy,maxHFenergy*2); fhHFSum->Sumw2();
   fhPtHat = new TH1F("pthat","pthat",nPtHatBins,ptHatBins); fhPtHat->Sumw2();
   fhPtHatWeighted = new TH1F("pthatWeighted","pthatWeighted",nFinePtHatBins,minPtHat,maxPtHat); fhPtHatWeighted->Sumw2();
   
@@ -1184,6 +1207,9 @@ void EECHistograms::Write() const{
   fhTrackCuts->Write();
   fhCentrality->Write();
   fhCentralityWeighted->Write();
+  fhHFPlus->Write();
+  fhHFMinus->Write();
+  fhHFSum->Write();
   fhPtHat->Write();
   fhPtHatWeighted->Write();
   fhMultiplicity->Write();

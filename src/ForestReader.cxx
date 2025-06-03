@@ -18,6 +18,8 @@ ForestReader::ForestReader() :
   fMegaSkimMode(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
+  fHFPlusBranch(0),
+  fHFMinusBranch(0),
   fPtHatBranch(0),
   fEventNumberBranch(0),
   fJetPtBranch(0),
@@ -61,6 +63,8 @@ ForestReader::ForestReader() :
   fTrackEnergyHcalBranch(0),
   fVertexZ(-100),
   fHiBin(-1),
+  fHFPlus(0),
+  fHFMinus(0),
   fPtHat(0),
   fEventNumber(0),
   fnJets(0),
@@ -109,6 +113,8 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fMegaSkimMode(megaSkimMode),
   fHiVzBranch(0),
   fHiBinBranch(0),
+  fHFPlusBranch(0),
+  fHFMinusBranch(0),
   fPtHatBranch(0),
   fEventNumberBranch(0),
   fJetPtBranch(0),
@@ -152,6 +158,8 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fTrackEnergyHcalBranch(0),
   fVertexZ(-100),
   fHiBin(-1),
+  fHFPlus(0),
+  fHFMinus(0),
   fPtHat(0),
   fEventNumber(0),
   fnJets(0),
@@ -195,6 +203,8 @@ ForestReader::ForestReader(const ForestReader& in) :
   fMegaSkimMode(in.fMegaSkimMode),
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
+  fHFPlusBranch(in.fHFPlusBranch),
+  fHFMinusBranch(in.fHFMinusBranch),
   fPtHatBranch(in.fPtHatBranch),
   fEventNumberBranch(in.fEventNumberBranch),
   fJetPtBranch(in.fJetPtBranch),
@@ -238,6 +248,8 @@ ForestReader::ForestReader(const ForestReader& in) :
   fTrackEnergyHcalBranch(in.fTrackEnergyHcalBranch),
   fVertexZ(in.fVertexZ),
   fHiBin(in.fHiBin),
+  fHFPlus(in.fHFPlus),
+  fHFMinus(in.fHFMinus),
   fPtHat(in.fPtHat),
   fEventNumber(in.fEventNumber),
   fnJets(in.fnJets),
@@ -279,6 +291,8 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fMegaSkimMode = in.fMegaSkimMode;
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
+  fHFPlusBranch = in.fHFPlusBranch;
+  fHFMinusBranch = in.fHFMinusBranch;
   fPtHatBranch = in.fPtHatBranch;
   fEventNumberBranch = in.fEventNumberBranch;
   fJetPtBranch = in.fJetPtBranch;
@@ -322,6 +336,8 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fTrackEnergyHcalBranch = in.fTrackEnergyHcalBranch;
   fVertexZ = in.fVertexZ;
   fHiBin = in.fHiBin;
+  fHFPlus = in.fHFPlus;
+  fHFMinus = in.fHFMinus;
   fPtHat = in.fPtHat;
   fEventNumber = in.fEventNumber;
   fnJets = in.fnJets;
@@ -394,6 +410,21 @@ Int_t ForestReader::GetHiBin() const{
   if(fHiBin < 0) return 1;
   return fHiBin;
 }
+
+ // Getter for energy in HF plus calorimeters
+Float_t ForestReader::GetHFPlus() const{
+  return fHFPlus;
+}
+
+// Getter for energy in HF minus calorimeters   
+Float_t ForestReader::GetHFMinus() const{
+  return fHFMinus;
+}
+
+// Getter for energy in HF calorimeters        
+Float_t ForestReader::GetHFSum() const{
+  return fHFPlus + fHFMinus;
+}        
 
 // Getter for pT hat
 Float_t ForestReader::GetPtHat() const{

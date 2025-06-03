@@ -51,6 +51,9 @@ public:
   Float_t GetVz() const;              // Getter for vertex z position
   Float_t GetCentrality() const;      // Getter for centrality
   Int_t GetHiBin() const;             // Getter for CMS hiBin
+  Float_t GetHFPlus() const;          // Getter for energy in HF plus calorimeters
+  Float_t GetHFMinus() const;         // Getter for energy in HF minus calorimeters
+  Float_t GetHFSum() const;           // Getter for energy in HF calorimeters
   Float_t GetPtHat() const;           // Getter for pT hat
   ULong64_t GetEventNumber() const;   // Getter for event number
   Float_t GetEventWeight() const;     // Getter for jet weight in MC
@@ -140,6 +143,8 @@ protected:
   // Branches for heavy ion tree
   TBranch* fHiVzBranch;          // Branch for vertex z-position
   TBranch* fHiBinBranch;         // Branch for centrality
+  TBranch* fHFPlusBranch;        // Branch for energy in HF plus calorimeters
+  TBranch* fHFMinusBranch;       // Branch for energy in HF plus calorimeters
   TBranch* fPtHatBranch;         // Branch for pT hat
   TBranch* fEventNumberBranch;   // Branch for the event number         
   
@@ -196,6 +201,8 @@ protected:
   // Leaves for heavy ion tree
   Float_t fVertexZ;       // Vertex z-position
   Int_t fHiBin;           // HiBin = Centrality percentile * 2
+  Float_t fHFPlus;        // Energy in HF plus calorimeters
+  Float_t fHFMinus;       // Energy in HF minus calorimeters
   Float_t fPtHat;         // pT hat
   ULong64_t fEventNumber; // Number of the analyzed event
   

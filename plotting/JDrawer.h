@@ -72,6 +72,7 @@ private:
   TCanvas *fCanvas;       // If only a custom canvas is drawn, we need to keep on handle on that
   TPad* fSinglePad;       // Single pad for single canvas
   TPad* fUpperSplitPad;   // Upper pad in split canvas
+  TPad* fMiddleSplitPad;  // Middle pad in a split canvas with two ratio pads
   TPad* fLowerSplitPad;   // Lower pad in split canvas
   TPad* fLeftRowPad;      // Left pad in a row of three pads
   TPad* fMiddleRowPad;    // Middle pad in a row of three pads
@@ -222,6 +223,7 @@ public:
     if(fCanvas) delete fCanvas;
     if(fSinglePad) delete fSinglePad;
     if(fUpperSplitPad) delete fUpperSplitPad;
+    if(fMiddleSplitPad) delete fMiddleSplitPad;
     if(fLowerSplitPad) delete fLowerSplitPad;
     if(fLeftRowPad) delete fLeftRowPad;
     if(fMiddleRowPad) delete fMiddleRowPad;
@@ -327,6 +329,26 @@ public:
     }
     
     DrawHistogramToPad(histo, fUpperSplitPad, xTitle, yTitle, title, drawOption);
+    
+  }
+
+  /*
+   *  Draw a histogram to the middle pad of a split canvas
+   *
+   *  TH1 *histo = histogram to be drawn
+   *  char *xTitle = title for the x-axis
+   *  char *yTitle = title for the y-axis
+   *  char *title = title of the histogram
+   *  char *drawOption = options for drawing given in root documentation
+   */
+  void DrawHistogramToMiddlePad(TH1 *histo, const char *xTitle = "", const char *yTitle = "", const char *title = "", const char *drawOption = ""){
+    
+    // If there is no upper pad, create one
+    if(fMiddleSplitPad == NULL){
+      CreateDoubleSplitCanvas();
+    }
+    
+    DrawHistogramToPad(histo, fMiddleSplitPad, xTitle, yTitle, title, drawOption);
     
   }
   
@@ -490,6 +512,7 @@ public:
     fCanvas = NULL;
     fSinglePad = NULL;
     fUpperSplitPad = NULL;
+    fMiddleSplitPad = NULL;
     fLowerSplitPad = NULL;
     fLeftRowPad = NULL;
     fMiddleRowPad = NULL;
@@ -571,6 +594,60 @@ public:
     fLowerSplitPad = new TPad(dummyName.Data(), dummyName.Data(), 0, 0, 1, fSplitRatio, 0);
     fLowerSplitPad->SetTopMargin(0.0015); // Make the top margin small so that the pads fit nicely on top of each other
     fLowerSplitPad->SetBottomMargin(fMarginBottom/fSplitRatio); // Adjust bottom margin according to the split ratio
+    fLowerSplitPad->SetLeftMargin(fMarginLeft);
+    fLowerSplitPad->SetRightMargin(fMarginRight);
+    fLowerSplitPad->Draw();
+  }
+
+  /*
+   * Create a canvas that is split to three pads that are on top of each other
+   */
+  void CreateDoubleSplitCanvas(){
+    
+    TString dummyName;  // dummy name generator
+    dummyName = GenerateNameForCanvas();
+    
+    // Create the canvas
+    fCanvas = new TCanvas(dummyName.Data(), dummyName.Data(), fTopLeftX, fTopLeftY, fCanvasWidth, fCanvasHeight);
+    fCanvas->SetFillStyle(4000); // The created canvas is completely transparent
+    fCanvas->SetFillColor(10);   // Canvas is filled with white color
+    gStyle->SetOptStat(0);       // Disable the drawing of the statistics box to the canvas
+    gStyle->SetOptTitle(0);      // Disable the drawing of titles to the canvas
+    fCanvas->SetMargin(0,0,0,0); // Remove the margins from the bottom canvas
+    fCanvas->Draw();             // Draw the canvas to the screen
+    
+    // ---- Create the three pads to the canvas ----
+
+    // The variable fSplit ratio defines the fraction of the canvas given to ratio pads
+    // When there are several ratio pads, the bottom margin gets applied only to lowest one
+    // Thus we need to separately calculate the absolute size of each pad such that the
+    // spaces allocated to histograms themselves are of the same size
+    double ratioHeightWithoutMargin = fSplitRatio - fMarginBottom;
+    double lowerPadFraction = ratioHeightWithoutMargin / 2.0 + fMarginBottom;
+    
+    // The upper pad stretches from the top of the canvas down to its total fraction of canvas height
+    dummyName = GenerateName("UpperPad");
+    fUpperSplitPad = new TPad(dummyName.Data(), dummyName.Data(), 0, fSplitRatio, 1, 1, 0);
+    fUpperSplitPad->SetTopMargin(fMarginTop/(1 - fSplitRatio)); // Adjust top margin according to the split ratio
+    fUpperSplitPad->SetBottomMargin(0.0015);  // Make the bottom margin small so that the pads fit nicely on top of each other
+    fUpperSplitPad->SetLeftMargin(fMarginLeft);
+    fUpperSplitPad->SetRightMargin(fMarginRight);
+    fUpperSplitPad->Draw();
+
+    // The middle pad stretches from the bottom of the upper pad to the top of the lower pad
+    dummyName = GenerateName("MiddlePad");
+    fMiddleSplitPad = new TPad(dummyName.Data(), dummyName.Data(), 0, lowerPadFraction, 1, fSplitRatio, 0);
+    fMiddleSplitPad->SetTopMargin(0.0015); // Make the top margin small so that the pads fit nicely on top of each other
+    fMiddleSplitPad->SetBottomMargin(0.0015);  // Make the bottom margin small so that the pads fit nicely on top of each other
+    fMiddleSplitPad->SetLeftMargin(fMarginLeft);
+    fMiddleSplitPad->SetRightMargin(fMarginRight);
+    fMiddleSplitPad->Draw();
+    
+    // The lower pad stretches from the bottom of the middle pad to the bottom of the canvas
+    dummyName = GenerateName("LowerPad");
+    fLowerSplitPad = new TPad(dummyName.Data(), dummyName.Data(), 0, 0, 1, lowerPadFraction, 0);
+    fLowerSplitPad->SetTopMargin(0.0015); // Make the top margin small so that the pads fit nicely on top of each other
+    fLowerSplitPad->SetBottomMargin(fMarginBottom/lowerPadFraction); // Adjust bottom margin according to the split ratio
     fLowerSplitPad->SetLeftMargin(fMarginLeft);
     fLowerSplitPad->SetRightMargin(fMarginRight);
     fLowerSplitPad->Draw();
@@ -1110,8 +1187,11 @@ public:
         
       case 3:
         return fUpperSplitPad;
-        
+
       case 4:
+        return fMiddleSplitPad;
+        
+      case 5:
         return fLowerSplitPad;
         
       default:
@@ -1139,8 +1219,12 @@ public:
       case 3:
         fUpperSplitPad->cd();
         break;
-        
+
       case 4:
+        fMiddleSplitPad->cd();
+        break;
+        
+      case 5:
         fLowerSplitPad->cd();
         break;
         
@@ -1155,6 +1239,13 @@ public:
    */
   TPad* GetUpperPad(){
     return fUpperSplitPad;
+  }
+
+  /*
+   * Getter for the middle pad
+   */
+  TPad* GetMiddlePad(){
+    return fMiddleSplitPad;
   }
   
   /*
@@ -1172,7 +1263,14 @@ public:
   }
   
   /*
-   * Select the upper pad
+   * Select the middle pad
+   */
+  void SelectMiddlePad(){
+    fMiddleSplitPad->cd();
+  }
+
+  /*
+   * Select the lower pad
    */
   void SelectLowerPad(){
     fLowerSplitPad->cd();
