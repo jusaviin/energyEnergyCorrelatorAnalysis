@@ -326,7 +326,7 @@ HighForestReader::~HighForestReader(){
  * Initialization, meaning that the branches are connected to the tree
  */
 void HighForestReader::Initialize(){
-  
+
   // Connect the branches of the heavy ion tree
   fHeavyIonTree->SetBranchStatus("*", 0);
   fHeavyIonTree->SetBranchStatus("vz", 1);
@@ -374,7 +374,7 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchStatus("*", 0);
 
     // The corrected jet pT does not exist in the pPb forest
-    if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta){
+    if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta && fDataType != kPPb_pToMinusEta_5TeV){
       fJetTree->SetBranchStatus("jtpt", 1);
       fJetTree->SetBranchAddress("jtpt", &fJetPtArray, &fJetPtBranch);
     }
@@ -467,7 +467,7 @@ void HighForestReader::Initialize(){
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1", 1);
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
       
-    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta) { // pPb data
+    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta || fDataType == kPPb_pToMinusEta_5TeV) { // pPb data
 
       // No low jet pT triggers in pPb forests
       fCaloJet15FilterBit = 1;
@@ -550,7 +550,7 @@ void HighForestReader::Initialize(){
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
       fPileupFilterBit = 1; // No pileup filter for pp
 
-    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta){ // pPb data
+    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta || fDataType == kPPb_pToMinusEta_5TeV){ // pPb data
 
       fSkimTree->SetBranchStatus("pPAprimaryVertexFilter", 1);
       fSkimTree->SetBranchAddress("pPAprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
@@ -668,7 +668,7 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalArray, &fTrackEnergyHcalBranch);
 
         // Branches that do not exist for the pPb forest
-        if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta){
+        if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta && fDataType != kPPb_pToMinusEta_5TeV){
           fTrackTree->SetBranchStatus("trkChi2", 1);
           fTrackTree->SetBranchAddress("trkChi2", &fTrackChi2Array, &fTrackChi2Branch);
           fTrackTree->SetBranchStatus("trkNdof", 1);

@@ -69,6 +69,7 @@ EECAnalyzer::EECAnalyzer() :
   fMatchJets(0),
   fDebugLevel(0),
   fIsRealData(true),
+  fIsPPbData(false),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -238,7 +239,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fEnergyWeightSmearer = NULL;
     } 
     
-  } else if(fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+  } else if(fIsPPbData){
     
     // Track correction for 2016 pPb data
     fTrackEfficiencyCorrector = new TrkEff2016pPb(false, "trackCorrectionTables/pPb2016/");
@@ -392,6 +393,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMatchJets(in.fMatchJets),
   fDebugLevel(in.fDebugLevel),
   fIsRealData(in.fIsRealData),
+  fIsPPbData(in.fIsPPbData),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -494,6 +496,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMatchJets = in.fMatchJets;
   fDebugLevel = in.fDebugLevel;
   fIsRealData = in.fIsRealData;
+  fIsPPbData = in.fIsPPbData;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -601,10 +604,10 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fDataType = fCard->Get("DataType");
   fTriggerSelection = fCard->Get("TriggerSelection");
 
-  fIsRealData = true;
-  if(fDataType == ForestReader::kPpMC || fDataType == ForestReader::kPbPbMC){
-    fIsRealData = false;
-  }
+  // Determine the helper data types
+  fIsRealData = (fDataType != ForestReader::kPpMC && fDataType != ForestReader::kPbPbMC);
+  fIsPPbData = (fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta || fDataType == ForestReader::kPPb_pToMinusEta_5TeV);
+
   
   //****************************************
   //         Event selection cuts
@@ -682,11 +685,11 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fJetAxis = fCard->Get("JetAxis");              // Select between escheme and WTA axes
   fMatchJets = fCard->Get("MatchJets");          // Match flag between reconstructed and generator level jets
   
-  //*************************************************************
-  //    Turn off certain track cuts for generated tracks and pp
-  //*************************************************************
+  //********************************************************************
+  //    Turn off certain track cuts for generated tracks, pp, and pPb 
+  //********************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fIsPPbData){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -884,6 +887,7 @@ void EECAnalyzer::RunAnalysis(){
   correctionFileRelative[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
 
   std::string correctionFileResidual[ForestReader::knDataTypes];
   correctionFileResidual[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt";
@@ -892,6 +896,7 @@ void EECAnalyzer::RunAnalysis(){
   correctionFileResidual[ForestReader::kPbPbMC] = "CorrectionNotAppliedPF.txt";
   correctionFileResidual[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
 
   std::string uncertaintyFile[ForestReader::knDataTypes];
   uncertaintyFile[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt";
@@ -900,6 +905,7 @@ void EECAnalyzer::RunAnalysis(){
   uncertaintyFile[ForestReader::kPbPbMC] = "jetEnergyCorrections/Autumn18_HI_V8_MC_Uncertainty_AK4PF.txt";
   uncertaintyFile[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   uncertaintyFile[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   
   // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
   if(fJetType == 0){
@@ -964,9 +970,13 @@ void EECAnalyzer::RunAnalysis(){
   // Transform the CRAB job index into a accepted range of mixing job indices
   if(fMixingListIndex < 0){
     fMixingListIndex = fMixingListIndex * -1;
-    if(fDataType == ForestReader::kPbPbMC && !fMegaSkimMode){
+    if((fDataType == ForestReader::kPbPbMC && !fMegaSkimMode) || fDataType == ForestReader::kPPb_pToMinusEta){
       // There are four copies of non-mega skimmed mixing file list for PbPb MC
+      // There is also four parts for the mageskimmed files for pPb p -> -eta at 8 TeV
       fMixingListIndex = (fMixingListIndex % 4) + 1;
+    } else if (ForestReader::kPPb_pToMinusEta) {
+      // There is seven parts for the mageskimmed files for pPb p -> +eta at 8 TeV
+      fMixingListIndex = (fMixingListIndex % 7) + 1;
     } else {
       // There are eight copies all other mixing file lists
       fMixingListIndex = (fMixingListIndex % 8) + 1;
@@ -974,36 +984,40 @@ void EECAnalyzer::RunAnalysis(){
   }
 
   // CRAB running, regular mixing forest
-  fileListName[0][0][0] = "none";  // No mixing for pp
-  fileListName[0][1][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
-  fileListName[0][2][0] = "none";  // No mixing for pp MC
-  fileListName[0][3][0] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
-  fileListName[0][4][0] = "none"; // only mega skimmed mixing available for pPb pToMinusEta
-  fileListName[0][5][0] = "none"; // only mega skimmed mixing available for pPb pToPlusEta
+  fileListName[0][ForestReader::kPp][0] = "none";  // No mixing for pp
+  fileListName[0][ForestReader::kPbPb][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
+  fileListName[0][ForestReader::kPpMC][0] = "none";  // No mixing for pp MC
+  fileListName[0][ForestReader::kPbPbMC][0] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+  fileListName[0][ForestReader::kPPb_pToMinusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta
+  fileListName[0][ForestReader::kPPb_pToPlusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> +eta
+  fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
 
   // Local test, regular mixing forest
-  fileListName[1][0][0] = "none";  // No mixing for pp
-  fileListName[1][1][0] = "mixingFileList/mixingFilesPbPb.txt"; // PbPb data for local test
-  fileListName[1][2][0] = "none";  // No mixing for pp MC
-  fileListName[1][3][0] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
-  fileListName[1][4][0] = "none"; // only mega skimmed mixing available for pPb pToMinusEta
-  fileListName[1][5][0] = "none"; // only mega skimmed mixing available for pPb pToPlusEta
+  fileListName[1][ForestReader::kPp][0] = "none";  // No mixing for pp
+  fileListName[1][ForestReader::kPbPb][0] = "mixingFileList/mixingFilesPbPb.txt"; // PbPb data for local test
+  fileListName[1][ForestReader::kPpMC][0] = "none";  // No mixing for pp MC
+  fileListName[1][ForestReader::kPbPbMC][0] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
+  fileListName[1][ForestReader::kPPb_pToMinusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta
+  fileListName[1][ForestReader::kPPb_pToPlusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> +eta
+  fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
 
   // CRAB running, mega skimmed mixing forest
-  fileListName[0][0][1] = "none";  // No mixing for pp
-  fileListName[0][1][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
-  fileListName[0][2][1] = "none";  // No mixing for pp MC
-  fileListName[0][3][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetMegaSkims_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
-  fileListName[0][4][1] = "none"; // will be added after skimming is complete for pPb pToMinusEta
-  fileListName[0][5][1] = "none"; // will be added after skimming is complete  for pPb pToPlusEta
+  fileListName[0][ForestReader::kPp][1] = "none";  // No mixing for pp
+  fileListName[0][ForestReader::kPbPb][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
+  fileListName[0][ForestReader::kPpMC][1] = "none";  // No mixing for pp MC
+  fileListName[0][ForestReader::kPbPbMC][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetMegaSkims_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
+  fileListName[0][ForestReader::kPPb_pToMinusEta][1] = Form("mixingFileList/minimumBiasPPb2016_8TeV_megaSkim_pToMinusEta_part%d.txt", fMixingListIndex); // pPb p -> -eta for CRAB
+  fileListName[0][ForestReader::kPPb_pToPlusEta][1] = Form("mixingFileList/minimumBiasPPb2016_8TeV_megaSkim_pToPlusEta_part%d.txt", fMixingListIndex); // pPb p -> +eta for CRAB
+  fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/minimumBiasPPb2016_5TeV_megaSkim_pToMinusEta.txt"; // pPb pToMinusEta 5 TeV for CRAB
 
   // Local test, mega skimmed mixing forest
-  fileListName[1][0][1] = "none";  // No mixing for pp
-  fileListName[1][1][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
-  fileListName[1][2][1] = "none";  // No mixing for pp MC
-  fileListName[1][3][1] = "mixingFileList/mixingFilesPbPbMC_megaSkim.txt";  // PbPb MC for local test
-  fileListName[1][4][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb pToMinusEta
-  fileListName[1][5][1] = "mixingFileList/mixingFilesPPb_pToPlusEta_megaSkim.txt";  // pPb pToPlusEta
+  fileListName[1][ForestReader::kPp][1] = "none";  // No mixing for pp
+  fileListName[1][ForestReader::kPbPb][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
+  fileListName[1][ForestReader::kPpMC][1] = "none";  // No mixing for pp MC
+  fileListName[1][ForestReader::kPbPbMC][1] = "mixingFileList/mixingFilesPbPbMC_megaSkim.txt";  // PbPb MC for local test
+  fileListName[1][ForestReader::kPPb_pToMinusEta][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb p -> -eta for local test
+  fileListName[1][ForestReader::kPPb_pToPlusEta][1] = "mixingFileList/mixingFilesPPb_pToPlusEta_megaSkim.txt";  // pPb p -> +eta for local test
+  fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb p -> -eta 5 TeV for local test
         
   // Read the mixing files if defined and a file list exists
   if(fDoMixedCone){
@@ -1317,7 +1331,8 @@ void EECAnalyzer::RunAnalysis(){
 
           // For asymmetric systems, we will need to boost to get to center-of-mass frame
           if(fDataType == ForestReader::kPPb_pToMinusEta) jetEtaCM += 0.465; 
-          if(fDataType == ForestReader::kPPb_pToPlusEta) jetEtaCM -= 0.465; 
+          if(fDataType == ForestReader::kPPb_pToPlusEta) jetEtaCM -= 0.465;
+          if(fDataType == ForestReader::kPPb_pToMinusEta_5TeV) jetEtaCM += 0.465; 
           
           // For data, instead of jet flavor, mark positive vz with 1 and negative with 0
           // This is used in one of the systematic checks for long range correlations
@@ -1754,7 +1769,7 @@ void EECAnalyzer::RunAnalysis(){
             // Event matching is different for different systems
             if(fDataType == ForestReader::kPbPb){
               FindHiBinMatchedEvents(mixedEventIndices, 2, vz, hiBin, iEvent);
-            } else if (fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+            } else if (fIsPPbData){
               FindHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent);
             } else {
               currentMultiplicity = GetGenMultiplicity(fTrackReader, kSubeventNonZero, false);
@@ -4142,7 +4157,7 @@ void EECAnalyzer::PrepareMixingVectors(){
 
   // For pPb, we want to fill vz and multiplicity. To be determined if corrected on uncorrected works better.
   // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
-  if(fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta){
+  if(fIsPPbData){
     if(!fMegaSkimMode){
       // Only mega skim mode implemented for pPb. If not doing it, complain to user.
       throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");

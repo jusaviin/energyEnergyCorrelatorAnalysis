@@ -131,7 +131,8 @@ public:
   Int_t fJetType;                    // Type of jets used for analysis. 0 = Calo jets, 1 = PF jets
   Int_t fMatchJets;                  // Jet matching flag. 0 = Do not match jets, 1 = Match jets, 2 = Anti-match jets
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
-  Bool_t fIsRealData;                // Simplification from fData type: True = any measured data, False = any simulation
+  Bool_t fIsRealData;                // Simplification from fDataType: True = any measured data, False = any simulation
+  Bool_t fIsPPbData;                 // Flag for any pPb dataset: True = any pPb dataset, False = anything else
   
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC

@@ -30,7 +30,7 @@ class ForestReader{
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pToMinusEta, kPPb_pToPlusEta, knDataTypes};
+  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pToMinusEta, kPPb_pToPlusEta, kPPb_pToMinusEta_5TeV, knDataTypes};
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
@@ -138,7 +138,7 @@ protected:
   Bool_t fReadTrackTree;  // Read the track trees from the forest
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
   Bool_t fMixingMode;     // Flag for mixed event mode (false = regular events, true = mixed events)
-  Bool_t fMegaSkimMode;   // Flag for mega skim mode (false = regular micing files, true = mega skimmed mixing files)
+  Bool_t fMegaSkimMode;   // Flag for mega skim mode (false = regular mixing files, true = mega skimmed mixing files)
   
   // Branches for heavy ion tree
   TBranch* fHiVzBranch;          // Branch for vertex z-position
