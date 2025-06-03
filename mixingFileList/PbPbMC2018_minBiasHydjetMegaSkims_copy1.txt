@@ -1,3 +1,4 @@
+PbPbMC2018_minBiasHydjetMegaSkims_copy1.txt
 root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_1.root
 root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_2.root
 root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/minimumBiasHydjet2018_5TeV_megaSkims/HiForestAOD_minBiasHydjet2018_megaSkim_3.root
