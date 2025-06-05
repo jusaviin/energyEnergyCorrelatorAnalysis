@@ -190,7 +190,8 @@ public:
   Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 
   // Reflected cone mixing
-  Int_t fLocalRun;                      // Flag for local vs. CRAB run
+  Int_t fLocalRun;                      // Flag for local vs. CRAB/slurm run
+  Int_t fLocalMixing;                   // Mixing is done locally for slurm, via xrootd for CRAB
   Int_t fMixingListIndex;               // Index of the used mixing file list
   Int_t fMixingStartIndex;              // Event index from which event mixing is started
   Int_t fRunningMixingIndex;            // Mixed event index 

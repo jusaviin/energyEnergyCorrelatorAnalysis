@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     cout<<"+  fileNameFile: Text file containing the list of files used in the analysis. Also a single .root file can be given. For crab analysis a job id should be given here." <<endl;
     cout<<"+  configurationCard: Card file with binning and cut information for the analysis." <<endl;
     cout<<"+  outputFileName: .root file to which the histograms are written." <<endl;
-    cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data." << endl;
+    cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data. -1 is used to indicate running slurm jobs on ACCRE." << endl;
     cout<<"+  runLocal: True: Search input files from local machine. False (default): Search input files from grid with xrootd." << endl;
     cout<<"+  mixingListIndex: Mixing file list index for CRAB running. If -1, used list is determined from CRAB job ID (default = -1)" << endl;
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
@@ -188,12 +188,18 @@ int main(int argc, char **argv) {
   } else {
     ReadFileList(fileNameVector,fileNameFile,debugLevel,fileSearchIndex,runLocal);
   }
+
+  // Negative file search index combined with true flag for local run marks slurm running
+  int localRunIndex = runLocal;
+  if(fileSearchIndex < 0 && runLocal){
+    localRunIndex = 2;
+  }
   
   // Variable for histograms in the analysis
   EECHistograms* histograms;
   
   // Run the analysis over the list of files
-  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard, runLocal, mixingListIndex);
+  EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard, localRunIndex, mixingListIndex);
   eecAnalysis->RunAnalysis();
   histograms = eecAnalysis->GetHistograms();
   

@@ -114,6 +114,7 @@ EECAnalyzer::EECAnalyzer() :
   fCutJetsFromReflectedCone(false),
   fUseRecoJetsForReflectedCone(false),
   fLocalRun(0),
+  fLocalMixing(0),
   fMixingListIndex(1),
   fMixingStartIndex(0),
   fRunningMixingIndex(0),
@@ -174,7 +175,6 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fCentralityWeight(1),
   fPtHatWeight(1),
   fTotalEventWeight(1),
-  fLocalRun(runLocal),
   fMixingListIndex(mixingListIndex)
 {
   // Custom constructor
@@ -186,6 +186,15 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fRecoJetReader = NULL;
   fTrackReader = NULL;
   fMixedEventReader = NULL;
+
+  // Decode indices for local running to read mixing files from proper location
+  if(runLocal > 1){
+    fLocalRun = 0;
+    fLocalMixing = 1;
+  } else {
+    fLocalRun = runLocal;
+    fLocalMixing = 0;
+  }
   
   // Configurure the analyzer from input card
   ReadConfigurationFromCard();
@@ -438,6 +447,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fCutJetsFromReflectedCone(in.fCutJetsFromReflectedCone),
   fUseRecoJetsForReflectedCone(in.fUseRecoJetsForReflectedCone),
   fLocalRun(in.fLocalRun),
+  fLocalMixing(in.fLocalMixing),
   fMixingListIndex(in.fMixingListIndex),
   fMixingStartIndex(in.fMixingStartIndex),
   fRunningMixingIndex(in.fRunningMixingIndex),
@@ -541,6 +551,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fCutJetsFromReflectedCone = in.fCutJetsFromReflectedCone;
   fUseRecoJetsForReflectedCone = in.fUseRecoJetsForReflectedCone;
   fLocalRun = in.fLocalRun;
+  fLocalMixing = in.fLocalMixing;
   fMixingListIndex = in.fMixingListIndex;
   fMixingStartIndex = in.fMixingStartIndex;
   fRunningMixingIndex = in.fRunningMixingIndex;
@@ -1031,7 +1042,23 @@ void EECAnalyzer::RunAnalysis(){
       std::string lineInFile;
       std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType][fMegaSkimMode]);
       while (std::getline(mixingFileStream,lineInFile)) {
-        mixingFiles.push_back(lineInFile);
+
+        // For slurm running, remove xrootd pointer from mixing lists
+        if(fLocalMixing){
+          // Find the first occurrence of "//"
+          size_t firstDoubleSlash = lineInFile.find("//");
+          if(firstDoubleSlash != std::string::npos){
+          // Find the second occurrence of "//"
+            size_t secondDoubleSlash = lineInFile.find("//", firstDoubleSlash + 2);
+            if(secondDoubleSlash != std::string::npos){
+              // Remove the part with xrootd pointer from mixing files
+              mixingFiles.push_back(lineInFile.substr(secondDoubleSlash + 1));
+            }
+          }
+        } else{
+          // If not running on slurm, we can directly use whatever is in the file lists
+          mixingFiles.push_back(lineInFile);
+        }
       }
 
       // Check that all the mixing files we are supposed to read exist and can be opened
