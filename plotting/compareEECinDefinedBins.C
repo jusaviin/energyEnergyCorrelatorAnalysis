@@ -12,10 +12,10 @@ void compareEECinDefinedBins(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_unfoldedResults_processed_2025-05-20.root");
-  fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_reimplementedUnfoldedResults_processed_2025-05-20.root");
-  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
-  //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  //fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_unfoldedResults_processed_2025-05-20.root");
+  //fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_reimplementedUnfoldedResults_processed_2025-05-20.root");
+  fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaCMcut_processed_2025-05-14.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_newFileList_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
   //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
 
@@ -34,8 +34,8 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("Old implementation");
-  fileDescription.push_back("New implementation");
+  fileDescription.push_back("Old file list");
+  fileDescription.push_back("New file list");
   //fileDescription.push_back("Mixed cone sanity check");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
@@ -122,7 +122,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;

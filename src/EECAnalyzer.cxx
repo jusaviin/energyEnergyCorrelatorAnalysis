@@ -852,6 +852,10 @@ void EECAnalyzer::RunAnalysis(){
   std::vector<Int_t> mixedEventIndices;  // Vector for holding the events we have already mixed with
   Int_t eventNumber;                     // Event number
   Double_t hfSum;                        // Energy sum in HF calorimeters
+
+  // HF calorimeters
+  Double_t hfPlus;                       // Energy sum in HF plus calorimeters
+  Double_t hfMinus;                      // Energy sum in HF minus calorimeters
   
   // Variables for energy-energy correlators
   vector<double> selectedTrackPt[EECHistograms::knJetConeTypes];     // Track pT for tracks selected for energy-energy correlator analysis
@@ -1208,6 +1212,8 @@ void EECAnalyzer::RunAnalysis(){
       ptHat = fJetReader->GetPtHat();
       eventNumber = fJetReader->GetEventNumber();
       hfSum = fJetReader->GetHFSum();
+      hfPlus = fJetReader->GetHFPlus();
+      hfMinus = fJetReader->GetHFMinus();
       
       // We need to apply pT hat cuts before getting pT hat weight. There might be rare events above the upper
       // limit from which the weights are calculated, which could cause the code to crash.
@@ -1302,12 +1308,17 @@ void EECAnalyzer::RunAnalysis(){
       
       // Fill the event information histograms for the events that pass the event cuts
       if(fFillEventInformation){
-        fHistograms->fhVertexZ->Fill(vz,fPtHatWeight);                         // z vertex distribution from all events
-        fHistograms->fhVertexZWeighted->Fill(vz,fTotalEventWeight);            // z-vertex distribution weighted with the weight function
-        fHistograms->fhCentrality->Fill(centrality, fPtHatWeight);             // Centrality filled from all events
-        fHistograms->fhCentralityWeighted->Fill(centrality,fTotalEventWeight); // Centrality weighted with the centrality weighting function
-        fHistograms->fhPtHat->Fill(ptHat);                                     // pT hat histogram
-        fHistograms->fhPtHatWeighted->Fill(ptHat,fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
+        fHistograms->fhVertexZ->Fill(vz, fPtHatWeight);                         // z vertex distribution from all events
+        fHistograms->fhVertexZWeighted->Fill(vz, fTotalEventWeight);            // z-vertex distribution weighted with the weight function
+        fHistograms->fhCentrality->Fill(centrality, fPtHatWeight);              // Centrality filled from all events
+        fHistograms->fhCentralityWeighted->Fill(centrality, fTotalEventWeight); // Centrality weighted with the centrality weighting function
+        fHistograms->fhPtHat->Fill(ptHat);                                      // pT hat histogram
+        fHistograms->fhPtHatWeighted->Fill(ptHat, fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
+
+        // Also fill the HF histograms. For pp these are nonsense
+        fHistograms->fhHFPlus->Fill(hfPlus, fTotalEventWeight);                 // energy in HF plus calorimeters
+        fHistograms->fhHFMinus->Fill(hfMinus, fTotalEventWeight);               // energy in HF minus calorimeters
+        fHistograms->fhHFSum->Fill(hfSum, fTotalEventWeight);                   // energy in HF calorimeters
 
         // Fill the trigger histograms after the trigger selection
         if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kNoTrigger);
