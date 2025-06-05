@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
     cout<<"+ Usage of the macro: " << endl;
     cout<<"+  "<<argv[0]<<" [fileNameFile] [configurationCard] [outputFileName] [fileLocation] <runLocal> <mixingListIndex>"<<endl;
-    cout<<"+  fileNameFile: Text file containing the list of files used in the analysis. For crab analysis a job id should be given here." <<endl;
+    cout<<"+  fileNameFile: Text file containing the list of files used in the analysis. Also a single .root file can be given. For crab analysis a job id should be given here." <<endl;
     cout<<"+  configurationCard: Card file with binning and cut information for the analysis." <<endl;
     cout<<"+  outputFileName: .root file to which the histograms are written." <<endl;
     cout<<"+  fileLocation: Where to find analysis files: 0 = Purdue EOS, 1 = CERN EOS, 2 = Vanderbilt T2, 3 = Use xrootd to find the data." << endl;
@@ -181,7 +181,13 @@ int main(int argc, char **argv) {
   // Read the file names used for the analysis to a vector
   std::vector<TString> fileNameVector;
   fileNameVector.clear();
-  ReadFileList(fileNameVector,fileNameFile,debugLevel,fileSearchIndex,runLocal);
+
+  // Check if a root file is given, add it directly to the vector. Otherwise assume we are reading a file list
+  if(fileNameFile.EndsWith(".root")){
+    fileNameVector.push_back(fileNameFile);
+  } else {
+    ReadFileList(fileNameVector,fileNameFile,debugLevel,fileSearchIndex,runLocal);
+  }
   
   // Variable for histograms in the analysis
   EECHistograms* histograms;
