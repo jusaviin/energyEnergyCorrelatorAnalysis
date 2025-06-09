@@ -12,10 +12,10 @@ void compareEECinDefinedBins(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  //fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_unfoldedResults_processed_2025-05-20.root");
-  //fileName.push_back("data/perpendicularCone/eecAnalysis_akFlowJet_wtaAxis_nominalEnergyWeight_perpendicularCone_reimplementedUnfoldedResults_processed_2025-05-20.root");
-  fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaCMcut_processed_2025-05-14.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_newFileList_processed_2025-06-05.root");
+  fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_noSubtraction_processed_2025-06-06.root");
+  fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_perpConeSubtraction_processed_2025-06-06.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
   //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
 
@@ -27,15 +27,15 @@ void compareEECinDefinedBins(){
 
 
   std::vector<TString> fileDescription;
-  //fileDescription.push_back("pp Jet 60||80 Trigger");
-  //fileDescription.push_back("pp 5.02 TeV, No sub");
-  //fileDescription.push_back("pp 5.02 TeV, Perp cone sub");
+  //fileDescription.push_back("pp 5.02 TeV");
+  fileDescription.push_back("pp 5.02 TeV, no sub");
+  fileDescription.push_back("pp 5.02 TeV, perp cone sub");
   //fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("Old file list");
-  fileDescription.push_back("New file list");
+  //fileDescription.push_back("pPb 5 TeV, mixed cone");
+  //fileDescription.push_back("pPb 5 TeV, perp cone");
   //fileDescription.push_back("Mixed cone sanity check");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
@@ -122,7 +122,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -156,12 +156,12 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_exampleMCresult";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_ppBackgroundSubtraction";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.0, 2.0);
+  std::pair<double, double> ratioZoom = std::make_pair(0.75, 1.25);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 

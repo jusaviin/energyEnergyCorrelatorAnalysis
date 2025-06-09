@@ -273,6 +273,11 @@ public:
   TH1D* GetHistogramMultiplicityWeighted(int iCentrality);       // Getter for efficiency weighted multiplicity from all events
   TH2D* GetHistogramMultiplicityMap();                           // Getter for multiplicity vs. centrality map
   TH2D* GetHistogramWeightedMultiplicityMap();                   // Getter for efficiency weighted multiplicity vs. centrality map
+
+  // Getters for HF energy histograms
+  TH1D* GetHistogramHFPlus();             // Getter for energy in HF plus calorimeters
+  TH1D* GetHistogramHFMinus();            // Getter for energy in HF minus calorimeters
+  TH1D* GetHistogramHFSum();              // Getter for energy in HF calorimeters
   
   // Getters for jet histograms
   TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
@@ -301,6 +306,7 @@ public:
   
   // Getters for energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // Energy-energy correlator histograms
+  TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const std::pair<int,int> centralityBin, const std::pair<int,int> jetPtBin, const double trackPtCut, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel);  // Processed energy-energy correlator histograms
 
   // Getters for reflected cone QA histograms
@@ -437,6 +443,10 @@ private:
   TH1D* fhMultiplicityWeighted[kMaxCentralityBins+1];  // Efficiency weighted multiplicity form all events
   TH2D* fhMultiplicityMap;                             // Multiplicity vs. centrality map
   TH2D* fhMultiplicityMapWeighted;                     // Efficiency weighted multiplicity vs. centrality map
+
+  TH1D* fhHFPlus;             // Energy in HF plus calorimeters
+  TH1D* fhHFMinus;            // Energy in HF minus calorimeters
+  TH1D* fhHFSum;              // Energy in HF calorimeters
 
   // Histograms for jets
   TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms
