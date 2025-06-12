@@ -27,6 +27,7 @@ EECHistograms::EECHistograms() :
   fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
+  fhMixedEventCounts(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
   fhTrack(0),
@@ -80,6 +81,7 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
+  fhMixedEventCounts(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
   fhTrack(0),
@@ -133,6 +135,7 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhHFSum(in.fhHFSum),
   fhPtHat(in.fhPtHat),
   fhPtHatWeighted(in.fhPtHatWeighted),
+  fhMixedEventCounts(in.fhMixedEventCounts),
   fhMultiplicity(in.fhMultiplicity),
   fhInclusiveJet(in.fhInclusiveJet),
   fhTrack(in.fhTrack),
@@ -190,6 +193,7 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhHFSum = in.fhHFSum;
   fhPtHat = in.fhPtHat;
   fhPtHatWeighted = in.fhPtHatWeighted;
+  fhMixedEventCounts = in.fhMixedEventCounts;
   fhMultiplicity = in.fhMultiplicity;
   fhInclusiveJet = in.fhInclusiveJet;
   fhTrack = in.fhTrack;
@@ -243,6 +247,7 @@ EECHistograms::~EECHistograms(){
   delete fhHFSum;
   delete fhPtHat;
   delete fhPtHatWeighted;
+  delete fhMixedEventCounts;
   delete fhMultiplicity;
   delete fhInclusiveJet;
   delete fhTrack;
@@ -563,6 +568,7 @@ void EECHistograms::CreateHistograms(){
   fhHFSum = new TH1F("HFSum","HFSum",nHFenergyBins*2,minHFenergy,maxHFenergy*2); fhHFSum->Sumw2();
   fhPtHat = new TH1F("pthat","pthat",nPtHatBins,ptHatBins); fhPtHat->Sumw2();
   fhPtHatWeighted = new TH1F("pthatWeighted","pthatWeighted",nFinePtHatBins,minPtHat,maxPtHat); fhPtHatWeighted->Sumw2();
+  fhMixedEventCounts = new TH2I("mixedEventCounts", "mixedEventCounts", 1, 0, 1, 1, 0, 1);
   
   // For the event histogram, label each bin corresponding to an event cut
   for(Int_t i = 0; i < knEventTypes; i++){
@@ -1212,6 +1218,7 @@ void EECHistograms::Write() const{
   fhHFSum->Write();
   fhPtHat->Write();
   fhPtHatWeighted->Write();
+  fhMixedEventCounts->Write();
   fhMultiplicity->Write();
   fhInclusiveJet->Write();
   fhTrack->Write();

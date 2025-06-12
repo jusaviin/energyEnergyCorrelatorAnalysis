@@ -67,11 +67,23 @@ public:
   void FillUnfoldingResponse(); // Fill the histograms needed for unfolding study
   void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
+
+  // Methods for event mixing
   void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
+  void PrepareBinnedMixingVectors(); // Prepare variables needed for mixing in a binned manner
   void FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t iEvent); // Find the mixed events that are matched with the signal event using multiplicity
   void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin
   void FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy
+  void FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy bins
+  Int_t FindMixingBin(Double_t value, Double_t anchor, Double_t width); // Find a generic mixing bin
+  Int_t FindMixingBin(Double_t value, std::vector<Double_t> borders); // Find a generic mixing bin from bin borders
+  Int_t FindMixingVzBin(Double_t vz); // Find mixing vz bin from a vz value
+  Int_t FindMixingHFEnergyBin(Double_t hfEnergy); // Find mixing HF energy bin from HF energy value
+  std::vector<Double_t> GetMixingBinBorders(std::vector<Double_t> binBorderVector, std::vector<Double_t> valueVector); // Get vector with bin borders used in mixing
+  std::vector<Double_t> GetBinnedMixingBinBorders(std::vector<Double_t> binBorderVector, std::vector<Int_t> binVector); // Get vector with bin borders used in mixing
+  Double_t FindExampleValue(Int_t iBin, std::vector<Double_t> borders); // Find an example value from certain mixing bin
   
+  // Other methods
   Bool_t PassSubeventCut(const Int_t subeventIndex) const;  // Check if the track passes the set subevent cut
   Bool_t PassTrackCuts(ForestReader* trackReader, const Int_t iTrack, TH1F* trackCutHistogram, const Bool_t bypassFill = false); // Check if a track passes all the track cuts
   Bool_t PassTrackCuts(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a track passes all the track cuts
@@ -186,10 +198,8 @@ public:
   Bool_t fDoMixedCone;       // Estimate background from cones dropped in mixed events
   Bool_t fMegaSkimMode;      // Use mega skimmed mixing files, that contain bare minimum information for mixing
   Bool_t fDoPerpendicularCone;         // Estimate background from perpendicular cones
-  Bool_t fCutJetsFromReflectedCone;    // Do not analyze jets if there are other jets in the reflected cone
-  Bool_t fUseRecoJetsForReflectedCone; // Regardless of what jet collection is used, always look at reconstructed jets when determining if there are jets in the reflected cone
 
-  // Reflected cone mixing
+  // Event mixing variables
   Int_t fLocalRun;                      // Flag for local vs. CRAB/slurm run
   Int_t fLocalMixing;                   // Mixing is done locally for slurm, via xrootd for CRAB
   Int_t fMixingListIndex;               // Index of the used mixing file list
@@ -201,6 +211,15 @@ public:
   std::vector<Int_t> fMixedEventMultiplicity;    // Multiplicity in the mixed event
   std::vector<Double_t> fMixedEventHFEnergy;     // HF energy in the mixed event
   std::vector<ULong64_t> fMixedEventEventNumber; // Event number of the mixed event
+  std::vector<Int_t> fMixedEventVzBin;       // vz bin indices for event mixing
+  std::vector<Int_t> fMixedEventHFEnergyBin; // HF energy bin indices for event mixing
+  Bool_t fBinnedMixing;                 // Flag for doing event mixing in binned or unbinned way
+  Double_t fVzMixingAnchor;             // Low bin edge for the zero bin for vz in mixed event matching
+  Double_t fVzMixingBinWidth;           // Bin width for vz in mixed event matching
+  Double_t fHFEnergyMixingAnchor;       // Low bin edge for the zero bin for HF energy in mixed event matching
+  Double_t fHFEnergyMixingBinWidth;     // Bin width for HF energy in mixed event matching
+  std::vector<Double_t> fVzMixingBinBorders;       // Bin borders for vz used for event matching in mixing
+  std::vector<Double_t> fHFEnergyMixingBinBorders; // Bin borders for HF energy used for event matching in mixing
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

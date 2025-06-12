@@ -58,6 +58,7 @@ public:
   TH1F* fhHFSum;                   // Energy in HF calorimeters
   TH1F* fhPtHat;                   // pT hat for MC events (only meaningful for MC)
   TH1F* fhPtHatWeighted;           // Weighted pT hat distribution
+  TH2I* fhMixedEventCounts;        // Count of events available for mixing for each matched variable
   THnSparseF* fhMultiplicity;      // Track multiplicity from all events [multiplicity][centrality]
   THnSparseF* fhInclusiveJet;      // Inclusive jet information. Axes: [jet pT][jet phi][jet eta][cent]
   THnSparseF* fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent]

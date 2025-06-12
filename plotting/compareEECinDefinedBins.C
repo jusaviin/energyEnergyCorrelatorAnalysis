@@ -12,12 +12,12 @@ void compareEECinDefinedBins(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_noSubtraction_processed_2025-06-06.root");
-  fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_perpConeSubtraction_processed_2025-06-06.root");
-  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
+  //fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_noSubtraction_processed_2025-06-06.root");
+  //fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_perpConeSubtraction_processed_2025-06-06.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
-  //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
-  //fileName.push_back("data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_binnedMixingSubtracted_processed_2025-06-10.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-10.root");
 
   const int nComparisonFiles = fileName.size();
 
@@ -28,14 +28,14 @@ void compareEECinDefinedBins(){
 
   std::vector<TString> fileDescription;
   //fileDescription.push_back("pp 5.02 TeV");
-  fileDescription.push_back("pp 5.02 TeV, no sub");
-  fileDescription.push_back("pp 5.02 TeV, perp cone sub");
+  //fileDescription.push_back("pp 5.02 TeV, no sub");
+  //fileDescription.push_back("pp 5.02 TeV, perp cone sub");
   //fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  //fileDescription.push_back("pPb 5 TeV, mixed cone");
-  //fileDescription.push_back("pPb 5 TeV, perp cone");
+  fileDescription.push_back("pPb 5 TeV, mixed cone no bins");
+  fileDescription.push_back("pPb 5 TeV, mixed cone binned");
   //fileDescription.push_back("Mixed cone sanity check");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
@@ -97,10 +97,10 @@ void compareEECinDefinedBins(){
   bool individualCentrality = true; // True = make different figure for each bin. False = plot all centrality bin to the same figure.
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(30,40));
+  comparedJetPtBin.push_back(std::make_pair(40,50));
+  comparedJetPtBin.push_back(std::make_pair(50,60));
+  comparedJetPtBin.push_back(std::make_pair(60,80));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -112,7 +112,7 @@ void compareEECinDefinedBins(){
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Option to disable normalization of distributions
-  const bool normalizeDistributions = true;
+  const bool normalizeDistributions = false;
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
@@ -122,7 +122,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackground;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
@@ -156,7 +156,7 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_ppBackgroundSubtraction";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
