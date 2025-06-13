@@ -17,7 +17,7 @@ void compareEECinDefinedBins(){
   fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
   fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_binnedMixingSubtracted_processed_2025-06-10.root");
-  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-10.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedHFPlusSubtracted_processed_2025-06-12.root");
 
   const int nComparisonFiles = fileName.size();
 
@@ -36,7 +36,7 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
   fileDescription.push_back("pPb 5 TeV, mixed cone no bins");
   fileDescription.push_back("pPb 5 TeV, mixed cone binned");
-  //fileDescription.push_back("Mixed cone sanity check");
+  fileDescription.push_back("pPb 5 TeV, mixed cone HFPlus");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
   // Check that a description exists for each file
@@ -122,7 +122,7 @@ void compareEECinDefinedBins(){
   // EECHistogramManager::kEnergyEnergyCorrelatorBackgroundAfterUnfolding = Estimated background after unfolding
   // EECHistogramManager::kEnergyEnergyCorrelatorUnfoldedSignal = Unfolded energy-energy correlator signal
   // EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels = Raw energy-energy correlator
-  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorBackground;
+  int drawnEnergyEnergyCorrelator = EECHistogramManager::kEnergyEnergyCorrelatorSignal;
 
   // Choose the pairing type if raw energy-energy correlator is drawn
   // EECHistograms::kSameJetPair;
