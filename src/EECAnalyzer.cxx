@@ -819,6 +819,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t jetPtWeight = 1;         // Weighting for jet pT
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
   Bool_t jetOver120Found = false;   // Flag for finding a jet above 120 GeV from the event
+  Double_t leadingJetPt = 0;        // Leading jet pT in an event
 
   // Variables for reflected cone QA study
   Double_t reflectedConeJetPt = 0;   // pT of a jet that might be in the reflected cone
@@ -908,6 +909,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillMaxParticlePtInJetCone = 4;
   const Int_t nFillReflectedConeQA = 2;
   const Int_t nFillUnfoldingCovariance = 5;
+  const Int_t nFillHFEnergy = 4;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
@@ -915,6 +917,7 @@ void EECAnalyzer::RunAnalysis(){
   Double_t fillerMaxParticlePtInJetCone[nFillMaxParticlePtInJetCone];
   Double_t fillerReflectedConeQA[nFillReflectedConeQA];
   Double_t fillerUnfoldingCovariance[nFillUnfoldingCovariance];
+  Double_t fillerHFEnergy[nFillHFEnergy];
   
   // Setup the jet energy correction files based on the analyzed data type
   std::string correctionFileRelative[ForestReader::knDataTypes];
@@ -1356,11 +1359,6 @@ void EECAnalyzer::RunAnalysis(){
         fHistograms->fhPtHat->Fill(ptHat);                                      // pT hat histogram
         fHistograms->fhPtHatWeighted->Fill(ptHat, fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
 
-        // Also fill the HF histograms. For pp these are nonsense
-        fHistograms->fhHFPlus->Fill(hfPlus, fTotalEventWeight);                 // energy in HF plus calorimeters
-        fHistograms->fhHFMinus->Fill(hfMinus, fTotalEventWeight);               // energy in HF minus calorimeters
-        fHistograms->fhHFSum->Fill(hfSum, fTotalEventWeight);                   // energy in HF calorimeters
-
         // Fill the trigger histograms after the trigger selection
         if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kNoTrigger);
         if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet60);
@@ -1388,6 +1386,7 @@ void EECAnalyzer::RunAnalysis(){
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
 
       // Jet loop
+      leadingJetPt = 0;
       for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
         
         // Only do actual jet stuff with actual jets
@@ -1582,6 +1581,9 @@ void EECAnalyzer::RunAnalysis(){
           if(fFillJetPtClosure && (fMatchJets == 1)) FillJetPtClosureHistograms(jetIndex);
           
         } // Circle jet if
+
+        // Once the jet quality cuts are applied, determine the leading jet pT
+        if(jetPt > leadingJetPt) leadingJetPt = jetPt;
         
         //************************************************
         //         Fill histograms for all jets
@@ -1992,6 +1994,19 @@ void EECAnalyzer::RunAnalysis(){
         } // Fill anything in-jet particle pairing related
         
       } // End of jet loop
+
+      // After the jet loop, we can fill the HF energy histograms for with leading jet pT
+      if(fFillEventInformation){
+
+        // Fill the axes for HF energy histogram
+        fillerHFEnergy[0] = hfPlus;        // Axis 0 = HF plus
+        fillerHFEnergy[1] = hfMinus;       // Axis 1 = HF minus
+        fillerHFEnergy[2] = hfSum;         // Axis 2 = HF sum
+        fillerHFEnergy[3] = leadingJetPt;  // Axis 3 = leading jet pT
+
+        fHistograms->fhHFEnergy->Fill(fillerHFEnergy, fTotalEventWeight); 
+
+      }
       
       //************************************************
       //       Fill histograms for inclusive tracks

@@ -22,12 +22,10 @@ EECHistograms::EECHistograms() :
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
-  fhHFPlus(0),
-  fhHFMinus(0),
-  fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
   fhMixedEventCounts(0),
+  fhHFEnergy(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
   fhTrack(0),
@@ -76,12 +74,10 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhTrackCuts(0),
   fhCentrality(0),
   fhCentralityWeighted(0),
-  fhHFPlus(0),
-  fhHFMinus(0),
-  fhHFSum(0),
   fhPtHat(0),
   fhPtHatWeighted(0),
   fhMixedEventCounts(0),
+  fhHFEnergy(0),
   fhMultiplicity(0),
   fhInclusiveJet(0),
   fhTrack(0),
@@ -130,12 +126,10 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhTrackCuts(in.fhTrackCuts),
   fhCentrality(in.fhCentrality),
   fhCentralityWeighted(in.fhCentralityWeighted),
-  fhHFPlus(in.fhHFPlus),
-  fhHFMinus(in.fhHFMinus),
-  fhHFSum(in.fhHFSum),
   fhPtHat(in.fhPtHat),
   fhPtHatWeighted(in.fhPtHatWeighted),
   fhMixedEventCounts(in.fhMixedEventCounts),
+  fhHFEnergy(in.fhHFEnergy),
   fhMultiplicity(in.fhMultiplicity),
   fhInclusiveJet(in.fhInclusiveJet),
   fhTrack(in.fhTrack),
@@ -188,12 +182,10 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhTrackCuts = in.fhTrackCuts;
   fhCentrality = in.fhCentrality;
   fhCentralityWeighted = in.fhCentralityWeighted;
-  fhHFPlus = in.fhHFPlus;
-  fhHFMinus = in.fhHFMinus;
-  fhHFSum = in.fhHFSum;
   fhPtHat = in.fhPtHat;
   fhPtHatWeighted = in.fhPtHatWeighted;
   fhMixedEventCounts = in.fhMixedEventCounts;
+  fhHFEnergy = in.fhHFEnergy;
   fhMultiplicity = in.fhMultiplicity;
   fhInclusiveJet = in.fhInclusiveJet;
   fhTrack = in.fhTrack;
@@ -242,12 +234,10 @@ EECHistograms::~EECHistograms(){
   delete fhTrackCuts;
   delete fhCentrality;
   delete fhCentralityWeighted;
-  delete fhHFPlus;
-  delete fhHFMinus;
-  delete fhHFSum;
   delete fhPtHat;
   delete fhPtHatWeighted;
   delete fhMixedEventCounts;
+  delete fhHFEnergy;
   delete fhMultiplicity;
   delete fhInclusiveJet;
   delete fhTrack;
@@ -538,6 +528,11 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t highBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
 
+  const Int_t nAxesHFEnergy = 4;
+  Int_t nBinsHFEnergy[nAxesHFEnergy];
+  Double_t lowBinBorderHFEnergy[nAxesHFEnergy];
+  Double_t highBinBorderHFEnergy[nAxesHFEnergy];
+
   const Int_t nAxesReflectedConeQA = 2;
   Int_t nBinsReflectedConeQA[nAxesReflectedConeQA];
   Double_t lowBinBorderReflectedConeQA[nAxesReflectedConeQA];
@@ -563,9 +558,6 @@ void EECHistograms::CreateHistograms(){
   fhTrackCuts = new TH1F("trackCuts","trackCuts",knTrackCuts,-0.5,knTrackCuts-0.5); fhTrackCuts->Sumw2();
   fhCentrality = new TH1F("centrality","centrality",nCentralityBins,minCentrality,maxCentrality); fhCentrality->Sumw2();
   fhCentralityWeighted = new TH1F("centralityWeighted","centralityWeighted",nCentralityBins,minCentrality,maxCentrality); fhCentralityWeighted->Sumw2();
-  fhHFPlus = new TH1F("HFPlus","HFPlus",nHFenergyBins,minHFenergy,maxHFenergy); fhHFPlus->Sumw2();
-  fhHFMinus = new TH1F("HFMinus","HFMinus",nHFenergyBins,minHFenergy,maxHFenergy); fhHFMinus->Sumw2();
-  fhHFSum = new TH1F("HFSum","HFSum",nHFenergyBins*2,minHFenergy,maxHFenergy*2); fhHFSum->Sumw2();
   fhPtHat = new TH1F("pthat","pthat",nPtHatBins,ptHatBins); fhPtHat->Sumw2();
   fhPtHatWeighted = new TH1F("pthatWeighted","pthatWeighted",nFinePtHatBins,minPtHat,maxPtHat); fhPtHatWeighted->Sumw2();
   fhMixedEventCounts = new TH2I("mixedEventCounts", "mixedEventCounts", 1, 0, 1, 1, 0, 1);
@@ -585,6 +577,34 @@ void EECHistograms::CreateHistograms(){
   for(Int_t i = 0; i < knTrackCuts; i++){
     fhTrackCuts->GetXaxis()->SetBinLabel(i+1,kTrackCutStrings[i]);
   }
+
+  // ======== THnSparses for HF energy ========
+  
+  // Axis 0 for the HF energy histogram: HF plus
+  nBinsHFEnergy[0] = nHFenergyBins;          // nBins for energy in HF plus
+  lowBinBorderHFEnergy[0] = minHFenergy;     // low bin border for energy in HF plus
+  highBinBorderHFEnergy[0] = maxHFenergy;    // high bin border for energy in HF plus
+  
+  // Axis 1 for the HF energy histogram: HF minus
+  nBinsHFEnergy[1] = nHFenergyBins;          // nBins for energy in HF minus
+  lowBinBorderHFEnergy[1] = minHFenergy;     // low bin border for energy in HF minus
+  highBinBorderHFEnergy[1] = maxHFenergy;    // high bin border for energy in HF minus
+  
+  // Axis 2 for the HF energy histogram: HF sum
+  nBinsHFEnergy[2] = nHFenergyBins*2;        // nBins for energy in HF calorimeters
+  lowBinBorderHFEnergy[2] = minHFenergy;     // low bin border for energy in HF calorimeters
+  highBinBorderHFEnergy[2] = maxHFenergy*2;  // high bin border for energy in HF calorimeters
+
+  // Axis 3 for the HF energy histogram: leading jet pT
+  nBinsHFEnergy[3] = nJetPtBinsEEC;          // nBins for leading jet pT
+  lowBinBorderHFEnergy[3] = minJetPtEEC;     // low bin border for leading jet pT
+  highBinBorderHFEnergy[3] = maxJetPtEEC;    // high bin border for leading jet pT
+  
+  // Create the HF energy histograms using the above binning information
+  fhHFEnergy = new THnSparseF("hfEnergy", "hfEnergy", nAxesHFEnergy, nBinsHFEnergy, lowBinBorderHFEnergy, highBinBorderHFEnergy); fhHFEnergy->Sumw2();
+
+  // Custom bin borders for leading jet pT
+  fhHFEnergy->SetBinEdges(3,jetPtBinsEEC);   // Jet pT bins
   
   // ======== THnSparses for multiplicity ========
   
@@ -603,7 +623,7 @@ void EECHistograms::CreateHistograms(){
   lowBinBorderMultiplicity[2] = minCentrality;    // low bin border for centrality
   highBinBorderMultiplicity[2] = maxCentrality;   // high bin border for centrality
   
-  // Create the histograms for leading and subleading jets using the above binning information
+  // Create the multiplicity histograms using the above binning information
   fhMultiplicity = new THnSparseF("multiplicity", "multiplicity", nAxesMultiplicity, nBinsMultiplicity, lowBinBorderMultiplicity, highBinBorderMultiplicity); fhMultiplicity->Sumw2();
   
   // ======== THnSparse for multiplicity within the jet cone ========
@@ -1213,9 +1233,7 @@ void EECHistograms::Write() const{
   fhTrackCuts->Write();
   fhCentrality->Write();
   fhCentralityWeighted->Write();
-  fhHFPlus->Write();
-  fhHFMinus->Write();
-  fhHFSum->Write();
+  fhHFEnergy->Write();
   fhPtHat->Write();
   fhPtHatWeighted->Write();
   fhMixedEventCounts->Write();

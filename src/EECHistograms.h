@@ -53,12 +53,10 @@ public:
   TH1F* fhTrackCuts;               // Number of tracks. For binning see enumTrackCuts.
   TH1F* fhCentrality;              // Centrality information. -0.5 for pp or PYTHIA.
   TH1F* fhCentralityWeighted;      // Weighted centrality distribution (only meaningful for MC)
-  TH1F* fhHFPlus;                  // Energy in HF plus calorimeters
-  TH1F* fhHFMinus;                 // Energy in HF minus calorimeters
-  TH1F* fhHFSum;                   // Energy in HF calorimeters
   TH1F* fhPtHat;                   // pT hat for MC events (only meaningful for MC)
   TH1F* fhPtHatWeighted;           // Weighted pT hat distribution
   TH2I* fhMixedEventCounts;        // Count of events available for mixing for each matched variable
+  THnSparseF* fhHFEnergy;          // HF energy as a function of leading jet pT
   THnSparseF* fhMultiplicity;      // Track multiplicity from all events [multiplicity][centrality]
   THnSparseF* fhInclusiveJet;      // Inclusive jet information. Axes: [jet pT][jet phi][jet eta][cent]
   THnSparseF* fhTrack;             // Track histogram. Axes: [pT][phi][eta][cent]
