@@ -275,9 +275,15 @@ public:
   TH2D* GetHistogramWeightedMultiplicityMap();                   // Getter for efficiency weighted multiplicity vs. centrality map
 
   // Getters for HF energy histograms
-  TH1D* GetHistogramHFPlus();             // Getter for energy in HF plus calorimeters
-  TH1D* GetHistogramHFMinus();            // Getter for energy in HF minus calorimeters
-  TH1D* GetHistogramHFSum();              // Getter for energy in HF calorimeters
+  TH1D* GetHistogramHFPlus(int iJetPt = -1);             // Getter for energy in HF plus calorimeters
+  TH1D* GetHistogramHFMinus(int iJetPt = -1);            // Getter for energy in HF minus calorimeters
+  TH1D* GetHistogramHFSum(int iJetPt = -1);              // Getter for energy in HF calorimeters
+  TH2D* GetHistogramHFPlusVsHFMinus(int iJetPt = -1);    // Getter for 2D map between HF plus and HF minus
+
+  TH1D* GetHistogramHFPlus(std::pair<double,double> jetPtBin);             // Getter for energy in HF plus calorimeters
+  TH1D* GetHistogramHFMinus(std::pair<double,double> jetPtBin);            // Getter for energy in HF minus calorimeters
+  TH1D* GetHistogramHFSum(std::pair<double,double> jetPtBin);              // Getter for energy in HF calorimeters
+  TH2D* GetHistogramHFPlusVsHFMinus(std::pair<double,double> jetPtBin);    // Getter for 2D map between HF plus and HF minus
   
   // Getters for jet histograms
   TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
@@ -444,9 +450,10 @@ private:
   TH2D* fhMultiplicityMap;                             // Multiplicity vs. centrality map
   TH2D* fhMultiplicityMapWeighted;                     // Efficiency weighted multiplicity vs. centrality map
 
-  TH1D* fhHFPlus;             // Energy in HF plus calorimeters
-  TH1D* fhHFMinus;            // Energy in HF minus calorimeters
-  TH1D* fhHFSum;              // Energy in HF calorimeters
+  TH1D* fhHFPlus[kMaxJetPtBinsEEC];           // Energy in HF plus calorimeters
+  TH1D* fhHFMinus[kMaxJetPtBinsEEC];          // Energy in HF minus calorimeters
+  TH1D* fhHFSum[kMaxJetPtBinsEEC];            // Energy in HF calorimeters
+  TH2D* fhHFPlusVsHFMinus[kMaxJetPtBinsEEC];  // 2D-map between energy in plus and minus sides of HF calorimeters
 
   // Histograms for jets
   TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms
@@ -508,12 +515,15 @@ private:
   void SetBinBordersAndIndices(const char* histogramName, const int nBins, double *copyBinBorders, int* binIndices, const double* binBorders, const int iAxis, const bool setIndices); // Read the bin indices for given bin borders
   
   // Finders for histograms with different amount of restrictions
+  TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, const bool normalizeToBinWidth = true); // Extract a 2D histogram without axis restrictions from THnSparseD
   TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
   TH2D* FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a 2D histogram using given axis restrictions from THnSparseD
+  TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, const bool normalizeToBinWidth = true); // Extract a histogram without axis restrictions from THnSparseD
   TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int nAxes, int* axisNumber, int* lowBinIndex, int* highBinIndex, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
   TH1D* FindHistogram(THnSparseD* histogramArray, int xAxis, int restrictionAxis, int lowBinIndex, int highBinIndex, int restrictionAxis2 = 0, int lowBinIndex2 = 0, int highBinIndex2 = 0, const bool normalizeToBinWidth = true); // Extract a histogram using given axis restrictions from THnSparseD
   
   // Loaders for different groups of histograms
+  void LoadHFEnergyHistograms(); // Loader for HF energy histograms
   void LoadMultiplicityHistograms(); // Loader for multiplicity histograms
   void LoadJetHistograms(); // Loader for jet histograms
   void LoadTrackHistograms(); // Loader for track histograms

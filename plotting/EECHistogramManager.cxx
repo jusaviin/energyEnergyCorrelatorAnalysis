@@ -100,9 +100,12 @@ EECHistogramManager::EECHistogramManager() :
   fhMultiplicityMap = NULL;              // Multiplicity vs. centrality map
   fhMultiplicityMapWeighted = NULL;      // Efficiency weighted multiplicity vs. centrality map
 
-  fhHFPlus = NULL;             // Energy in HF plus calorimeters
-  fhHFMinus = NULL;            // Energy in HF minus calorimeters
-  fhHFSum= NULL;               // Energy in HF calorimeters
+  for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+    fhHFPlus[iJetPt] = NULL;             // Energy in HF plus calorimeters
+    fhHFMinus[iJetPt] = NULL;            // Energy in HF minus calorimeters
+    fhHFSum[iJetPt] = NULL;              // Energy in HF calorimeters
+    fhHFPlusVsHFMinus[iJetPt] = NULL;    // 2D-map of HF plus vs. HF minus
+  }
   
   // Centrality loop
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins; iCentrality++){
@@ -448,9 +451,12 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
   fhMultiplicityMapWeighted = in.fhMultiplicityMapWeighted;
 
   // HF energy histograms
-  fhHFPlus = in.fhHFPlus;
-  fhHFMinus = in.fhHFMinus;
-  fhHFSum = in.fhHFSum;
+  for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
+    fhHFPlus[iJetPt] = in.fhHFPlus[iJetPt];
+    fhHFMinus[iJetPt] = in.fhHFMinus[iJetPt];
+    fhHFSum[iJetPt] = in.fhHFSum[iJetPt];
+    fhHFPlusVsHFMinus[iJetPt] = in.fhHFPlusVsHFMinus[iJetPt];
+  }
   
   // Centrality loop
   for(int iCentrality = 0; iCentrality < kMaxCentralityBins; iCentrality++){
@@ -1049,10 +1055,11 @@ void EECHistogramManager::LoadHistograms(){
     fhCentralityWeighted = (TH1D*) fInputFile->Get("centralityWeighted");  // MC weighted centrality in all events
     fhPtHat = (TH1D*) fInputFile->Get("pthat");                            // pT hat for MC events
     fhPtHatWeighted = (TH1D*) fInputFile->Get("pthatWeighted");            // Weighted pT hat for MC events
-    fhHFPlus = (TH1D*) fInputFile->Get("HFPlus");                          // Energy in HF plus calorimeters
-    fhHFMinus = (TH1D*) fInputFile->Get("HFMinus");                        // Energy in HF minus calorimeters
-    fhHFSum = (TH1D*) fInputFile->Get("HFSum");                            // Energy in HF calorimeters
     
+    // Load HF energy histograms
+    LoadHFEnergyHistograms();
+
+    // Load multiplicity histograms
     LoadMultiplicityHistograms();
   }
   
@@ -1101,6 +1108,52 @@ void EECHistogramManager::LoadHistograms(){
   // Update the weight exponent to the card if necessary
   UpdateWeightExponent();
   
+}
+
+/*
+ * Loader for HF energy histograms
+ *
+ * THnSparse for HF energy:
+ *
+ *     Histogram name        Axis index            Content of axis
+ * --------------------------------------------------------------------------
+ *        hfEnergy             Axis 0               Energy in HF plus
+ *        hfEnergy             Axis 1              Energy in HF minus
+ *        hfEnergy             Axis 2            Energy in HF calorimeters
+ *        hfEnergy             Axis 3                Leading jet pT
+ */
+void EECHistogramManager::LoadHFEnergyHistograms(){
+    
+  // Define helper variables
+  int duplicateRemoverJetPt = -1;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  THnSparseD* histogramArray;
+
+  // Open the multidimensional histogram from which the histograms are projected
+  histogramArray = (THnSparseD*) fInputFile->Get("hfEnergy");
+
+  // Load the histograms without jet pT selection
+  fhHFPlus[fnJetPtBinsEEC] = FindHistogram(histogramArray, 0);
+  fhHFMinus[fnJetPtBinsEEC] = FindHistogram(histogramArray, 1);
+  fhHFSum[fnJetPtBinsEEC] = FindHistogram(histogramArray, 2);
+  fhHFPlusVsHFMinus[fnJetPtBinsEEC] = FindHistogram2D(histogramArray, 0, 1);
+
+  // Loop over jet pT bins
+  for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+    
+    // Select the jet pT bin indices
+    lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+    higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemoverJetPt;
+          
+    // Load the histograms with jet pT selection
+    fhHFPlus[iJetPt] = FindHistogram(histogramArray, 0, 3, lowerJetPtBin, higherJetPtBin);
+    fhHFMinus[iJetPt] = FindHistogram(histogramArray, 1, 3, lowerJetPtBin, higherJetPtBin);
+    fhHFSum[iJetPt] = FindHistogram(histogramArray, 2, 3, lowerJetPtBin, higherJetPtBin);
+    fhHFPlusVsHFMinus[iJetPt] = FindHistogram2D(histogramArray, 0, 1, 3, lowerJetPtBin, higherJetPtBin);
+    
+  } // Jet pT loop
+
 }
 
 /*
@@ -2586,6 +2639,32 @@ void EECHistogramManager::LoadTrackParticleMatchingHistograms(){
  *   THnSparseD* histogramArray = Inputfile containing the THnSparse to be read
  *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
  *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
+ *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
+ */
+TH2D* EECHistogramManager::FindHistogram2D(THnSparseD* histogramArray, int xAxis, int yAxis, const bool normalizeToBinWidth){
+  
+  // Create a unique name for eeach histogram that is read from the file
+  TString newName = histogramArray->GetName();
+  newName.Append("_inclusive");
+  
+  // Project out the histogram and give it the created unique name
+  TH2D* projectedHistogram = (TH2D*) histogramArray->Projection(yAxis,xAxis);
+  projectedHistogram->SetName(newName.Data());
+  
+  // Apply bin width normalization to the projected histogram
+  if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
+  
+  // Return the projected histogram
+  return projectedHistogram;
+}
+
+/*
+ * Extract a 2D histogram from a given centrality bin from THnSparseD
+ *
+ *  Arguments:
+ *   THnSparseD* histogramArray = Inputfile containing the THnSparse to be read
+ *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH2D
+ *   int yAxis = Index for the axis in THnSparse that is projected to y-axis for TH2D
  *   int nAxes = Number of axes that are restained for the projection
  *   int* axisNumber = Indices for the axes in THnSparse that are used as a restriction for the projection
  *   int* lowBinIndex = Indices of the lowest considered bins in the restriction axis
@@ -2636,6 +2715,36 @@ TH2D* EECHistogramManager::FindHistogram2D(THnSparseD* histogramArray, int xAxis
   int nAxes = 2;
   if(highBinIndex2 == 0 && lowBinIndex2 == 0) nAxes = 1;
   return FindHistogram2D(histogramArray,xAxis,yAxis,nAxes,restrictionAxes,lowBinIndices,highBinIndices,normalizeToBinWidth);
+}
+
+/*
+ * Extract a histogram without restrictions on other axes in THnSparse
+ *
+ *  Arguments:
+ *   THnSparseD* histogramArray = Histogram array from which the desired histograms are projected
+ *   int xAxis = Index for the axis in THnSparse that is projected to x-axis for TH1D
+ *   const bool normalizeToBinWidth = Flag for normalizing the projected histogram to the bin width
+ */
+TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, const bool normalizeToBinWidth){
+  
+  // Create a unique name for each histogram that is read from the file
+  TString newName = histogramArray->GetName();
+  newName.Append("_inclusive");
+  
+  // Project out the histogram and give it the created unique name
+  TH1D* projectedHistogram = NULL;
+  
+  // Check that we are not trying to project a non-existing axis
+  if(xAxis < histogramArray->GetNdimensions()){
+    projectedHistogram = (TH1D*) histogramArray->Projection(xAxis);
+    projectedHistogram->SetName(newName.Data());
+  
+    // Apply bin width normalization to the projected histogram
+    if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
+  }
+  
+  // Return the projected histogram
+  return projectedHistogram;
 }
 
 /*
@@ -2726,9 +2835,26 @@ void EECHistogramManager::Write(const char* fileName, const char* fileOption){
     fhPtHat->Write("",TObject::kOverwrite);              // pT hat for MC events (only meaningful for MC)
     fhPtHatWeighted->Write("",TObject::kOverwrite);      // Weighted pT hat distribution (only meaningful for MC)
 
-    fhHFPlus->Write("",TObject::kOverwrite);             // Energy in HF plus calorimeters
-    fhHFMinus->Write("",TObject::kOverwrite);            // Energy in HF minus calorimeters
-    fhHFSum->Write("",TObject::kOverwrite);              // Energy in HF calorimeters
+    // Create a directory for the HF energy histograms if it does not already exist
+    if(!gDirectory->GetDirectory("HFEnergy")) gDirectory->mkdir("HFEnergy");
+    gDirectory->cd("HFEnergy");
+
+    // Write the histograms without jet pT selection
+    fhHFPlus[fnJetPtBinsEEC]->Write("HFPlus",TObject::kOverwrite);                   // Energy in HF plus calorimeters
+    fhHFMinus[fnJetPtBinsEEC]->Write("HFMinus",TObject::kOverwrite);                 // Energy in HF minus calorimeters
+    fhHFSum[fnJetPtBinsEEC]->Write("HFSum",TObject::kOverwrite);                     // Energy in HF calorimeters
+    fhHFPlusVsHFMinus[fnJetPtBinsEEC]->Write("HFPlusVsHFMinus",TObject::kOverwrite); // 2D-map between HF plus and HF minus
+
+    // Loop ovet jet pT
+    for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+      fhHFPlus[iJetPt]->Write(Form("HFPlus_J%d", iJetPt), TObject::kOverwrite);                   // Energy in HF plus calorimeters
+      fhHFMinus[iJetPt]->Write(Form("HFMinus_J%d", iJetPt), TObject::kOverwrite);                 // Energy in HF minus calorimeters
+      fhHFSum[iJetPt]->Write(Form("HFSum_J%d", iJetPt), TObject::kOverwrite);                     // Energy in HF calorimeters
+      fhHFPlusVsHFMinus[iJetPt]->Write(Form("HFPlusVsHFMinus_J%d", iJetPt), TObject::kOverwrite); // 2D-map between HF plus and HF minus
+    }
+
+    // Return back to main directory
+    gDirectory->cd("../");
     
     // Create a directory for the multiplicity histograms if it does not already exist
     if(!gDirectory->GetDirectory("multiplicity")) gDirectory->mkdir("multiplicity");
@@ -3850,9 +3976,9 @@ void EECHistogramManager::LoadProcessedHistograms(){
     fhPtHat = (TH1D*) fInputFile->Get("pthat");                            // pT hat for MC events
     fhPtHatWeighted = (TH1D*) fInputFile->Get("pthatWeighted");            // Weighted pT hat for MC events
 
-    fhHFPlus = (TH1D*) fInputFile->Get("HFPlus");                          // Energy in HF plus calorimeters
-    fhHFMinus = (TH1D*) fInputFile->Get("HFMinus");                        // Energy in HF minus calorimeters
-    fhHFSum = (TH1D*) fInputFile->Get("HFSum");                            // Energy in HF calorimeters
+    fhHFPlus[fnJetPtBinsEEC] = (TH1D*) fInputFile->Get("hfEnergy/HFPlus");    // Energy in HF plus calorimeters
+    fhHFMinus[fnJetPtBinsEEC] = (TH1D*) fInputFile->Get("hfEnergy/HFMinus");  // Energy in HF minus calorimeters
+    fhHFSum[fnJetPtBinsEEC] = (TH1D*) fInputFile->Get("hfEnergy/HFSum");      // Energy in HF calorimeters
     
     for(int iCentrality = 0; iCentrality < fnCentralityBins; iCentrality++){
       
@@ -5088,30 +5214,87 @@ TH2D* EECHistogramManager::GetHistogramWeightedMultiplicityMap(){
 }
 
 // Getter for energy in HF plus calorimeters
-TH1D* EECHistogramManager::GetHistogramHFPlus(){
+TH1D* EECHistogramManager::GetHistogramHFPlus(int iJetPt){
+
+  // If the jet pT index is out of bounds, give the jet pT integrated histogram
+  if(iJetPt < 0 || iJetPt > fnJetPtBinsEEC) iJetPt = fnJetPtBinsEEC;
 
   // If the histogram is NULL, try to load the processed version of it
-  if(fhHFPlus == NULL) fhHFPlus = (TH1D*) fInputFile->Get("HFPlus"); 
+  if(fhHFPlus[iJetPt] == NULL) {
+    TString histogramNamer = "HFEnergy/HFPlus";
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("_J%d", iJetPt));
+    fhHFPlus[iJetPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
 
-  return fhHFPlus;
+  return fhHFPlus[iJetPt];
 }
 
 // Getter for energy in HF minus calorimeters          
-TH1D* EECHistogramManager::GetHistogramHFMinus(){
+TH1D* EECHistogramManager::GetHistogramHFMinus(int iJetPt){
+
+  // If the jet pT index is out of bounds, give the jet pT integrated histogram
+  if(iJetPt < 0 || iJetPt > fnJetPtBinsEEC) iJetPt = fnJetPtBinsEEC;
 
   // If the histogram is NULL, try to load the processed version of it
-  if(fhHFMinus == NULL) fhHFMinus = (TH1D*) fInputFile->Get("HFMinus"); 
+  if(fhHFMinus[iJetPt] == NULL) {
+    TString histogramNamer = "HFEnergy/HFMinus";
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("_J%d", iJetPt));
+    fhHFMinus[iJetPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
 
-  return fhHFMinus;
+  return fhHFMinus[iJetPt];
 }
 
 // Getter for energy in HF calorimeters            
-TH1D* EECHistogramManager::GetHistogramHFSum(){
+TH1D* EECHistogramManager::GetHistogramHFSum(int iJetPt){
+
+  // If the jet pT index is out of bounds, give the jet pT integrated histogram
+  if(iJetPt < 0 || iJetPt > fnJetPtBinsEEC) iJetPt = fnJetPtBinsEEC;
 
   // If the histogram is NULL, try to load the processed version of it
-  if(fhHFSum == NULL) fhHFSum = (TH1D*) fInputFile->Get("HFSum"); 
+  if(fhHFSum[iJetPt] == NULL) {
+    TString histogramNamer = "HFEnergy/HFSum";
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("_J%d", iJetPt));
+    fhHFSum[iJetPt] = (TH1D*) fInputFile->Get(histogramNamer.Data());
+  }
 
-  return fhHFSum;
+  return fhHFSum[iJetPt];
+}
+
+// Getter for energy in HF plus calorimeters
+TH2D* EECHistogramManager::GetHistogramHFPlusVsHFMinus(int iJetPt){
+
+  // If the jet pT index is out of bounds, give the jet pT integrated histogram
+  if(iJetPt < 0 || iJetPt > fnJetPtBinsEEC) iJetPt = fnJetPtBinsEEC;
+
+  // If the histogram is NULL, try to load the processed version of it
+  if(fhHFPlusVsHFMinus[iJetPt] == NULL) {
+    TString histogramNamer = "HFEnergy/HFPlusVsHFMinus";
+    if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("_J%d", iJetPt));
+    fhHFPlusVsHFMinus[iJetPt] = (TH2D*) fInputFile->Get(histogramNamer.Data());
+  }
+
+  return fhHFPlusVsHFMinus[iJetPt];
+}
+
+// Getter for energy in HF plus calorimeters
+TH1D* EECHistogramManager::GetHistogramHFPlus(std::pair<double,double> jetPtBin){
+  return GetHistogramHFPlus(fCard->FindBinIndexJetPtEEC(jetPtBin));
+} 
+
+ // Getter for energy in HF minus calorimeters
+TH1D* EECHistogramManager::GetHistogramHFMinus(std::pair<double,double> jetPtBin){
+  return GetHistogramHFMinus(fCard->FindBinIndexJetPtEEC(jetPtBin));
+}
+
+// Getter for energy in HF calorimeters    
+TH1D* EECHistogramManager::GetHistogramHFSum(std::pair<double,double> jetPtBin){
+  return GetHistogramHFSum(fCard->FindBinIndexJetPtEEC(jetPtBin));
+}
+
+// Getter for 2D map between HF plus and HF minus
+TH2D* EECHistogramManager::GetHistogramHFPlusVsHFMinus(std::pair<double,double> jetPtBin){
+  return GetHistogramHFPlusVsHFMinus(fCard->FindBinIndexJetPtEEC(jetPtBin));
 }
 
 // Getters for jet histograms
