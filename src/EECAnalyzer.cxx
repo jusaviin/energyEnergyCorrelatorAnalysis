@@ -127,6 +127,7 @@ EECAnalyzer::EECAnalyzer() :
   fBinnedMixing(false),
   fVzMixingBinBorders(0),
   fHFEnergyMixingBinBorders(0),
+  fHFEnergyMatchingShift(0),
   fFillEventInformation(false),
   fFillJetHistograms(false),
   fFillTrackHistograms(false),
@@ -463,6 +464,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fBinnedMixing(in.fBinnedMixing),
   fVzMixingBinBorders(in.fVzMixingBinBorders),
   fHFEnergyMixingBinBorders(in.fHFEnergyMixingBinBorders),
+  fHFEnergyMatchingShift(in.fHFEnergyMatchingShift),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
   fFillTrackHistograms(in.fFillTrackHistograms),
@@ -570,6 +572,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fBinnedMixing = in.fBinnedMixing;
   fVzMixingBinBorders = in.fVzMixingBinBorders;
   fHFEnergyMixingBinBorders = in.fHFEnergyMixingBinBorders;
+  fHFEnergyMatchingShift = in.fHFEnergyMatchingShift;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
   fFillTrackHistograms = in.fFillTrackHistograms;
@@ -755,6 +758,10 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   for(Int_t iBin = 0; iBin < nMixingHFEnergyBins; iBin++){
     fHFEnergyMixingBinBorders.push_back(fCard->Get("HFEnergyMixingBins", iBin));
   }
+
+  // TODO: For now, this number is hard coded.
+  // DEBUG: This should eventually come either from card, or a configuration class
+  fHFEnergyMatchingShift = 28;
   
   //************************************************
   //         Read which histograms to fill
@@ -820,6 +827,7 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t jetOver80Found = false;    // Flag for finding a jet above 80 GeV from the event
   Bool_t jetOver120Found = false;   // Flag for finding a jet above 120 GeV from the event
   Double_t leadingJetPt = 0;        // Leading jet pT in an event
+  Int_t nGoodJets = 0;              // Nuber of good jets in the event
 
   // Variables for reflected cone QA study
   Double_t reflectedConeJetPt = 0;   // pT of a jet that might be in the reflected cone
@@ -909,7 +917,7 @@ void EECAnalyzer::RunAnalysis(){
   const Int_t nFillMaxParticlePtInJetCone = 4;
   const Int_t nFillReflectedConeQA = 2;
   const Int_t nFillUnfoldingCovariance = 5;
-  const Int_t nFillHFEnergy = 4;
+  const Int_t nFillHFEnergy = 5;
   Double_t fillerJet[nFillJet];
   Double_t fillerMultiplicity[nFillMultiplicity];
   Double_t fillerMultiplicityInJetCone[nFillMultiplicityInJetCone];
@@ -1387,6 +1395,7 @@ void EECAnalyzer::RunAnalysis(){
 
       // Jet loop
       leadingJetPt = 0;
+      nGoodJets = 0;
       for(Int_t jetIndex = 0; jetIndex < nJets; jetIndex++){
         
         // Only do actual jet stuff with actual jets
@@ -1584,6 +1593,9 @@ void EECAnalyzer::RunAnalysis(){
 
         // Once the jet quality cuts are applied, determine the leading jet pT
         if(jetPt > leadingJetPt) leadingJetPt = jetPt;
+
+        // We have a good jet!
+        nGoodJets++;
         
         //************************************************
         //         Fill histograms for all jets
@@ -2003,6 +2015,7 @@ void EECAnalyzer::RunAnalysis(){
         fillerHFEnergy[1] = hfMinus;       // Axis 1 = HF minus
         fillerHFEnergy[2] = hfSum;         // Axis 2 = HF sum
         fillerHFEnergy[3] = leadingJetPt;  // Axis 3 = leading jet pT
+        fillerHFEnergy[4] = nGoodJets;     // Axis 4 = Number of jets passing selection
 
         fHistograms->fhHFEnergy->Fill(fillerHFEnergy, fTotalEventWeight); 
 
@@ -4110,7 +4123,7 @@ void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, co
  *  const Int_t iEvent = Loop index of the current event
  *
  */
-void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent){
+void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent){
 
   // Event matching for pPb
   Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
@@ -4123,6 +4136,10 @@ void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices,
   Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
 
   mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+
+  // Shift the hfEnergy in the data event to remove the contribution from the hard scattering
+  hfEnergy -= fHFEnergyMatchingShift;
+  if(hfEnergy < 2) hfEnergy = 2; // TODO: There are very few events with energy below 5 units. This might need adjustment...
 
   // Find events to mix until we have found defined number of matching events
   while(mixedEventFillIndex < nEventsToMatch){

@@ -73,7 +73,7 @@ public:
   void PrepareBinnedMixingVectors(); // Prepare variables needed for mixing in a binned manner
   void FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t iEvent); // Find the mixed events that are matched with the signal event using multiplicity
   void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin
-  void FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy
+  void FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy
   void FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy bins
   Int_t FindMixingBin(Double_t value, Double_t anchor, Double_t width); // Find a generic mixing bin
   Int_t FindMixingBin(Double_t value, std::vector<Double_t> borders); // Find a generic mixing bin from bin borders
@@ -220,6 +220,7 @@ public:
   Double_t fHFEnergyMixingBinWidth;     // Bin width for HF energy in mixed event matching
   std::vector<Double_t> fVzMixingBinBorders;       // Bin borders for vz used for event matching in mixing
   std::vector<Double_t> fHFEnergyMixingBinBorders; // Bin borders for HF energy used for event matching in mixing
+  Double_t fHFEnergyMatchingShift;      // Shift the matched HF energy value to find a reference value without hard interaction
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.
   Bool_t fFillEventInformation;                   // Fill event information histograms

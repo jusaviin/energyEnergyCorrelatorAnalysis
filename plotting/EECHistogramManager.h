@@ -65,6 +65,7 @@ public:
   static const int kMaxJetPtBinsEEC = 60;       // Maximum allowed number of jet pT bins for energy-energy correlators
   static const int kMaxTrackPtBinsEEC = 20;     // Maximum allowed number of track pT bins for energy-energy correlators
   static const int knProjectedMaxParticlePtBins = 6; // Number of pT bins projected from the max particle pT within the jets histograms
+  static const int knMaxJetsBins = 10;           // Maximum allowed number of high-pT jets in an event
   
 private:
   
@@ -275,15 +276,15 @@ public:
   TH2D* GetHistogramWeightedMultiplicityMap();                   // Getter for efficiency weighted multiplicity vs. centrality map
 
   // Getters for HF energy histograms
-  TH1D* GetHistogramHFPlus(int iJetPt = -1);             // Getter for energy in HF plus calorimeters
-  TH1D* GetHistogramHFMinus(int iJetPt = -1);            // Getter for energy in HF minus calorimeters
-  TH1D* GetHistogramHFSum(int iJetPt = -1);              // Getter for energy in HF calorimeters
-  TH2D* GetHistogramHFPlusVsHFMinus(int iJetPt = -1);    // Getter for 2D map between HF plus and HF minus
+  TH1D* GetHistogramHFPlus(int iJetPt = -1, int nJets = -1);             // Getter for energy in HF plus calorimeters
+  TH1D* GetHistogramHFMinus(int iJetPt = -1, int nJets = -1);            // Getter for energy in HF minus calorimeters
+  TH1D* GetHistogramHFSum(int iJetPt = -1, int nJets = -1);              // Getter for energy in HF calorimeters
+  TH2D* GetHistogramHFPlusVsHFMinus(int iJetPt = -1, int nJets = -1);    // Getter for 2D map between HF plus and HF minus
 
-  TH1D* GetHistogramHFPlus(std::pair<double,double> jetPtBin);             // Getter for energy in HF plus calorimeters
-  TH1D* GetHistogramHFMinus(std::pair<double,double> jetPtBin);            // Getter for energy in HF minus calorimeters
-  TH1D* GetHistogramHFSum(std::pair<double,double> jetPtBin);              // Getter for energy in HF calorimeters
-  TH2D* GetHistogramHFPlusVsHFMinus(std::pair<double,double> jetPtBin);    // Getter for 2D map between HF plus and HF minus
+  TH1D* GetHistogramHFPlus(std::pair<double,double> jetPtBin, int nJets = -1);           // Getter for energy in HF plus calorimeters
+  TH1D* GetHistogramHFMinus(std::pair<double,double> jetPtBin, int nJets = -1);          // Getter for energy in HF minus calorimeters
+  TH1D* GetHistogramHFSum(std::pair<double,double> jetPtBin, int nJets = -1);            // Getter for energy in HF calorimeters
+  TH2D* GetHistogramHFPlusVsHFMinus(std::pair<double,double> jetPtBin, int nJets = -1);  // Getter for 2D map between HF plus and HF minus
   
   // Getters for jet histograms
   TH1D* GetHistogramJetPt(int iCentrality);     // Jet pT histograms
@@ -450,10 +451,10 @@ private:
   TH2D* fhMultiplicityMap;                             // Multiplicity vs. centrality map
   TH2D* fhMultiplicityMapWeighted;                     // Efficiency weighted multiplicity vs. centrality map
 
-  TH1D* fhHFPlus[kMaxJetPtBinsEEC];           // Energy in HF plus calorimeters
-  TH1D* fhHFMinus[kMaxJetPtBinsEEC];          // Energy in HF minus calorimeters
-  TH1D* fhHFSum[kMaxJetPtBinsEEC];            // Energy in HF calorimeters
-  TH2D* fhHFPlusVsHFMinus[kMaxJetPtBinsEEC];  // 2D-map between energy in plus and minus sides of HF calorimeters
+  TH1D* fhHFPlus[kMaxJetPtBinsEEC][knMaxJetsBins+1];           // Energy in HF plus calorimeters
+  TH1D* fhHFMinus[kMaxJetPtBinsEEC][knMaxJetsBins+1];          // Energy in HF minus calorimeters
+  TH1D* fhHFSum[kMaxJetPtBinsEEC][knMaxJetsBins+1];            // Energy in HF calorimeters
+  TH2D* fhHFPlusVsHFMinus[kMaxJetPtBinsEEC][knMaxJetsBins+1];  // 2D-map between energy in plus and minus sides of HF calorimeters
 
   // Histograms for jets
   TH1D* fhJetPt[kMaxCentralityBins];      // Jet pT histograms

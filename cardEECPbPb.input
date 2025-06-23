@@ -83,7 +83,11 @@ BackgroundMethods 3  # Bit 0 = Reflected-eta cone       (to set: 1)
                      # Bit 2 = Mixed cones              (to set: 4)
                      # Examples: All = 7, Everything but no mixing = 3
 MegaSkimMixing 1 # 0 = If doing mixing, use regular mixing files. 1 = Use megaskimmed mixing files
-AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
+BinnedMixing 0 # 0 = Match events without bin borders for mixing. 1 = Use binned event matching for mixing
+
+# For the mixing bins, if exactly two values are given, these are interpreted as an example bin border, and bin width. The mixing bins are then automatically contructed using this information with even bin width. If more than two values are given, these are directly interpreted as bin borders.
+VzMixingBins -0.5 1 # vz binning for mixing
+HFEnergyMixingBins 0 1 # HF energy binning for mixing
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

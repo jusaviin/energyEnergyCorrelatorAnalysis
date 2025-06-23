@@ -333,10 +333,19 @@ void HighForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("vz", &fVertexZ, &fHiVzBranch);
   fHeavyIonTree->SetBranchStatus("evt", 1);
   fHeavyIonTree->SetBranchAddress("evt", &fEventNumber, &fEventNumberBranch);
-  fHeavyIonTree->SetBranchStatus("hiHFplus", 1);
-  fHeavyIonTree->SetBranchAddress("hiHFplus", &fHFPlus, &fHFPlusBranch);
-  fHeavyIonTree->SetBranchStatus("hiHFminus", 1);
-  fHeavyIonTree->SetBranchAddress("hiHFminus", &fHFMinus, &fHFMinusBranch);
+
+  if(fDataType == kPp || fDataType == kPpMC){
+    // We do not have HF tower information for pp. In this case find HF like energy from particle flow candidates
+    fHeavyIonTree->SetBranchStatus("hiHFPlus_pf", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFPlus_pf", &fHFPlus, &fHFPlusBranch);
+    fHeavyIonTree->SetBranchStatus("hiHFMinus_pf", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFMinus_pf", &fHFMinus, &fHFMinusBranch);
+  } else {
+    fHeavyIonTree->SetBranchStatus("hiHFplus", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFplus", &fHFPlus, &fHFPlusBranch);
+    fHeavyIonTree->SetBranchStatus("hiHFminus", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFminus", &fHFMinus, &fHFMinusBranch);
+  }
 
   if(fDataType == kPbPb || fDataType == kPbPbMC){
     fHeavyIonTree->SetBranchStatus("hiBin", 1);

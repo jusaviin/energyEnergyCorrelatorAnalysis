@@ -8,7 +8,7 @@ McCorrelationType 0 # 0 = RecoReco, 1 = RecoGen, 2 = GenReco, 3 = GenGen
 MatchJets 0 # Only relevant for Monte Carlo, keep this 0 for data
 
 # Select if you want to use the jet trigger
-TriggerSelection 15   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80, 15 = CaloJet15, 30 = CaloJet30, 40 = CaloJet40
+TriggerSelection 0   # 0 = No trigger, 1 = CaloJet80, 2 = CaloJet100, 3 = CaloJet80 || CaloJet100, 4 = CaloJet60, 7 = CaloJet60 || CaloJet80, 15 = CaloJet15, 30 = CaloJet30, 40 = CaloJet40
 
 # Select which histograms to save. Checked bit by bit. Needed for memory issues.
 FilledHistograms 31 # Bit 0 = Event information histograms                  (to set: 1)
@@ -83,7 +83,11 @@ BackgroundMethods 3  # Bit 0 = Reflected-eta cone       (to set: 1)
                      # Bit 2 = Mixed cones              (to set: 4)
                      # Examples: All = 7, Everything but no mixing = 3
 MegaSkimMixing 1 # 0 = If doing mixing, use regular mixing files. 1 = Use megaskimmed mixing files
-AllowJetsInReflectedCone 1 # 0 = Do not allow jets in reflected cone, 1 = Allow jets in reflected cone
+BinnedMixing 0 # 0 = Match events without bin borders for mixing. 1 = Use binned event matching for mixing
+
+# For the mixing bins, if exactly two values are given, these are interpreted as an example bin border, and bin width. The mixing bins are then automatically contructed using this information with even bin width. If more than two values are given, these are directly interpreted as bin borders.
+VzMixingBins -0.5 1 # vz binning for mixing
+HFEnergyMixingBins 0 1 # HF energy binning for mixing
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

@@ -396,6 +396,11 @@ void EECHistograms::CreateHistograms(){
   const Double_t minHFenergy = 0;
   const Double_t maxHFenergy = 300;
   const Int_t nHFenergyBins = 60;
+
+  // Bins for number of jets in the collision
+  const Double_t minJets = -0.5;
+  const Double_t maxJets = 9.5;
+  const Int_t nJetNumberBins = 10;
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
@@ -528,7 +533,7 @@ void EECHistograms::CreateHistograms(){
   Double_t lowBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
   Double_t highBinBorderParticlePtResponseMatrix[nAxesParticlePtResponseMatrix];
 
-  const Int_t nAxesHFEnergy = 4;
+  const Int_t nAxesHFEnergy = 5;
   Int_t nBinsHFEnergy[nAxesHFEnergy];
   Double_t lowBinBorderHFEnergy[nAxesHFEnergy];
   Double_t highBinBorderHFEnergy[nAxesHFEnergy];
@@ -599,6 +604,11 @@ void EECHistograms::CreateHistograms(){
   nBinsHFEnergy[3] = nJetPtBinsEEC;          // nBins for leading jet pT
   lowBinBorderHFEnergy[3] = minJetPtEEC;     // low bin border for leading jet pT
   highBinBorderHFEnergy[3] = maxJetPtEEC;    // high bin border for leading jet pT
+
+  // Axis 4 for the HF energy histogram: number of jets in the event
+  nBinsHFEnergy[4] = nJetNumberBins;         // nBins for leading jet pT
+  lowBinBorderHFEnergy[4] = minJets;         // low bin border for leading jet pT
+  highBinBorderHFEnergy[4] = maxJets;        // high bin border for leading jet pT
   
   // Create the HF energy histograms using the above binning information
   fhHFEnergy = new THnSparseF("hfEnergy", "hfEnergy", nAxesHFEnergy, nBinsHFEnergy, lowBinBorderHFEnergy, highBinBorderHFEnergy); fhHFEnergy->Sumw2();
