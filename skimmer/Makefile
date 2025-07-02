@@ -1,4 +1,4 @@
-PROGRAM       = megaSkimmerPPb
+PROGRAM       = megaSkimmerPp
 
 version       = skimming
 CXX           = g++
@@ -17,7 +17,7 @@ LDFLAGS  += $(shell root-config --libs)
         
 # Use the following form if you have classes inherit TObject
 # HDRS += $(HDRSDICT) src/Class.h ... nanoDict.h       
-HDRS += TrackingEfficiencyInterface.h trackingEfficiency2016pPb.h
+HDRS += TrackingEfficiencyInterface.h trackingEfficiency2017pp.h
 
 SRCS = $(HDRS:.h=.cxx)
 OBJS = $(HDRS:.h=.o)
