@@ -145,6 +145,7 @@ public:
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
   Bool_t fIsRealData;                // Simplification from fDataType: True = any measured data, False = any simulation
   Bool_t fIsPPbData;                 // Flag for any pPb dataset: True = any pPb dataset, False = anything else
+  Bool_t fIsPpData;                  // Flag for any pp dataset: True = any pp dataset, False = anything else
   
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC

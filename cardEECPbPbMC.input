@@ -88,6 +88,7 @@ BinnedMixing 0 # 0 = Match events without bin borders for mixing. 1 = Use binned
 # For the mixing bins, if exactly two values are given, these are interpreted as an example bin border, and bin width. The mixing bins are then automatically contructed using this information with even bin width. If more than two values are given, these are directly interpreted as bin borders.
 VzMixingBins -0.5 1 # vz binning for mixing
 HFEnergyMixingBins 0 1 # HF energy binning for mixing
+HFEnergyShift 25 # Shift in HF energy when matching to find mixed events
 
 # Debug
 DebugLevel 2   # 0 = No debug messages, 1 = Some debug messages, 2 = All debug messages

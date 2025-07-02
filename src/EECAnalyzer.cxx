@@ -70,6 +70,7 @@ EECAnalyzer::EECAnalyzer() :
   fDebugLevel(0),
   fIsRealData(true),
   fIsPPbData(false),
+  fIsPpData(false),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -213,7 +214,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fSmearingFunction = new TF1("fSmearingFunction","pol4",0,500);
   
   // Find the correct folder for track correction tables based on data type
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
+  if(fIsPpData){
     
     // Track correction for 2017 pp data
     fTrackEfficiencyCorrector = new TrkEff2017pp(false, "trackCorrectionTables/pp2017/");
@@ -407,6 +408,7 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fDebugLevel(in.fDebugLevel),
   fIsRealData(in.fIsRealData),
   fIsPPbData(in.fIsPPbData),
+  fIsPpData(in.fIsPpData),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -515,6 +517,7 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fDebugLevel = in.fDebugLevel;
   fIsRealData = in.fIsRealData;
   fIsPPbData = in.fIsPPbData;
+  fIsPpData = in.fIsPpData;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -630,6 +633,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   // Determine the helper data types
   fIsRealData = (fDataType != ForestReader::kPpMC && fDataType != ForestReader::kPbPbMC);
   fIsPPbData = (fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta || fDataType == ForestReader::kPPb_pToMinusEta_5TeV);
+  fIsPpData = (fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC);
 
   
   //****************************************
@@ -712,7 +716,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //    Turn off certain track cuts for generated tracks, pp, and pPb 
   //********************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fDataType == ForestReader::kPp || fIsPPbData){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fIsPpData || fIsPPbData){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -759,9 +763,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
     fHFEnergyMixingBinBorders.push_back(fCard->Get("HFEnergyMixingBins", iBin));
   }
 
-  // TODO: For now, this number is hard coded.
-  // DEBUG: This should eventually come either from card, or a configuration class
-  fHFEnergyMatchingShift = 28;
+  // Shift in HF energy when finding events to mix with
+  fHFEnergyMatchingShift = fCard->Get("HFEnergyShift");
   
   //************************************************
   //         Read which histograms to fill
@@ -1028,36 +1031,36 @@ void EECAnalyzer::RunAnalysis(){
   }
 
   // CRAB running, regular mixing forest
-  fileListName[0][ForestReader::kPp][0] = "none";  // No mixing for pp
+  fileListName[0][ForestReader::kPp][0] = "none";  // only mega skimmed mixing available for pp
   fileListName[0][ForestReader::kPbPb][0] = Form("mixingFileList/PbPbData2018_minBiasFiles_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
-  fileListName[0][ForestReader::kPpMC][0] = "none";  // No mixing for pp MC
+  fileListName[0][ForestReader::kPpMC][0] = "none";  // only mega skimmed mixing available for pp MC
   fileListName[0][ForestReader::kPbPbMC][0] = Form("mixingFileList/PbPbMC2018_minBiasHydjetFiles_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
   fileListName[0][ForestReader::kPPb_pToMinusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta
   fileListName[0][ForestReader::kPPb_pToPlusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> +eta
   fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
 
   // Local test, regular mixing forest
-  fileListName[1][ForestReader::kPp][0] = "none";  // No mixing for pp
+  fileListName[1][ForestReader::kPp][0] = "none";  // only mega skimmed mixing available for pp
   fileListName[1][ForestReader::kPbPb][0] = "mixingFileList/mixingFilesPbPb.txt"; // PbPb data for local test
-  fileListName[1][ForestReader::kPpMC][0] = "none";  // No mixing for pp MC
+  fileListName[1][ForestReader::kPpMC][0] = "none";  // only mega skimmed mixing available for pp MC
   fileListName[1][ForestReader::kPbPbMC][0] = "mixingFileList/mixingFilesPbPbMC.txt";  // PbPb MC for local test
   fileListName[1][ForestReader::kPPb_pToMinusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta
   fileListName[1][ForestReader::kPPb_pToPlusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> +eta
   fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
 
   // CRAB running, mega skimmed mixing forest
-  fileListName[0][ForestReader::kPp][1] = "none";  // No mixing for pp
+  fileListName[0][ForestReader::kPp][1] = "mixingFileList/zeroBiasPp2017_5TeV_megaSkim_2025-06-24.txt"; // pp data for CRAB
   fileListName[0][ForestReader::kPbPb][1] = Form("mixingFileList/PbPbData2018_minBiasMegaSkims_copy%d.txt", fMixingListIndex); // PbPb data for CRAB
-  fileListName[0][ForestReader::kPpMC][1] = "none";  // No mixing for pp MC
+  fileListName[0][ForestReader::kPpMC][1] = "none";  // no mixing currently implemented for pp MC
   fileListName[0][ForestReader::kPbPbMC][1] = Form("mixingFileList/PbPbMC2018_minBiasHydjetMegaSkims_copy%d.txt", fMixingListIndex); // PbPb MC for CRAB
   fileListName[0][ForestReader::kPPb_pToMinusEta][1] = Form("mixingFileList/minimumBiasPPb2016_8TeV_megaSkim_pToMinusEta_part%d.txt", fMixingListIndex); // pPb p -> -eta for CRAB
   fileListName[0][ForestReader::kPPb_pToPlusEta][1] = Form("mixingFileList/minimumBiasPPb2016_8TeV_megaSkim_pToPlusEta_part%d.txt", fMixingListIndex); // pPb p -> +eta for CRAB
   fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/minimumBiasPPb2016_5TeV_megaSkim_pToMinusEta.txt"; // pPb pToMinusEta 5 TeV for CRAB
 
   // Local test, mega skimmed mixing forest
-  fileListName[1][ForestReader::kPp][1] = "none";  // No mixing for pp
+  fileListName[1][ForestReader::kPp][1] = "mixingFileList/mixingFilesPp_zeroBias_megaSkim.txt";  // pp data for local test
   fileListName[1][ForestReader::kPbPb][1] = "mixingFileList/mixingFilesPbPb_megaSkim.txt"; // PbPb data for local test
-  fileListName[1][ForestReader::kPpMC][1] = "none";  // No mixing for pp MC
+  fileListName[1][ForestReader::kPpMC][1] = "none";  // no mixing currently implemented for pp MC
   fileListName[1][ForestReader::kPbPbMC][1] = "mixingFileList/mixingFilesPbPbMC_megaSkim.txt";  // PbPb MC for local test
   fileListName[1][ForestReader::kPPb_pToMinusEta][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb p -> -eta for local test
   fileListName[1][ForestReader::kPPb_pToPlusEta][1] = "mixingFileList/mixingFilesPPb_pToPlusEta_megaSkim.txt";  // pPb p -> +eta for local test
@@ -1856,14 +1859,17 @@ void EECAnalyzer::RunAnalysis(){
 
             // Event matching is different for different systems
             if(fDataType == ForestReader::kPbPb){
+              // PbPb data
               FindHiBinMatchedEvents(mixedEventIndices, 2, vz, hiBin, iEvent);
-            } else if (fIsPPbData){
+            } else if (fIsPPbData || fIsPpData){
+              // pp or pPb data or MC
               if(fBinnedMixing){
                 FindBinnedHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent);
               } else {
                 FindHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent);
               }
             } else {
+              // PbPb MC
               currentMultiplicity = GetGenMultiplicity(fTrackReader, kSubeventNonZero, false);
               FindMultiplicityMatchedEvents(mixedEventIndices, 2, vz, currentMultiplicity, iEvent); 
             }
@@ -3111,7 +3117,7 @@ Double_t EECAnalyzer::GetSmearingFactor(Double_t jetPt, Double_t jetEta, const D
   Int_t centralityBin = GetCentralityBin(centrality);
   
   // Set the parameters to the smearing function. pp and PbPb have different smearing function parameters
-  if(fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC){
+  if(fIsPpData){
     // Settings for pp
     // Determined using the macro constructJetPtClosures.C
     // Input file: ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_noCorrelations_jetPtClosures_processed_2023-01-13.root
@@ -4138,7 +4144,11 @@ void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices,
   mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
 
   // Shift the hfEnergy in the data event to remove the contribution from the hard scattering
-  hfEnergy -= fHFEnergyMatchingShift;
+  if(hfEnergy < 2*fHFEnergyMatchingShift){
+    hfEnergy /= 2;
+  } else {
+    hfEnergy -= fHFEnergyMatchingShift;
+  }
   if(hfEnergy < 2) hfEnergy = 2; // TODO: There are very few events with energy below 5 units. This might need adjustment...
 
   // Find events to mix until we have found defined number of matching events
@@ -4353,12 +4363,12 @@ void EECAnalyzer::PrepareMixingVectors(){
     } // Loop over all mixed events
   }
 
-  // For pPb, we want to fill vz and multiplicity. To be determined if corrected on uncorrected works better.
+  // For pPb and pp, we want to fill vz and HF energy.
   // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
-  if(fIsPPbData){
+  if(fIsPPbData || fIsPpData){
     if(!fMegaSkimMode){
       // Only mega skim mode implemented for pPb. If not doing it, complain to user.
-      throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
+      throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb and pp data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
     }
 
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
@@ -4424,9 +4434,9 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
     } // Loop over all mixed events
   }*/
 
-  // For pPb, we want to fill vz and multiplicity. To be determined if corrected on uncorrected works better.
+  // For pPb and pp, we want to fill vz and HF energy.
   // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
-  if(fIsPPbData){
+  if(fIsPPbData || fIsPpData){
     if(!fMegaSkimMode){
       // Only mega skim mode implemented for pPb. If not doing it, complain to user.
       throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
