@@ -12,12 +12,13 @@ void compareEECinDefinedBins(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  //fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_noSubtraction_processed_2025-06-06.root");
-  //fileName.push_back("data/perpendicularCone/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_jet60or80Trigger_perpConeSubtraction_processed_2025-06-06.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFshift28_mixedConeSubtracted_smallStats_processed_2025-06-30.root");
   fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
-  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_binnedMixingSubtracted_processed_2025-06-10.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedHFPlusSubtracted_processed_2025-06-12.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_noBackgroundSubtraction_smallStats_processed_2025-06-30.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_mixedConeSubtraction_smallStats_processed_2025-06-30.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_perpendicularConeSubtraction_smallStats_processed_2025-06-30.root");
 
   const int nComparisonFiles = fileName.size();
 
@@ -34,9 +35,10 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("pPb 5 TeV, mixed cone no bins");
-  fileDescription.push_back("pPb 5 TeV, mixed cone binned");
-  fileDescription.push_back("pPb 5 TeV, mixed cone HFPlus");
+  fileDescription.push_back("pPb 5 TeV, no bg subtraction");
+  fileDescription.push_back("pPb 5 TeV, mixed cone with shift");
+  fileDescription.push_back("pPb 5 TeV, mixed cone no shift");
+  fileDescription.push_back("pPb 5 TeV, perp cone sub");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
   // Check that a description exists for each file
@@ -112,7 +114,7 @@ void compareEECinDefinedBins(){
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Option to disable normalization of distributions
-  const bool normalizeDistributions = false;
+  const bool normalizeDistributions = true;
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator

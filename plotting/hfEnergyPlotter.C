@@ -10,6 +10,8 @@ void hfEnergyPlotter(){
   // File from which the integrals are calculated
   TString inputFileName = "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root";
 
+  // data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_zeroBias_processed_2025-06-23.root
+  // data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root
   //"data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergy_processed_2025-06-17.root";
   
   // Open the input file
