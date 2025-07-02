@@ -17,6 +17,7 @@
 #include <TMath.h>
 #include <TObjArray.h>
 #include <TObjString.h>
+#include <TStopwatch.h>
 
 // Own includes
 #include "src/EECAnalyzer.h"
@@ -197,11 +198,20 @@ int main(int argc, char **argv) {
   
   // Variable for histograms in the analysis
   EECHistograms* histograms;
+
+  // Time the analysis
+  TStopwatch* analysisTimer = new TStopwatch();
+  analysisTimer->Start();
   
   // Run the analysis over the list of files
   EECAnalyzer* eecAnalysis = new EECAnalyzer(fileNameVector, configurationCard, localRunIndex, mixingListIndex);
   eecAnalysis->RunAnalysis();
   histograms = eecAnalysis->GetHistograms();
+
+  // Print the time it took to run the analysis
+  analysisTimer->Stop();
+  std::cout << "Analysis was compeleted in: " << std::endl;
+  analysisTimer->Print();
   
   // Write the histograms and card to file
   TFile* outputFile = new TFile(outputFileName, "RECREATE");
@@ -210,6 +220,7 @@ int main(int argc, char **argv) {
   outputFile->Close();
   
   // After writing to the file, delete all created objects
+  delete analysisTimer;
   delete configurationCard;
   delete eecAnalysis;
   delete outputFile;
