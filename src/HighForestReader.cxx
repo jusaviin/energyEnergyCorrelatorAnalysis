@@ -617,34 +617,38 @@ void HighForestReader::Initialize(){
       
       fTrackTree->SetBranchStatus("trkPt", 1);
       fTrackTree->SetBranchAddress("trkPt", &fTrackPtVector, &fTrackPtBranch);
-      fTrackTree->SetBranchStatus("trkPtError", 1);
-      fTrackTree->SetBranchAddress("trkPtError", &fTrackPtErrorVector, &fTrackPtErrorBranch);
       fTrackTree->SetBranchStatus("trkPhi", 1);
       fTrackTree->SetBranchAddress("trkPhi", &fTrackPhiVector, &fTrackPhiBranch);
       fTrackTree->SetBranchStatus("trkEta", 1);
       fTrackTree->SetBranchAddress("trkEta", &fTrackEtaVector, &fTrackEtaBranch);
       fTrackTree->SetBranchStatus("nTrk", 1);
       fTrackTree->SetBranchAddress("nTrk", &fnTracks, &fnTracksBranch);
-      fTrackTree->SetBranchStatus("highPurity", 1);
-      fTrackTree->SetBranchAddress("highPurity", &fHighPurityTrackVector, &fHighPurityTrackBranch);
-      fTrackTree->SetBranchStatus("trkDzFirstVtx", 1);
-      fTrackTree->SetBranchAddress("trkDzFirstVtx", &fTrackVertexDistanceZVector, &fTrackVertexDistanceZBranch);
-      fTrackTree->SetBranchStatus("trkDzErrFirstVtx", 1);
-      fTrackTree->SetBranchAddress("trkDzErrFirstVtx", &fTrackVertexDistanceZErrorVector, &fTrackVertexDistanceZErrorBranch);
-      fTrackTree->SetBranchStatus("trkDxyFirstVtx", 1);
-      fTrackTree->SetBranchAddress("trkDxyFirstVtx", &fTrackVertexDistanceXYVector, &fTrackVertexDistanceXYBranch);
-      fTrackTree->SetBranchStatus("trkDxyErrFirstVtx", 1);
-      fTrackTree->SetBranchAddress("trkDxyErrFirstVtx", &fTrackVertexDistanceXYErrorVector, &fTrackVertexDistanceXYErrorBranch);
-      fTrackTree->SetBranchStatus("trkNormChi2", 1);
-      fTrackTree->SetBranchAddress("trkNormChi2", &fTrackNormalizedChi2Vector, &fTrackChi2Branch);
-      fTrackTree->SetBranchStatus("trkNLayers", 1);
-      fTrackTree->SetBranchAddress("trkNLayers", &fnHitsTrackerLayerVector, &fnHitsTrackerLayerBranch);
-      fTrackTree->SetBranchStatus("trkNHits", 1);
-      fTrackTree->SetBranchAddress("trkNHits", &fnHitsTrackVector, &fnHitsTrackBranch);
-      fTrackTree->SetBranchStatus("pfEcal", 1);
-      fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalVector, &fTrackEnergyEcalBranch);
-      fTrackTree->SetBranchStatus("pfHcal", 1);
-      fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalVector, &fTrackEnergyHcalBranch);
+
+      // In mega skim mode, only basic track kinematics are available
+      if(!fMegaSkimMode){
+        fTrackTree->SetBranchStatus("trkPtError", 1);
+        fTrackTree->SetBranchAddress("trkPtError", &fTrackPtErrorVector, &fTrackPtErrorBranch);
+        fTrackTree->SetBranchStatus("highPurity", 1);
+        fTrackTree->SetBranchAddress("highPurity", &fHighPurityTrackVector, &fHighPurityTrackBranch);
+        fTrackTree->SetBranchStatus("trkDzFirstVtx", 1);
+        fTrackTree->SetBranchAddress("trkDzFirstVtx", &fTrackVertexDistanceZVector, &fTrackVertexDistanceZBranch);
+        fTrackTree->SetBranchStatus("trkDzErrFirstVtx", 1);
+        fTrackTree->SetBranchAddress("trkDzErrFirstVtx", &fTrackVertexDistanceZErrorVector, &fTrackVertexDistanceZErrorBranch);
+        fTrackTree->SetBranchStatus("trkDxyFirstVtx", 1);
+        fTrackTree->SetBranchAddress("trkDxyFirstVtx", &fTrackVertexDistanceXYVector, &fTrackVertexDistanceXYBranch);
+        fTrackTree->SetBranchStatus("trkDxyErrFirstVtx", 1);
+        fTrackTree->SetBranchAddress("trkDxyErrFirstVtx", &fTrackVertexDistanceXYErrorVector, &fTrackVertexDistanceXYErrorBranch);
+        fTrackTree->SetBranchStatus("trkNormChi2", 1);
+        fTrackTree->SetBranchAddress("trkNormChi2", &fTrackNormalizedChi2Vector, &fTrackChi2Branch);
+        fTrackTree->SetBranchStatus("trkNLayers", 1);
+        fTrackTree->SetBranchAddress("trkNLayers", &fnHitsTrackerLayerVector, &fnHitsTrackerLayerBranch);
+        fTrackTree->SetBranchStatus("trkNHits", 1);
+        fTrackTree->SetBranchAddress("trkNHits", &fnHitsTrackVector, &fnHitsTrackBranch);
+        fTrackTree->SetBranchStatus("pfEcal", 1);
+        fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalVector, &fTrackEnergyEcalBranch);
+        fTrackTree->SetBranchStatus("pfHcal", 1);
+        fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalVector, &fTrackEnergyHcalBranch);
+      }
       
     } else { // Read the tree from AOD files
       
@@ -744,8 +748,14 @@ void HighForestReader::ReadForestFromFile(TFile* inputFile){
 void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
 
   // Open one file to determine if we are dealing with miniAOD or regular AOD
-  TFile *inputFile = TFile::Open(fileList.at(0));
-  TTree* miniAODcheck = (TTree*)inputFile->Get("HiForestInfo/HiForest");
+  TFile* inputFile = TFile::Open(fileList.at(0));
+  TTree* miniAODcheck;
+  // The track tree has different name in miniAOD and AOD
+  if(fDataType == kPbPb || fDataType == kPbPbMC){
+    miniAODcheck = (TTree*)inputFile->Get("PbPbTracks/trackTree");
+  } else {
+    miniAODcheck = (TTree*)inputFile->Get("ppTracks/trackTree");
+  }
   fIsMiniAOD = !(miniAODcheck == NULL);
   inputFile->Close();
 
