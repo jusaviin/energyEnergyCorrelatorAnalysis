@@ -16,6 +16,8 @@ ForestReader::ForestReader() :
   fIsMiniAOD(false),
   fMixingMode(false),
   fMegaSkimMode(false),
+  fIsMC(false),
+  fIsPPb(false),
   fHiVzBranch(0),
   fHiBinBranch(0),
   fHFPlusBranch(0),
@@ -102,7 +104,6 @@ ForestReader::ForestReader() :
  *   Bool_t megaSkimMode: Assume that the file contains only the information strictly necessary for event mixing
  */
 ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, Int_t jetAxis, Int_t matchJets, Bool_t readTrackTree, Bool_t mixingMode, Bool_t megaSkimMode) :
-  fDataType(0),
   fUseJetTrigger(useJetTrigger),
   fJetType(jetType),
   fJetAxis(jetAxis),
@@ -201,6 +202,8 @@ ForestReader::ForestReader(const ForestReader& in) :
   fIsMiniAOD(in.fIsMiniAOD),
   fMixingMode(in.fMixingMode),
   fMegaSkimMode(in.fMegaSkimMode),
+  fIsMC(in.fIsMC),
+  fIsPPb(in.fIsPPb),
   fHiVzBranch(in.fHiVzBranch),
   fHiBinBranch(in.fHiBinBranch),
   fHFPlusBranch(in.fHFPlusBranch),
@@ -289,6 +292,8 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fIsMiniAOD = in.fIsMiniAOD;
   fMixingMode = in.fMixingMode;
   fMegaSkimMode = in.fMegaSkimMode;
+  fIsMC = in.fIsMC;
+  fIsPPb = in.fIsPPb;
   fHiVzBranch = in.fHiVzBranch;
   fHiBinBranch = in.fHiBinBranch;
   fHFPlusBranch = in.fHFPlusBranch;
@@ -382,6 +387,10 @@ void ForestReader::SetDataType(Int_t dataType){
     
     // If the sanity check passes, set the given data type
     fDataType = dataType;
+
+    // Also set the relevant flags for this data type
+    fIsMC = (fDataType == kPpMC) || (fDataType == kPbPbMC) || (fDataType == kPPbMC_pToMinusEta) || (fDataType == kPPbMC_pToPlusEta);
+    fIsPPb = (fDataType == kPPb_pToMinusEta) || (fDataType == kPPb_pToPlusEta) || (fDataType == kPPb_pToMinusEta_5TeV) || (fDataType == kPPbMC_pToMinusEta) || (fDataType == kPPbMC_pToPlusEta);
   }
 }
 

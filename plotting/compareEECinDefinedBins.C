@@ -12,13 +12,26 @@ void compareEECinDefinedBins(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift25_processed_2025-06-30.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift22_processed_2025-07-02.root");
-  fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift28_processed_2025-07-02.root");
+
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift25_processed_2025-06-30.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift28_processed_2025-07-02.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift22_processed_2025-07-02.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeNoHFShift_smallStats_processed_2025-07-03.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_noBackgroundSubtraction_processed_2025-06-30.root");
+
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift31_smallStats_processed_2025-07-08.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift25_smallStats_processed_2025-07-03.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
-  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_noBackgroundSubtraction_smallStats_processed_2025-06-30.root");
-  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_mixedConeSubtraction_smallStats_processed_2025-06-30.root");
-  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_perpendicularConeSubtraction_smallStats_processed_2025-06-30.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root");
+
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFPlusAndMinus_processed_2025-06-13.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFPlus_processed_2025-06-13.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFMinus_processed_2025-06-13.root");
+    
 
   const int nComparisonFiles = fileName.size();
 
@@ -28,16 +41,22 @@ void compareEECinDefinedBins(){
 
 
   std::vector<TString> fileDescription;
-  //fileDescription.push_back("pp 5.02 TeV");
-  //fileDescription.push_back("pp 5.02 TeV, no sub");
-  //fileDescription.push_back("pp 5.02 TeV, perp cone sub");
+  //fileDescription.push_back("pPb 5.02 TeV, match HF p and pPb going");
+  //fileDescription.push_back("pPb 5.02 TeV, match HF sum");
+  //fileDescription.push_back("pPb 5.02 TeV, match HF Pb going");
+  //fileDescription.push_back("pPb 5.02 TeV, match HF p going");
   //fileDescription.push_back("pp 5.02 TeV |#eta_{CM}| < 1.135");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow -#eta)");
   //fileDescription.push_back("pPb 8.16 TeV (p #rightarrow +#eta)");
   //fileDescription.push_back("pPb 5.02 TeV (p #rightarrow -#eta)");
-  fileDescription.push_back("pp 5 TeV, HF shift 25");
-  fileDescription.push_back("pp 5 TeV, HF shift 22");
-  fileDescription.push_back("pp 5 TeV, HF shift 28");
+  //fileDescription.push_back("pp 5 TeV, mixed cone");
+  //fileDescription.push_back("pp 5 TeV, perpendicular cone");
+  //fileDescription.push_back("pp 5 TeV, unsubtracted");
+  fileDescription.push_back("pPb 5 TeV, HF shift 28");
+  fileDescription.push_back("pPb 5 TeV, HF shift 31");
+  fileDescription.push_back("pPb 5 TeV, HF shift 25");
+  fileDescription.push_back("pPb 5 TeV, no HF shift");
+  fileDescription.push_back("pPb 5 TeV, unsubtracted");
   //fileDescription.push_back("pPb 5 TeV, perp cone sub");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
@@ -158,12 +177,12 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_ppBackgroundSubtraction";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_pPbSignalHFShift";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.75, 1.25);
+  std::pair<double, double> ratioZoom = std::make_pair(0.85, 1.15);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -727,7 +746,8 @@ void compareEECinDefinedBins(){
     if(includeRelativeUncertainty){
       drawer->DrawHistogramToLowerPad(hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ", "e2");
     } else {
-      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
+      //drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
+      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "#frac{Color}{HF shift 28}", " ");
     }
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
@@ -743,7 +763,7 @@ void compareEECinDefinedBins(){
           
     // Save the figures to a file
     if(saveFigures){
-    gPad->GetCanvas()->SaveAs(Form("figures/eecFinalResults%s%s%s%s%s.%s", saveComment, comparedVariableString.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
+    gPad->GetCanvas()->SaveAs(Form("figures/eecComparison%s%s%s%s%s.%s", saveComment, comparedVariableString.Data(), compactCentralityString.Data(), compactJetPtString.Data(), compactTrackPtString.Data(), figureFormat));
     }
   }
 

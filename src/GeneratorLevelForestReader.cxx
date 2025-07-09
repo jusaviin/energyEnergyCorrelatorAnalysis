@@ -149,12 +149,27 @@ void GeneratorLevelForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("vz",&fVertexZ,&fHiVzBranch);
   fHeavyIonTree->SetBranchStatus("evt",1);
   fHeavyIonTree->SetBranchAddress("evt", &fEventNumber, &fEventNumberBranch);
-  fHeavyIonTree->SetBranchStatus("hiHFplus", 1);
-  fHeavyIonTree->SetBranchAddress("hiHFplus", &fHFPlus, &fHFPlusBranch);
-  fHeavyIonTree->SetBranchStatus("hiHFminus", 1);
-  fHeavyIonTree->SetBranchAddress("hiHFminus", &fHFMinus, &fHFMinusBranch);
-  fHeavyIonTree->SetBranchStatus("hiBin",1);
-  fHeavyIonTree->SetBranchAddress("hiBin",&fHiBin,&fHiBinBranch);
+
+  if(fDataType == kPpMC){
+    // We do not have HF tower information for pp. In this case find HF like energy from particle flow candidates
+    fHeavyIonTree->SetBranchStatus("hiHFPlus_pf", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFPlus_pf", &fHFPlus, &fHFPlusBranch);
+    fHeavyIonTree->SetBranchStatus("hiHFMinus_pf", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFMinus_pf", &fHFMinus, &fHFMinusBranch);
+  } else {
+    fHeavyIonTree->SetBranchStatus("hiHFplus", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFplus", &fHFPlus, &fHFPlusBranch);
+    fHeavyIonTree->SetBranchStatus("hiHFminus", 1);
+    fHeavyIonTree->SetBranchAddress("hiHFminus", &fHFMinus, &fHFMinusBranch);
+  }
+
+  if(fDataType == kPbPbMC){
+    fHeavyIonTree->SetBranchStatus("hiBin", 1);
+    fHeavyIonTree->SetBranchAddress("hiBin", &fHiBin, &fHiBinBranch);
+  } else {
+    fHiBin = -1;  // No centrality definition for pp or pPb
+  }
+
   fHeavyIonTree->SetBranchStatus("pthat",1);
   fHeavyIonTree->SetBranchAddress("pthat",&fPtHat,&fPtHatBranch); // pT hat only for MC
   
@@ -228,33 +243,72 @@ void GeneratorLevelForestReader::Initialize(){
     
     fHltTree->SetBranchStatus("*",0);
     
-    if(fDataType == kPp || fDataType == kPpMC){ // pp data or MC
+    if(fDataType == kPpMC){ // pp MC
 
-      // Calo jet 80 trigger
+      // Calo jet 15 trigger
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet15_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet15_v1", &fCaloJet15FilterBit, &fCaloJet15FilterBranch);
+
+      // Calo jet 30 trigger
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet30_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet30_v1", &fCaloJet30FilterBit, &fCaloJet30FilterBranch);
+
+      // Calo jet 40 trigger
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet40_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet40_v1", &fCaloJet40FilterBit, &fCaloJet40FilterBranch);
+
+      // Calo jet 60 trigger
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet60_v1", 1);
-      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet60_v1",&fCaloJet60FilterBit,&fCaloJet60FilterBranch);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet60_v1", &fCaloJet60FilterBit, &fCaloJet60FilterBranch);
 
       // Calo jet 80 trigger
-      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet80_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet80_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet80_v1", &fCaloJet80FilterBit, &fCaloJet80FilterBranch);
       
       // Calo jet 100 trigger
-      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
+      fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
       
-    } else { // PbPb data or MC
+    } else if(fIsPPb) { // pPb MC
+
+      // No low jet pT triggers in pPb forests
+      fCaloJet15FilterBit = 1;
+      fCaloJet30FilterBit = 1;
+      fCaloJet40FilterBit = 1;
+
+      // Calo jet 60 trigger
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet60_Eta5p1_v3", 1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet60_Eta5p1_v3", &fCaloJet60FilterBit, &fCaloJet60FilterBranch);
 
       // Calo jet 80 trigger
-      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet60Eta5p1_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet60Eta5p1_v1",&fCaloJet60FilterBit,&fCaloJet60FilterBranch);
-
-      // Calo jet 80 trigger
-      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1",&fCaloJet80FilterBit,&fCaloJet80FilterBranch);
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet80_Eta5p1_v3", 1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet80_Eta5p1_v3", &fCaloJet80FilterBit, &fCaloJet80FilterBranch);
       
       // Calo jet 100 trigger
-      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1",1);
-      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1",&fCaloJet100FilterBit,&fCaloJet100FilterBranch);
+      fHltTree->SetBranchStatus("HLT_PAAK4CaloJet100_Eta5p1_v3", 1);
+      fHltTree->SetBranchAddress("HLT_PAAK4CaloJet100_Eta5p1_v3", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
+
+    } else { // PbPb MC
+
+      // No low jet pT triggers in PbPb forests
+      fCaloJet15FilterBit = 1;
+      fCaloJet30FilterBit = 1;
+
+      // Calo jet 60 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet40Eta5p1_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet40Eta5p1_v1", &fCaloJet40FilterBit, &fCaloJet40FilterBranch);
+
+      // Calo jet 60 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet60Eta5p1_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet60Eta5p1_v1", &fCaloJet60FilterBit, &fCaloJet60FilterBranch);
+
+      // Calo jet 80 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet80Eta5p1_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1", &fCaloJet80FilterBit, &fCaloJet80FilterBranch);
+      
+      // Calo jet 100 trigger
+      fHltTree->SetBranchStatus("HLT_HIPuAK4CaloJet100Eta5p1_v1", 1);
+      fHltTree->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
       
     }
   } else {
@@ -293,6 +347,21 @@ void GeneratorLevelForestReader::Initialize(){
       fHfCoincidenceFilterBit = 1; // No HF energy coincidence requirement for pp
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
       fPileupFilterBit = 1;        // No pile-up filter for pp
+    } else if(fIsPPb){ // pPb  MC
+
+      fSkimTree->SetBranchStatus("pPAprimaryVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pPAprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
+      fSkimTree->SetBranchStatus("pBeamScrapingFilter", 1);
+      fSkimTree->SetBranchAddress("pBeamScrapingFilter", &fBeamScrapingFilterBit, &fBeamScrapingBranch);
+      fSkimTree->SetBranchStatus("HBHENoiseFilterResultRun2Loose", 1);
+      fSkimTree->SetBranchAddress("HBHENoiseFilterResultRun2Loose", &fHBHENoiseFilterBit, &fHBHENoiseBranch);
+      fSkimTree->SetBranchStatus("phfCoincFilter", 1);
+      fSkimTree->SetBranchAddress("phfCoincFilter", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+      fSkimTree->SetBranchStatus("pVertexFilterCutdz1p0", 1);
+      fSkimTree->SetBranchAddress("pVertexFilterCutdz1p0", &fPileupFilterBit, &fPileupFilterBranch);
+
+      fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pPb
+
     } else { // PbPb MC
     
       // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction

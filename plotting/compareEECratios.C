@@ -12,16 +12,16 @@ void compareEECratios(){
   
   // Files for comparison
   std::vector<std::pair<TString,TString>> fileName;
-  fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_noBackgroundSubtraction_smallStats_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root"));
-  fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_mixedConeSubtraction_smallStats_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFshift28_mixedConeSubtracted_smallStats_processed_2025-06-30.root"));
-  fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixingHFShift25_perpendicularConeSubtraction_smallStats_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root"));
+  //fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_noBackgroundSubtraction_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root"));
+  fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift25_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root"));
+  //fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root"));
 
   const int nComparisonFiles = fileName.size();
 
   std::vector<TString> fileDescription;
-  fileDescription.push_back("pPb/pp 5 TeV, no bg subtraction");
+  //fileDescription.push_back("pPb/pp 5 TeV, no bg subtraction");
   fileDescription.push_back("pPb/pp 5 TeV, mixed cone sub");
-  fileDescription.push_back("pPb/pp 5 TeV, perp cone sub");
+  //fileDescription.push_back("pPb/pp 5 TeV, perp cone sub");
 
   // Check that a description exists for each file
   if(fileDescription.size() < fileName.size()){
@@ -85,7 +85,7 @@ void compareEECratios(){
   comparedJetPtBin.push_back(std::make_pair(40,50));
   comparedJetPtBin.push_back(std::make_pair(50,60));
   comparedJetPtBin.push_back(std::make_pair(60,80));
-  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -140,12 +140,12 @@ void compareEECratios(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = false;  // Save figures
-  const char* saveComment = "_backgroundSubtraction";   // Comment given for this specific file
+  const bool saveFigures = true;  // Save figures
+  const char* saveComment = "_aliceAspectRatio";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.85, 1.25);
+  std::pair<double, double> ratioZoom = std::make_pair(0.7, 1.35);
 
   // Only allow one variable for which all bins are plotted to the same figure
   if(individualCentrality + individualJetPt + individualTrackPt < 2){
@@ -423,9 +423,10 @@ void compareEECratios(){
   
   JDrawer* drawer = new JDrawer();
   //drawer->SetDefaultAppearanceSplitCanvas();
-  //drawer->SetRelativeCanvasSize(1.1,1.1);
+  drawer->SetRelativeCanvasSize(1.1,0.94);
   //drawer->SetLeftMargin(0.14);
-  //drawer->SetTopMargin(0.07);
+  drawer->SetTopMargin(0.055);
+  drawer->SetBottomMargin(0.155);
   //drawer->SetTitleOffsetY(1.7);
   //drawer->SetTitleOffsetX(1.0);
   
@@ -502,8 +503,11 @@ void compareEECratios(){
     // Linear scale for the ratio
     drawer->SetLogY(false);
 
-    TLegend* legend = new TLegend(0.18,0.54,0.45,0.98);
-    legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+    TLegend* legend = new TLegend(0.18,0.74,0.45,0.98);
+    legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.04);legend->SetTextFont(62);
+
+    TLegend* anotherLegend = new TLegend(0.18,0.14,0.45,0.44);
+    anotherLegend->SetFillStyle(0);anotherLegend->SetBorderSize(0);anotherLegend->SetTextSize(0.04);anotherLegend->SetTextFont(62);
 
     // Add the file description to the legend if coloring with any variable
     if(colorWithCentrality || colorWithJetPt || colorWithTrackPt){
@@ -598,7 +602,7 @@ void compareEECratios(){
           for(int iCentrality : currentCentralityIndices){
             if(colorWithCentrality) individualLegend = Form(" Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(legendCentralityIndex).first, std::get<kCentrality>(plottedBin).at(legendCentralityIndex).second);
             legendCentralityIndex++;
-            legend->AddEntry(hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt], individualLegend.Data(), "p");
+            anotherLegend->AddEntry(hEnergyEnergyCorrelatorRatio[iFile][iCentrality][iJetPt][iTrackPt], individualLegend.Data(), "p");
           } // Centrality loop 
         } // Track pT loop
       } // Jet pT loop
@@ -606,6 +610,7 @@ void compareEECratios(){
   
     // Draw the legend
     legend->Draw();
+    anotherLegend->Draw();
 
     // Add a line to one
     oneLine->Draw();

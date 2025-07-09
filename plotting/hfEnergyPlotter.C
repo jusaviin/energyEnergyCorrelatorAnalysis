@@ -33,7 +33,7 @@ void hfEnergyPlotter(){
   // ====================================================
   const bool draw2DHFmap = false;
   const bool drawHFsum = true;
-  const bool drawHFSumGraph = true;
+  const bool drawHFSumGraph = false;
   
   // ====================================================
   //  Binning configuration for the integral calculation
@@ -138,6 +138,19 @@ void hfEnergyPlotter(){
   zeroJetsLine->SetLineColor(kRed);
   zeroJetsLine->SetLineStyle(2);
 
+  double hfShiftValue = 25;
+  if(card->GetAlternativeDataType().Contains("pp")) hfShiftValue = 25;
+  if(card->GetAlternativeDataType().Contains("pPb")) hfShiftValue = 28;
+  TLine* estimatedShiftLine = new TLine(comparedJetPtBin.at(0).first, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue);
+  estimatedShiftLine->SetLineColor(kBlack);
+  estimatedShiftLine->SetLineStyle(2);
+  TLine* estimatedShiftLineUp = new TLine(comparedJetPtBin.at(0).first, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue+3, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue+3);
+  estimatedShiftLineUp->SetLineColor(kBlack);
+  estimatedShiftLineUp->SetLineStyle(2);
+  TLine* estimatedShiftLineDown = new TLine(comparedJetPtBin.at(0).first, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue-3, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, hHFSum[nJetPtBins][0]->GetMean()+hfShiftValue-3);
+  estimatedShiftLineDown->SetLineColor(kBlack);
+  estimatedShiftLineDown->SetLineStyle(2);
+
   // **********************************
   //         Draw the figures
   // **********************************
@@ -197,8 +210,9 @@ void hfEnergyPlotter(){
         iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
 
         // Define legend
-        legend = new TLegend(0.48,0.44,0.75,0.68);
+        legend = new TLegend(0.48,0.34,0.75,0.68);
         legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+        legend->AddEntry((TObject*)0, Form("%s  5.02 TeV", card->GetAlternativeDataType().Data()), "");
 
         if(iJetPt == -1){
           iJetPt = nJetPtBins;
@@ -227,8 +241,9 @@ void hfEnergyPlotter(){
   if(drawHFSumGraph){
 
     // Define legend
-    legend = new TLegend(0.48,0.44,0.75,0.68);
+    legend = new TLegend(0.48,0.34,0.75,0.68);
     legend->SetFillStyle(0);legend->SetBorderSize(0);legend->SetTextSize(0.05);legend->SetTextFont(62);
+    legend->AddEntry((TObject*)0, Form("%s  5.02 TeV", card->GetAlternativeDataType().Data()), "");
 
     // Loop over all number of jets bins
     for(int iNJet = 0; iNJet < nNJetBins; iNJet++){
@@ -251,6 +266,9 @@ void hfEnergyPlotter(){
 
     // Draw a line showing the HF energy sum for the case when there are zero jets
     zeroJetsLine->Draw();
+    estimatedShiftLine->Draw();
+    estimatedShiftLineUp->Draw();
+    estimatedShiftLineDown->Draw();
     legend->AddEntry(zeroJetsLine, Form("n_{jets > %.0f GeV} = 0", minJetPt), "l");
 
     // Draw the legend

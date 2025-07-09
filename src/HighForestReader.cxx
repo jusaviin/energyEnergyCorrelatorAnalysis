@@ -353,19 +353,14 @@ void HighForestReader::Initialize(){
   } else {
     fHiBin = -1;  // No centrality definition for pp or pPb
   }
-  if(fDataType == kPpMC || fDataType == kPbPbMC){
+  if(fIsMC){
     fHeavyIonTree->SetBranchStatus("pthat", 1);
     fHeavyIonTree->SetBranchAddress("pthat", &fPtHat, &fPtHatBranch); // pT hat only for MC
-  } else {
-    fPtHat = 0; // We do not have pT hat information for real data
-  }
-  
-  // Event weight for Monte Carlo
-  if(fDataType == kPbPbMC || fDataType == kPpMC){
     fHeavyIonTree->SetBranchStatus("weight", 1);
     fHeavyIonTree->SetBranchAddress("weight", &fEventWeight, &fEventWeightBranch);
   } else {
-    fEventWeight = 1;
+    fPtHat = 0;        // We do not have pT hat information for real data
+    fEventWeight = 1;  // No event weighting for real data
   }
   
   // Connect the branches to the jet tree
@@ -383,7 +378,7 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchStatus("*", 0);
 
     // The corrected jet pT does not exist in the pPb forest
-    if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta && fDataType != kPPb_pToMinusEta_5TeV){
+    if(!fIsPPb){
       fJetTree->SetBranchStatus("jtpt", 1);
       fJetTree->SetBranchAddress("jtpt", &fJetPtArray, &fJetPtBranch);
     }
@@ -406,7 +401,7 @@ void HighForestReader::Initialize(){
     fJetTree->SetBranchAddress("trackMax", &fJetMaxTrackPtArray, &fJetMaxTrackPtBranch);
   
     // If we are looking at Monte Carlo, connect the reference pT and parton arrays
-    if(fDataType == kPpMC || fDataType == kPbPbMC){
+    if(fIsMC){
       fJetTree->SetBranchStatus("refpt", 1);
       fJetTree->SetBranchAddress("refpt", &fJetRefPtArray, &fJetRefPtBranch);
       fJetTree->SetBranchStatus("refeta", 1);
@@ -476,7 +471,7 @@ void HighForestReader::Initialize(){
       fHltTree->SetBranchStatus("HLT_HIAK4CaloJet100_v1", 1);
       fHltTree->SetBranchAddress("HLT_HIAK4CaloJet100_v1", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
       
-    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta || fDataType == kPPb_pToMinusEta_5TeV) { // pPb data
+    } else if(fIsPPb) { // pPb data or MC
 
       // No low jet pT triggers in pPb forests
       fCaloJet15FilterBit = 1;
@@ -559,7 +554,7 @@ void HighForestReader::Initialize(){
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pp
       fPileupFilterBit = 1; // No pileup filter for pp
 
-    } else if(fDataType == kPPb_pToMinusEta || fDataType == kPPb_pToPlusEta || fDataType == kPPb_pToMinusEta_5TeV){ // pPb data
+    } else if(fIsPPb){ // pPb data or MC
 
       fSkimTree->SetBranchStatus("pPAprimaryVertexFilter", 1);
       fSkimTree->SetBranchAddress("pPAprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
@@ -680,8 +675,8 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchStatus("pfHcal", 1);
         fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalArray, &fTrackEnergyHcalBranch);
 
-        // Branches that do not exist for the pPb forest
-        if(fDataType != kPPb_pToMinusEta && fDataType != kPPb_pToPlusEta && fDataType != kPPb_pToMinusEta_5TeV){
+        // Branches that do not exist for the pPb forests
+        if(!fIsPPb){
           fTrackTree->SetBranchStatus("trkChi2", 1);
           fTrackTree->SetBranchAddress("trkChi2", &fTrackChi2Array, &fTrackChi2Branch);
           fTrackTree->SetBranchStatus("trkNdof", 1);
@@ -708,7 +703,7 @@ void HighForestReader::Initialize(){
   } // Reading track trees
 
   // Generator level particles needed only is we do mixing, and we are working on Monte Carlo simulations
-  if(fDataType == kPbPbMC){
+  if(fIsMC){
 
     fParticleTree->SetBranchStatus("*", 0);
     fParticleTree->SetBranchStatus("pt", 1);
@@ -793,7 +788,7 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
     }
   }
 
-  if(fDataType == kPbPbMC){
+  if(fIsMC){
     fParticleTree = new TChain("HiGenParticleAna/hi");
   }
   
@@ -803,7 +798,7 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
     if(fUseJetTrigger) fHltTree->Add(*listIterator);
     if(!fMixingMode) fJetTree->Add(*listIterator);
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
-    if(fDataType == kPbPbMC){
+    if(fIsMC){
       fParticleTree->Add(*listIterator);
     }
   }
@@ -872,7 +867,7 @@ void HighForestReader::GetEvent(Int_t nEvent){
       fnTracks = fTrackPtVector->size();
     }
   }
-  if(fDataType == kPbPbMC){
+  if(fIsMC){
     fParticleTree->GetEntry(nEvent);
   }
 }
@@ -1065,7 +1060,7 @@ Int_t HighForestReader::GetParticleSubevent(Int_t iParticle) const{
 Bool_t HighForestReader::HasMatchingJet(Int_t iJet) const{
   
   // If we are not matching jets or are considering real data, everything is fine
-  if(!fMatchJets || fDataType <= kPbPb) return true;
+  if(!fMatchJets || !fIsMC) return true;
   
   // For each reconstructed jet there is a reference pT, which tells the the pT of a matched generator level jet
   // If this number is -999, it means that there are no generator level jets matching the reconstructed jet
@@ -1077,7 +1072,7 @@ Bool_t HighForestReader::HasMatchingJet(Int_t iJet) const{
 Float_t HighForestReader::GetMatchedPt(Int_t iJet) const{
   
   // If we are not matching jets or are considering real data, this value has no meaning
-  if(!fMatchJets || fDataType <= kPbPb) return 0;
+  if(!fMatchJets || !fIsMC) return 0;
   
   // Find the index of the matching generator level jet
   Int_t matchedIndex = GetMatchingIndex(iJet);
@@ -1093,7 +1088,7 @@ Float_t HighForestReader::GetMatchedPt(Int_t iJet) const{
 Int_t HighForestReader::GetPartonFlavor(Int_t iJet) const{
   
   // If we are considering real data, this value has no meaning
-  if(fDataType <= kPbPb) return 0;
+  if(!fIsMC) return 0;
   
   // Return the matching parton flavor
   return fJetRefFlavorArray[iJet];
