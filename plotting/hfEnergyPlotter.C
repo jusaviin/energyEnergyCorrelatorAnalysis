@@ -8,7 +8,7 @@
 void hfEnergyPlotter(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root";
+  TString inputFileName = "data/pPb/pPb_5TeV_pToMinusEta_pfCsJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_hfCheck_processed_2025-07-14.root";
 
   // data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_zeroBias_processed_2025-06-23.root
   // data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root
@@ -33,7 +33,7 @@ void hfEnergyPlotter(){
   // ====================================================
   const bool draw2DHFmap = false;
   const bool drawHFsum = true;
-  const bool drawHFSumGraph = false;
+  const bool drawHFSumGraph = true;
   
   // ====================================================
   //  Binning configuration for the integral calculation

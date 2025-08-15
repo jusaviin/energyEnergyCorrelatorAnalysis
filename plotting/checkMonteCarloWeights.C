@@ -12,8 +12,8 @@ void checkMonteCarloWeights(){
   
   // Data and MC files for the comparison
   TString fileName[knDataTypes];
-  fileName[kData] = "data/eecAnalysis_akFlowJet_onlyJets_weightEventInfo_combinedTriggers_processed_2023-03-06.root";
-  fileName[kMC] = "data/PbPbMC2018_RecoGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_wtaAxis_onlyJets_noTrigger_finalMcWeight_processed_2023-03-06.root";
+  fileName[kData] = "data/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root";
+  fileName[kMC] = "data/pythiaEpos_8TeV_RecoReco_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_processed_2025-07-16.root";
   
   // Some PbPb files
   // data/eecAnalysis_akFlowJets_wtaAxis_cutBadPhi_miniAODtesting_processed_2023-01-30.root
@@ -58,12 +58,6 @@ void checkMonteCarloWeights(){
   
   for(int iFile = 0; iFile < knDataTypes; iFile++){
     histograms[iFile] = new EECHistogramManager(inputFile[iFile]);
-    
-    // Choose the event information histograms to load
-    histograms[iFile]->SetLoadEventInformation(true);
-    
-    // Load the histograms from the file
-    histograms[iFile]->LoadProcessedHistograms();
   }
   
   // Loaded event information histograms used to check the MC weighted
@@ -71,6 +65,8 @@ void checkMonteCarloWeights(){
   TH1D* hVzRatio[2];        // Ratios of data to MC vz distributions
   TH1D* hCentrality[knDataTypes+1]; // Ratio between true and extracted signal
   TH1D* hCentralityRatio[2]; // Ratios of data to MC centrality distributions
+  TH1D* hJetPt[knDataTypes]; // Jet pT distribution
+  TH1D* hJetPtRatio[knDataTypes-1]; // Jet pT ratop
   
   // Initialize the event information histograms to NULL
   for(int iDataType = 0; iDataType < knDataTypes+1; iDataType++){
@@ -81,6 +77,11 @@ void checkMonteCarloWeights(){
     hVzRatio[iRatioType] = NULL;
     hCentralityRatio[iRatioType] = NULL;
   }
+  for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
+    hJetPt[iDataType] = NULL;
+    if(iDataType == knDataTypes-1) continue;
+    hJetPtRatio[iDataType] = NULL;
+  }
   
   // Read the histograms from the file
   hVz[0] = histograms[0]->GetHistogramVertexZWeighted(); // Vertex-z distribution from data (weighing for trigger combination)
@@ -90,6 +91,9 @@ void checkMonteCarloWeights(){
   hCentrality[0] = histograms[0]->GetHistogramCentralityWeighted(); // Centrality distribution from data (weighing for trigger combination)
   hCentrality[1] = histograms[1]->GetHistogramCentrality();         // Centrality distribution from MC
   hCentrality[2] = histograms[1]->GetHistogramCentralityWeighted(); // Weighted centrality distribution from MC
+
+  hJetPt[kData] = histograms[kData]->GetHistogramJetPt(0); // Jet pT distribution without centrality selection in data
+  hJetPt[kMC] = histograms[kMC]->GetHistogramJetPt(0);     // Jet pT distribution without centrality selection in MC
 
   // Normalize all distributions to one and set line colors for histograms
   int color[knDataTypes+1] = {kBlack, kRed, kBlue};
@@ -113,6 +117,21 @@ void checkMonteCarloWeights(){
         
     hCentralityRatio[iRatioType] = (TH1D*) hCentrality[iRatioType+1]->Clone(Form("centralityRatio%d", iRatioType));
     hCentralityRatio[iRatioType]->Divide(hCentrality[0]);
+  }
+
+    // Normalize the jet pT distributions to some region and set drawing style
+  for(int iDataType = 0; iDataType < knDataTypes; iDataType++){
+    hJetPt[iDataType]->Scale(1.0 / histograms[iDataType]->GetJetPtIntegral(0,30,80));
+
+    hJetPt[iDataType]->SetLineColor(color[iDataType]);
+    hJetPt[iDataType]->SetMarkerColor(color[iDataType]);
+    hJetPt[iDataType]->SetMarkerStyle(markerStyle[iDataType]);
+  }
+
+  // Calculate data to MC ratio also for the jet pT
+  for(int iDataType = 1; iDataType < knDataTypes; iDataType++){
+    hJetPtRatio[iDataType-1] = (TH1D*) hJetPt[iDataType]->Clone(Form("vzRatio%d", iRatioType));
+    hJetPtRatio[iDataType-1]->Divide(hJetPt[kData]);
   }
   
   // ==========================================================================

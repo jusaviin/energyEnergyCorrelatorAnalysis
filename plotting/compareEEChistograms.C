@@ -12,8 +12,8 @@ void compareEEChistograms(){
   // ==================================================================
   
   // Define the used data files, and a comment describing the data in each file
-  const int nDatasets = 3;
-  TString inputFileName[] = {"data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root", "data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_processed_2025-05-13.root",  "data/pPb/pPbData_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_minimumBias_processed_2025-05-13.root"};
+  const int nDatasets = 4;
+  TString inputFileName[] = {"data/pPb/pPb_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaCMcut_lowPt_processed_2025-07-17.root", "data/pPb/pPb_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaCMcut_lowPt_processed_2025-07-17.root",  "data/pPb/pythiaEpos_8TeV_RecoReco_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_processed_2025-07-16.root", "data/pPb/pythiaEpos_8TeV_RecoReco_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_processed_2025-07-16.root"};
   //TString inputFileName[] = {"data/ppMC2017_GenGen_Pythia8_pfJets_eschemeAxis_energyWeightSquared_processed_2025-02-19.root", "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_optimizedUnfoldingBins_energyWeightSquared_nominalSmear_truthReference_processed_2024-01-10.root"};
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_eschemeAxis_preprocessed_2022-10-17.root
   // eecAnalysis_akFlowJets_updatedMultiplicityAndDensity_wtaAxis_preprocessed_2022-10-17.root
@@ -22,7 +22,7 @@ void compareEEChistograms(){
   // PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_finalMcWeight_processed_2023-03-08.root
   // data/MinBiasHydjet_RecoGen_eecAnalysis_akFlowJet_firstMinBiasScan_noTrigger_preprocessed_2022-10-10.root
   
-  TString legendComment[] = {"pPb 8.16 TeV p #rightarrow -#eta", "pPb 8.16 TeV p #rightarrow +#eta", "pPb 5.02 TeV p #rightarrow -#eta"};
+  TString legendComment[] = {"pPb 8.16 TeV p #rightarrow +#eta", "pPb 8.16 TeV p #rightarrow -#eta", "Pythia+EPOS 8.16 TeV p #rightarrow +#eta", "Pythia+EPOS 8.16 TeV p #rightarrow -#eta"};
   
   // Try to open the files
   TFile* inputFile[nDatasets];
@@ -41,8 +41,8 @@ void compareEEChistograms(){
   EECCard* card = new EECCard(inputFile[0]);
   
   // Choose which figure sets to draw
-  bool drawEventInformation = false;
-  bool drawJets = true;
+  bool drawEventInformation = true;
+  bool drawJets = false;
   bool drawTracks = false;
   bool drawUncorrectedTracks = false;
   
@@ -109,9 +109,9 @@ void compareEEChistograms(){
   
   // Settings for ratios
   bool useDifferenceInsteadOfRatio = false;
-  double minZoom = 0.9;
-  double maxZoom = 1.1;
-  TString ratioLabel = "#frac{WTA}{E-scheme}";
+  double minZoom = 0.8;
+  double maxZoom = 1.2;
+  TString ratioLabel = "#frac{MC}{Data}";
   bool manualLegend = false; // Set this true if you want to set legend manually in EECComparingDrawer.cxx code instead of using automatic legend generation
   bool addSystemToLegend = false;  // Add the collision system from first file to legend. Useful if all files are from same system
   bool includeMCtype = false;      // Include MC type in the system

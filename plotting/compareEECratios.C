@@ -14,14 +14,14 @@ void compareEECratios(){
   std::vector<std::pair<TString,TString>> fileName;
   //fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_noBackgroundSubtraction_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root"));
   fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift25_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root"));
-  //fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root"));
+  fileName.push_back(std::make_pair("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root", "data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root"));
 
   const int nComparisonFiles = fileName.size();
 
   std::vector<TString> fileDescription;
   //fileDescription.push_back("pPb/pp 5 TeV, no bg subtraction");
   fileDescription.push_back("pPb/pp 5 TeV, mixed cone sub");
-  //fileDescription.push_back("pPb/pp 5 TeV, perp cone sub");
+  fileDescription.push_back("pPb/pp 5 TeV, perp cone sub");
 
   // Check that a description exists for each file
   if(fileDescription.size() < fileName.size()){
@@ -85,7 +85,7 @@ void compareEECratios(){
   comparedJetPtBin.push_back(std::make_pair(40,50));
   comparedJetPtBin.push_back(std::make_pair(50,60));
   comparedJetPtBin.push_back(std::make_pair(60,80));
-  bool individualJetPt = false; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
+  bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -95,8 +95,9 @@ void compareEECratios(){
   //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
-  // Option to disable normalization of distributions
-  const bool normalizeDistributions = true;
+  // Different normalization options
+  enum enumNormalization{kNoNormalization, kNormalizeToPairs, kNormalizeToJets};
+  const int normalizeDistributions = kNormalizeToJets;
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
@@ -141,7 +142,7 @@ void compareEECratios(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_aliceAspectRatio";   // Comment given for this specific file
+  const char* saveComment = "_aliceAspectRatioJetNormalized";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
@@ -336,11 +337,13 @@ void compareEECratios(){
         }
 
         // Normalize the distributions to one in the drawingRange
-        if(normalizeDistributions){
+        if(normalizeDistributions == kNormalizeToPairs){
           lowNormalizationBin = hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
           highNormalizationBin = hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-          hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->Scale(1.0 / hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+        } else if (normalizeDistributions == kNormalizeToJets){
+          hEnergyEnergyCorrelatorReference[iFile][iJetPtReference][iTrackPtReference]->Scale(1.0 / histograms.at(iFile).first->GetJetPtIntegral(0, jetPtBin.first, jetPtBin.second));
         }
 
         for(auto centralityBin : comparedCentralityBin){
@@ -378,11 +381,13 @@ void compareEECratios(){
           }
 
           // Normalize the distributions to one in the drawingRange
-          if(normalizeDistributions){
+          if(normalizeDistributions == kNormalizeToPairs){
             lowNormalizationBin = hEnergyEnergyCorrelatorMedium[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
             highNormalizationBin = hEnergyEnergyCorrelatorMedium[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
             hEnergyEnergyCorrelatorMedium[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelatorMedium[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          } else if (normalizeDistributions == kNormalizeToJets){
+          hEnergyEnergyCorrelatorMedium[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1.0 / histograms.at(iFile).second->GetJetPtIntegral(iCentrality, jetPtBin.first, jetPtBin.second));
           }
 
         } // Centrality loop
@@ -441,6 +446,7 @@ void compareEECratios(){
   TString comparedVariableString = "";
   TString ratioName = "";
   TString energyWeightString = (referenceCard->GetWeightExponent() == 1) ? "Nominal energy weight" : "Energy weight squared";
+  energyWeightString = "Per jet normalized";
   TString legendString;
   int markerStyle[5] = {kFullCircle, kOpenSquare, kOpenCross, kFullStar, kFullCross};
   int color[] = {kBlack,kRed,kBlue,kGreen+3,kMagenta,kCyan,kOrange,kViolet+3,kPink-7,kSpring+3,kAzure-7};
