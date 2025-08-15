@@ -16,16 +16,17 @@ void compareEECinDefinedBins(){
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift25_processed_2025-06-30.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift28_processed_2025-07-02.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeSubtractedHFShift22_processed_2025-07-02.root");
-  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeNoHFShift_smallStats_processed_2025-07-03.root");
+  //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_mixedConeNoHFShift_processed_2025-07-03.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_noBackgroundSubtraction_processed_2025-06-30.root");
 
   fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift31_smallStats_processed_2025-07-08.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift25_smallStats_processed_2025-07-03.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
-  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift31_smallStats_processed_2025-07-08.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift25_smallStats_processed_2025-07-03.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
+  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfCsJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-07-14.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root");
 
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFPlusAndMinus_processed_2025-06-13.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
@@ -53,11 +54,12 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pp 5 TeV, perpendicular cone");
   //fileDescription.push_back("pp 5 TeV, unsubtracted");
   fileDescription.push_back("pPb 5 TeV, HF shift 28");
-  fileDescription.push_back("pPb 5 TeV, HF shift 31");
-  fileDescription.push_back("pPb 5 TeV, HF shift 25");
-  fileDescription.push_back("pPb 5 TeV, no HF shift");
-  fileDescription.push_back("pPb 5 TeV, unsubtracted");
-  //fileDescription.push_back("pPb 5 TeV, perp cone sub");
+  //fileDescription.push_back("pPb 5 TeV, HF shift 31");
+  //fileDescription.push_back("pPb 5 TeV, HF shift 25");
+  //fileDescription.push_back("pPb 5 TeV, no HF shift");
+  //fileDescription.push_back("pPb 5 TeV, unsubtracted");
+  fileDescription.push_back("pPb 5 TeV, perp cone sub");
+  fileDescription.push_back("pPb 5 TeV, perp cone and CS sub");
   //fileDescription.push_back("Perpendicular cone sanity check");
 
   // Check that a description exists for each file
@@ -132,8 +134,9 @@ void compareEECinDefinedBins(){
   //comparedTrackPtBin.push_back(3.0);
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
-  // Option to disable normalization of distributions
-  const bool normalizeDistributions = false;
+  // Different normalization options
+  enum enumNormalization{kNoNormalization, kNormalizeToPairs, kNormalizeToJets};
+  const int normalizeDistributions = kNormalizeToPairs;
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
@@ -177,7 +180,7 @@ void compareEECinDefinedBins(){
   // ====================================================
   
   // Figure saving
-  const bool saveFigures = true;  // Save figures
+  const bool saveFigures = false;  // Save figures
   const char* saveComment = "_pPbSignalHFShift";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
@@ -444,11 +447,13 @@ void compareEECinDefinedBins(){
           }
 
           // Normalize the distributions to one in the drawingRange
-          if(normalizeDistributions){
+          if(normalizeDistributions == kNormalizeToPairs){
             lowNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.first + epsilon);
             highNormalizationBin = hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->GetXaxis()->FindBin(drawingRange.second - epsilon);
 
-            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1.0 / hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Integral(lowNormalizationBin, highNormalizationBin, "width"));
+          } else if(normalizeDistributions == kNormalizeToJets){
+            hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference]->Scale(1.0 / histograms[iFile]->GetJetPtIntegral(iCentrality, jetPtBin.first, jetPtBin.second));
           }
 
           // Uncertainty histograms
