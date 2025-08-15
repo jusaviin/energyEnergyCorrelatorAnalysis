@@ -180,6 +180,30 @@ void EECComparingDrawer::DrawEventInformation(){
   //char namerX[100];
   TString centralityString;
   TString compactCentralityString;
+
+  // === Vz ===
+  
+  // Scale the histograms to the counts
+  FindScalingFactors("vertexz",-1,-1,-1);
+  
+  // Prepare the jet pT histograms and ratio to be drawn
+  PrepareRatio("vertexz", 1);
+  
+  // Draw the centrality histograms to the upper pad
+  DrawToUpperPad("v_{z}", "Counts");
+  
+  // Add a legend to the plot
+  legend = new TLegend(0.48,0.48,0.78,0.83);
+  SetupLegend(legend, "Events passing cuts");
+  legend->Draw();
+  
+  // Draw the ratios to the lower portion of the split canvas
+  fDrawer->SetGridY(true);
+  DrawToLowerPad("v_{z}","Ratio",fRatioZoomMin,fRatioZoomMax);
+  fDrawer->SetGridY(false);
+  
+  // Save the figure to a file
+  SaveFigure("vertexZ");
   
   // === Centrality ===
   
