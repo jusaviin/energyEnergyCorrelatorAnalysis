@@ -43,6 +43,10 @@ private:
   enum enumTupleDecoder{kTrackPt, kTrackEta, kTrackPhi, kTrackEfficiencyCorrection, kTrackCharge, kMatchIndex}; // Components of the n-tuple in track vector
   enum enumMatchForMixing{kMatchHiBin, kMatchHFEnergy, kMatchMultiplicity, knMatchMethods}; // Different methods to match the events for mixing
   enum enumSmallTupleDecoder{kPossibleMatchPtDifference, kPossibleMatchIndex}; // Components of the n-tuple in track vector
+
+  // Definitions for nonsensical bin values
+  static inline constexpr int kNonsenseValue = -50;           // Non-sensical mixing variable value
+  static inline constexpr int kNonsenseBin = -500;            // Non-sensical mixing bin index
   
 public:
   

@@ -1084,7 +1084,7 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[1][ForestReader::kPPb_pToPlusEta][0] = "none"; // only mega skimmed mixing available for pPb p -> +eta
   fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
   fileListName[1][ForestReader::kPPbMC_pToMinusEta][0] = "none"; // currently no mixing implemented for pPb MC
-  fileListName[1][ForestReader::kPPbMC_pToPlusEta][0] = "none"; // currently no mixing implemented for pPb MC
+  fileListName[1][ForestReader::kPPbMC_pToPlusEta][0] = "mixingFileList/mixingFilesPPb_pToPlusEta.txt"; // low statistics test mixing file for pPb MC p -> + eta
 
   // CRAB running, mega skimmed mixing forest
   fileListName[0][ForestReader::kPp][1] = "mixingFileList/zeroBiasPp2017_5TeV_megaSkim_2025-06-24.txt"; // pp data for CRAB
@@ -1182,8 +1182,11 @@ void EECAnalyzer::RunAnalysis(){
     fnEventsInMixingFile = fMixedEventReader->GetNEvents();  
 
     if(fBinnedMixing){
+
+      // Find the event matching variables from mixed event list
       PrepareBinnedMixingVectors();
 
+      // Make a two dimensional illustration of the mixed event statistics
       std::vector<Double_t> vzMixingCountVector = GetBinnedMixingBinBorders(fVzMixingBinBorders, fMixedEventVzBin);
       std::vector<Double_t> eventActivityCountVector;
       std::vector<Double_t> eventActivityBinBorders;
@@ -1203,16 +1206,15 @@ void EECAnalyzer::RunAnalysis(){
       fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), eventActivityCountVector.size() - 1, eventActivityCountVector.data());
 
       for(int iMixedEvent = 0; iMixedEvent < fMixedEventVzBin.size(); iMixedEvent++){
-
-        // Skip filling mixed event statistics histogram for events that do not pass the event cut
-        if(fMixedEventVzBin.at(iMixedEvent) == 1000) continue;
-
         fHistograms->fhMixedEventCounts->Fill(FindExampleValue(fMixedEventVzBin.at(iMixedEvent), fVzMixingBinBorders), FindExampleValue(eventActivityCountVector.at(iMixedEvent), eventActivityBinBorders));
       }
 
     } else {
+
+      // Find the event matching variables from mixed event list
       PrepareMixingVectors();
 
+      // Make a two dimensional illustration of the mixed event statistics
       std::vector<Double_t> vzMixingCountVector = GetMixingBinBorders(fVzMixingBinBorders, fMixedEventVz);
       std::vector<Double_t> eventActivityCountVector;
       std::vector<Double_t> eventActivityVector;
@@ -1231,10 +1233,6 @@ void EECAnalyzer::RunAnalysis(){
       fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), eventActivityCountVector.size() - 1, eventActivityCountVector.data());
 
       for(int iMixedEvent = 0; iMixedEvent < fMixedEventVz.size(); iMixedEvent++){
-
-        // Skip filling mixed event statistics histogram for events that do not pass the event cut
-        if(fMixedEventVz.at(iMixedEvent) == 100) continue;
-        
         fHistograms->fhMixedEventCounts->Fill(fMixedEventVz.at(iMixedEvent), eventActivityVector.at(iMixedEvent));
       }
     }
@@ -4655,8 +4653,8 @@ void EECAnalyzer::PrepareMixingVectors(){
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
         fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(100);
-        fMixedEventHiBin.push_back(1000);
+        fMixedEventVz.push_back(kNonsenseValue);
+        fMixedEventHiBin.push_back(kNonsenseValue);
       }
     } // Loop over all mixed events
   } // Event matching based on HiBin
@@ -4674,8 +4672,8 @@ void EECAnalyzer::PrepareMixingVectors(){
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
         fMixedEventMultiplicity.push_back(GetGenMultiplicity(fMixedEventReader, kSubeventAny, false));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(100);
-        fMixedEventMultiplicity.push_back(-10);
+        fMixedEventVz.push_back(kNonsenseValue);
+        fMixedEventMultiplicity.push_back(kNonsenseValue);
       }
     } // Loop over all mixed events
   } // Event matching based on background multiplicity
@@ -4694,8 +4692,8 @@ void EECAnalyzer::PrepareMixingVectors(){
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
         fMixedEventHFEnergy.push_back(fMixedEventReader->GetHFSum());
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(100);
-        fMixedEventHFEnergy.push_back(-50);
+        fMixedEventVz.push_back(kNonsenseValue);
+        fMixedEventHFEnergy.push_back(kNonsenseValue);
       }
     } // Loop over all mixed events
 
@@ -4740,8 +4738,8 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
         fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
         fMixedEventHiBin.push_back(FindMixingHiBinBin(fMixedEventReader->GetHiBin()));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVzBin.push_back(1000);
-        fMixedEventHiBin.push_back(-500);
+        fMixedEventVzBin.push_back(kNonsenseBin);
+        fMixedEventHiBin.push_back(kNonsenseBin);
       }
     } // Loop over all mixed events
   } // Event matching based on HiBin
@@ -4760,8 +4758,8 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
         fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
         fMixedEventMultiplicityBin.push_back(FindMixingMultiplicityBin(GetGenMultiplicity(fMixedEventReader, kSubeventAny, false)));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVzBin.push_back(1000);
-        fMixedEventMultiplicityBin.push_back(-500);
+        fMixedEventVzBin.push_back(kNonsenseBin);
+        fMixedEventMultiplicityBin.push_back(kNonsenseBin);
       }
     } // Loop over all mixed events
   }
@@ -4781,8 +4779,8 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
         fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
         fMixedEventHFEnergyBin.push_back(FindMixingHFEnergyBin(fMixedEventReader->GetHFSum()));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVzBin.push_back(1000);
-        fMixedEventHFEnergyBin.push_back(-500);
+        fMixedEventVzBin.push_back(kNonsenseBin);
+        fMixedEventHFEnergyBin.push_back(kNonsenseBin);
       }
     } // Loop over all mixed events
   } // Event matching based on HF energy
@@ -4882,9 +4880,14 @@ std::vector<Double_t> EECAnalyzer::GetMixingBinBorders(std::vector<Double_t> bin
   double binAnchor = binBorderVector.at(0);
   double binWidth = binBorderVector.at(1);
 
-  // Find the maximum and minimum value from the value vector
-  Double_t minValue = *std::min_element(valueVector.begin(), valueVector.end());
-  Double_t maxValue = *std::max_element(valueVector.begin(), valueVector.end());
+  // Find the maximum and minimum values from the value vector that are not non-sensical
+  Double_t minValue = 1e9;
+  Double_t maxValue = -1e9;
+  for(Double_t currentValue : valueVector){
+    if(TMath::Abs(currentValue - kNonsenseValue) < 1e-6) continue;
+    if(currentValue < minValue) minValue = currentValue;
+    if(currentValue > maxValue) maxValue = currentValue;
+  }
 
   // Find the maximum and minimum bin index for these values
   Int_t minBinIndex = FindMixingBin(minValue, binAnchor, binWidth);
@@ -4916,9 +4919,14 @@ std::vector<Double_t> EECAnalyzer::GetBinnedMixingBinBorders(std::vector<Double_
   double binAnchor = binBorderVector.at(0);
   double binWidth = binBorderVector.at(1);
 
-  // Find the maximum and minimum bin indices from the bin index vector
-  Int_t minBinIndex = *std::min_element(binVector.begin(), binVector.end());
-  Int_t maxBinIndex = *std::max_element(binVector.begin(), binVector.end());
+  // Find the maximum and minimum bin indices from the bin index vector that are not non-sensical
+  Int_t minBinIndex = 1e9;
+  Int_t maxBinIndex = -1e9;
+  for(Int_t currentBin : binVector){
+    if(currentBin == kNonsenseBin) continue;
+    if(currentBin < minBinIndex) minBinIndex = currentBin;
+    if(currentBin > maxBinIndex) maxBinIndex = currentBin;
+  }
 
   // Get the number of bins from the bin indices
   Int_t nMixingBins = maxBinIndex - minBinIndex + 1;

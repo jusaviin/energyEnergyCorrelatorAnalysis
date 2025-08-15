@@ -464,12 +464,12 @@ void GeneratorLevelForestReader::ReadForestFromFileList(std::vector<TString> fil
 
   // The track tree is different than in other types of forests
   if(fReadTrackTree) fTrackTree = new TChain("HiGenParticleAna/hi");
-  
+
   for(std::vector<TString>::iterator listIterator = fileList.begin(); listIterator != fileList.end(); listIterator++){
     fHeavyIonTree->Add(*listIterator);
     if(!fMegaSkimMode) fSkimTree->Add(*listIterator);
     if(fUseJetTrigger) fHltTree->Add(*listIterator);
-    if(!fMegaSkimMode) fJetTree->Add(*listIterator);
+    if(!fMixingMode) fJetTree->Add(*listIterator);
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
   }
   

@@ -8,7 +8,7 @@
 void hfEnergyPlotter(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "data/pPb/pPb_5TeV_pToMinusEta_pfCsJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_hfCheck_processed_2025-07-14.root";
+  TString inputFileName = "veryEmbeddedData_processed.root";
 
   // data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_zeroBias_processed_2025-06-23.root
   // data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root
@@ -47,9 +47,9 @@ void hfEnergyPlotter(){
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(30,40));
   comparedJetPtBin.push_back(std::make_pair(40,50));
-  comparedJetPtBin.push_back(std::make_pair(50,60));
-  comparedJetPtBin.push_back(std::make_pair(60,80));
-  comparedJetPtBin.push_back(std::make_pair(80,100));
+  //comparedJetPtBin.push_back(std::make_pair(50,60));
+  //comparedJetPtBin.push_back(std::make_pair(60,80));
+  //comparedJetPtBin.push_back(std::make_pair(80,100));
   comparedJetPtBin.push_back(std::make_pair(0,0));
   bool plotToSameFigure = false; // False = make different figure for each bin. True = plot all jet pT bins to the same figure.
     
@@ -255,7 +255,8 @@ void hfEnergyPlotter(){
 
       // For the first graph create new canvas. Draw the others to the same canvas
       if(iNJet == 0){
-        drawer->DrawGraph(gAverageHFSum[0], comparedJetPtBin.at(0).first, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, 35, 80, "Jet p_{T} (GeV)", "HF energy", "", "p");
+        //drawer->DrawGraph(gAverageHFSum[0], comparedJetPtBin.at(0).first, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, 35, 80, "Jet p_{T} (GeV)", "HF energy", "", "p");
+        drawer->DrawGraph(gAverageHFSum[0], comparedJetPtBin.at(0).first, comparedJetPtBin.at(comparedJetPtBin.size()-2).second, 35, 105, "Jet p_{T} (GeV)", "HF energy", "", "p");
         legend->AddEntry(gAverageHFSum[0], Form("n_{jets > %.0f GeV} > 0", minJetPt), "p");
       } else {
         gAverageHFSum[iNJet]->Draw("p,same");

@@ -24,7 +24,7 @@ void compareDifferentEECpairings(){
   } 
 
   // Studied file
-  TString fileName = "veryCoolData_processed.root";
+  TString fileName = "veryNonShiftedData_processed.root";
 
   // eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root
   // eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root
@@ -138,7 +138,7 @@ void compareDifferentEECpairings(){
   bool useManualLegend = true;
   std::vector<TString> manualLegend;
   manualLegend.push_back("True signal");
-  manualLegend.push_back("Mixed event signal");
+  manualLegend.push_back("Mixed cone, plain HFSum");
   manualLegend.push_back("Perpendicular cone signal");
   //manualLegend.push_back("Pythia+EPOS");
   //manualLegend.push_back("EPOS+EPOS");
@@ -239,8 +239,8 @@ void compareDifferentEECpairings(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  TString saveComment = "_signalExtraction";   // Comment given for this specific file
-  const char* figureFormat = "pdf"; // Format given for the figures
+  TString saveComment = "_plainHFMatch";   // Comment given for this specific file
+  const char* figureFormat = "png"; // Format given for the figures
 
   int weightExponent = card->GetWeightExponent();
   if(weightExponent == 2){
@@ -250,7 +250,7 @@ void compareDifferentEECpairings(){
   }
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.91, 1.09);
+  std::pair<double, double> ratioZoom = std::make_pair(0.85, 1.15);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   bool logRatio = false;
   bool automaticZoom = true;
@@ -400,7 +400,7 @@ void compareDifferentEECpairings(){
 
       int perpendicularShifter = 0;
       if(pairingType.first == kCompiledBackgroundPerpendicularCone){
-        perpendicularShifter = 6;
+        perpendicularShifter = 5;
       }
 
       for(auto centralityBin : comparedCentralityBin){
@@ -525,7 +525,7 @@ void compareDifferentEECpairings(){
 
       int perpendicularShifter = 0;
       if(pairingType.first == kPerpendicularBackgroundSubtracted){
-        perpendicularShifter = 6;
+        perpendicularShifter = 5;
       }
 
       for(auto centralityBin : comparedCentralityBin){
