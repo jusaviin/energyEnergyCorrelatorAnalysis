@@ -83,9 +83,9 @@ void EECCard::ReadVectors(){
 void EECCard::FindDataTypeString(){
   
   // Define the different data types corresponding to certain indices
-  TString dataTypes[7] = {"pp","PbPb","pp MC","PbPb MC","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb p #rightarrow -#eta 5TeV"};
-  TString alternativeDataTypes[7] = {"pp","PbPb","Pythia8","Pythia+Hydjet","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb"};
-  if(fDataType < 0 || fDataType > 6){
+  TString dataTypes[9] = {"pp","PbPb","pp MC","PbPb MC","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb p #rightarrow -#eta 5TeV", "pPb MC p #rightarrow -#eta", "pPb MC p #rightarrow +#eta"};
+  TString alternativeDataTypes[9] = {"pp","PbPb","Pythia8","Pythia+Hydjet","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb", "Pythia+EPOS p #rightarrow -#eta","Pythia+EPOS p #rightarrow +#eta",};
+  if(fDataType < 0 || fDataType > 8){
     fDataTypeString = "Unknown";
     fAlternativeDataTypeString = "Unknown";
     fDataTypeStringWithoutMCType = "Unknown";
