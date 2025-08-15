@@ -41,6 +41,7 @@ private:
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix
   enum enumTupleDecoder{kTrackPt, kTrackEta, kTrackPhi, kTrackEfficiencyCorrection, kTrackCharge, kMatchIndex}; // Components of the n-tuple in track vector
+  enum enumMatchForMixing{kMatchHiBin, kMatchHFEnergy, kMatchMultiplicity, knMatchMethods}; // Different methods to match the events for mixing
   enum enumSmallTupleDecoder{kPossibleMatchPtDifference, kPossibleMatchIndex}; // Components of the n-tuple in track vector
   
 public:
@@ -71,14 +72,18 @@ public:
   // Methods for event mixing
   void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
   void PrepareBinnedMixingVectors(); // Prepare variables needed for mixing in a binned manner
-  void FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t iEvent); // Find the mixed events that are matched with the signal event using multiplicity
-  void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin
-  void FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy
+  void FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing); // Find the mixed events that are matched with the signal event using multiplicity
+  void FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing); // Find the mixed events that are matched with the signal event using hiBin
+  void FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing); // Find the mixed events that are matched with the signal event using HF energy
+  void FindBinnedMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using multiplicity bins
+  void FindBinnedHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hibin, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using hiBin bins
   void FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent); // Find the mixed events that are matched with the signal event using HF energy bins
   Int_t FindMixingBin(Double_t value, Double_t anchor, Double_t width); // Find a generic mixing bin
   Int_t FindMixingBin(Double_t value, std::vector<Double_t> borders); // Find a generic mixing bin from bin borders
   Int_t FindMixingVzBin(Double_t vz); // Find mixing vz bin from a vz value
   Int_t FindMixingHFEnergyBin(Double_t hfEnergy); // Find mixing HF energy bin from HF energy value
+  Int_t FindMixingHiBinBin(Int_t hiBin); // Find mixing HiBin bin from HiBin value
+  Int_t FindMixingMultiplicityBin(Int_t multiplicity); // Find mixing multiplicity bin from multiplicity value
   std::vector<Double_t> GetMixingBinBorders(std::vector<Double_t> binBorderVector, std::vector<Double_t> valueVector); // Get vector with bin borders used in mixing
   std::vector<Double_t> GetBinnedMixingBinBorders(std::vector<Double_t> binBorderVector, std::vector<Int_t> binVector); // Get vector with bin borders used in mixing
   Double_t FindExampleValue(Int_t iBin, std::vector<Double_t> borders); // Find an example value from certain mixing bin
@@ -207,20 +212,21 @@ public:
   Int_t fMixingStartIndex;              // Event index from which event mixing is started
   Int_t fRunningMixingIndex;            // Mixed event index 
   Int_t fnEventsInMixingFile;           // Number of mixed events available
-  std::vector<Double_t> fMixedEventVz;  // vz values in mixed events
-  std::vector<Int_t> fMixedEventHiBin;  // HiBin values in mixed events
+  std::vector<Double_t> fMixedEventVz;           // vz values in mixed events
+  std::vector<Int_t> fMixedEventHiBin;           // HiBin values in mixed events
   std::vector<Int_t> fMixedEventMultiplicity;    // Multiplicity in the mixed event
   std::vector<Double_t> fMixedEventHFEnergy;     // HF energy in the mixed event
   std::vector<ULong64_t> fMixedEventEventNumber; // Event number of the mixed event
-  std::vector<Int_t> fMixedEventVzBin;       // vz bin indices for event mixing
-  std::vector<Int_t> fMixedEventHFEnergyBin; // HF energy bin indices for event mixing
+  std::vector<Int_t> fMixedEventVzBin;           // vz bin indices for event mixing
+  std::vector<Int_t> fMixedEventHiBinBin;        // HiBin bin indices for event mixing
+  std::vector<Int_t> fMixedEventMultiplicityBin; // Multiplicity bin indices for event mixing
+  std::vector<Int_t> fMixedEventHFEnergyBin;     // HF energy bin indices for event mixing
+  Int_t fEventMatchForMixing;           // Method used to match events for mixing analysis
   Bool_t fBinnedMixing;                 // Flag for doing event mixing in binned or unbinned way
-  Double_t fVzMixingAnchor;             // Low bin edge for the zero bin for vz in mixed event matching
-  Double_t fVzMixingBinWidth;           // Bin width for vz in mixed event matching
-  Double_t fHFEnergyMixingAnchor;       // Low bin edge for the zero bin for HF energy in mixed event matching
-  Double_t fHFEnergyMixingBinWidth;     // Bin width for HF energy in mixed event matching
-  std::vector<Double_t> fVzMixingBinBorders;       // Bin borders for vz used for event matching in mixing
-  std::vector<Double_t> fHFEnergyMixingBinBorders; // Bin borders for HF energy used for event matching in mixing
+  std::vector<Double_t> fVzMixingBinBorders;           // Bin borders for vz used for event matching in mixing
+  std::vector<Double_t> fHiBinMixingBinBorders;        // Bin borders for HiBin used for event matching in mixing
+  std::vector<Double_t> fHFEnergyMixingBinBorders;     // Bin borders for HF energy used for event matching in mixing
+  std::vector<Double_t> fMultiplicityMixingBinBorders; // Bin borders for multiplicity used for event matching in mixing
   Double_t fHFEnergyMatchingShift;      // Shift the matched HF energy value to find a reference value without hard interaction
   
   // Which histograms are filled. Do not fill all in order to save memory and not to crash jobs.

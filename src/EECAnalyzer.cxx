@@ -124,10 +124,15 @@ EECAnalyzer::EECAnalyzer() :
   fMixedEventHFEnergy(0),
   fMixedEventEventNumber(0),
   fMixedEventVzBin(0),
+  fMixedEventHiBinBin(0),
+  fMixedEventMultiplicityBin(0),
   fMixedEventHFEnergyBin(0),
+  fEventMatchForMixing(0),
   fBinnedMixing(false),
   fVzMixingBinBorders(0),
+  fHiBinMixingBinBorders(0),
   fHFEnergyMixingBinBorders(0),
+  fMultiplicityMixingBinBorders(0),
   fHFEnergyMatchingShift(0),
   fFillEventInformation(false),
   fFillJetHistograms(false),
@@ -462,10 +467,15 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fMixedEventHFEnergy(in.fMixedEventHFEnergy),
   fMixedEventEventNumber(in.fMixedEventEventNumber),
   fMixedEventVzBin(in.fMixedEventVzBin),
+  fMixedEventHiBinBin(in.fMixedEventHiBinBin),
+  fMixedEventMultiplicityBin(in.fMixedEventMultiplicityBin),
   fMixedEventHFEnergyBin(in.fMixedEventHFEnergyBin),
+  fEventMatchForMixing(in.fEventMatchForMixing),
   fBinnedMixing(in.fBinnedMixing),
   fVzMixingBinBorders(in.fVzMixingBinBorders),
+  fHiBinMixingBinBorders(in.fHiBinMixingBinBorders),
   fHFEnergyMixingBinBorders(in.fHFEnergyMixingBinBorders),
+  fMultiplicityMixingBinBorders(in.fMultiplicityMixingBinBorders),
   fHFEnergyMatchingShift(in.fHFEnergyMatchingShift),
   fFillEventInformation(in.fFillEventInformation),
   fFillJetHistograms(in.fFillJetHistograms),
@@ -571,10 +581,15 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fMixedEventHFEnergy = in.fMixedEventHFEnergy;
   fMixedEventEventNumber = in.fMixedEventEventNumber;
   fMixedEventVzBin = in.fMixedEventVzBin;
+  fMixedEventHiBinBin = in.fMixedEventHiBinBin;
+  fMixedEventMultiplicityBin = in.fMixedEventMultiplicityBin;
   fMixedEventHFEnergyBin = in.fMixedEventHFEnergyBin;
+  fEventMatchForMixing = in.fEventMatchForMixing;
   fBinnedMixing = in.fBinnedMixing;
   fVzMixingBinBorders = in.fVzMixingBinBorders;
+  fHiBinMixingBinBorders = in.fHiBinMixingBinBorders;
   fHFEnergyMixingBinBorders = in.fHFEnergyMixingBinBorders;
+  fMultiplicityMixingBinBorders = in.fMultiplicityMixingBinBorders;
   fHFEnergyMatchingShift = in.fHFEnergyMatchingShift;
   fFillEventInformation = in.fFillEventInformation;
   fFillJetHistograms = in.fFillJetHistograms;
@@ -746,7 +761,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fDoMixedCone = backgroundBitChecker.test(2);
   fMegaSkimMode = (fCard->Get("MegaSkimMixing") == 1);
 
-  // Configuration for event mixing (TODO: possibility to define bin borders directly in the card if uneven bin width is wanted)
+  // Configuration for event mixing
+  fEventMatchForMixing = fCard->Get("EventMatchForMixing");
   fBinnedMixing = (fCard->Get("BinnedMixing") == 1);
 
   // If exactly two numbers are defined for mixing bins, those are interpreted as example bin border and bin width
@@ -757,10 +773,22 @@ void EECAnalyzer::ReadConfigurationFromCard(){
     fVzMixingBinBorders.push_back(fCard->Get("VzMixingBins", iBin));
   }
 
+  const Int_t nHiBinMixingbins = fCard->GetN("HiBinMixingBins");
+  fHiBinMixingBinBorders.clear();
+  for(Int_t iBin = 0; iBin < nHiBinMixingbins; iBin++){
+    fHiBinMixingBinBorders.push_back(fCard->Get("HiBinMixingBins", iBin));
+  }
+
   const Int_t nMixingHFEnergyBins = fCard->GetN("HFEnergyMixingBins");
   fHFEnergyMixingBinBorders.clear();
   for(Int_t iBin = 0; iBin < nMixingHFEnergyBins; iBin++){
     fHFEnergyMixingBinBorders.push_back(fCard->Get("HFEnergyMixingBins", iBin));
+  }
+
+  const Int_t nMultiplicityMixingBins = fCard->GetN("MultiplicityMixingBins");
+  fMultiplicityMixingBinBorders.clear();
+  for(Int_t iBin = 0; iBin < nMultiplicityMixingBins; iBin++){
+    fMultiplicityMixingBinBorders.push_back(fCard->Get("MultiplicityMixingBins", iBin));
   }
 
   // Shift in HF energy when finding events to mix with
@@ -1084,8 +1112,8 @@ void EECAnalyzer::RunAnalysis(){
   if(fDoMixedCone){
     if(std::string(fileListName[fLocalRun][fDataType][fMegaSkimMode]) == "none"){
 
-      cout << "EECAnalyzer::Warning! You are trying to do mixed cone background estimation for a dataset for which no mixed event file list is defined in the code! The code will run, but no mixed events will be generated." << endl;
-      fDoMixedCone = false;
+      cout << "EECAnalyzer::Note: You are trying to do mixed cone background estimation for a dataset for which no mixed event file list is defined in the code! The input file list is used also for mixing." << endl;
+      mixingFiles = fFileNames;
     
     } else {
 
@@ -1110,76 +1138,107 @@ void EECAnalyzer::RunAnalysis(){
           mixingFiles.push_back(lineInFile);
         }
       }
+    } // Mixing file list exists
 
-      // Check that all the mixing files we are supposed to read exist and can be opened
-      for(auto currentFile : mixingFiles){
-        testFile = TFile::Open(currentFile);
+    // Check that all the mixing files we are supposed to read exist and can be opened
+    for(auto currentFile : mixingFiles){
+      testFile = TFile::Open(currentFile);
 
-        // Check that the file exists
-        if(!testFile){
-          cout << "Error! Could not find the file: " << currentFile.Data() << endl;
-          assert(0);
-        }
+      // Check that the file exists
+      if(!testFile){
+        cout << "Error! Could not find the file: " << currentFile.Data() << endl;
+        assert(0);
+      }
 
-        // Check that the file is open
-        if(!testFile->IsOpen()){
-          cout << "Error! Could not open the file: " << currentFile.Data() << endl;
-          assert(0);
-        }
+      // Check that the file is open
+      if(!testFile->IsOpen()){
+        cout << "Error! Could not open the file: " << currentFile.Data() << endl;
+        assert(0);
+      }
     
-        // Check that the file is not zombie
-        if(testFile->IsZombie()){
-          cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
-          assert(0);
-        }
-
-        // Close the test file after the test 
-        testFile->Close();
+      // Check that the file is not zombie
+      if(testFile->IsZombie()){
+        cout << "Error! The following file is a zombie: " << currentFile.Data() << endl;
+        assert(0);
       }
 
-      // If everything is fine, we can read the mixing information from the minimum bias files
-      fMixedEventReader->ReadForestFromFileList(mixingFiles);
+      // Close the test file after the test 
+      testFile->Close();
+    }
 
-      // Print the used mixing files
-      if(fDebugLevel > 0){
-        cout << "Mixing files: " << endl;
-        for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
-          cout << *mixIterator << endl;
-        }
-        cout << endl;
+    // If everything is fine, we can read the mixing information from the minimum bias files
+    fMixedEventReader->ReadForestFromFileList(mixingFiles);
+
+    // Print the used mixing files
+    if(fDebugLevel > 0){
+      cout << "Mixing files: " << endl;
+      for(std::vector<TString>::iterator mixIterator = mixingFiles.begin(); mixIterator != mixingFiles.end(); mixIterator++){
+        cout << *mixIterator << endl;
       }
+      cout << endl;
+    }
 
-      // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
-      fnEventsInMixingFile = fMixedEventReader->GetNEvents();
+    // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
+    fnEventsInMixingFile = fMixedEventReader->GetNEvents();  
 
+    if(fBinnedMixing){
+      PrepareBinnedMixingVectors();
+
+      std::vector<Double_t> vzMixingCountVector = GetBinnedMixingBinBorders(fVzMixingBinBorders, fMixedEventVzBin);
+      std::vector<Double_t> eventActivityCountVector;
+      std::vector<Double_t> eventActivityBinBorders;
+
+      if(fEventMatchForMixing == kMatchHiBin){
+        eventActivityCountVector = GetBinnedMixingBinBorders(fHiBinMixingBinBorders, fMixedEventHiBinBin);
+        eventActivityBinBorders = fHiBinMixingBinBorders;
+      } else if (fEventMatchForMixing == kMatchHFEnergy){
+        eventActivityCountVector = GetBinnedMixingBinBorders(fHFEnergyMixingBinBorders, fMixedEventHFEnergyBin);
+        eventActivityBinBorders = fHFEnergyMixingBinBorders;
+      } else {
+        eventActivityCountVector = GetBinnedMixingBinBorders(fMultiplicityMixingBinBorders, fMixedEventMultiplicityBin);
+        eventActivityBinBorders = fMultiplicityMixingBinBorders;
+      }
       
 
-      if(fBinnedMixing){
-        PrepareBinnedMixingVectors();
+      fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), eventActivityCountVector.size() - 1, eventActivityCountVector.data());
 
-        std::vector<Double_t> vzMixingCountVector = GetBinnedMixingBinBorders(fVzMixingBinBorders, fMixedEventVzBin);
-        std::vector<Double_t> hfEnergyMixingCountVector = GetBinnedMixingBinBorders(fHFEnergyMixingBinBorders, fMixedEventHFEnergyBin);
+      for(int iMixedEvent = 0; iMixedEvent < fMixedEventVzBin.size(); iMixedEvent++){
 
-        fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), hfEnergyMixingCountVector.size() - 1, hfEnergyMixingCountVector.data());
+        // Skip filling mixed event statistics histogram for events that do not pass the event cut
+        if(fMixedEventVzBin.at(iMixedEvent) == 1000) continue;
 
-        for(int iMixedEvent = 0; iMixedEvent < fMixedEventVzBin.size(); iMixedEvent++){
-          fHistograms->fhMixedEventCounts->Fill(FindExampleValue(fMixedEventVzBin.at(iMixedEvent), fVzMixingBinBorders), FindExampleValue(fMixedEventHFEnergyBin.at(iMixedEvent), fHFEnergyMixingBinBorders));
-        }
-
-      } else {
-        PrepareMixingVectors();
-
-        std::vector<Double_t> vzMixingCountVector = GetMixingBinBorders(fVzMixingBinBorders, fMixedEventVz);
-        std::vector<Double_t> hfEnergyMixingCountVector = GetMixingBinBorders(fHFEnergyMixingBinBorders, fMixedEventHFEnergy);
-
-        fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), hfEnergyMixingCountVector.size() - 1, hfEnergyMixingCountVector.data());
-
-        for(int iMixedEvent = 0; iMixedEvent < fMixedEventVz.size(); iMixedEvent++){
-          fHistograms->fhMixedEventCounts->Fill(fMixedEventVz.at(iMixedEvent), fMixedEventHFEnergy.at(iMixedEvent));
-        }
+        fHistograms->fhMixedEventCounts->Fill(FindExampleValue(fMixedEventVzBin.at(iMixedEvent), fVzMixingBinBorders), FindExampleValue(eventActivityCountVector.at(iMixedEvent), eventActivityBinBorders));
       }
 
-    } // Mixing file list exists 
+    } else {
+      PrepareMixingVectors();
+
+      std::vector<Double_t> vzMixingCountVector = GetMixingBinBorders(fVzMixingBinBorders, fMixedEventVz);
+      std::vector<Double_t> eventActivityCountVector;
+      std::vector<Double_t> eventActivityVector;
+
+      if(fEventMatchForMixing == kMatchHiBin){
+        for(auto number : fMixedEventHiBin) eventActivityVector.push_back(number);
+        eventActivityCountVector = GetMixingBinBorders(fHiBinMixingBinBorders, eventActivityVector);
+      } else if (fEventMatchForMixing == kMatchHFEnergy){
+        eventActivityCountVector = GetMixingBinBorders(fHFEnergyMixingBinBorders, fMixedEventHFEnergy);
+        eventActivityVector = fMixedEventHFEnergy;
+      } else {
+        for(auto number : fMixedEventMultiplicity) eventActivityVector.push_back(number);
+        eventActivityCountVector = GetMixingBinBorders(fMultiplicityMixingBinBorders, eventActivityVector);
+      }
+
+      fHistograms->fhMixedEventCounts->SetBins(vzMixingCountVector.size() - 1, vzMixingCountVector.data(), eventActivityCountVector.size() - 1, eventActivityCountVector.data());
+
+      for(int iMixedEvent = 0; iMixedEvent < fMixedEventVz.size(); iMixedEvent++){
+
+        // Skip filling mixed event statistics histogram for events that do not pass the event cut
+        if(fMixedEventVz.at(iMixedEvent) == 100) continue;
+        
+        fHistograms->fhMixedEventCounts->Fill(fMixedEventVz.at(iMixedEvent), eventActivityVector.at(iMixedEvent));
+      }
+    }
+
   } // Prepare event mixing for PbPb data and MC 
   
   //************************************************
@@ -1237,7 +1296,8 @@ void EECAnalyzer::RunAnalysis(){
     //    Special case for pPb MC. We need to limit ptHat range to those in the generated files
     //**********************************************************************************************
 
-    if(fDataType == ForestReader::kPPbMC_pToMinusEta || fDataType == ForestReader::kPPbMC_pToPlusEta){
+    // TODO: Figure out proper event weighting once the new MC is ready
+    /*if(fDataType == ForestReader::kPPbMC_pToMinusEta || fDataType == ForestReader::kPPbMC_pToPlusEta){
 
       // The bin borders for pThat for which pPb MC is generated
       std::vector<std::pair<int,double>> ptHatBinBordersAndWeights;
@@ -1264,7 +1324,7 @@ void EECAnalyzer::RunAnalysis(){
         }
       }
 
-    }
+    }*/
 
     //************************************************
     //         Main event loop for each file
@@ -1910,22 +1970,24 @@ void EECAnalyzer::RunAnalysis(){
           if(fDoMixedCone){
 
             // Event matching is different for different systems
-            if(fDataType == ForestReader::kPbPb){
-              // PbPb data
-              FindHiBinMatchedEvents(mixedEventIndices, 2, vz, hiBin, iEvent);
-            } else if (fIsPPbData || fIsPpData){
-              // pp or pPb data or MC
-              if(fBinnedMixing){
-                FindBinnedHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent);
-              } else {
-                FindHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent);
-              }
+            if(fEventMatchForMixing == kMatchHiBin){
+              // Match HiBin
+              FindHiBinMatchedEvents(mixedEventIndices, 2, vz, hiBin, eventNumber, iEvent, fBinnedMixing);
+            } else if (fEventMatchForMixing == kMatchHFEnergy){
+              // Match HF energy
+              FindHFEnergyMatchedEvents(mixedEventIndices, 2, vz, hfSum, eventNumber, iEvent, fBinnedMixing);
             } else {
-              // PbPb MC
+              // Match background multiplicity
               currentMultiplicity = GetGenMultiplicity(fTrackReader, kSubeventNonZero, false);
-              FindMultiplicityMatchedEvents(mixedEventIndices, 2, vz, currentMultiplicity, iEvent); 
+              FindMultiplicityMatchedEvents(mixedEventIndices, 2, vz, currentMultiplicity, eventNumber, iEvent, fBinnedMixing); 
             }
-            
+
+            // Make the pPb MC "minimum bias" by only accepting particles from the EPOS simulation
+            //if(fDataType == ForestReader::kPPbMC_pToPlusEta || fDataType == ForestReader::kPPbMC_pToMinusEta){
+            //  if(fMcCorrelationType == kRecoGen || fMcCorrelationType == kGenGen){
+            //    fSubeventCut = kSubeventNonZero;
+            //  }
+            //}   
 
             // Fill the pairing arrays with the found mixed event indices
             mixedEventFillIndex = EECHistograms::kMixedCone;
@@ -1965,6 +2027,9 @@ void EECAnalyzer::RunAnalysis(){
               mixedEventFillIndex = EECHistograms::kSecondMixedCone;
       
             } // Loop over good events to mix with
+
+            // Return to original cut after analyzing all particles for the mixing check
+            //fSubeventCut = fCard->Get("SubeventCut");
 
           } // Event mixing for PbPb data and MC
 
@@ -3996,18 +4061,22 @@ Double_t EECAnalyzer::SimpleSmearDeltaR(const Double_t deltaR){
 }
 
 /*
- * Find matching events for the current event
+ * Find matching events for the current event based on multiplicity
  *
  *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
  *  const Int_t nEventsToMatch = Number of matched events that are searched for
  *  const Double_t vz = Vertex z-position of the event
  *  const Int_t currentMultiplicity = Multiplicity of the event. HiBin in case of PbPb collisions
  *  const Int_t iEvent = Number of the current event
- *
+ *  const Bool_t binnedMixing = True: Use binned matching, False: Use unbinned matching
  */
-void EECAnalyzer::FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t currentMultiplicity, const Int_t iEvent){
+void EECAnalyzer::FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t currentMultiplicity, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing){
 
-  // For PbPb MC and pPb MC, the matching is done using multiplicity
+  // If we are doing binned matching to find mixed events, use different method for that
+  if(binnedMixing){
+    FindBinnedMultiplicityMatchedEvents(mixedEventIndices, nEventsToMatch, vz, currentMultiplicity, eventNumber, iEvent);
+    return;
+  }
 
   // Event matching for Monte Carlo
   Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
@@ -4073,6 +4142,9 @@ void EECAnalyzer::FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndi
       if(TMath::Abs(fMixedEventMultiplicity.at(mixedEventIndex) - currentMultiplicity) > lowMultiplicityTolerance) continue;
     }
 
+    // Avoid mixing an event with itself
+    if(fMixedEventEventNumber.at(mixedEventIndex) == eventNumber) continue;
+
     // Mark that this event is good to use for mixing
     mixedEventIndices.push_back(mixedEventIndex);
 
@@ -4094,9 +4166,15 @@ void EECAnalyzer::FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndi
  *  const Double_t vz = Vertex z-position of the event
  *  const Int_t hiBin = HiBin index of the current event
  *  const Int_t iEvent = Number of the current event
- *
- */
-void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hiBin, const Int_t iEvent){
+ *  const Bool_t binnedMixing = True: Use binned matching, False: Use unbinned matching
+ */ 
+void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hiBin, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing){
+
+  // If we are doing binned matching to find mixed events, use different method for that
+  if(binnedMixing){
+    FindBinnedHiBinMatchedEvents(mixedEventIndices, nEventsToMatch, vz, hiBin, eventNumber, iEvent);
+    return;
+  }
 
   // Event matching for PbPb
   Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
@@ -4156,6 +4234,9 @@ void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, co
     // Match hiBin between the current eent and mixed event
     if(TMath::Abs(fMixedEventHiBin.at(mixedEventIndex) - hiBin) > (hiBinTolerance + 1e-4)) continue;
 
+    // Avoid mixing an event with itself
+    if(fMixedEventEventNumber.at(mixedEventIndex) == eventNumber) continue;
+
     // Mark that this event is good to use for mixing
     mixedEventIndices.push_back(mixedEventIndex);
 
@@ -4178,9 +4259,15 @@ void EECAnalyzer::FindHiBinMatchedEvents(std::vector<int>& mixedEventIndices, co
  *  const Double_t hfEnergy = Energy in the HF calorimeters
  *  const Int_t eventNumber = Number of the current event
  *  const Int_t iEvent = Loop index of the current event
- *
+ *  const Bool_t binnedMixing = True: Use binned matching, False: Use unbinned matching
  */
-void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent){
+void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Double_t hfEnergy, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing){
+
+  // If we are doing binned matching to find mixed events, use different method for that
+  if(binnedMixing){
+    FindBinnedHFEnergyMatchedEvents(mixedEventIndices, nEventsToMatch, vz, hfEnergy, eventNumber, iEvent);
+    return;
+  }
 
   // Event matching for pPb
   Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
@@ -4224,7 +4311,7 @@ void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices,
     
     // Increment the counter for event index to be mixed with the current event
     mixedEventIndex++;
-    
+
     // If we are out of bounds from the event in data file, reset the counter
     if(mixedEventIndex == fnEventsInMixingFile) {
       mixedEventIndex = -1;
@@ -4271,7 +4358,184 @@ void EECAnalyzer::FindHFEnergyMatchedEvents(std::vector<int>& mixedEventIndices,
 }
 
 /*
- * Find matching events for the current event based on HF energy
+ * Find matching events for the current event based on multiplicity bins
+ *
+ *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
+ *  const Int_t nEventsToMatch = Number of matched events that are searched for
+ *  const Double_t vz = Vertex z-position of the event
+ *  const Int_t currentMultiplicity = Multiplicity of the event. HiBin in case of PbPb collisions
+ *  const Int_t iEvent = Number of the current event
+ *  
+ */
+void EECAnalyzer::FindBinnedMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t currentMultiplicity, const Int_t eventNumber, const Int_t iEvent){
+
+
+  // Event matching based on multiplicity bins
+  Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
+  Bool_t allEventsWentThrough  = false;          // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Int_t vzTolerance = 0;                         // Starting tolerance for vz bin: exact match
+  Int_t multiplicityTolerance = 0;               // Starting tolerance for multiplicity bin: exact match
+  Int_t mixedEventFillIndex = 0;                 // Index telling how many mixed events have been found already
+  Bool_t skipEvent = false;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
+  Int_t vzBin = FindMixingVzBin(vz);             // Mixing bin index for the vz in the current event
+  Int_t multiplicityBin = FindMixingMultiplicityBin(currentMultiplicity); // Mixing bin index for the multiplicity in the current event
+
+  mixedEventIndices.clear();                     // Reset the previously found event index vector from previous events
+
+  // Find events to mix until we have found defined number of matching events
+  while(mixedEventFillIndex < nEventsToMatch){
+
+    // By default, do not skip events
+    skipEvent = false;
+
+    // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
+    if(allEventsWentThrough){
+      if(fDebugLevel > 0){
+        cout << "Could not find matching mixed events for event " << iEvent << endl;
+        cout << "Increasing vz tolerance by 0.5 and multiplicity tolerance by 0.01" << endl;
+      }
+      
+      multiplicityTolerance++;
+      vzTolerance++;
+      allEventsWentThrough = false;
+      checkForDuplicates = true;
+    }
+    
+    // Increment the counter for event index to be mixed with the current event
+    mixedEventIndex++;
+    
+    // If we are out of bounds from the event in data file, reset the counter
+    if(mixedEventIndex == fnEventsInMixingFile) {
+      mixedEventIndex = -1;
+      continue;
+    }
+
+    // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
+    if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+    // Do not mix with events used in the previous iteration over the file
+    if(checkForDuplicates){
+      for(Int_t iMixedEvent : mixedEventIndices) {
+        if(iMixedEvent == mixedEventIndex) skipEvent = true;
+      }
+    }
+
+    // If we have already used the current mixed event, do not use the same event
+    if(skipEvent) continue;
+
+    // Match vz bin between the current event and mixed event
+    if(TMath::Abs(fMixedEventVzBin.at(mixedEventIndex) - vzBin) > (vzTolerance + 1e-4)) continue;
+
+    // Match multiplicity bin between the current event and mixed event
+    if(TMath::Abs(fMixedEventMultiplicityBin.at(mixedEventIndex) - multiplicityBin) > (multiplicityTolerance + 1e-4)) continue;
+
+    // Avoid mixing an event with itself
+    if(fMixedEventEventNumber.at(mixedEventIndex) == eventNumber) continue;
+
+    // Mark that this event is good to use for mixing
+    mixedEventIndices.push_back(mixedEventIndex);
+
+    // Increment the index of event that we have found for mixing purposes
+    mixedEventFillIndex++;
+      
+  } // While loop for searching for a good event to mix with
+
+  // For the next event, randomize the starting event again
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+
+}
+
+/*
+ * Find matching events for the current event based on hiBin bins
+ *
+ *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
+ *  const Int_t nEventsToMatch = Number of matched events that are searched for
+ *  const Double_t vz = Vertex z-position of the event
+ *  const Int_t hiBin = HiBin index of the current event
+ *  const Int_t iEvent = Number of the current event
+ *  
+ */ 
+void EECAnalyzer::FindBinnedHiBinMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, const Int_t hiBin, const Int_t eventNumber, const Int_t iEvent){
+
+  // Event matching for PbPb
+  Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
+  Bool_t allEventsWentThrough  = false;          // Flag telling if we have gone through all the events in mixing file without finding a matching event
+  Double_t vzTolerance = 0;                      // Starting tolerance for vz bin: exact match
+  Int_t hiBinTolerance = 0;                      // Starting tolerance for hiBin bin: exact match
+  Int_t mixedEventFillIndex = 0;                 // Index telling how many mixed events have been found already
+  Bool_t skipEvent = false;                      // Flag for skipping unwanted miked events
+  Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
+  Int_t vzBin = FindMixingVzBin(vz);             // Mixing bin index for the vz in the current event
+  Int_t hiBinBin = FindMixingHiBinBin(hiBin);    // Mixing bin index for the hiBin in the current event
+
+  mixedEventIndices.clear();  // Reset the previously found event index vector from previous events
+
+  // Find events to mix until we have found defined number of matching events
+  while(mixedEventFillIndex < nEventsToMatch){
+
+    // By default, do not skip events
+    skipEvent = false;
+
+    // If we have checked all the events but not found an event to mix with, increase vz and hiBin tolerance
+    if(allEventsWentThrough){
+      if(fDebugLevel > 0){
+        cout << "Could not find matching mixed events for event " << iEvent << endl;
+        cout << "Increasing vz tolerance by 0.5 and hiBin tolerance by 1" << endl;
+      }
+      
+      hiBinTolerance++;
+      vzTolerance++;
+      allEventsWentThrough = false;
+      checkForDuplicates = true;
+    }
+    
+    // Increment the counter for event index to be mixed with the current event
+    mixedEventIndex++;
+    
+    // If we are out of bounds from the event in data file, reset the counter
+    if(mixedEventIndex == fnEventsInMixingFile) {
+      mixedEventIndex = -1;
+      continue;
+    }
+
+    // If we come back to the first event index, we have gone through all the events without finding a matching mixed event
+    if(mixedEventIndex == fMixingStartIndex) allEventsWentThrough = true;
+
+    // Do not mix with events used in the previous iteration over the file
+    if(checkForDuplicates){
+      for(Int_t iMixedEvent : mixedEventIndices) {
+        if(iMixedEvent == mixedEventIndex) skipEvent = true;
+      }
+    }
+
+    // If we have already used the current mixed event, do not use the same event
+    if(skipEvent) continue;
+
+    // Match vz bin between the current event and mixed event
+    if(TMath::Abs(fMixedEventVzBin.at(mixedEventIndex) - vzBin) > (vzTolerance + 1e-4)) continue;
+
+    // Match hiBin bin between the current eent and mixed event
+    if(TMath::Abs(fMixedEventHiBinBin.at(mixedEventIndex) - hiBinBin) > (hiBinTolerance + 1e-4)) continue;
+
+    // Avoid mixing an event with itself
+    if(fMixedEventEventNumber.at(mixedEventIndex) == eventNumber) continue;
+
+    // Mark that this event is good to use for mixing
+    mixedEventIndices.push_back(mixedEventIndex);
+
+    // Increment the index of event that we have found for mixing purposes
+    mixedEventFillIndex++;
+      
+  } // While loop for searching for a good event to mix with
+
+  // For the next event, randomize the starting event again
+  fMixingStartIndex = fRng->Integer(fnEventsInMixingFile);  // Start mixing from random spot in file
+
+}
+
+/*
+ * Find matching events for the current event based on HF energy bins
  *
  *  std::vector<int>& mixedEventIndices = Reference to a vector that will hold the indiced of matched events
  *  const Int_t nEventsToMatch = Number of matched events that are searched for
@@ -4286,8 +4550,8 @@ void EECAnalyzer::FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIn
   // Event matching for pPb
   Int_t mixedEventIndex = fMixingStartIndex;     // Current index for mixed event file
   Bool_t allEventsWentThrough  = false;          // Flag telling if we have gone through all the events in mixing file without finding a matching event
-  Int_t vzTolerance = 0;                         // Starting tolerance for vz position: 0.5 cm
-  Int_t hfEnergyTolerance = 0;                   // Percentage difference in HF energy values that we allow between current and mixed events, starts from 1%.
+  Int_t vzTolerance = 0;                         // Starting tolerance for vz bin: exact match
+  Int_t hfEnergyTolerance = 0;                   // Starting tolerance for HF energy bin: exact match
   Int_t mixedEventFillIndex = 0;                 // Index telling how many mixed events have been found already
   Bool_t skipEvent = false;                      // Flag for skipping unwanted miked events
   Bool_t checkForDuplicates = false;             // Flag for checking duplicate events in the mixing list
@@ -4337,10 +4601,10 @@ void EECAnalyzer::FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIn
     // If we have already used the current mixed event, do not use the same event
     if(skipEvent) continue;
 
-    // Match vz between the current event and mixed event
+    // Match vz bin between the current event and mixed event
     if(TMath::Abs(fMixedEventVzBin.at(mixedEventIndex) - vzBin) > (vzTolerance + 1e-4)) continue;
 
-    // Match HF energy between the current event and mixed event
+    // Match HF energy bin between the current event and mixed event
     if(TMath::Abs(fMixedEventHFEnergyBin.at(mixedEventIndex) - hfEnergyBin) > (hfEnergyTolerance + 1e-4)) continue;
 
     // We are using minimum bias dataset for both mixing and analysis. Make sure not to match with the same event!
@@ -4378,10 +4642,11 @@ void EECAnalyzer::PrepareMixingVectors(){
   fMixedEventHFEnergy.clear();                 // contents they
   fMixedEventEventNumber.clear();              // might have
 
-  // For data, fill the vz and hiBin arrays
-  if(fDataType == ForestReader::kPbPb){
+  // Event matching based on HiBin
+  if(fEventMatchForMixing == kMatchHiBin){
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
       fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
@@ -4394,12 +4659,13 @@ void EECAnalyzer::PrepareMixingVectors(){
         fMixedEventHiBin.push_back(1000);
       }
     } // Loop over all mixed events
-  }
+  } // Event matching based on HiBin
 
-  // For MC, fill the vz and generator level particle multiplicity arrays for more accurate event matching
-  if(fDataType == ForestReader::kPbPbMC){
+  // Event matching based on background multiplicity
+  else if(fEventMatchForMixing == kMatchMultiplicity){
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
       fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
@@ -4412,23 +4678,33 @@ void EECAnalyzer::PrepareMixingVectors(){
         fMixedEventMultiplicity.push_back(-10);
       }
     } // Loop over all mixed events
-  }
+  } // Event matching based on background multiplicity
 
-  // For pPb and pp, we want to fill vz and HF energy.
-  // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
-  if(fIsPPbData || fIsPpData){
-    if(!fMegaSkimMode){
-      // Only mega skim mode implemented for pPb. If not doing it, complain to user.
-      throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb and pp data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
-    }
+  // Event matching based on HF energy
+  else if(fEventMatchForMixing == kMatchHFEnergy){
 
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
       fMixedEventReader->GetEvent(iMixedEvent);
-      fMixedEventVz.push_back(fMixedEventReader->GetVz());
-      fMixedEventHFEnergy.push_back(fMixedEventReader->GetHFSum());
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+      if(fMegaSkimMode){
+        // Event selection is already applied in mega skim mode. No need to check it again here.
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventHFEnergy.push_back(fMixedEventReader->GetHFSum());
+      } else if(PassEventCuts(fMixedEventReader,false)){
+        fMixedEventVz.push_back(fMixedEventReader->GetVz());
+        fMixedEventHFEnergy.push_back(fMixedEventReader->GetHFSum());
+      } else { // If event cuts not passed, input values such that events will never be mixed with these
+        fMixedEventVz.push_back(100);
+        fMixedEventHFEnergy.push_back(-50);
+      }
     } // Loop over all mixed events
-  } // Mixing for pPb
+
+  } // Event matching based on HF energy
+
+  // If something else is selected, crash the code and complain to user
+  else {
+    throw std::invalid_argument(Form("EECAnalyzer::ERROR There are three different event matching methods implemented for unbinned mixing. %d = Match HiBin, %d = Match HF energy, %d = Match background multiplicity. In the card, you defined EventMatchForMixing = %d. I do not know what to do with that, so I am crashing your code instead. Please fix this in the configuration.", kMatchHiBin, kMatchHFEnergy, kMatchMultiplicity, fEventMatchForMixing));
+  }
   
 }
 
@@ -4449,57 +4725,72 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
   fMixedEventHFEnergyBin.clear();                 // any possible contents 
   fMixedEventEventNumber.clear();                 // they might have
 
-  // For data, fill the vz and hiBin arrays
-  /*if(fDataType == ForestReader::kPbPb){
+  // Event matching based on HiBin
+  if(fEventMatchForMixing == kMatchHiBin){
+
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
       fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
-        fMixedEventVz.push_back(fMixedEventReader->GetVz());
-        fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventHiBin.push_back(FindMixingHiBinBin(fMixedEventReader->GetHiBin()));
       } else if(PassEventCuts(fMixedEventReader,false)){
-        fMixedEventVz.push_back(fMixedEventReader->GetVz());
-        fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventHiBin.push_back(FindMixingHiBinBin(fMixedEventReader->GetHiBin()));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(100);
-        fMixedEventHiBin.push_back(1000);
+        fMixedEventVzBin.push_back(1000);
+        fMixedEventHiBin.push_back(-500);
+      }
+    } // Loop over all mixed events
+  } // Event matching based on HiBin
+
+  // For MC, fill the vz and generator level particle multiplicity arrays for more accurate event matching
+  else if(fEventMatchForMixing == kMatchMultiplicity){
+    for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
+      fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+
+      if(fMegaSkimMode){
+        // Event selection is already applied in mega skim mode. No need to check it again here.
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventMultiplicityBin.push_back(FindMixingMultiplicityBin(GetGenMultiplicity(fMixedEventReader, kSubeventAny, true)));
+      } else if(PassEventCuts(fMixedEventReader,false)){
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventMultiplicityBin.push_back(FindMixingMultiplicityBin(GetGenMultiplicity(fMixedEventReader, kSubeventAny, false)));
+      } else { // If event cuts not passed, input values such that events will never be mixed with these
+        fMixedEventVzBin.push_back(1000);
+        fMixedEventMultiplicityBin.push_back(-500);
       }
     } // Loop over all mixed events
   }
 
-  // For MC, fill the vz and generator level particle multiplicity arrays for more accurate event matching
-  if(fDataType == ForestReader::kPbPbMC){
+  // Event matching based on HF energy
+  else if(fEventMatchForMixing == kMatchHFEnergy){
+
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
       fMixedEventReader->GetEvent(iMixedEvent);
+      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
-        fMixedEventVz.push_back(fMixedEventReader->GetVz());
-        fMixedEventMultiplicity.push_back(GetGenMultiplicity(fMixedEventReader, kSubeventAny, true));
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventHFEnergyBin.push_back(FindMixingHFEnergyBin(fMixedEventReader->GetHFSum()));
       } else if(PassEventCuts(fMixedEventReader,false)){
-        fMixedEventVz.push_back(fMixedEventReader->GetVz());
-        fMixedEventMultiplicity.push_back(GetGenMultiplicity(fMixedEventReader, kSubeventAny, false));
+        fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
+        fMixedEventHFEnergyBin.push_back(FindMixingHFEnergyBin(fMixedEventReader->GetHFSum()));
       } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(100);
-        fMixedEventMultiplicity.push_back(-10);
+        fMixedEventVzBin.push_back(1000);
+        fMixedEventHFEnergyBin.push_back(-500);
       }
     } // Loop over all mixed events
-  }*/
+  } // Event matching based on HF energy
 
-  // For pPb and pp, we want to fill vz and HF energy.
-  // Because we are mixing with the same minimum bias dataset, remember also event number to avoid mixing with same events.
-  if(fIsPPbData || fIsPpData){
-    if(!fMegaSkimMode){
-      // Only mega skim mode implemented for pPb. If not doing it, complain to user.
-      throw std::invalid_argument("EECAnalyzer::ERROR The mixing for pPb data is only implemented for mega skimmed mode, but you trying to run without enabling a flag for mega skimmed mode. Please fix this in your configuration");
-    }
-
-    for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
-      fMixedEventVzBin.push_back(FindMixingVzBin(fMixedEventReader->GetVz()));
-      fMixedEventHFEnergyBin.push_back(FindMixingHFEnergyBin(fMixedEventReader->GetHFSum()));
-      fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
-    } // Loop over all mixed events
-  } // Mixing for pPb
+  // If something else is selected, crash the code and complain to user
+  else {
+    throw std::invalid_argument(Form("EECAnalyzer::ERROR There are three different event matching methods implemented for binned mixing. %d = Match HiBin, %d = Match HF energy, %d = Match background multiplicity. In the card, you defined EventMatchForMixing = %d. I do not know what to do with that, so I am crashing your code instead. Please fix this in the configuration.", kMatchHiBin, kMatchHFEnergy, kMatchMultiplicity, fEventMatchForMixing));
+  }
   
 }
 
@@ -4563,9 +4854,22 @@ Int_t EECAnalyzer::FindMixingVzBin(Double_t vz){
   return FindMixingBin(vz, fVzMixingBinBorders.at(0), fVzMixingBinBorders.at(1));
 }
 
+// Find mixing HF energy bin from hfEnergy value
 Int_t EECAnalyzer::FindMixingHFEnergyBin(Double_t hfEnergy){
   if(fHFEnergyMixingBinBorders.size() > 2) FindMixingBin(hfEnergy, fHFEnergyMixingBinBorders);
   return FindMixingBin(hfEnergy, fHFEnergyMixingBinBorders.at(0), fHFEnergyMixingBinBorders.at(1));
+}
+
+// Find mixing HiBin bin from HiBin value
+Int_t EECAnalyzer::FindMixingHiBinBin(Int_t hiBin){
+  if(fHiBinMixingBinBorders.size() > 2) FindMixingBin(hiBin, fHiBinMixingBinBorders);
+  return FindMixingBin(hiBin, fHiBinMixingBinBorders.at(0), fHiBinMixingBinBorders.at(1));
+}
+
+// Find mixing multiplicity bin from multiplicity value
+Int_t EECAnalyzer::FindMixingMultiplicityBin(Int_t multiplicity){
+  if(fMultiplicityMixingBinBorders.size() > 2) FindMixingBin(multiplicity, fMultiplicityMixingBinBorders);
+  return FindMixingBin(multiplicity, fMultiplicityMixingBinBorders.at(0), fMultiplicityMixingBinBorders.at(1));
 }
 
 // Get vector with bin borders used in mixing
