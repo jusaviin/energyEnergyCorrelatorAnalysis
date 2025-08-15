@@ -78,8 +78,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   int firstDrawnTrackPtBin = 0;
   int lastDrawnTrackPtBin = 0;
   
-  int firstDrawnJetPtBinEEC = 5;
-  int lastDrawnJetPtBinEEC = 5; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
+  int firstDrawnJetPtBinEEC = 1;
+  int lastDrawnJetPtBinEEC = 1; // Note: Jets integrated over all pT ranges are in nJetPtBinsEEC bin
   
   int firstDrawnTrackPtBinEEC = 1;
   int lastDrawnTrackPtBinEEC = 1;
@@ -128,10 +128,10 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   const bool drawParticleDensitiesForConstantJetPt = false;
   
   // Select the style of histograms drawn for energy-energy correlators
-  const bool drawIndividualEnergyEnergyCorrelators = true;
+  const bool drawIndividualEnergyEnergyCorrelators = false;
   const bool drawEnergyEnergyCorrelatorsForConstantJetPt = false;
   const bool drawEnergyEnergyCorrelatorsForConstantTrackPt = false;
-  bool drawEnergyEnergyCorrelatorsSubevent = false;
+  bool drawEnergyEnergyCorrelatorsSubevent = true;
   
   // Select which subevents to draw
   bool drawAllSubevents = true;   // Draw histograms without subevent selection
@@ -143,8 +143,8 @@ void plotEEChistograms(TString inputFileName = "veryCoolData_processed.root"){
   bool drawSignalFake = false;        // Draw Pythia+Hydjet correlations from MC
   bool drawFakeFake = false;          // Draw Hydjet+Hydjet correlations from MC
   
-  // If the collision system in not PbPb MC, we cannot draw subevent decomposition
-  if(!collisionSystem.Contains("PbPb MC")){
+  // If the collision system in not PbPb or pPb MC, we cannot draw subevent decomposition
+  if(!collisionSystem.Contains("Pb MC")){
     drawEnergyEnergyCorrelatorsSubevent = false;
     
     drawPythiaOnly = false;
