@@ -319,14 +319,14 @@ void edgeStudyPaperPlots(){
   // Paper plot selection
   bool drawDeltaJetAxisWithPt = false;        // Draw DeltaR between E-scheme and WTA jet axes as a function of pT
   bool fitOneOverPt = false;                  // Fit 1/pT function to average DeltaR between E-scheme and WTA jet axes as a function of pT histograms
-  bool drawEdgeLossIllustration = false;      // Draw an illustration about edge loss
+  bool drawEdgeLossIllustration = true;      // Draw an illustration about edge loss
   bool drawEdgeLossWithPt = false;            // Draw the amount of edge-loss as a function of jet pT
   bool drawEdgeLossWithDeltaJetAxis = false;  // Draw the amount of edge-loss as a function of DeltaR between E-scheme and WTA jet axes 
-  bool fitLinearToEdgeLoss = false;
+  bool fitLinearToEdgeLoss = true;
 
   // QA plots
   bool drawJetVetoBiasIllustration = false;    // Draw plots illustrating how much vetoing close jets biases the distributions
-  bool drawEdgeLossDefinition = true;          // Illustrate the definition of edge loss
+  bool drawEdgeLossDefinition = false;          // Illustrate the definition of edge loss
   bool drawJetDeltaAxis = false;               // Draw the delta R distributions between jet axes
 
   // Style for edge loss definition
@@ -1087,10 +1087,28 @@ void edgeStudyPaperPlots(){
             if(saveFigures){
               gPad->GetCanvas()->SaveAs(Form("figures/edgeLossWithPt%s%s%s%s%s%s.%s", saveComment.Data(), vetoSaveName[vetoCloseJets].Data(), jetAxisSaveName[iJetAxis].Data(), energyWeightDescription[iEnergyWeight].Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat));
             }
+
+            // Print the point values to the console
+            cout << "Energy weight: " << iEnergyWeight << " Jet axis: " << iJetAxis << endl;
+            cout << "JetPtLow JetPtHigh EdgeLossPythia ErrorPythia EdgeLossHerwig ErrorHerwig" << endl;
+            int iEdgeLossBin = 0;
+            for(auto jetPtBin : comparedJetPtBin){
+              iEdgeLossBin++;
+              cout << jetPtBin.first << " " << jetPtBin.second << " ";
+              cout << hEdgeLossVsPt[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetBinContent(iEdgeLossBin) << " ";
+              cout << hEdgeLossVsPt[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetBinError(iEdgeLossBin) << " ";
+              cout << hEdgeLossVsPt[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetBinContent(iEdgeLossBin) << " ";
+              cout << hEdgeLossVsPt[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetBinError(iEdgeLossBin) << " ";
+              cout << endl;
+            }
+            
+
           } // Centrality loop
         } // Track pT loop
       } // Jet axis loop
     } // Energy weight loop
+
+
   } // Drawing the edge loss as a function of jet pT
 
 
@@ -1165,6 +1183,35 @@ void edgeStudyPaperPlots(){
             if(saveFigures){
               gPad->GetCanvas()->SaveAs(Form("figures/edgeLossWithDeltaJetAxis%s%s%s%s%s%s.%s", saveComment.Data(), vetoSaveName[vetoCloseJets].Data(), jetAxisSaveName[iJetAxis].Data(), energyWeightDescription[iEnergyWeight].Data(), compactCentralityString.Data(), compactTrackPtString.Data(), figureFormat));
             }
+
+            // Print the point values to the console
+            cout << "Energy weight: " << iEnergyWeight << " Jet axis: " << iJetAxis << endl;
+            cout << "Pythia8" << endl;
+            cout << "JetAxisDifference JetAxisError EdgeLoss EdgeLossError" << endl;
+            int iEdgeLossPoint = 0;
+            for(auto jetPtBin : comparedJetPtBin){
+              cout << hEdgeLossVsDeltaJetAxis[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetPointX(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetErrorX(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetPointY(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetErrorY(iEdgeLossPoint) << " ";
+              cout << endl;
+              iEdgeLossPoint++;
+            }
+            cout << "Linear fit parameters:" << endl;
+            cout << fLinearFit[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetParameter(0) << " " << fLinearFit[kPythia][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetParameter(1) << endl;
+            cout << "Herwig" << endl;
+            cout << "JetAxisDifference JetAxisError EdgeLoss EdgeLossError" << endl;
+            iEdgeLossPoint = 0;
+            for(auto jetPtBin : comparedJetPtBin){
+              cout << hEdgeLossVsDeltaJetAxis[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetPointX(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetErrorX(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetPointY(iEdgeLossPoint) << " ";
+              cout << hEdgeLossVsDeltaJetAxis[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetErrorY(iEdgeLossPoint) << " ";
+              cout << endl;
+              iEdgeLossPoint++;
+            }
+            cout << "Linear fit parameters:" << endl;
+            cout << fLinearFit[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetParameter(0) << " " << fLinearFit[kHerwig][vetoCloseJets][iEnergyWeight][iJetAxis][iCentrality][iTrackPt]->GetParameter(1) << endl;
           } // Centrality loop
         } // Track pT loop
       } // Jet axis loop
@@ -1349,17 +1396,20 @@ void edgeStudyPaperPlots(){
 
     drawer->SetGridY(false);
 
-    /*TFile* carlotaFile = new TFile("histogramsForCarlota.root","RECREATE");
-    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
-    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
-    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
-    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
-    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecHistogramR0p4");
-    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p8][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecHistogramR0p8");
-    hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecHistogramR0p2");
-    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecRadiusRatioR0p4");
-    hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write("eecRadiusRatioR0p2");
-    carlotaFile->Close();*/
+    TFile* carlotaFile = new TFile("herwigHistogramsForCarlota.root","RECREATE");
+    for(auto jetPtBin : comparedJetPtBin){
+      iJetPt = card[0][0][0][0][0]->FindBinIndexJetPtEEC(jetPtBin);
+      hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
+      hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
+      hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetXaxis()->SetRangeUser(0,0);
+      hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
+      hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p4_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p8][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p8_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      //hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecRadiusRatioR0p4_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      //hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecRadiusRatioR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+    }
+    carlotaFile->Close();
 
   } // Drawing illustration of edge loss definition
 
