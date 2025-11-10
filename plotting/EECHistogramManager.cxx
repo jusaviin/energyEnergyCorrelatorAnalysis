@@ -609,6 +609,7 @@ EECHistogramManager::~EECHistogramManager(){
  *                1: Use ALICE style perpendicular cone subtraction
  *                2: Use reflected cone background subtraction with MC based scaling
  *                3: Do not subtract background, just copy the raw distribution
+ *                4: Use generator level truth signal for the signal histogram
  *                
  *  const int iSystematic = Index for systematic uncertainty estimation for background subtraction.
  *                          0: Nominal results, no systematic uncertainty estimation
@@ -619,7 +620,7 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
 
   // Sanity check for selected background subtraction method
   if(iMethod < 0) iMethod = 0;
-  if(iMethod > 3) iMethod = 3;
+  if(iMethod > 4) iMethod = 4;
   
   double normalizationFactor;
   EECBackgroundScale* scaleProvider = new EECBackgroundScale(fCard, iSystematic);
@@ -708,7 +709,16 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
         }
         
         // Subtracts the background from the raw distribution
-        fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
+        if(iMethod < 4){
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
+        } else {
+          // For Monte Carlo, we can directly read the truth level distributions
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal] =  (TH1D*) GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaPythia);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorSignal]->SetName(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground] = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaHydjet);
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->SetName(Form("%s%s_C%dT%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt));
+          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, fnJetPtBinsEEC, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kHydjetHydjet));
+        }
 
         // Subtract the background unless specifically defined not to do that
         if(iMethod < 3){
@@ -771,7 +781,16 @@ void EECHistogramManager::SubtractBackground(int iMethod, const int iSystematic)
           }
           
           // Now that the background is properly normalized, it can be subtracted from the total distribution to get the signal
-          fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
+          if(iMethod < 4){
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] = (TH1D*) rawHistogram->Clone(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
+          } else {
+            // For Monte Carlo, we can directly read the truth level distributions
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal] =  GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaPythia);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorSignal]->SetName(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorSignal], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground] = GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kPythiaHydjet);
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->SetName(Form("%s%s_C%dT%dJ%d",fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fEnergyEnergyCorrelatorProcessedSaveString[kEnergyEnergyCorrelatorBackground], iCentrality, iTrackPt, iJetPt));
+            fhEnergyEnergyCorrelatorProcessed[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][kEnergyEnergyCorrelatorBackground]->Add(GetHistogramEnergyEnergyCorrelator(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, EECHistograms::kSameJetPair, EECHistograms::kHydjetHydjet));
+          }
 
           // Subtract the background unless specifically instructed not to do that
           if(iMethod < 3){

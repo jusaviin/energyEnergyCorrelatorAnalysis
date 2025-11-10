@@ -20,18 +20,23 @@ void compareEECinDefinedBins(){
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_perpendicularConeSubtracted_processed_2025-06-30.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_noBackgroundSubtraction_processed_2025-06-30.root");
 
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift28_processed_2025-06-30.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift31_smallStats_processed_2025-07-08.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedConeHFshift25_smallStats_processed_2025-07-03.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
-  fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfCsJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-07-14.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-06-05.root");
+  //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfCsJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_perpendicularConeSubtracted_processed_2025-07-14.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_noSubtraction_processed_2025-06-05.root");
 
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFPlusAndMinus_processed_2025-06-13.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixedEventSubtracted_processed_2025-06-05.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFPlus_processed_2025-06-13.root");
   //fileName.push_back("data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_mixHFMinus_processed_2025-06-13.root");
+
+  fileName.push_back("pythiaEposPilot_GenGen_truthLevelBackground_processed.root");
+  fileName.push_back("pythiaEposPilot_GenGen_mixingWithNominalHF_processed.root");
+  fileName.push_back("pythiaEposPilot_GenGen_mixingWithShiftedHF_processed.root");
+  fileName.push_back("pythiaEposPilot_GenGen_perpendicularConeBackground_processed.root");
     
 
   const int nComparisonFiles = fileName.size();
@@ -53,14 +58,17 @@ void compareEECinDefinedBins(){
   //fileDescription.push_back("pp 5 TeV, mixed cone");
   //fileDescription.push_back("pp 5 TeV, perpendicular cone");
   //fileDescription.push_back("pp 5 TeV, unsubtracted");
-  fileDescription.push_back("pPb 5 TeV, HF shift 28");
+  //fileDescription.push_back("pPb 5 TeV, HF shift 28");
   //fileDescription.push_back("pPb 5 TeV, HF shift 31");
   //fileDescription.push_back("pPb 5 TeV, HF shift 25");
   //fileDescription.push_back("pPb 5 TeV, no HF shift");
   //fileDescription.push_back("pPb 5 TeV, unsubtracted");
-  fileDescription.push_back("pPb 5 TeV, perp cone sub");
-  fileDescription.push_back("pPb 5 TeV, perp cone and CS sub");
-  //fileDescription.push_back("Perpendicular cone sanity check");
+  //fileDescription.push_back("pPb 5 TeV, perp cone sub");
+  //fileDescription.push_back("pPb 5 TeV, perp cone and CS sub");
+  fileDescription.push_back("Pythia+EPOS, truth signal");
+  fileDescription.push_back("Mixed cone, no HF shift");
+  fileDescription.push_back("Mixed cone, with HF shift");
+  fileDescription.push_back("Perpendicular cone");
 
   // Check that a description exists for each file
   if(fileDescription.size() < fileName.size()){
@@ -121,9 +129,9 @@ void compareEECinDefinedBins(){
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(30,40));
-  comparedJetPtBin.push_back(std::make_pair(40,50));
-  comparedJetPtBin.push_back(std::make_pair(50,60));
-  comparedJetPtBin.push_back(std::make_pair(60,80));
+  //comparedJetPtBin.push_back(std::make_pair(40,50));
+  //comparedJetPtBin.push_back(std::make_pair(50,60));
+  //comparedJetPtBin.push_back(std::make_pair(60,80));
   bool individualJetPt = true; // True = make different figure for each bin. False = plot all jet pT bin to the same figure.
 
   std::vector<double> comparedTrackPtBin;
@@ -185,7 +193,7 @@ void compareEECinDefinedBins(){
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
-  std::pair<double, double> ratioZoom = std::make_pair(0.85, 1.15);
+  std::pair<double, double> ratioZoom = std::make_pair(0.81, 1.19);
   std::pair<double, double> eecZoom = std::make_pair(0.2, 30);
   const bool automaticZoom = true;
 
@@ -752,7 +760,7 @@ void compareEECinDefinedBins(){
       drawer->DrawHistogramToLowerPad(hRelativeUncertainty[firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ", "e2");
     } else {
       //drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", Form("#frac{Color}{%s}", ratioName.Data()), " ");
-      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "#frac{Color}{HF shift 28}", " ");
+      drawer->DrawHistogramToLowerPad(hEnergyEnergyCorrelatorRatio[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], "#Deltar", "#frac{Color}{Truth signal}", " ");
     }
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){

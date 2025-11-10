@@ -44,6 +44,7 @@ void calculateCorrelatedBands(TH1D* correlatedHistogram, TH1D* correlatedBandUpH
  *       4 = Best k from Holguin and CoLBT
  *       5 = Only JEWEL
  *       6 = Best k from Holguin and JEWEL
+ *       7 = Full hybrid and JEWEL with recoils
  *   int drawnPlots = Index to select which plots are drawn to the canvas
  *       0 = Compare energy-energy correlator distributions to theory predictions
  *       1 = Compare PbPb/pp ratios to theory predictions
@@ -225,7 +226,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
   // 4 = Best k from Holguin and CoLBT
   // 5 = Only JEWEL
   // 6 = Best k from Holguin and JEWEL
-  TString theorySaveName[7] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt", "jewel", "holguinAndJewel"};
+  // 7 = Full hybrid and JEWEL with recoils
+  TString theorySaveName[8] = {"hybridModel", "holguin", "colbt", "threeModels", "holguinAndColbt", "jewel", "holguinAndJewel", "hybridAndJewel"};
 
 
   // Binning for double ratio plots
@@ -1070,7 +1072,7 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
   // Read the histograms for JEWEL
   JewelHistogramManager* jewelHistograms = new JewelHistogramManager(jewelDataFolder);
-  if(theoryComparisonIndex == 5 || theoryComparisonIndex == 6 || drawnPlots == 0){
+  if(theoryComparisonIndex == 5 || theoryComparisonIndex == 6 || theoryComparisonIndex == 7 || drawnPlots == 0){
     for(int iWeightExponent = 0; iWeightExponent < nWeightExponents; iWeightExponent++){
       for(auto jetPtBin : drawnJetPtBin){
         iJetPt = card[kPbPb][iWeightExponent]->FindBinIndexJetPtEEC(jetPtBin);
@@ -1647,6 +1649,39 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               // Add a legend for the theory prediction
               legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
+          } else if(theoryComparisonIndex == 7){
+
+            // Draw the hybrid model with all bells and whistles
+            if(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetLineColor(color[HybridModelHistogramManager::kFullWake]);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerColor(color[HybridModelHistogramManager::kFullWake]);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->Draw("3,same");
+
+              // Add a legend for the theory prediction
+              legend->AddEntry(energyEnergyCorrelatorHybridModelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake], hybridHistograms->GetWakeName(HybridModelHistogramManager::kFullWake), "f");
+            }
+
+            // Draw the JEWEL with recoils
+            if(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetLineColor(color[JewelHistogramManager::kRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              legend->AddEntry(energyEnergyCorrelatorJewelPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil], jewelHistograms->GetRecoilName(JewelHistogramManager::kRecoil), "pl");
+            }
+
           }
 
           // Draw the legend to the upper pad
@@ -1762,6 +1797,22 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerColor(color[iRecoil]);
               jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
               jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
+            }
+          } else if(theoryComparisonIndex == 7){
+            // Theory comparison index 7, full wake Hybrid and JEWEL with recoils
+
+            if(hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake] != NULL){
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerColor(color[HybridModelHistogramManager::kFullWake]);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerSize(0);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+              hybridModelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->Draw("same,e3");
+            }
+
+            if(jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil] != NULL){
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+              jewelToDataRatioPbPb[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->Draw("same,pl");
             }
           }
 
@@ -2110,6 +2161,40 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               // Add a legend for the theory prediction
               anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
             }
+          } else if(theoryComparisonIndex == 7){
+            // Theory comparison index 7: Full wake hybrid and JEWEL with recoils
+
+            // Hybrid full wake
+            if(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetLineColor(color[HybridModelHistogramManager::kFullWake]);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerColor(color[HybridModelHistogramManager::kFullWake]);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->Draw("3,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorHybridModelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake], hybridHistograms->GetWakeName(HybridModelHistogramManager::kFullWake), "f");
+            }
+
+            // JEWEL with recoil
+            if(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil] != NULL){
+
+              // Give some nice styles for the predictions
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetLineColor(color[JewelHistogramManager::kRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+
+              // Draw the prediction to the same canvas as the data
+              energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->Draw("pl,same");
+
+              // Add a legend for the theory prediction
+              anotherLegend->AddEntry(energyEnergyCorrelatorJewelPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil], jewelHistograms->GetRecoilName(JewelHistogramManager::kRecoil), "pl");
+            }
+
           }
 
           // Draw the legends to the upper pad
@@ -2348,6 +2433,25 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
               jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->SetMarkerStyle(jewelMarkerStyle[iRecoil]);
               jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][iRecoil]->Draw("same,pl");
             }
+          } else if(theoryComparisonIndex == 7){
+            // Theory comparison index 7, Hybrid full wake and JEWEL with recoils
+
+            // Hybrid full wake
+            if(hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake] != NULL){
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerColor(color[HybridModelHistogramManager::kFullWake]);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetMarkerSize(0);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+              hybridModelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][HybridModelHistogramManager::kFullWake]->Draw("same,e3");
+            }
+
+            // JEWEL with recoils
+            if(jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil] != NULL){
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+              jewelToDataRatioPbPbToPpRatio[weightExponent-1][iCentrality][iJetPt][iTrackPt][JewelHistogramManager::kRecoil]->Draw("same,pl");
+            }
+
           }
 
           // Draw the legend to the lower pad
@@ -2451,8 +2555,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             // Add a legend for the theory prediction
             anotherLegend->AddEntry(histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake], hybridHistograms->GetWakeName(iWake), "f");
           }
-        } else if (theoryComparisonIndex >= 5){
-          // Theory comparison index >= 5: JEWEL
+        } else if (theoryComparisonIndex == 5 || theoryComparisonIndex == 6){
+          // Theory comparison index 5 or 6: JEWEL
 
           for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
 
@@ -2469,6 +2573,39 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
 
             // Add a legend for the theory prediction
             anotherLegend->AddEntry(jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil], jewelHistograms->GetRecoilName(iRecoil), "pl");
+          }
+        } else if (theoryComparisonIndex == 7){
+          // Theory comparison index 7: Hybrid full wake and JEWEL with recoils
+
+          // Hybrid full wake
+          if(histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake] != NULL){
+
+            // Give some nice styles for the predictions
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetLineColor(color[HybridModelHistogramManager::kFullWake]);
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetMarkerSize(0);
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+
+            // Draw the prediction to the same canvas as the data
+            histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->Draw("same,e3");
+
+            // Add a legend for the theory prediction
+            anotherLegend->AddEntry(histogrammifiedHybridModelDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake], hybridHistograms->GetWakeName(HybridModelHistogramManager::kFullWake), "f");
+          }
+
+          // JEWEL with recoils
+          if(jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil] != NULL){
+
+            // Give some nice styles for the predictions
+            jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+            jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetLineColor(color[JewelHistogramManager::kRecoil]);
+            jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+
+            // Draw the prediction to the same canvas as the data
+            jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->Draw("same,pl");
+
+            // Add a legend for the theory prediction
+            anotherLegend->AddEntry(jewelDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil], jewelHistograms->GetRecoilName(JewelHistogramManager::kRecoil), "pl");
           }
         }
 
@@ -2554,8 +2691,8 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->SetFillColorAlpha(color[iWake], jetWakeOpacity[iWake]);
             hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iWake]->Draw("same,e3");
           }
-        } else if(theoryComparisonIndex >= 5){
-          // Theory comparison index >= 5: JEWEL
+        } else if(theoryComparisonIndex == 5 || theoryComparisonIndex == 6){
+          // Theory comparison index 5 or 6: JEWEL
 
           for(int iRecoil = 0; iRecoil < JewelHistogramManager::kRecoilSettings; iRecoil++){
 
@@ -2566,6 +2703,25 @@ void modelComparison(int weightExponent = 1, int theoryComparisonIndex = 0, int 
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->SetMarkerColor(color[iRecoil]);
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->SetLineColor(color[iRecoil]);
             jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][iRecoil]->Draw("same,pl");
+          }
+        } else if(theoryComparisonIndex == 7){
+          // Theory comparison index 7: Hybrid full wake and JEWEL with recoils
+
+          // Hybrid full wake
+          if(hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake] != NULL){
+            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetMarkerStyle(kFullCircle);
+            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetMarkerSize(0);
+            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->SetFillColorAlpha(color[HybridModelHistogramManager::kFullWake], jetWakeOpacity[HybridModelHistogramManager::kFullWake]);
+            hybridModelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][HybridModelHistogramManager::kFullWake]->Draw("same,e3");
+          }
+
+          // JEWEL with recoils
+          if(jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil] != NULL){
+
+            jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetMarkerStyle(jewelMarkerStyle[JewelHistogramManager::kRecoil]);
+            jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetMarkerColor(color[JewelHistogramManager::kRecoil]);
+            jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->SetLineColor(color[JewelHistogramManager::kRecoil]);
+            jewelToDataRatioDoubleRatio[weightExponent-1][iCentrality][iJetPt][JewelHistogramManager::kRecoil]->Draw("same,pl");
           }
         }
 

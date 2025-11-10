@@ -155,7 +155,7 @@ void constructJetPtClosures(){
   // ========================= Configuration ==========================
   // ==================================================================
   
-  TString closureFileName = "data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_jetPtClosureIncludingPhi_processed_2023-08-15.root";
+  TString closureFileName = "data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root";
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_fixCentrality_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_miniAOD_4pCentShift_noTrigger_jetPtClosure_finalMcWeight_processed_2023-03-06.root
   // data/PbPbMC2018_GenGen_eecAnalysis_akFlowJets_mAOD_4pC_wtaAxis_noTrig_matchJetPt_closures_processed_2023-02-07.root
@@ -165,15 +165,15 @@ void constructJetPtClosures(){
   // data/ppMC2017_GenGen_Pythia8_pfJets_wtaAxis_jetPtClosureWithPhi_processed_2023-08-15.root
   
   bool drawPtClosure = true;
-  bool drawEtaClosure = true;
-  bool drawPhiClosure = true;
+  bool drawEtaClosure = false;
+  bool drawPhiClosure = false;
   
   bool includeQuarkGluon = false; // Include only quark and only gluon jet curves
   bool drawGaussFitsPt = false;
     
   bool fitResolution = false;  // Fit the jet pT resolution histograms
   
-  bool saveFigures = true;  // Save the figures to file
+  bool saveFigures = false;  // Save the figures to file
   
   // ==================================================================
   // =================== Configuration ready ==========================

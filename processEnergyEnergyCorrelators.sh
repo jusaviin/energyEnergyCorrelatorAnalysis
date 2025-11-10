@@ -10,6 +10,7 @@ if [ "$#" -lt 1 ]; then
   echo "  1 = Perpendicular cone background"
   echo "  2 = Reflected cone background"
   echo "  3 = No background subtraction"
+  echo "  4 = Truth level separation for signal and background in Monte Carlo"
   echo "-u systematicUncertainty = Index for systematic uncertainty. Default = 0."
   echo "  0 = Nominal result"
   echo "  1 = Background scale from 2% centrality shift"
