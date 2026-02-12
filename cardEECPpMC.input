@@ -24,7 +24,7 @@ FilledHistograms 31 # Bit 0 = Event information histograms                  (to 
 
 # Cuts for dijets
 JetType 1                  # 0 = Calo jets, 1 = PF jets
-JetAxis 0                  # 0 = Escheme axis, 1 = WTA axis
+JetAxis 1                  # 0 = Escheme axis, 1 = WTA axis
 JetEtaCut 1.6              # Region in eta around midrapidity taken into account in analysis
 MinJetPtCut 80            # Minimum pT of a leading jet accepted in the analysis
 MaxJetPtCut 5020           # Maximum pT of a leading jet accepted in the analysis

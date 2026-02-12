@@ -454,6 +454,7 @@ private:
 
   // Histograms for leading particle in jets
   TH1D* fhLeadingParticleInJet[kMaxJetDeltaAxisBins+1][kMaxCentralityBins][kMaxJetPtBinsEEC];
+  TH1D* fhDeltaJetLeadingParticle[kMaxCentralityBins][kMaxJetPtBinsEEC];
 
   // Histograms for tracks
   TH1D* fhTrackPt[knTrackCategories][kMaxCentralityBins];                         // Track pT histograms

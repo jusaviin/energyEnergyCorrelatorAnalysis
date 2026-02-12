@@ -43,10 +43,12 @@ void edgeStudyPaperPlots(){
   TString jetRadiusDescription[knJetRadii];
   jetRadiusDescription[kR0p4] = "R = 0.4";
   jetRadiusDescription[kR0p8] = "R = 0.8";
+  jetRadiusDescription[kR0p2] = "R = 0.2";
 
   TString jetRadiusSaveName[knJetRadii];
   jetRadiusSaveName[kR0p4] = "_R0p4";
   jetRadiusSaveName[kR0p8] = "_R0p8";
+  jetRadiusSaveName[kR0p2] = "_R0p2";
 
   // Naming for energy weights
   TString energyWeightDescription[knEnergyWeights];
@@ -172,6 +174,13 @@ void edgeStudyPaperPlots(){
   fileExists[kHerwig][kNoVeto][kR0p8][kSquaredWeight][kEscheme] = true;
   fileExists[kHerwig][kNoVeto][kR0p8][kNominalWeight][kWTA] = true;
   fileExists[kHerwig][kNoVeto][kR0p8][kSquaredWeight][kWTA] = true;
+
+  // Files for R = 0.2. These only exist for E-scheme axis and without jet veto
+  fileName[kHerwig][kNoVeto][kR0p2][kNominalWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Herwig_pfJets_eschemeAxis_nominalEnergyWeight_jetDeltaAxis_jetRadius0p2_leadingParticleFlag_processed_2025-11-11.root";
+  fileName[kHerwig][kNoVeto][kR0p2][kSquaredWeight][kEscheme] = "data/eschemeAxis/ppMC2017_GenGen_Herwig_pfJets_eschemeAxis_energyWeightSquared_jetDeltaAxis_jetRadius0p2_leadingParticleFlag_processed_2025-11-11.root";
+
+  fileExists[kHerwig][kNoVeto][kR0p2][kNominalWeight][kEscheme] = true;
+  fileExists[kHerwig][kNoVeto][kR0p2][kSquaredWeight][kEscheme] = true;
 
   // Note: There are no files for Herwig with jet veto
   
@@ -319,14 +328,14 @@ void edgeStudyPaperPlots(){
   // Paper plot selection
   bool drawDeltaJetAxisWithPt = false;        // Draw DeltaR between E-scheme and WTA jet axes as a function of pT
   bool fitOneOverPt = false;                  // Fit 1/pT function to average DeltaR between E-scheme and WTA jet axes as a function of pT histograms
-  bool drawEdgeLossIllustration = true;      // Draw an illustration about edge loss
+  bool drawEdgeLossIllustration = false;      // Draw an illustration about edge loss
   bool drawEdgeLossWithPt = false;            // Draw the amount of edge-loss as a function of jet pT
   bool drawEdgeLossWithDeltaJetAxis = false;  // Draw the amount of edge-loss as a function of DeltaR between E-scheme and WTA jet axes 
   bool fitLinearToEdgeLoss = true;
 
   // QA plots
   bool drawJetVetoBiasIllustration = false;    // Draw plots illustrating how much vetoing close jets biases the distributions
-  bool drawEdgeLossDefinition = false;          // Illustrate the definition of edge loss
+  bool drawEdgeLossDefinition = true;          // Illustrate the definition of edge loss
   bool drawJetDeltaAxis = false;               // Draw the delta R distributions between jet axes
 
   // Style for edge loss definition
@@ -1405,9 +1414,9 @@ void edgeStudyPaperPlots(){
       hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0,0);
       hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p4_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
       hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p8][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p8_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
-      //hEnergyEnergyCorrelator[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      hEnergyEnergyCorrelator[kHerwig][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecHistogramR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
       hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p4][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecRadiusRatioR0p4_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
-      //hEnergyEnergyCorrelatorRadiusRatio[kPythia][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecRadiusRatioR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
+      hEnergyEnergyCorrelatorRadiusRatio[kHerwig][vetoCloseJets][kR0p2][kNominalWeight][kEscheme][0][iJetPt][iTrackPt]->Write(Form("eecRadiusRatioR0p2_jetPt%d-%d", jetPtBin.first, jetPtBin.second));
     }
     carlotaFile->Close();
 

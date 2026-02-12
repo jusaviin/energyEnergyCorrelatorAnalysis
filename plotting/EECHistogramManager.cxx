@@ -121,6 +121,7 @@ EECHistogramManager::EECHistogramManager() :
 
     for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
       fhJetDeltaAxis[iCentrality][iJetPt] = NULL; // DeltaR between WTA and E-scheme axes
+      fhDeltaJetLeadingParticle[iCentrality][iJetPt] = NULL; // DeltaR leading particle and jet axes
       for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
         fhLeadingParticleInJet[iJetDeltaAxis][iCentrality][iJetPt] = NULL;
       }
@@ -453,6 +454,7 @@ EECHistogramManager::EECHistogramManager(const EECHistogramManager& in) :
 
     for(int iJetPt = 0; iJetPt < kMaxJetPtBinsEEC; iJetPt++){
       fhJetDeltaAxis[iCentrality][iJetPt] = in.fhJetDeltaAxis[iCentrality][iJetPt]; // DeltaR between WTA and E-scheme axes
+      fhDeltaJetLeadingParticle[iCentrality][iJetPt] = in.fhDeltaJetLeadingParticle[iCentrality][iJetPt]; // DeltaR leading particle and jet axes
       for(int iJetDeltaAxis = 0; iJetDeltaAxis <= kMaxJetDeltaAxisBins; iJetDeltaAxis++){
         fhLeadingParticleInJet[iJetDeltaAxis][iCentrality][iJetPt] = in.fhLeadingParticleInJet[iJetDeltaAxis][iCentrality][iJetPt];
       }
@@ -1094,12 +1096,12 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
  *
  *  Leading particle inside the jet cone: leadingParticleInJet
  *
-*     Axis index           Content of axis
+ *     Axis index               Content of axis
  * --------------------------------------------------------
- *       Axis 0                 Jet pT
- *       Axis 1           Leading particle pT
- *       Axis 2     DeltaR between E-scheme and WTA axes
- *       Axis 3               Centrality
+ *       Axis 0                     Jet pT
+ *       Axis 1               Leading particle pT
+ *       Axis 2     DeltaR between leading particle and jet axis
+ *       Axis 3                   Centrality
  */
 void EECHistogramManager::LoadJetHistograms(){
   
@@ -1189,6 +1191,10 @@ void EECHistogramManager::LoadJetHistograms(){
 
     axisIndices[0] = 3; lowLimits[0] = lowerCentralityBin; highLimits[0] = higherCentralityBin;  // Centrality
 
+    nAxes = 1;
+
+    fhDeltaJetLeadingParticle[iCentralityBin][fnJetPtBinsEEC] = FindHistogram(histogramArray,2,nAxes,axisIndices,lowLimits,highLimits);
+
     // Loop over jet pT bins
     for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
 
@@ -1203,6 +1209,7 @@ void EECHistogramManager::LoadJetHistograms(){
 
       // Lead the leading particle pT histogram without DeltaR between E-scheme and WTA axes restrictions
       fhLeadingParticleInJet[kMaxJetDeltaAxisBins][iCentralityBin][iJetPt] = FindHistogram(histogramArray,1,nAxes,axisIndices,lowLimits,highLimits);
+      fhDeltaJetLeadingParticle[iCentralityBin][iJetPt] = FindHistogram(histogramArray,2,nAxes,axisIndices,lowLimits,highLimits);
 
       nAxes = 3;
 
@@ -2906,11 +2913,19 @@ void EECHistogramManager::WriteJetHistograms(){
     histogramNamer = Form("%sEtaPhi_C%d",fJetHistogramName,iCentralityBin);
     if(fLoad2DHistograms && fhJetEtaPhi[iCentralityBin]) fhJetEtaPhi[iCentralityBin]->Write(histogramNamer.Data(), TObject::kOverwrite);
 
+    // DeltaR difference between leading particle and jet axis without jet pT selection
+    histogramNamer = Form("deltaJetLeadingParticle_C%d", iCentralityBin);
+    if(fhDeltaJetLeadingParticle[iCentralityBin][fnJetPtBinsEEC]) fhDeltaJetLeadingParticle[iCentralityBin][fnJetPtBinsEEC]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
     for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
 
       // DeltaR difference between E-scheme and WTA jet axes
       histogramNamer = Form("%sDeltaAxis_C%dJ%d", fJetHistogramName, iCentralityBin, iJetPt);
       if(fhJetDeltaAxis[iCentralityBin][iJetPt]) fhJetDeltaAxis[iCentralityBin][iJetPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
+
+      // DeltaR difference between leading particle and jet axis
+      histogramNamer = Form("deltaJetLeadingParticle_C%dJ%d", iCentralityBin, iJetPt);
+      if(fhDeltaJetLeadingParticle[iCentralityBin][iJetPt]) fhDeltaJetLeadingParticle[iCentralityBin][iJetPt]->Write(histogramNamer.Data(), TObject::kOverwrite);
 
       // Leading charged particle pT within a jet cone
       histogramNamer = Form("leadingParticlePtInsideJet_C%dJ%d", iCentralityBin, iJetPt);
