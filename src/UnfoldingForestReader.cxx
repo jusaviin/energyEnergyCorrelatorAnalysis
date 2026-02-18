@@ -130,7 +130,7 @@ UnfoldingForestReader::UnfoldingForestReader() :
  * Custom constructor
  *
  *  Arguments:
- *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC
+ *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = pPb p -> -eta, 5 = pPb p -> +eta 6 = pPb 5 TeV, 7 = pPb MC p -> -eta, 8 = pPb MC p -> +eta
  *   Int_t jetType: 0 = Calo jets, 1 = CSPF jets, 2 = PuPF jets, 3 = Flow jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
  */

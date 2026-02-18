@@ -80,7 +80,7 @@ HighForestReader::HighForestReader() :
  * Custom constructor
  *
  *  Arguments:
- *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC
+ *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = pPb p -> -eta, 5 = pPb p -> +eta 6 = pPb 5 TeV, 7 = pPb MC p -> -eta, 8 = pPb MC p -> +eta
  *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet triggers
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
@@ -413,17 +413,19 @@ void HighForestReader::Initialize(){
       fJetTree->SetBranchStatus("genpt", 1);
       fJetTree->SetBranchAddress("genpt", &fMatchedJetPtArray, &fJetMatchedPtBranch);
     
-      // If specified, select WTA axis for jet phi
+      // Read jet phi and eta
       fJetTree->SetBranchStatus("genphi", 1);
       fJetTree->SetBranchAddress("genphi", &fMatchedJetPhiArray, &fJetMatchedPhiBranch);
-      fJetTree->SetBranchStatus("WTAgenphi", 1);
-      fJetTree->SetBranchAddress("WTAgenphi", &fMatchedJetWTAPhiArray, &fMatchedJetWTAPhiBranch);
-    
-      // If specified, select WTA axis for jet eta
       fJetTree->SetBranchStatus("geneta", 1);
       fJetTree->SetBranchAddress("geneta", &fMatchedJetEtaArray, &fJetMatchedEtaBranch);
-      fJetTree->SetBranchStatus("WTAgeneta", 1);
-      fJetTree->SetBranchAddress("WTAgeneta", &fMatchedJetWTAEtaArray, &fMatchedJetWTAEtaBranch);
+    
+      // WTA axis is not available in pPb files
+      if(!fIsPPb){
+        fJetTree->SetBranchStatus("WTAgenphi", 1);
+        fJetTree->SetBranchAddress("WTAgenphi", &fMatchedJetWTAPhiArray, &fMatchedJetWTAPhiBranch);
+        fJetTree->SetBranchStatus("WTAgeneta", 1);
+        fJetTree->SetBranchAddress("WTAgeneta", &fMatchedJetWTAEtaArray, &fMatchedJetWTAEtaBranch);
+      }
     
       fJetTree->SetBranchStatus("ngen", 1);
       fJetTree->SetBranchAddress("ngen", &fnMatchedJets, &fnMatchedJetsBranch);
