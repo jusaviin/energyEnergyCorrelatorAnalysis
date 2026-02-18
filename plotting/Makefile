@@ -1,8 +1,9 @@
 PROGRAM       = DrawingClasses
 version       = EEC
 CXX           = g++
-CXXFLAGS      = -O -Wall -fPIC -D$(version) # Add -g for debugger
+CXXFLAGS      = -O -Wall -fPIC -D$(version) -Wno-vla-cxx-extension # Add -g for debugger
 LDFLAGS       = -O
+# Note: -Wno-vla-cxx-extension flag removes warnings about how variable length arrays are a clang extension
 #############################################
 # -bind_at_load helps to remove linker error
 ############################################
