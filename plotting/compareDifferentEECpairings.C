@@ -24,7 +24,7 @@ void compareDifferentEECpairings(){
   } 
 
   // Studied file
-  TString fileName = "veryNonShiftedData_processed.root";
+  TString fileName = "data/pPb/monteCarlo/pythiaEpos_8TeV_GenGen_pToPlusEta_genJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_megaSkimMix_9filesMissing_processed_2026-02-13.root";
 
   // eecAnalysis_akFlowJet_nominalEnergyWeight_combinedMixedConeBackground_processed_2024-04-25.root
   // eecAnalysis_akFlowJet_energyWeightSquared_combinedMixedConeBackground_processed_2024-05-02.root

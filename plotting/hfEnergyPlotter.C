@@ -8,11 +8,12 @@
 void hfEnergyPlotter(){
 
   // File from which the integrals are calculated
-  TString inputFileName = "veryEmbeddedData_processed.root";
+  TString inputFileName = "veryEposData_processed.root";
 
   // data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_zeroBias_processed_2025-06-23.root
   // data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergyNjet_processed_2025-06-20.root
   //"data/pPb/pPb_5TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_jetEtaMCcut_HFEnergy_processed_2025-06-17.root";
+  // data/pPb/monteCarlo/pythiaEpos_8TeV_GenGen_pToPlusEta_genJets_eschemeAxis_nominalEnergyWeight_jetEtaCMcut_megaSkimMix_9filesMissing_processed_2026-02-13.root
   
   // Open the input file
   TFile* inputFile = TFile::Open(inputFileName);
@@ -47,9 +48,9 @@ void hfEnergyPlotter(){
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(30,40));
   comparedJetPtBin.push_back(std::make_pair(40,50));
-  //comparedJetPtBin.push_back(std::make_pair(50,60));
-  //comparedJetPtBin.push_back(std::make_pair(60,80));
-  //comparedJetPtBin.push_back(std::make_pair(80,100));
+  comparedJetPtBin.push_back(std::make_pair(50,60));
+  comparedJetPtBin.push_back(std::make_pair(60,80));
+  comparedJetPtBin.push_back(std::make_pair(80,100));
   comparedJetPtBin.push_back(std::make_pair(0,0));
   bool plotToSameFigure = false; // False = make different figure for each bin. True = plot all jet pT bins to the same figure.
     
