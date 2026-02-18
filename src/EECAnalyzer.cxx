@@ -1095,7 +1095,7 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[0][ForestReader::kPPb_pToPlusEta][1] = Form("mixingFileList/minimumBiasPPb2016_8TeV_megaSkim_pToPlusEta_part%d.txt", fMixingListIndex); // pPb p -> +eta for CRAB
   fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/minimumBiasPPb2016_5TeV_megaSkim_pToMinusEta.txt"; // pPb pToMinusEta 5 TeV for CRAB
   fileListName[0][ForestReader::kPPbMC_pToMinusEta][1] = "none"; // currently no mixing implemented for pPb MC
-  fileListName[0][ForestReader::kPPbMC_pToPlusEta][1] = "none"; // currently no mixing implemented for pPb MC
+  fileListName[0][ForestReader::kPPbMC_pToPlusEta][1] = "mixingFileList/EPOS_pToPlusEta_pPb816Summer16DR_megaSkim_2026-02-13.txt"; // currently no mixing implemented for pPb MC
 
   // Local test, mega skimmed mixing forest
   fileListName[1][ForestReader::kPp][1] = "mixingFileList/mixingFilesPp_zeroBias_megaSkim.txt";  // pp data for local test
@@ -1106,7 +1106,7 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[1][ForestReader::kPPb_pToPlusEta][1] = "mixingFileList/mixingFilesPPb_pToPlusEta_megaSkim.txt";  // pPb p -> +eta for local test
   fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb p -> -eta 5 TeV for local test
   fileListName[1][ForestReader::kPPbMC_pToMinusEta][1] = "none"; // currently no mixing implemented for pPb MC
-  fileListName[1][ForestReader::kPPbMC_pToPlusEta][1] = "none"; // currently no mixing implemented for pPb MC
+  fileListName[1][ForestReader::kPPbMC_pToPlusEta][1] = "mixingFileList/mixingFilesEpos_pToPlusEta_megaSkim.txt"; // pPb MC p -> +eta
         
   // Read the mixing files if defined and a file list exists
   if(fDoMixedCone){
