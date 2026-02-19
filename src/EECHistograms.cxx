@@ -404,21 +404,21 @@ void EECHistograms::CreateHistograms(){
   
   // Centrality bins for THnSparses (We run into memory issues, if have all the bins)
   const Int_t nWideCentralityBins = fCard->GetNBin("CentralityBinEdges");
-  Double_t wideCentralityBins[nWideCentralityBins+1];
+  Double_t* wideCentralityBins = new Double_t[nWideCentralityBins+1];
   for(Int_t iCentrality = 0; iCentrality < nWideCentralityBins+1; iCentrality++){
     wideCentralityBins[iCentrality] = fCard->Get("CentralityBinEdges",iCentrality);
   }
   
   // Bins for the pT hat histogram
   const Int_t nPtHatBins = fCard->GetNBin("PtHatBinEdges");
-  Double_t ptHatBins[nPtHatBins+1];
+  Double_t* ptHatBins = new Double_t[nPtHatBins+1];
   for(Int_t iPtHat = 0; iPtHat < nPtHatBins+1; iPtHat++){
     ptHatBins[iPtHat] = fCard->Get("PtHatBinEdges",iPtHat);
   }
   
   // Jet pT binning for energy-energy correlator histograms
   const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
-  Double_t jetPtBinsEEC[nJetPtBinsEEC+1];
+  Double_t* jetPtBinsEEC = new Double_t[nJetPtBinsEEC+1];
   for(Int_t iJetPt = 0; iJetPt < nJetPtBinsEEC+1; iJetPt++){
     jetPtBinsEEC[iJetPt] = fCard->Get("JetPtBinEdgesEEC",iJetPt);
   }
@@ -427,7 +427,7 @@ void EECHistograms::CreateHistograms(){
   
   // Track pT binning for energy-energy correlator histograms
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
-  Double_t trackPtBinsEEC[nTrackPtBinsEEC+1];
+  Double_t* trackPtBinsEEC = new Double_t[nTrackPtBinsEEC+1];
   for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC+1; iTrackPt++){
     trackPtBinsEEC[iTrackPt] = fCard->Get("TrackPtBinEdgesEEC",iTrackPt);
   }
@@ -459,7 +459,7 @@ void EECHistograms::CreateHistograms(){
   const Int_t nUnfoldingBins = nDeltaRBinsEEC*nJetPtBinsEEC;
   const Double_t minUnfoldingBin = 0;
   const Double_t maxUnfoldingBin = nJetPtBinsEEC*maxDeltaREEC;
-  Double_t fullUnfoldingBinning[nUnfoldingBins+1];
+  Double_t* fullUnfoldingBinning = new Double_t[nUnfoldingBins+1];
   for(int iDeltaR = 0; iDeltaR < nDeltaRBinsEEC; iDeltaR++){
     for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
       fullUnfoldingBinning[iDeltaR+iJetPt*nDeltaRBinsEEC] = deltaRBinsEEC[iDeltaR]+maxDeltaREEC*iJetPt;
@@ -1226,6 +1226,13 @@ void EECHistograms::CreateHistograms(){
   // Set custom bin axes for the histograms
   fhJetPtInReflectedCone->SetBinEdges(0,jetPtReflectedConeBins);  // Jet pT bins 
   fhJetPtInReflectedCone->SetBinEdges(1,wideCentralityBins);      // Centrality bins 
+
+  // Release memory allocated to new arrays
+  delete[] wideCentralityBins;
+  delete[] ptHatBins;
+  delete[] jetPtBinsEEC;
+  delete[] trackPtBinsEEC;
+  delete[] fullUnfoldingBinning;
 
 }
 

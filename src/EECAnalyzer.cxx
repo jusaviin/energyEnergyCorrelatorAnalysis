@@ -365,7 +365,7 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
 
   // Energy-energy correlator constructed only from this event
   const Int_t nDeltaRBins = fHistograms->GetNDeltaRBinsEEC();
-  Double_t deltaRBins[nDeltaRBins+1];
+  Double_t* deltaRBins = new Double_t[nDeltaRBins+1];
   for(Int_t iBin = 1; iBin <= nDeltaRBins; iBin++){
     deltaRBins[iBin-1] = fHistograms->GetDeltaRBinBorderLowEEC(iBin);
   }
@@ -377,6 +377,9 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
       fThisEventCorrelator[iWeightExponent][iTrackPt] = new TH1D(Form("thisEventCorrelator%d%d", iWeightExponent, iTrackPt), Form("thisEventCorrelator%d%d", iWeightExponent, iTrackPt), nDeltaRBins, deltaRBins);
     }
   }
+
+  // Release the memory reserved with new
+  delete[] deltaRBins;
   
   //**********************************************************
   //    Disable/enable the track pair efficiency correction
@@ -900,12 +903,18 @@ void EECAnalyzer::RunAnalysis(){
   
   // Study for track multiplicity inside the jet cone
   const Int_t nTrackPtBinsEEC = fCard->GetNBin("TrackPtBinEdgesEEC");
-  Double_t trackPtBinsEEC[nTrackPtBinsEEC];
+  Double_t* trackPtBinsEEC = new double[nTrackPtBinsEEC];
   for(Int_t iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
     trackPtBinsEEC[iTrackPt] = fCard->Get("TrackPtBinEdgesEEC",iTrackPt);
   }
-  Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1]; // Particle multiplicity within a jet cone, no tracking efficiency correction
-  Double_t multiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];;        // Efficiency corrected particle multiplicity within a jet cone
+
+  // Mapping a bin index to multiplicity number
+  std::map<std::tuple<Int_t,Int_t,Int_t>, Int_t> uncorrectedMultiplicityInJetCone;
+  std::map<std::tuple<Int_t,Int_t,Int_t>, Int_t> multiplicityInJetCone;
+  std::tuple<Int_t,Int_t,Int_t> multiplicityBin;
+
+  //Int_t uncorrectedMultiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1]; // Particle multiplicity within a jet cone, no tracking efficiency correction
+  //Double_t multiplicityInJetCone[nTrackPtBinsEEC][EECHistograms::knJetConeTypes][EECHistograms::knSubeventTypes+1];;        // Efficiency corrected particle multiplicity within a jet cone
 
   // Event mixing variables
   std::vector<TString> mixingFiles;      // List of mixing files
@@ -1753,8 +1762,9 @@ void EECAnalyzer::RunAnalysis(){
           for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
             for(int iJetCone = 0; iJetCone < EECHistograms::knJetConeTypes; iJetCone++){
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventTypes+1; iSubevent++){
-                uncorrectedMultiplicityInJetCone[iTrackPt][iJetCone][iSubevent] = 0;
-                multiplicityInJetCone[iTrackPt][iJetCone][iSubevent] = 0;
+                multiplicityBin = std::make_tuple(iTrackPt,iJetCone,iSubevent);
+                uncorrectedMultiplicityInJetCone[multiplicityBin] = 0;
+                multiplicityInJetCone[multiplicityBin] = 0;
               }
             }
           }
@@ -1793,11 +1803,13 @@ void EECAnalyzer::RunAnalysis(){
               if(fFillJetConeHistograms){
                 for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                   if(trackPt < trackPtBinsEEC[iTrackPt]) break;
-                  uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes]++;
-                  multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                  multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kSignalCone,EECHistograms::knSubeventTypes);
+                  uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                  multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                   if(trackSubeventIndex >= 0){
-                    uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][trackSubeventIndex]++;
-                    multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                    multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kSignalCone,trackSubeventIndex);
+                    uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                    multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                   }
                 } // Track pT loop
                 
@@ -1842,11 +1854,13 @@ void EECAnalyzer::RunAnalysis(){
                 if(fFillJetConeHistograms){
                   for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                     if(trackPt < trackPtBinsEEC[iTrackPt]) break;
-                    uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes]++;
-                    multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                    multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kReflectedCone,EECHistograms::knSubeventTypes);
+                    uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                    multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                     if(trackSubeventIndex >= 0){
-                      uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][trackSubeventIndex]++;
-                      multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                      multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kReflectedCone,trackSubeventIndex);
+                      uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                      multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                     }
                   } // Track pT loop
                 } // Fill jet cone histograms
@@ -1887,11 +1901,13 @@ void EECAnalyzer::RunAnalysis(){
                   if(fFillJetConeHistograms){
                     for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
                       if(trackPt < trackPtBinsEEC[iTrackPt]) break;
-                      uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes]++;
-                      multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][EECHistograms::knSubeventTypes] += trackEfficiencyCorrection;
+                      multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kPerpendicularCone + iPerpendicularCone,EECHistograms::knSubeventTypes);
+                      uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                      multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                       if(trackSubeventIndex >= 0){
-                        uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex]++;
-                        multiplicityInJetCone[iTrackPt][EECHistograms::kPerpendicularCone + iPerpendicularCone][trackSubeventIndex] += trackEfficiencyCorrection;
+                        multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kPerpendicularCone + iPerpendicularCone,trackEfficiencyCorrection);
+                        uncorrectedMultiplicityInJetCone[multiplicityBin]++;
+                        multiplicityInJetCone[multiplicityBin] += trackEfficiencyCorrection;
                       }
                     } // Track pT loop
                   } // Fill jet cone histograms
@@ -2046,18 +2062,23 @@ void EECAnalyzer::RunAnalysis(){
               fillerMultiplicityInJetCone[3] = centrality; // Axis 3: centrality
               fillerMultiplicityInJetCone[4] = iSubevent;  // Axis 4: Subevent index
               for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][iSubevent]; // Axis 0: Multiplicity
-                fillerMultiplicityInJetCone[2] = trackPtBinsEEC[iTrackPt]+0.01;                                          // Axis 2: Track pT
-                fHistograms->fhParticleMultiplicityInJet->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);           // Fill the multiplicity within the jet cone histogram
-                
-                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][iSubevent]; // Axis 0: Multiplicity
+
+                // Multiplicity in jet cone
+                multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kSignalCone,iSubevent);
+                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[multiplicityBin];                         // Axis 0: Multiplicity
+                fillerMultiplicityInJetCone[2] = trackPtBinsEEC[iTrackPt]+0.01;                                  // Axis 2: Track pT
+                fHistograms->fhParticleMultiplicityInJet->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);   // Fill the multiplicity within the jet cone histogram
+
+                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[multiplicityBin];                        // Axis 0: Multiplicity
+                fHistograms->fhParticleMultiplicityInJetUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);  // Fill the uncorrected multiplicity within the jet cone histogram
+
+                // Multiplicity in reflected cone
+                multiplicityBin = std::make_tuple(iTrackPt,EECHistograms::kReflectedCone,iSubevent);
+                fillerMultiplicityInJetCone[0] = multiplicityInJetCone[multiplicityBin];                                    // Axis 0: Multiplicity
                 fHistograms->fhParticleMultiplicityInReflectedCone->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);    // Fill the multiplicity within the reflected cone histogram
-                
-                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kSignalCone][iSubevent]; // Axis 0: Multiplicity
-                fHistograms->fhParticleMultiplicityInJetUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);           // Fill the uncorrected multiplicity within the jet cone histogram
-                
-                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[iTrackPt][EECHistograms::kReflectedCone][iSubevent]; // Axis 0: Multiplicity
-                fHistograms->fhParticleMultiplicityInReflectedConeUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);    // Fill the uncorrected multiplicity within the reflected cone histogram
+
+                fillerMultiplicityInJetCone[0] = uncorrectedMultiplicityInJetCone[multiplicityBin];                                  // Axis 0: Multiplicity
+                fHistograms->fhParticleMultiplicityInReflectedConeUncorrected->Fill(fillerMultiplicityInJetCone,fTotalEventWeight);  // Fill the uncorrected multiplicity within the reflected cone histogram
               }
               
             } // Subevent loop
@@ -2209,6 +2230,9 @@ void EECAnalyzer::RunAnalysis(){
     }
     
   } // File loop
+
+  // Release the memory for arrays reserved with new operator
+  delete[] trackPtBinsEEC;
   
 }
 

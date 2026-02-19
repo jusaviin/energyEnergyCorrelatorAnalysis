@@ -10,6 +10,7 @@
 #include <tuple>      // For returning several arguments in a transparent manner
 #include <fstream>
 #include <string>
+#include <map>        // To avoid using variable length arrays, that are clang extension
 
 // Root includes
 #include <TString.h>

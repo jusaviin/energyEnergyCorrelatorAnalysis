@@ -2,7 +2,7 @@ PROGRAM       = eecAnalysis
 
 version       = development
 CXX           = g++
-CXXFLAGS      = -g -Wall -D$(version) -Wno-vla-cxx-extension
+CXXFLAGS      = -g -Wall -D$(version)
 LDFLAGS       = -O2
 # Note: -Wno-vla-cxx-extension flag removes warnings about how variable length arrays are a clang extension
 #############################################
