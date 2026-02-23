@@ -4,7 +4,6 @@ version       = development
 CXX           = g++
 CXXFLAGS      = -g -Wall -D$(version)
 LDFLAGS       = -O2
-# Note: -Wno-vla-cxx-extension flag removes warnings about how variable length arrays are a clang extension
 #############################################
 # -bind_at_load helps to remove linker error
 ############################################

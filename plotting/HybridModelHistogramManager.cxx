@@ -71,6 +71,13 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
     inputDirectory.Remove(inputDirectory.Capacity()-2);
   }
    
+  // Helper variables for creating graphs
+  std::vector<std::vector<double>> parameterValue;
+  std::vector<double> xValue;
+  std::vector<double> yValue;
+  std::vector<double> xError;
+  std::vector<double> yError;
+
   // Loop over all the files that are present in the input directory and create graphs from the information inside the files
   TString currentFile;
   for(int iCentrality = 0; iCentrality < kCentralityBins; iCentrality++){
@@ -113,6 +120,18 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
             // After we have all the information in a vector, we can dissect it into arrays
             const int nPoints = lineVector.size();
 
+            // Initialize the vectors to have nPoint zeros
+            xValue.clear();
+            yValue.clear();
+            xError.clear();
+            yError.clear();
+            for(int iPoint = 0; iPoint < nPoints; iPoint++){
+              xValue.push_back(0);
+              yValue.push_back(0);
+              xError.push_back(0);
+              yError.push_back(0);
+            }
+
             // The parameters in the input file are in this order:
             // 0: DeltaR value for the points
             // 1: Central value of the pp graph
@@ -121,11 +140,9 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
             // 4: Lower error band value for PbPb graph
             // 5: Upper error band value for PbPb/pp ratio
             // 6: Lower error band value for PbPb/pp ratio
-            double parameterValue[7][nPoints];
+            parameterValue.clear();
             for(int i = 0; i < 7; i++){
-              for(int j = 0; j < nPoints; j++){
-                parameterValue[i][j] = 0;
-              }
+              parameterValue.push_back(xValue);
             }
 
             // Loop over the lines in the input files and collect the numbers to arrays
@@ -152,12 +169,6 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
               } // Parameter loop
             } // Point loop
 
-            // Define the arrays of graph creation
-            double xValue[nPoints];
-            double yValue[nPoints];
-            double xError[nPoints];
-            double yError[nPoints];
-
             // The deltaR points in the x-axis are common for all graphs
             for(int iPoint = 0; iPoint < nPoints; iPoint++){
               xValue[iPoint] = parameterValue[0][iPoint];
@@ -174,7 +185,7 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
               }
 
               // Create the energy-energy correlator graph for pp for this bin
-              fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue, yValue, xError, yError);
+              fEnergyEnergyCorrelatorPp[iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue.data(), yValue.data(), xError.data(), yError.data());
 
             }
 
@@ -185,7 +196,7 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
             }
 
             // Create the energy-energy correlator graph for PbPb for this bin
-            fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue, yValue, xError, yError);
+            fEnergyEnergyCorrelatorPbPb[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue.data(), yValue.data(), xError.data(), yError.data());
 
             // Collect the y-values and errors for PbPb to pp ratio graph
             for(int iPoint = 0; iPoint < nPoints; iPoint++){
@@ -194,7 +205,7 @@ void HybridModelHistogramManager::LoadGraphs(TString inputDirectory){
             }
 
             // Create the energy-energy correlator graph for PbPb for this bin
-            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue, yValue, xError, yError);
+            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iWake] = new TGraphErrors(nPoints, xValue.data(), yValue.data(), xError.data(), yError.data());
 
 
           } // Wake type loop

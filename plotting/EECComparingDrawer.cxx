@@ -1150,8 +1150,8 @@ void EECComparingDrawer::DrawToLowerPad(const char* xTitle, const char* yTitle, 
 void EECComparingDrawer::ZoomToRegion(const double maxZoomValue, const int nZoomBins, const double scaleFactor, const bool bothSides, const bool asymmetricZoom){
   
   // Create array for average values in the main histogram and added histograms
-  double averageValues[fnAddedHistograms+1];
-  double differences[fnAddedHistograms+1];
+  double* averageValues = new double[fnAddedHistograms+1];
+  double* differences = new double[fnAddedHistograms+1];
   
   // Fill the array with average values from the main histogram and added histograms
   std::tie(averageValues[0],differences[0]) = GetHistogramAverageAndDifferenceInRegion(fMainHistogram,maxZoomValue,nZoomBins,bothSides);
@@ -1181,6 +1181,10 @@ void EECComparingDrawer::ZoomToRegion(const double maxZoomValue, const int nZoom
   for(int iAdditional = 0; iAdditional < fnAddedHistograms; iAdditional++){
     fComparisonHistogram[iAdditional]->GetYaxis()->SetRangeUser(minScale,maxScale);
   }
+
+  // Delete the created double arrays
+  delete[] averageValues;
+  delete[] differences;
   
 }
 

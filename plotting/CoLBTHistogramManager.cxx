@@ -66,6 +66,13 @@ void CoLBTHistogramManager::LoadGraphs(TString inputDirectory){
   if(inputDirectory.EndsWith("/")){
     inputDirectory.Remove(inputDirectory.Capacity()-2);
   }
+
+  // Helper variables for creating graphs
+  std::vector<std::vector<double>> parameterValue;
+  std::vector<double> xValue;
+  std::vector<double> yValue;
+  std::vector<double> xError;
+  std::vector<double> yError;
    
   // First, read all the calculations for the PbPb distirbution itself
   TString currentFile;
@@ -111,16 +118,26 @@ void CoLBTHistogramManager::LoadGraphs(TString inputDirectory){
             // The first line is a comment, so it needs to be subtracted from the number of points
             const int nPoints = lineVector.size()-1;
 
+            // Initialize the vectors to have nPoint zeros
+            xValue.clear();
+            yValue.clear();
+            xError.clear();
+            yError.clear();
+            for(int iPoint = 0; iPoint < nPoints; iPoint++){
+              xValue.push_back(0);
+              yValue.push_back(0);
+              xError.push_back(0);
+              yError.push_back(0);
+            }
+
             // The parameters in the input file are in this order:
             // 0: DeltaR value for the points
             // 1: EEC value for points
             // 2: Error for DeltaR
             // 3: Error for EEC
-            double parameterValue[4][nPoints];
+            parameterValue.clear();
             for(int i = 0; i < 4; i++){
-              for(int j = 0; j < nPoints; j++){
-                parameterValue[i][j] = 0;
-              }
+              parameterValue.push_back(xValue);
             }
 
             // Loop over the lines in the input files and collect the numbers to arrays
@@ -149,12 +166,6 @@ void CoLBTHistogramManager::LoadGraphs(TString inputDirectory){
               } // Parameter loop
             } // Point loop
 
-            // Define the arrays of graph creation
-            double xValue[nPoints];
-            double yValue[nPoints];
-            double xError[nPoints];
-            double yError[nPoints];
-
             // The deltaR points in the x-axis are common for all graphs
             for(int iPoint = 0; iPoint < nPoints; iPoint++){
               xValue[iPoint] = parameterValue[0][iPoint];
@@ -164,7 +175,7 @@ void CoLBTHistogramManager::LoadGraphs(TString inputDirectory){
             }
 
             // Create the energy-energy correlator graph for PbPb for this bin
-            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iQValue] = new TGraphErrors(nPoints, xValue, yValue, xError, yError);
+            fEnergyEnergyCorrelatorPbPbToPpRatio[iCentrality][iJetPt][iTrackPt][iEnergyWeight][iQValue] = new TGraphErrors(nPoints, xValue.data(), yValue.data(), xError.data(), yError.data());
 
           } // q-value loop
         } // Energy weight loop

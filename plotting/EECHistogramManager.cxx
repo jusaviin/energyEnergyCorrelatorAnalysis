@@ -1261,7 +1261,7 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
   // Multiplicity histograms have more denser centrality binning than other histograms, so need to determine them separately
   TH1D* hBinner;
   hBinner = FindHistogram(histogramArray,2,0,0,0);
-  double centralityBinIndicesMultiplicity[fnCentralityBins+1];
+  double* centralityBinIndicesMultiplicity = new double[fnCentralityBins+1];
   for(int iBin = 0; iBin < fnCentralityBins+1; iBin++){
     centralityBinIndicesMultiplicity[iBin] = hBinner->GetXaxis()->FindBin(fCentralityBinBorders[iBin]);
   }
@@ -1290,6 +1290,9 @@ void EECHistogramManager::LoadMultiplicityHistograms(){
 
   fhMultiplicityMap = FindHistogram2D(histogramArray, 0, 2, 1, 0, 0, 0);
   fhMultiplicityMapWeighted = FindHistogram2D(histogramArray, 1, 2, 0, 0, 0, 0);
+
+  // Remove the created double array
+  delete[] centralityBinIndicesMultiplicity;
 }
 
 

@@ -183,10 +183,18 @@ std::vector<std::pair<double, TGraph*>> HolguinHistogramManager::GetGraphsFromDa
   const int numberOfPredictions = parameterArray->GetEntries()-1;
   const int numberOfPoints = lineVector.size()-1;
 
-  // Create arrays to hold the information about the predictions
-  double deltaRPoints[numberOfPoints];
-  double eecPredictions[numberOfPredictions][numberOfPoints];
-  double valueOfK[numberOfPredictions];
+  // Create vectors to hold the information about the predictions
+  std::vector<double> deltaRPoints;
+  std::vector<std::vector<double>> eecPredictions;
+  std::vector<double> valueOfK;
+
+  // Resize the vectors to have the desired dimensions
+  deltaRPoints.resize(numberOfPoints);
+  eecPredictions.resize(numberOfPredictions);
+  valueOfK.resize(numberOfPredictions);
+  for(auto& prediction : eecPredictions){
+    prediction.resize(numberOfPoints);
+  }
 
   // Loop over the input and collect the information into arrays
   int numberOfParameters;
@@ -223,7 +231,7 @@ std::vector<std::pair<double, TGraph*>> HolguinHistogramManager::GetGraphsFromDa
   // Make graphs out of the information arrays and put them into a vector
   std::vector<std::pair<double, TGraph*>> graphedPrediction;
   for(int iPrediction = 0; iPrediction < numberOfPredictions; iPrediction++){
-    graphedPrediction.push_back(std::make_pair(valueOfK[iPrediction], new TGraph(numberOfPoints, deltaRPoints, eecPredictions[iPrediction])));
+    graphedPrediction.push_back(std::make_pair(valueOfK[iPrediction], new TGraph(numberOfPoints, deltaRPoints.data(), eecPredictions[iPrediction].data())));
   }
 
   // Return the vector of predictions
