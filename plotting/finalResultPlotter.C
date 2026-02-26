@@ -326,9 +326,9 @@ void finalResultPlotter(bool drawOnlyPaperPlots = false){
 
   } // Weight exponent loop
 
-  // Efficiency note: The element access operator [] for std::map works in logarithmic time, while for std::vector the time
-  // is constant. However, I think single map object for each type type of histogram is cleaner implementation
-  // compared to multidimensional arrays of vectors. Since we are not pressed on processing time in a plotting macro,
+  // Efficiency note: The element access operator [] for std::map works in logarithmic time, while for std::vector 
+  // the time is constant. However, I think single map object for each type type of histogram is cleaner 
+  // implementation compared to nested vectors. Since we are not pressed on processing time in a plotting macro,
   // std::map is a reasonable choice for a container to keep the histograms in.
  
   // Energy-energy correlators and PbPb to pp ratios

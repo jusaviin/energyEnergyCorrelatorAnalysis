@@ -2,7 +2,44 @@
 
 ## Producing final plots
 
-If you just want to generate all the plots that are in the paper, you can use the script `makeAllPaperPlots.sh` provided you have access to all necessary data files. Contact Jussi Viinikainen to get these files.
+Follow these steps to produce all the plots that are published in the article "Observation of nuclear modification of energy-energy correlators inside jets in heavy ion collisions", [Phys. Lett. B 866 (2025) 139556](https://doi.org/10.1016/j.physletb.2025.139556), [arXiv:2503.19993](https://arxiv.org/abs/2503.19993).
+
+1. Clone the repository
+
+```
+git clone git@github.com:jusaviin/energyEnergyCorrelatorAnalysis.git
+```
+
+2. Compile the code
+
+```
+cd energyEnergyCorrelatorAnalysis
+make
+cd plotting
+make
+cd ..
+```
+
+3. Download the data. Notice that you will need to have a read access to CMS Vanderbilt T2 storage to be able to download the data. The commands cited here work on lxplus. If you are working on a local computer, just scp the downloaded file to your computer from lxplus. The size of the tar-ball is just under 100 MB.
+
+```
+voms-proxy-init --voms cms
+xrdcp root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/energyEnergyCorrelatorAnalysisFiles/eecAllFinalResultFiles.tar.gz .
+```
+
+4. Expand the tar-ball
+
+```
+tar -xvzf eecAllFinalResultFiles.tar.gz
+```
+
+5. Run the script that produces all final figures
+
+```
+./makeAllPaperPlots.sh
+```
+
+Now you have all the plots in the published paper neatly organized by the figure number they appear in the publication located in paperFigures folder.
 
 ## General structure of the reposity
 
