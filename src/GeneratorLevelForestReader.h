@@ -29,6 +29,7 @@ public:
   GeneratorLevelForestReader& operator=(const GeneratorLevelForestReader& obj); // Equal sign operator
   
   // Methods
+  Long64_t GetTotalChainEntries() const override;
   void ReadForestFromFile(TFile *inputFile);   // Read the forest from a file
   void ReadForestFromFileList(std::vector<TString> fileList);  // Read the forest from a file list
   void BurnForest();                           // Burn the forest  
@@ -80,6 +81,8 @@ public:
   Float_t GetMatchedPhi(Int_t iJet) const;  // Getter for matched reconstructed jet phi
   Int_t GetPartonFlavor(Int_t iJet) const;  // Get the flavor of the parton initiating the jet
   
+  Int_t GetMatchedRecoIndex(Int_t iJet) const { return GetMatchingIndex(iJet); }
+
 private:
   
   // Methods

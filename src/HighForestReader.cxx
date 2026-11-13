@@ -1,7 +1,18 @@
 // Implementation for HighForestReader
 
+//
+// Modified: Jesus Corral, 09-May-2026
+// ===========================================================
+// Added support for OO data and MC
+// including the new jet trigger, branches and filters for OO and the centrality definition for OO. 
+// 
+//===========================================================
+// ROOT includes
+#include <TMath.h>
+
 // Own includes
 #include "HighForestReader.h"
+#include "Run3JetBranchValidation.h"
 
 /*
  * Default constructor
@@ -170,6 +181,7 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fSkimTree(in.fSkimTree),
   fTrackTree(in.fTrackTree),
   fParticleTree(in.fParticleTree),
+  fRun3L1Inputs(in.fRun3L1Inputs),
   fnJetsBranch(in.fnJetsBranch),
   fnTracksBranch(in.fnTracksBranch),
   fMatchedJetWTAEtaBranch(in.fMatchedJetWTAEtaBranch),
@@ -203,7 +215,13 @@ HighForestReader::HighForestReader(const HighForestReader& in) :
   fParticleSubeventVector(in.fParticleSubeventVector)
 {
   // Copy constructor
+  fRun3PFJetInputs = in.fRun3PFJetInputs;
+  fRun3TrackCharge = in.fRun3TrackCharge;
+  fRun3JetInputsBound = in.fRun3JetInputsBound;
+  fRun3ValidatedJetTreeNumber = in.fRun3ValidatedJetTreeNumber;
   for(Int_t i = 0; i < fnMaxJet; i++){
+    fDetectorJetEtaArray[i] = in.fDetectorJetEtaArray[i];
+    fDetectorJetPhiArray[i] = in.fDetectorJetPhiArray[i];
     fJetPtArray[i] = in.fJetPtArray[i];
     fJetPhiArray[i] = in.fJetPhiArray[i];
     fJetEtaArray[i] = in.fJetEtaArray[i];
@@ -242,6 +260,10 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   if (&in==this) return *this;
   
   ForestReader::operator=(in);
+  fRun3PFJetInputs = in.fRun3PFJetInputs;
+  fRun3TrackCharge = in.fRun3TrackCharge;
+  fRun3JetInputsBound = in.fRun3JetInputsBound;
+  fRun3ValidatedJetTreeNumber = in.fRun3ValidatedJetTreeNumber;
   
   fHeavyIonTree = in.fHeavyIonTree;
   fJetTree = in.fJetTree;
@@ -249,6 +271,7 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fSkimTree = in.fSkimTree;
   fTrackTree = in.fTrackTree;
   fParticleTree = in.fParticleTree;
+  fRun3L1Inputs = in.fRun3L1Inputs;
   fnJetsBranch = in.fnJetsBranch;
   fnTracksBranch = in.fnTracksBranch;
   fMatchedJetWTAEtaBranch = in.fMatchedJetWTAEtaBranch;
@@ -263,6 +286,8 @@ HighForestReader& HighForestReader::operator=(const HighForestReader& in){
   fParticleSubeventBranch = in.fParticleSubeventBranch;
   
   for(Int_t i = 0; i < fnMaxJet; i++){
+    fDetectorJetEtaArray[i] = in.fDetectorJetEtaArray[i];
+    fDetectorJetPhiArray[i] = in.fDetectorJetPhiArray[i];
     fJetPtArray[i] = in.fJetPtArray[i];
     fJetPhiArray[i] = in.fJetPhiArray[i];
     fJetEtaArray[i] = in.fJetEtaArray[i];
@@ -326,6 +351,8 @@ HighForestReader::~HighForestReader(){
  * Initialization, meaning that the branches are connected to the tree
  */
 void HighForestReader::Initialize(){
+  fRun3JetInputsBound = false;
+  fRun3ValidatedJetTreeNumber = -1;
 
   // Connect the branches of the heavy ion tree
   fHeavyIonTree->SetBranchStatus("*", 0);
@@ -333,8 +360,16 @@ void HighForestReader::Initialize(){
   fHeavyIonTree->SetBranchAddress("vz", &fVertexZ, &fHiVzBranch);
   fHeavyIonTree->SetBranchStatus("evt", 1);
   fHeavyIonTree->SetBranchAddress("evt", &fEventNumber, &fEventNumberBranch);
+  fHasPhysicalEventIdentity = fHeavyIonTree->GetBranch("run") && fHeavyIonTree->GetBranch("lumi") && fHeavyIonTree->GetBranch("evt");
+  if(fHasPhysicalEventIdentity){
+    fHeavyIonTree->SetBranchStatus("run",1);
+    fHeavyIonTree->SetBranchAddress("run",&fRunNumber);
+    fHeavyIonTree->SetBranchStatus("lumi",1);
+    fHeavyIonTree->SetBranchAddress("lumi",&fLumiNumber);
+  }
 
-  if(fDataType == kPp || fDataType == kPpMC){
+
+  if(fDataType == kPp || fDataType == kPpMC || fDataType == kOO || fDataType == kOOMC || fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC){
     // We do not have HF tower information for pp. In this case find HF like energy from particle flow candidates
     fHeavyIonTree->SetBranchStatus("hiHFPlus_pf", 1);
     fHeavyIonTree->SetBranchAddress("hiHFPlus_pf", &fHFPlus, &fHFPlusBranch);
@@ -347,7 +382,7 @@ void HighForestReader::Initialize(){
     fHeavyIonTree->SetBranchAddress("hiHFminus", &fHFMinus, &fHFMinusBranch);
   }
 
-  if(fDataType == kPbPb || fDataType == kPbPbMC){
+  if(fDataType == kPbPb || fDataType == kPbPbMC || fDataType == kOO || fDataType == kOOMC){
     fHeavyIonTree->SetBranchStatus("hiBin", 1);
     fHeavyIonTree->SetBranchAddress("hiBin", &fHiBin, &fHiBinBranch);
   } else {
@@ -367,8 +402,8 @@ void HighForestReader::Initialize(){
   const char* jetAxis[2] = {"jt","WTA"};
   const char* branchName;
 
-  // Jet trees are not needed for mixed events
-  if(fMixingMode){
+  // Event vetoes require the complete reconstructed jet tree in mixing too.
+  if(fMixingMode && !fRun3JetSelectionEnabled){
 
     fnJets = 0;
     fnMatchedJets = 0;
@@ -395,13 +430,32 @@ void HighForestReader::Initialize(){
   
     fJetTree->SetBranchStatus("nref", 1);
     fJetTree->SetBranchAddress("nref", &fnJets, &fnJetsBranch);
+
+    
     fJetTree->SetBranchStatus("rawpt", 1);
     fJetTree->SetBranchAddress("rawpt", &fJetRawPtArray, &fJetRawPtBranch);
     fJetTree->SetBranchStatus("trackMax", 1);
     fJetTree->SetBranchAddress("trackMax", &fJetMaxTrackPtArray, &fJetMaxTrackPtBranch);
+
+    if(fRun3JetSelectionEnabled){
+      fRun3PFJetInputs.Bind(fJetTree);
+      // With the standard analysis axis the existing arrays already contain
+      // detector coordinates. Keep separate arrays only for the WTA analysis.
+      if(fJetAxis != 0){
+        fJetTree->SetBranchStatus("jteta", 1);
+        fJetTree->SetBranchStatus("jtphi", 1);
+        if(fJetTree->SetBranchAddress("jteta", fDetectorJetEtaArray) < 0 ||
+           fJetTree->SetBranchAddress("jtphi", fDetectorJetPhiArray) < 0)
+          throw std::runtime_error("HighForestReader: cannot bind standard detector coordinates for Run-3 selection");
+      }
+      fRun3JetInputsBound = true;
+    }
+    
+    
   
+    // Mixing event vetoes only need reconstructed jets.
     // If we are looking at Monte Carlo, connect the reference pT and parton arrays
-    if(fIsMC){
+    if(fIsMC && !fMixingMode){
       fJetTree->SetBranchStatus("refpt", 1);
       fJetTree->SetBranchAddress("refpt", &fJetRefPtArray, &fJetRefPtBranch);
       fJetTree->SetBranchStatus("refeta", 1);
@@ -419,8 +473,9 @@ void HighForestReader::Initialize(){
       fJetTree->SetBranchStatus("geneta", 1);
       fJetTree->SetBranchAddress("geneta", &fMatchedJetEtaArray, &fJetMatchedEtaBranch);
     
-      // WTA axis is not available in pPb files
-      if(!fIsPPb){
+      // Legacy readers retain both axes; Run-3 selection only binds the
+      // generator WTA coordinates when that axis is actually requested.
+      if(!fIsPPb && (!fRun3JetSelectionEnabled || fJetAxis == 1)){
         fJetTree->SetBranchStatus("WTAgenphi", 1);
         fJetTree->SetBranchAddress("WTAgenphi", &fMatchedJetWTAPhiArray, &fMatchedJetWTAPhiBranch);
         fJetTree->SetBranchStatus("WTAgeneta", 1);
@@ -441,6 +496,9 @@ void HighForestReader::Initialize(){
   // skimanalysis/HltTree    HBHENoiseFilterResultRun2Loose   Event selection for pp and PbPb
   // skimanalysis/HltTree         pPAprimaryVertexFilter          Event selection for pp
   // skimanalysis/HltTree           pBeamScrapingFilter           Event selection for pp
+  //  hltanalysis/HltTree     HLT_MinimumBiasHF_OR_BptxAND_v1      Run-3 OO data trigger
+  //  hltanalysis/HltTree     HLT_PPRefZeroBias_v6                  Run-3 ppRef data trigger
+
   
   // Connect the branches to the HLT tree
   if(fUseJetTrigger){
@@ -491,6 +549,38 @@ void HighForestReader::Initialize(){
       // Calo jet 100 trigger
       fHltTree->SetBranchStatus("HLT_PAAK4CaloJet100_Eta5p1_v3", 1);
       fHltTree->SetBranchAddress("HLT_PAAK4CaloJet100_Eta5p1_v3", &fCaloJet100FilterBit, &fCaloJet100FilterBranch);
+
+    } else if(fDataType == kOO || fDataType == kOOMC) { //  OO data or MC
+
+      // Run-3 OO minimum-bias trigger, required for both data and MC.
+      //
+      // The first legacy trigger slot is reused as the generic Run-3
+      // minimum-bias trigger bit. TriggerSelection 8 reads this slot.
+      fHltTree->SetBranchStatus("HLT_MinimumBiasHF_OR_BptxAND_v1", 1);
+      fHltTree->SetBranchAddress("HLT_MinimumBiasHF_OR_BptxAND_v1", &fCaloJet15FilterBit, &fCaloJet15FilterBranch);
+
+      // The Run-3 minimum-bias analysis does not use jet-trigger paths.
+      fCaloJet30FilterBit = 0;
+      fCaloJet40FilterBit = 0;
+      fCaloJet60FilterBit = 0;
+      fCaloJet80FilterBit = 0;
+      fCaloJet100FilterBit = 0;
+
+    } else if(fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC){
+
+      // Run-3 pp-reference ZeroBias trigger, required for both data and MC.
+      //
+      // The first legacy trigger slot is reused as the generic Run-3
+      // minimum-bias/zero-bias trigger bit. TriggerSelection 8 reads it.
+      fHltTree->SetBranchStatus("HLT_PPRefZeroBias_v6", 1);
+      fHltTree->SetBranchAddress("HLT_PPRefZeroBias_v6", &fCaloJet15FilterBit, &fCaloJet15FilterBranch);
+
+      // The Run-3 ZeroBias analysis does not use jet-trigger paths.
+      fCaloJet30FilterBit = 0;
+      fCaloJet40FilterBit = 0;
+      fCaloJet60FilterBit = 0;
+      fCaloJet80FilterBit = 0;
+      fCaloJet100FilterBit = 0;
 
     } else { // PbPb data or MC
 
@@ -571,6 +661,81 @@ void HighForestReader::Initialize(){
 
       fClusterCompatibilityFilterBit = 1; // No cluster compatibility requirement for pPb
 
+     } else if(fDataType == kOO ){ // OO data 
+
+      // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
+      fSkimTree->SetBranchStatus("pprimaryVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
+     
+      // Have at least two towers on both of the HF calorimerter to have energies above 4 GeV
+      // accumulated by the energies of PF (particle-flow)candidates
+      fSkimTree->SetBranchStatus("OOpfCoincFilterPF2Th4", 1);
+      fSkimTree->SetBranchAddress("OOpfCoincFilterPF2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+
+      fSkimTree->SetBranchStatus("pileupVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pileupVertexFilter", &fPileupFilterBit, &fPileupFilterBranch);
+
+      // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
+      //fSkimTree->SetBranchStatus("pclusterCompatibilityFilter", 1);
+      //fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+
+      //fPrimaryVertexFilterBit = 1; // No primary vertex filter for OO
+      //fHfCoincidenceFilterBit = 1; // No HF coincidence filter for OO
+      //fPileupFilterBit = 1; // No pile-up filter for OO
+      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the OO MiniAOD forests.
+      fBeamScrapingFilterBit = 1;  // No beam scraping filter for OO
+      fClusterCompatibilityFilterBit = 1; // No Cluster compatibility, no good for 2025 data
+
+     } else if(fDataType == kOOMC){ // MC
+
+      // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
+      fSkimTree->SetBranchStatus("pprimaryVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
+     
+      // Have at least two towers on both of the HF calorimerter to have energies above 4 GeV
+      // accumulated by the energies of PF (particle-flow)candidates
+      fSkimTree->SetBranchStatus("OOphfCoincFilterPF2Th4", 1);
+      fSkimTree->SetBranchAddress("OOphfCoincFilterPF2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+
+      fSkimTree->SetBranchStatus("pileupVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pileupVertexFilter", &fPileupFilterBit, &fPileupFilterBranch);
+
+      // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
+      //fSkimTree->SetBranchStatus("pclusterCompatibilityFilter", 1);
+      //fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+
+      //fPrimaryVertexFilterBit = 1; // No primary vertex filter for OO
+      //fHfCoincidenceFilterBit = 1; // No HF coincidence filter for OO
+      //fPileupFilterBit = 1; // No pile-up filter for OO
+      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the OO MiniAOD forests.
+      fBeamScrapingFilterBit = 1;  // No beam scraping filter for OO
+      fClusterCompatibilityFilterBit = 1; // No Cluster compatibility, no good for 2025 data
+
+     } else if(fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC){ // ppRef data or MC 5.36TeV
+
+      // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
+      fSkimTree->SetBranchStatus("pprimaryVertexFilter", 1);
+      fSkimTree->SetBranchAddress("pprimaryVertexFilter", &fPrimaryVertexFilterBit, &fPrimaryVertexBranch);
+     
+      // Have at least two towers on both of the HF calorimerter to have energies above 4 GeV
+      // accumulated by the energies of PF (particle-flow)candidates
+      //fSkimTree->SetBranchStatus("OOpfCoincFilterPF2Th4", 1);
+      //fSkimTree->SetBranchAddress("OOpfCoincFilterPF2Th4", &fHfCoincidenceFilterBit, &fHfCoincidenceBranch);
+
+      //fSkimTree->SetBranchStatus("pileupVertexFilter", 1);
+      //fSkimTree->SetBranchAddress("pileupVertexFilter", &fPileupFilterBit, &fPileupFilterBranch);
+
+      // Calculated from pixel clusters. Ensures that measured and predicted primary vertices are compatible
+      //fSkimTree->SetBranchStatus("pclusterCompatibilityFilter", 1);
+      //fSkimTree->SetBranchAddress("pclusterCompatibilityFilter", &fClusterCompatibilityFilterBit, &fClusterCompatibilityBranch);
+
+      //fPrimaryVertexFilterBit = 1; // No primary vertex filter for OO
+      fHfCoincidenceFilterBit = 1; // No HF coincidence filter for OO
+      fPileupFilterBit = 1; // No pile-up filter for OO
+      fHBHENoiseFilterBit = 1; // HBHE noise filter bit is not available in the OO MiniAOD forests.
+      fBeamScrapingFilterBit = 1;  // No beam scraping filter for OO
+      fClusterCompatibilityFilterBit = 1; // No Cluster compatibility, no good for 2025 data
+
     } else { // PbPb data or MC
     
       // Primary vertex has at least two tracks, is within 25 cm in z-direction and within 2 cm in xy-direction
@@ -606,8 +771,18 @@ void HighForestReader::Initialize(){
   
   // Connect the branches to the track tree
   if(fReadTrackTree){
+    // These inputs are deliberately NOT read for OO/ppRef data or MC.
+    // Reset handles too: a reader may be reused with a different input file.
+    const bool requireLegacyTrackInputs = !UsesRun3SlimTracks();
+    fTrackChi2Branch = nullptr;
+    fnTrackDegreesOfFreedomBranch = nullptr;
+    fnHitsTrackerLayerBranch = nullptr;
+    fnHitsTrackBranch = nullptr;
+    fTrackEnergyEcalBranch = nullptr;
+    fTrackEnergyHcalBranch = nullptr;
     
     fTrackTree->SetBranchStatus("*", 0);
+    if((fDataType == kOO || fDataType == kOOMC || fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC) && !fMegaSkimMode) fRun3TrackCharge.Bind(fTrackTree);
     
     // We need to read the forest to vectors for MiniAODs and to arrays for AODs
     if(fIsMiniAOD){
@@ -635,16 +810,32 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchAddress("trkDxyFirstVtx", &fTrackVertexDistanceXYVector, &fTrackVertexDistanceXYBranch);
         fTrackTree->SetBranchStatus("trkDxyErrFirstVtx", 1);
         fTrackTree->SetBranchAddress("trkDxyErrFirstVtx", &fTrackVertexDistanceXYErrorVector, &fTrackVertexDistanceXYErrorBranch);
-        fTrackTree->SetBranchStatus("trkNormChi2", 1);
-        fTrackTree->SetBranchAddress("trkNormChi2", &fTrackNormalizedChi2Vector, &fTrackChi2Branch);
-        fTrackTree->SetBranchStatus("trkNLayers", 1);
-        fTrackTree->SetBranchAddress("trkNLayers", &fnHitsTrackerLayerVector, &fnHitsTrackerLayerBranch);
-        fTrackTree->SetBranchStatus("trkNHits", 1);
-        fTrackTree->SetBranchAddress("trkNHits", &fnHitsTrackVector, &fnHitsTrackBranch);
-        fTrackTree->SetBranchStatus("pfEcal", 1);
-        fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalVector, &fTrackEnergyEcalBranch);
-        fTrackTree->SetBranchStatus("pfHcal", 1);
-        fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalVector, &fTrackEnergyHcalBranch);
+        // Run-3 selection never consumes these PbPb-only quantities.
+        fTrackNormalizedChi2Vector = nullptr;
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("trkNormChi2", 1);
+          fTrackTree->SetBranchAddress("trkNormChi2", &fTrackNormalizedChi2Vector, &fTrackChi2Branch);
+        }
+        fnHitsTrackerLayerVector = nullptr;
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("trkNLayers", 1);
+          fTrackTree->SetBranchAddress("trkNLayers", &fnHitsTrackerLayerVector, &fnHitsTrackerLayerBranch);
+        }
+        fnHitsTrackVector = nullptr;
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("trkNHits", 1);
+          fTrackTree->SetBranchAddress("trkNHits", &fnHitsTrackVector, &fnHitsTrackBranch);
+        }
+        fTrackEnergyEcalVector = nullptr;
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("pfEcal", 1);
+          fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalVector, &fTrackEnergyEcalBranch);
+        }
+        fTrackEnergyHcalVector = nullptr;
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("pfHcal", 1);
+          fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalVector, &fTrackEnergyHcalBranch);
+        }
       }
       
     } else { // Read the tree from AOD files
@@ -672,13 +863,15 @@ void HighForestReader::Initialize(){
         fTrackTree->SetBranchAddress("trkDxy1", &fTrackVertexDistanceXYArray, &fTrackVertexDistanceXYBranch);
         fTrackTree->SetBranchStatus("trkDxyError1", 1);
         fTrackTree->SetBranchAddress("trkDxyError1", &fTrackVertexDistanceXYErrorArray, &fTrackVertexDistanceXYErrorBranch);
-        fTrackTree->SetBranchStatus("pfEcal", 1);
-        fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalArray, &fTrackEnergyEcalBranch);
-        fTrackTree->SetBranchStatus("pfHcal", 1);
-        fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalArray, &fTrackEnergyHcalBranch);
+        if(requireLegacyTrackInputs){
+          fTrackTree->SetBranchStatus("pfEcal", 1);
+          fTrackTree->SetBranchAddress("pfEcal", &fTrackEnergyEcalArray, &fTrackEnergyEcalBranch);
+          fTrackTree->SetBranchStatus("pfHcal", 1);
+          fTrackTree->SetBranchAddress("pfHcal", &fTrackEnergyHcalArray, &fTrackEnergyHcalBranch);
+        }
 
         // Branches that do not exist for the pPb forests
-        if(!fIsPPb){
+        if(requireLegacyTrackInputs && !fIsPPb){
           fTrackTree->SetBranchStatus("trkChi2", 1);
           fTrackTree->SetBranchAddress("trkChi2", &fTrackChi2Array, &fTrackChi2Branch);
           fTrackTree->SetBranchStatus("trkNdof", 1);
@@ -733,6 +926,11 @@ void HighForestReader::Initialize(){
 /*
  * Connect a new tree to the reader
  */
+Long64_t HighForestReader::GetTotalChainEntries() const{
+  if(!fHeavyIonTree) throw std::runtime_error("Total chain entries requested before opening a forest");
+  return fHeavyIonTree->GetEntries();
+}
+
 void HighForestReader::ReadForestFromFile(TFile* inputFile){
   std::vector<TString> fileList;
   fileList.push_back(inputFile->GetName());
@@ -746,15 +944,20 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
 
   // Open one file to determine if we are dealing with miniAOD or regular AOD
   TFile* inputFile = TFile::Open(fileList.at(0));
+  if(inputFile == nullptr || inputFile->IsZombie()){
+    throw std::runtime_error("HighForestReader: cannot open input forest");
+  }
+  if(fJetType < 0 || fJetType > 3 || fJetAxis < 0 || fJetAxis > 1){
+    throw std::invalid_argument("HighForestReader: invalid jet type or axis");
+  }
   TTree* miniAODcheck;
   // The track tree has different name in miniAOD and AOD
-  if(fDataType == kPbPb || fDataType == kPbPbMC){
+  if(fDataType == kPbPb || fDataType == kPbPbMC || fDataType == kOO || fDataType == kOOMC){
     miniAODcheck = (TTree*)inputFile->Get("PbPbTracks/trackTree");
   } else {
     miniAODcheck = (TTree*)inputFile->Get("ppTracks/trackTree");
   }
   fIsMiniAOD = !(miniAODcheck == NULL);
-  inputFile->Close();
 
   // Helper variable for finding the correct tree
   const char *treeName[4] = {"none","none","none","none"};
@@ -770,16 +973,28 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
     treeName[1] = "akCs4PFJetAnalyzer/t";       // Tree for csPF jets
     treeName[2] = "akPu4PFJetAnalyzer/t";       // Tree for puPF jets
     treeName[3] = "akFlowPuCs4PFJetAnalyzer/t"; // Tree for flow subtracted csPF jets
+  } else if(fDataType == kOO || fDataType == kOOMC){
+    treeName[0] = "akCs2PFJetAnalyzer/t";       // Tree for cs R=0.2 PF jets
+    treeName[1] = "akCs4PFJetAnalyzer/t";       // Tree for cs R=0.4 PF jets
+    treeName[2] = "akCs6PFJetAnalyzer/t";       // Tree for cs R=0.6 PF jets
+    treeName[3] = "akCs8PFJetAnalyzer/t";       // Tree for cs R=0.8 PF jets
   } else { // pp or pPb data or MC
     treeName[0] = "ak4CaloJetAnalyzer/t"; // Tree for calo jets
     treeName[1] = "ak4PFJetAnalyzer/t";   // Tree for PF jets
     treeName[2] = "akCs4PFJetAnalyzer/t"; // Tree for constituent subtracted PF jets
+    if(fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC) treeName[3] = "ak8PFJetAnalyzer/t"; // Native AK8.
   }
 
-  if(!fMixingMode) fJetTree = new TChain(treeName[fJetType]);
+  if(!fMixingMode || fRun3JetSelectionEnabled){
+    if(fDataType == kOO || fDataType == kOOMC || fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC){
+      EECJetGeometry::RequireRun3JetBranches(dynamic_cast<TTree*>(inputFile->Get(treeName[fJetType])), false, fIsMC, fJetAxis, fMatchJets);
+    }
+    fJetTree = new TChain(treeName[fJetType]);
+  }
+  inputFile->Close();
 
   if(fReadTrackTree){
-    if(fIsMiniAOD && (fDataType == kPbPb || fDataType == kPbPbMC)){
+    if(fIsMiniAOD && (fDataType == kPbPb || fDataType == kPbPbMC || fDataType == kOO || fDataType == kOOMC)){
       fTrackTree = new TChain("PbPbTracks/trackTree");
     } else {
       if(fIsMiniAOD){
@@ -798,14 +1013,32 @@ void HighForestReader::ReadForestFromFileList(std::vector<TString> fileList){
     fHeavyIonTree->Add(*listIterator);
     if(!fMegaSkimMode) fSkimTree->Add(*listIterator);
     if(fUseJetTrigger) fHltTree->Add(*listIterator);
-    if(!fMixingMode) fJetTree->Add(*listIterator);
+    if(!fMixingMode || fRun3JetSelectionEnabled){
+      if(fRun3JetSelectionEnabled){
+        TFile* validationFile = TFile::Open(*listIterator);
+        if(!validationFile || validationFile->IsZombie())
+          throw std::runtime_error("HighForestReader: cannot open Run-3 selection input file");
+        TTree* jets = dynamic_cast<TTree*>(validationFile->Get(treeName[fJetType]));
+        TTree* events = dynamic_cast<TTree*>(validationFile->Get("hiEvtAnalyzer/HiTree"));
+        EECJetSelection::Detail::ValidateNativeJetInputs(jets);
+        if(!events || jets->GetEntries() != events->GetEntries()){
+          validationFile->Close();
+          delete validationFile;
+          throw std::runtime_error("HighForestReader: reconstructed jet and event trees have unequal entries for Run-3 selection");
+        }
+        validationFile->Close();
+        delete validationFile;
+      }
+      fJetTree->Add(*listIterator);
+    }
     if(fReadTrackTree) fTrackTree->Add(*listIterator);
     if(fIsMC){
       fParticleTree->Add(*listIterator);
     }
   }
   
-  // Connect branches to trees
+  // Initialize primes event zero, so bind its L1 companion chains first.
+  if(fRun3L1Inputs) fRun3L1Inputs->Bind(fileList,treeName[fJetType]);
   Initialize();
 }
 
@@ -816,7 +1049,8 @@ void HighForestReader::BurnForest(){
   fHeavyIonTree->Delete();
   fHltTree->Delete();
   fSkimTree->Delete();
-  fJetTree->Delete();
+  if(fJetTree) fJetTree->Delete();
+  fRun3JetInputsBound = false;
   fTrackTree->Delete();
   fParticleTree->Delete();
 }
@@ -857,8 +1091,48 @@ bool HighForestReader::CheckFileProblems(){
  * Load an event to memory
  */
 void HighForestReader::GetEvent(Int_t nEvent){
+  if(fRun3JetSelectionEnabled){
+    if(!fJetTree || !fRun3JetInputsBound || nEvent < 0 || nEvent >= fHeavyIonTree->GetEntries())
+      throw std::out_of_range("HighForestReader: Run-3 jet selection event is outside the open forest");
+    const Long64_t localEntry = fJetTree->LoadTree(nEvent);
+    TTree* nativeTree = fJetTree->GetTree();
+    if(localEntry < 0 || !nativeTree)
+      throw std::runtime_error("HighForestReader: cannot load Run-3 native jet entry");
+    if(fRun3ValidatedJetTreeNumber != fJetTree->GetTreeNumber()){
+      fRun3PFJetInputs.ValidateSchema(nativeTree);
+      EECJetSelection::Detail::RequireJetLeaf(nativeTree, "trackMax", "Float_t", "nref");
+      if(fJetAxis != 0){
+        EECJetSelection::Detail::RequireJetLeaf(nativeTree, "WTAeta", "Float_t", "nref");
+        EECJetSelection::Detail::RequireJetLeaf(nativeTree, "WTAphi", "Float_t", "nref");
+      }
+      if(fIsMC && !fMixingMode){
+        EECJetSelection::Detail::RequireJetLeaf(nativeTree, "ngen", "Int_t");
+        for(const char* name : {"refpt", "refeta", "refphi"})
+          EECJetSelection::Detail::RequireJetLeaf(nativeTree, name, "Float_t", "nref");
+        EECJetSelection::Detail::RequireJetLeaf(nativeTree, "refparton_flavorForB", "Int_t", "nref");
+        for(const char* name : {"genpt", "geneta", "genphi"})
+          EECJetSelection::Detail::RequireJetLeaf(nativeTree, name, "Float_t", "ngen");
+        if(fJetAxis == 1){
+          EECJetSelection::Detail::RequireJetLeaf(nativeTree, "WTAgeneta", "Float_t", "ngen");
+          EECJetSelection::Detail::RequireJetLeaf(nativeTree, "WTAgenphi", "Float_t", "ngen");
+        }
+      }
+      fRun3ValidatedJetTreeNumber = fJetTree->GetTreeNumber();
+    }
+    // Read counts first, using the local entry after each TChain transition.
+    // No fixed-array payload may be read until both native counts fit.
+    if(nativeTree->GetBranch("nref")->GetEntry(localEntry) <= 0 || fnJets < 0 || fnJets > fnMaxJet)
+      throw std::runtime_error("HighForestReader: native reconstructed jet multiplicity exceeds the reader buffer");
+    if(fIsMC && !fMixingMode &&
+       (nativeTree->GetBranch("ngen")->GetEntry(localEntry) <= 0 || fnMatchedJets < 0 || fnMatchedJets > fnMaxJet))
+      throw std::runtime_error("HighForestReader: native generator jet multiplicity exceeds the reader buffer");
+  }
   fHeavyIonTree->GetEntry(nEvent);
-  if(!fMixingMode) fJetTree->GetEntry(nEvent);
+  if(!fMixingMode || fRun3JetSelectionEnabled){
+    const Long64_t bytes = fJetTree->GetEntry(nEvent);
+    if(fRun3JetSelectionEnabled && bytes <= 0)
+      throw std::runtime_error("HighForestReader: failed to read Run-3 native jet payload");
+  }
   if(fUseJetTrigger) fHltTree->GetEntry(nEvent);
   if(!fMegaSkimMode) fSkimTree->GetEntry(nEvent);
   if(fReadTrackTree) {
@@ -872,6 +1146,8 @@ void HighForestReader::GetEvent(Int_t nEvent){
   if(fIsMC){
     fParticleTree->GetEntry(nEvent);
   }
+  if(fRun3L1Inputs) fRun3L1Inputs->Read(nEvent,fnJets);
+
 }
 
 // Getter for jet pT
@@ -955,49 +1231,72 @@ Float_t HighForestReader::GetTrackVertexDistanceXYError(Int_t iTrack) const{
 
 // Getter for normalized track chi2 value from reconstruction fit
 Float_t HighForestReader::GetTrackNormalizedChi2(Int_t iTrack) const{
-  if(fIsMiniAOD) return fTrackNormalizedChi2Vector->at(iTrack);
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: trkNormChi2 is unavailable (disabled for Run-3)");
+  if(fIsMiniAOD){
+    if(!fTrackNormalizedChi2Vector) throw std::logic_error("Legacy track quality input is absent from this slim Run-3 forest");
+    return fTrackNormalizedChi2Vector->at(iTrack);
+  }
   return GetTrackChi2(iTrack) / (1.0*GetNTrackDegreesOfFreedom(iTrack));
 }
 
 // Getter for track chi2 value from reconstruction fit
 Float_t HighForestReader::GetTrackChi2(Int_t iTrack) const{
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: trkChi2 is unavailable (disabled for Run-3)");
   if(fIsMiniAOD) return -1; // Does not exist in MiniAOD forest
   return fTrackChi2Array[iTrack];
 }
 
 // Getter for number of degrees of freedom in reconstruction fit
 Int_t HighForestReader::GetNTrackDegreesOfFreedom(Int_t iTrack) const{
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: trkNdof is unavailable (disabled for Run-3)");
   if(fIsMiniAOD) return -1; // Does not exist in MiniAOD forest
   return fnTrackDegreesOfFreedomArray[iTrack];
 }
 
 // Getter for number of hits in tracker layers
 Int_t HighForestReader::GetNHitsTrackerLayer(Int_t iTrack) const{
-  if(fIsMiniAOD) return fnHitsTrackerLayerVector->at(iTrack);
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: trkNLayers is unavailable (disabled for Run-3)");
+  if(fIsMiniAOD){
+    if(!fnHitsTrackerLayerVector) throw std::logic_error("Legacy track quality input is absent from this slim Run-3 forest");
+    return fnHitsTrackerLayerVector->at(iTrack);
+  }
   return fnHitsTrackerLayerArray[iTrack];
 }
 
 // Getter for number of hits for the track
 Int_t HighForestReader::GetNHitsTrack(Int_t iTrack) const{
-  if(fIsMiniAOD) return fnHitsTrackVector->at(iTrack);
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: trkNHits is unavailable (disabled for Run-3)");
+  if(fIsMiniAOD){
+    if(!fnHitsTrackVector) throw std::logic_error("Legacy track quality input is absent from this slim Run-3 forest");
+    return fnHitsTrackVector->at(iTrack);
+  }
   return fnHitsTrackArray[iTrack];
 }
 
 // Getter for track energy in ECal
 Float_t HighForestReader::GetTrackEnergyEcal(Int_t iTrack) const{
-  if(fIsMiniAOD) return fTrackEnergyEcalVector->at(iTrack);
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: pfEcal is unavailable (disabled for Run-3)");
+  if(fIsMiniAOD){
+    if(!fTrackEnergyEcalVector) throw std::logic_error("Legacy track quality input is absent from this slim Run-3 forest");
+    return fTrackEnergyEcalVector->at(iTrack);
+  }
   return fTrackEnergyEcalArray[iTrack];
 }
 
 // Getter for track energy in HCal
 Float_t HighForestReader::GetTrackEnergyHcal(Int_t iTrack) const{
-  if(fIsMiniAOD) return fTrackEnergyHcalVector->at(iTrack);
+  if(UsesRun3SlimTracks()) throw std::logic_error("HighForestReader: pfHcal is unavailable (disabled for Run-3)");
+  if(fIsMiniAOD){
+    if(!fTrackEnergyHcalVector) throw std::logic_error("Legacy track quality input is absent from this slim Run-3 forest");
+    return fTrackEnergyHcalVector->at(iTrack);
+  }
   return fTrackEnergyHcalArray[iTrack];
 }
 
 // Getter for track charge. Charge is only relevant for generator level tracks.
 Int_t HighForestReader::GetTrackCharge(Int_t iTrack) const{
-  return 1;
+  if((fDataType == kOO || fDataType == kOOMC || fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC) && !fMegaSkimMode) return fRun3TrackCharge.Get(iTrack);
+  return 1; // Unchanged legacy/mega-skim path, not used for Run-3 matching.
 }
 
 // Getter for track subevent index. Relevant only for generator level tracks.
@@ -1151,4 +1450,23 @@ Float_t HighForestReader::GetMatchedPhi(Int_t iJet) const{
   if(fJetAxis == 0) return fMatchedJetPhiArray[matchedIndex];
   return fMatchedJetWTAPhiArray[matchedIndex];
   
+}
+
+void HighForestReader::EnableRun3JetSelection(Bool_t enabled){
+  if(fHeavyIonTree && enabled != fRun3JetSelectionEnabled)
+    throw std::logic_error("HighForestReader: enable Run-3 jet selection before opening a forest");
+  if(enabled && fMegaSkimMode)
+    throw std::invalid_argument("HighForestReader: Run-3 jet selection requires full native jets and cannot use a mega skim");
+  ForestReader::EnableRun3JetSelection(enabled);
+}
+
+EECJetSelection::JetInputs HighForestReader::GetJetSelectionInputs(Int_t iJet) const{
+  if(!fRun3JetSelectionEnabled || !fRun3JetInputsBound)
+    throw std::logic_error("HighForestReader: Run-3 jet selection inputs were not enabled before opening the forest");
+  if(iJet < 0 || iJet >= fnJets)
+    throw std::out_of_range("HighForestReader: invalid Run-3 selection jet index");
+  return fRun3PFJetInputs.Get(iJet,
+      fJetAxis == 0 ? fJetEtaArray[iJet] : fDetectorJetEtaArray[iJet],
+      fJetAxis == 0 ? fJetPhiArray[iJet] : fDetectorJetPhiArray[iJet],
+      fJetRawPtArray[iJet], fJetPtArray[iJet]);
 }

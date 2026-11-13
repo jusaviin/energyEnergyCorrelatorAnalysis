@@ -1,118 +1,720 @@
-# Energy-energy correlators in PbPb and pp collisions
+# Energy-energy correlators in OO and pp collisions at 5.36 TeV
 
-## Producing final plots
+This repository contains the framework used to calculate energy-energy correlators (EECs) inside jets. The current development focuses on Run-3 OO collisions and the pp reference at \(\sqrt{s_{\mathrm{NN}}}=5.36\) TeV. The legacy PbPb/pp analysis used for the published 5.02 TeV result is also retained.
 
-Follow these steps to produce all the plots that are published in the article "Observation of nuclear modification of energy-energy correlators inside jets in heavy ion collisions", [Phys. Lett. B 866 (2025) 139556](https://doi.org/10.1016/j.physletb.2025.139556), [arXiv:2503.19993](https://arxiv.org/abs/2503.19993).
+> **Current status:** the reconstructed-level O–O and ppRef workflow is available for local tests, CRAB production, QA, and reflected/perpendicular-cone studies. Track-pair corrections, Run-3 JER, detector response, unfolding, and the final corrected O–O/ppRef ratio are still under validation.
 
-1. Clone the repository
+## Run-3 framework development
 
-```
-git clone git@github.com:jusaviin/energyEnergyCorrelatorAnalysis.git
-```
+The current changes add audited OO GenGen mixed/perpendicular closure,
+source-event track corrections, native pair exports and residual correction
+maps, and independent training/validation response production. Condor helpers
+prepare and validate production/merges; CRAB data lists reserve separate mixing
+donors and keep each task within the configured job cap. Plotting includes raw
+background projections and response diagnostics, with ROOT environment changes
+triggering a library rebuild.
 
-2. Compile the code
+- [Mixing contracts, ledgers and closure](validation/run3Mixing/README.md)
+- [Pair derivation, correction support and validation](validation/run3Pairs/README.md)
+- [Response folds and merge checks](validation/run3Unfolding/batch/README.md)
+- [Condor production and merges](condor/README.md)
+- [CRAB inputs and worker packaging](crab/README.md)
 
-```
+These additions provide software and diagnostic workflows. Baseline Run-3 cards
+keep pair corrections disabled; physics closure, generator normalization and
+full event covariance remain unresolved. A successful build or merge does not
+qualify a correction payload for physics results.
+
+Active CRAB input lists and manifests are versioned. Worker archives, CRAB task
+state, old partition copies and new campaign result directories stay local and
+are ignored by Git. Recreate the worker with
+`python3 crab/makeOOAnalysisTar.py`; historical result paths in validation notes
+refer to local evidence, while reusable contract cards live in
+`validation/run3Unfolding/fixtures/`.
+
+## Quick start
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/JesusVlz/energyEnergyCorrelatorAnalysis.git
 cd energyEnergyCorrelatorAnalysis
+```
+
+### 2. Compile the analysis and plotting code
+
+```bash
 make
-cd plotting
-make
-cd ..
+make -C plotting
 ```
 
-3. Download the data. Notice that you will need to have a read access to CMS Vanderbilt T2 storage to be able to download the data. The commands cited here work on lxplus. If you are working on a local computer, just scp the downloaded file to your computer from lxplus. The size of the tar-ball is just under 100 MB.
+Run the executable without arguments to print its command-line help:
 
-```
-voms-proxy-init --voms cms
-xrdcp root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/energyEnergyCorrelatorAnalysisFiles/eecAllFinalResultFiles.tar.gz .
-```
-
-4. Expand the tar-ball
-
-```
-tar -xvzf eecAllFinalResultFiles.tar.gz
-```
-
-5. Run the script that produces all final figures
-
-```
-./makeAllPaperPlots.sh
-```
-
-Now you have all the plots in the published paper neatly organized by the figure number they appear in the publication located in paperFigures folder.
-
-## General structure of the reposity
-
-The code is organized in folders, with different functionality in different folders. Below is a quick overview of this folder structure.
-
-**Home folder**
-
-This folder contains helpful processing scripts, together with a Makefile that compiles the code in the `src` folder that calculates the energy-energy correlators. Also the main program for the analysis, `eecAnalysis.cxx`, is located in this folder.
-
-**src**
-
-The code that calculates the energy-energy correlators is located in this folder.
-
-**plotting**
-
-Code that does post-processing for energy-energy correlator distributions and different plotting macros are located in this folder.
-
-**crab**
-
-The configuration to run the code on crab can be found from this folder.
-
-**jetEnergyCorrections**
-
-The jet energy corrections applied in this analysis are read from this folder.
-
-**smearingFiles**
-
-This folder contains particle level response matrices that can be used to smear the DeltaR values or energy weights to show the effect of detector resolution.
-
-**trackCorrectionTables**
-
-Corrections for tracks are read from the correction tables located in this folder.
-
-**mixingFileList**
-
-This folder contains file lists for the files from which the mixed events are read.
-
-**skimmer**
-
-This folder contains code to skim the minimum bias files from which the mixed events are read, leaving only bare minimum amount of information to perform the mixing. This greatly enhances the performance of the mixing.
-
-**toySimulation**
-
-Files to perform a toy simulation to study how energy-energy correlators look in completely uniform particle distribution.
-
-## Overview of basic workflow
-
-1. Test locally that everything works
-
-Before sending any code to GRID processing, you should check that the code compiles and produces the histograms you want. First, compile the code
-
-```
-make
-```
-
-Then, you should check that the desired running configuration is in a card file. Wheck this with
-
-```
-vim cardEECPbPb.input
-```
-
-Newxt, run the code and see that the histograms you want are filled. Executing the main program without parameters tells you which parameters you need to give to it in order to run it.
-
-```
+```bash
 ./eecAnalysis
 ```
 
-Once you have tested that everything works locally, it is time to run over larger datasets on CRAB.
+### 3. Run a local O–O test
 
-2. Run the jobs on CRAB
+```bash
+./eecAnalysis \
+  /eos/cms/store/group/phys_heavyions/jvelazqu/OO2025_dataset_MinimumBias_filtered/IonPhysics0/OO_MinimumBias_filtered_IonPhysics0/260908_000643/0000/L1_object_data_541.root \
+  cardEECOO.input \
+  test_OO.root \
+  1 \
+  true
+```
 
-For CRAB running, you will need a CMSSW area in your `lxplus` account. Any version will do, since no CMSSW functionality besised the CRAB job submitter will be used. Once you have a CMSSW area set up, copy the analysis code there and run it following the instructions in the `crab` folder in this repository. Once the jobs are finished, merge and download the produced root files.
+The same command on one line is:
 
-3. Post-process the downloaded files
+```bash
+./eecAnalysis /eos/cms/store/group/phys_heavyions/jvelazqu/Forest/OO/L1_object_data.root cardEECOO.input test_OO.root 1 true
+```
 
-There are several post-processing steps before you can get the final energy-energy correlator distributions.
+The arguments are:
+
+```text
+./eecAnalysis INPUT CARD OUTPUT FILE_LOCATION RUN_LOCAL [MIXING_LIST_INDEX]
+```
+
+| Argument | Meaning |
+|---|---|
+| `INPUT` | One ROOT file or a text file containing one input file per line. In CRAB mode, this is the CRAB job ID. |
+| `CARD` | Analysis configuration card. |
+| `OUTPUT` | Output ROOT file. |
+| `FILE_LOCATION` | `0` Purdue, `1` CERN EOS, `2` Vanderbilt, `3` global xrootd, or `-1` ACCRE/Slurm. For a complete ROOT path or URL, the value is still required but is not prepended. |
+| `RUN_LOCAL` | `true` for a local test; `false` for CRAB mode. |
+| `MIXING_LIST_INDEX` | Optional mixed-event list index. Normally omitted for local tests. |
+
+### 4. Run a local ppRef test
+
+```bash
+./eecAnalysis \
+  root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jvelazqu/HiForestpp2024/PPRefHardProbes0/ppRef2024_HardProbes_filtered_PPRefHardProbes0/260925_144732/0000/HiForestMiniAOD_1.root \
+  cardEECpp5v36TeV.input \
+  test_ppRef.root \
+  2 \
+  true
+```
+
+For MC, use `cardEECOOMC.input` or `cardEECpp5v36TeVMC.input` with an O–O or ppRef MC forest.
+
+For the bounded Run-3 R=0.4 RecoReco check used on 29 October 2026, run from
+the repository root in a configured ROOT environment. These test cards cap each
+input at 1,000 events and enable the HIN Jet ID and whole-event veto:
+
+```bash
+make -j4
+mkdir -p output/run3-mc
+./eecAnalysis \
+  /eos/user/j/jvelazqu/Foresting/OOMC/unembedded_L1HLT_objects_MC_1.root \
+  validation/run3Jets/cards/OOMC_R04_veto_test.input \
+  output/run3-mc/OO_R04_RecoReco.root 1 true
+./eecAnalysis \
+  /eos/user/j/jvelazqu/Foresting/ppMC/HiForestMiniAOD_MC_1.root \
+  validation/run3Jets/cards/ppRefMC_R04_veto_test.input \
+  output/run3-mc/pp_R04_RecoReco.root 1 true
+python3 validation/run3Jets/check_mc_smoke.py \
+  output/run3-mc/OO_R04_RecoReco.root \
+  --card validation/run3Jets/cards/OOMC_R04_veto_test.input --max-events 1000 \
+  --output output/run3-mc/OO_R04_RecoReco_check.json
+python3 validation/run3Jets/check_mc_smoke.py \
+  output/run3-mc/pp_R04_RecoReco.root \
+  --card validation/run3Jets/cards/ppRefMC_R04_veto_test.input --max-events 1000 \
+  --output output/run3-mc/pp_R04_RecoReco_check.json
+```
+
+Choose fresh output filenames for later runs. To generate scratch cards, logs,
+commands and JSON checks together, use
+`python3 validation/run3Jets/run_mc_smoke.py --events 1000 --output NEW_DIRECTORY`.
+The checker requires populated jet/EEC histograms, finite histogram contents and
+errors, consistent veto counters and the expected persisted configuration.
+
+The installed OO MC correction is `L2Relative_AK4PF_OO_V1.txt`; ppRef MC uses
+`Prompt24HIpp_V1_MC_L2Relative_AK4PF.txt`, both under `jetEnergyCorrections/`.
+The analyzer starts from raw jet pT and preserves the selected WTA lookup axis.
+MC has no data residual correction; Run-3 JES/JER variations remain disabled
+(`JetUncertainty 0`). These checks establish bounded software behavior; full JEC
+closure and campaign-wide veto applicability remain to be validated.
+The [precommit validation record](validation/run3Jets/results/2026-10-29-precommit/verification.json) retains the checks and exact source hashes.
+
+### 5. Check the output
+
+Open the file and print the configuration saved in it:
+
+```bash
+root -l test_OO.root
+root -l -b -q 'plotting/checkCard.C("test_OO.root")'
+```
+
+Before starting a large production, confirm that:
+
+- the output contains nonzero event, jet, track, and EEC histograms;
+- the expected `DataType`, jet radius, WTA axis, trigger, and background method are stored in the card;
+- no required tree or branch is missing;
+- the JEC and tracking-correction files are found;
+- all event, jet, and track weights are finite.
+
+## Run-3 cards
+
+Run-3 PF Jet ID and whole-event veto support use the user-confirmed HIN PbPb ID
+for OO and HIN pp ID for ppRef. The R=0.4 local and CRAB cards enable both with
+`JetVetoPtConvention stored`, `JetVetoInputMinPt 15` and `jetvetomap_all`.
+The map sidecars mark this configuration `ENABLED_FOR_PRODUCTION_TESTS`;
+campaign-wide applicability remains to be established.
+See [configuration and validation](validation/run3Jets/IMPLEMENTATION.md) and
+[map provenance](validation/run3Jets/vetoMapSources.md). User-uploaded map hashes
+are verified, and the tarball script includes the maps and metadata.
+
+
+The repository root retains the 12 OO2025 and ppRef2024 5.36 TeV cards,
+including the existing separate R=0.8 workstream. Legacy Run-2 PbPb, pp and
+pPb local cards are now in [cards/archive/run2/](cards/archive/run2/README.md).
+See the [card inventory and layout](cards/README.md) for exact paths and a
+snapshot of every card. Pass the archived path for a legacy local run.
+Operational CRAB cards remain in `crab/`; they are independent copies and can
+have different settings. This reorganization changes no card contents or
+calibration applicability.
+
+| Sample | `DataType` | Local card | CRAB configuration |
+|---|---:|---|---|
+| O–O data | 9 | `cardEECOO.input` | `crab/crabEECOO.py` |
+| O–O MC | 10 | `cardEECOOMC.input` | `crab/crabEECOOMC.py` |
+| ppRef data | 11 | `cardEECpp5v36TeV.input` | `crab/crabEECppref5v36.py` |
+| ppRef MC | 12 | `cardEECpp5v36TeVMC.input` | `crab/crabEECpprefMC5v36.py` |
+
+The current baseline uses AK4 jets, \(R=0.4\), the winner-take-all axis, \(|\eta_{\mathrm{jet}}|<1.6\), and \(|\eta_{\mathrm{track}}|<2.4\). O–O uses the 0–30%, 30–50%, and 50–90% centrality intervals, while ppRef is inclusive.
+
+The root-level data cards use `BackgroundMethods 0` for simple local tests. The OO and ppRef CRAB data cards use `BackgroundMethods 6` for the mixed/perpendicular studies, with separate reserved donor pools. MC baseline cards use `BackgroundMethods 0`.
+
+### Dedicated inclusive OO cards and radius choices
+
+The inclusive selected-MB workstream uses separate cards, following the existing
+pp/pPb per-system card convention. The original OO cards retain the provisional
+0–30/30–50/50–90 diagnostic selections.
+
+| Stream | Data | MC |
+|---|---|---|
+| Inclusive OO, native R=0.4 | [cardEECOOInclusiveR04.input](cardEECOOInclusiveR04.input) | [cardEECOOMCInclusiveR04.input](cardEECOOMCInclusiveR04.input) |
+| Inclusive OO, native R=0.8 | [cardEECOOInclusiveR08.input](cardEECOOInclusiveR08.input) | [cardEECOOMCInclusiveR08.input](cardEECOOMCInclusiveR08.input) |
+| Inclusive pp, native R=0.4 | [cardEECpp5v36TeVR04.input](cardEECpp5v36TeVR04.input) | [cardEECpp5v36TeVMCR04.input](cardEECpp5v36TeVMCR04.input) |
+| Inclusive pp, native R=0.8 | [cardEECpp5v36TeVR08.input](cardEECpp5v36TeVR08.input) | [cardEECpp5v36TeVMCR08.input](cardEECpp5v36TeVMCR08.input) |
+
+Integrated OO uses the standard EEC pipeline with a broad centrality
+interval; it is not a separate analysis mode.
+
+Dedicated OO cards use `CentralityBinEdges -1 100`. The existing split cards
+remain available. OO retains its DataType, real hiBin/HF/vz, selection, native
+jets, tracking inputs and standard event/pair weights. Output binning does not
+change any correction. `eventQA/` records selection stages, weighted activity,
+invalid/peripheral coordinates and capped-input coverage independently of that
+binning. Invalid values remain visible in QA and ordinary histogram flows;
+`-1 100` is an output interval, not a full-acceptance certification.
+
+`energyEnergyCorrelator` is the ordinary seven-axis spectrum. Use
+`plotting/projectEEChistograms.C` or `EECHistogramManager` for projection and
+save/load, including `CentralityBinEdges` from JCard and each weight exponent.
+There is no inclusive-only EEC or projector. Historical `inclusive/` raw-study
+files retain their original correction meaning; do not relabel them as standard
+corrected outputs. Cards using the retired raw-study flag fail explicitly.
+`MinPairTrackPt 2` applies a generic strict pair threshold while preserving the
+0.5 GeV track input/QA threshold.
+
+OO comparison cards request `BackgroundMethods 6`: the existing perpendicular
+and two-distinct-partner mixed pairing categories. `MixingFileList` explicitly
+selects the pool; `EventMatchForMixing`, `BinnedMixing`, `MegaSkimMixing` and the
+matching-bin settings remain independent of output centrality. The data card
+points to the existing **pilot** pool list, which is not physics validated.
+The MC `OO2025_MC_pool_REQUIRED.txt` path is a required analyst-supplied list,
+not a produced or validated pool. Missing/empty lists fail; no signal-file
+fallback is used for Run-3. Match applicability, source filters, partner reuse
+and R8 overlap still need closure. The existing standalone pool preflight and
+pair-efficiency tools remain useful diagnostics, not alternative pipelines.
+
+The standard background interface uses `SubtractBackground(0)` for mixed and
+`SubtractBackground(1)` for perpendicular controls. Component yields retain the
+inherited coefficients; do not normalize components independently. The standard
+unfolding macro accepts an explicit compatible response path and positive
+independently studied iteration count as its last two arguments. Run-3 has no
+legacy response fallback. `FirstUnfoldedJetPtBin 0` / `LastUnfoldedJetPtBin 2`
+select the three primary output intervals; response migration guards remain.
+Run-3 correction applicability, response closure, background transport, final
+normalization and covariance remain physics gates.
+
+Both powers and native R04/R08 are retained. AK8 is never obtained by widening
+an AK4 cone. R8 calibration and audited native pp AK8 availability remain blocked.
+Root cards are uncapped; the bounded cards in `validation/run3Workflow/cards/`
+use standard EEC output with no mixed-event production. Reproduce tests with
+`python3 validation/run3Inclusive/run_tests.py` and
+`python3 validation/run3Workflow/runChecks.py --output NEW_SCRATCH_DIRECTORY`.
+Tests demonstrate software behavior, not production or physics closure.
+
+### Optional QA histogram binning
+
+Add the following setting to an analysis card when the inclusive QA spectra
+should use the same pT boundaries as the EEC selections:
+
+```text
+MatchEECBinning 1
+```
+
+This uses `JetPtBinEdgesEEC` for inclusive-jet pT and reflected-cone jet pT,
+and `TrackPtBinEdgesEEC` for corrected and uncorrected track pT. It makes
+comparisons with the selected EEC bins direct. Omitting the setting, or setting
+it to `0`, keeps the established QA binning; `ConfigurationCard::HasKey` allows
+older cards to omit this optional key. The maximum-particle-pT and jet-closure
+axes retain their existing binning because their consumers apply separate
+particle thresholds and jet-pT selections that require those axes.
+
+## Running with CRAB
+
+### 1. Set up CRAB on lxplus
+
+Enter a CMSSW area and initialize the environment:
+
+```bash
+cd /path/to/CMSSW_X_Y_Z/src
+cmsenv
+source /cvmfs/cms.cern.ch/crab3/crab.sh
+voms-proxy-init --voms cms --valid 192:00
+voms-proxy-info --timeleft
+```
+
+Then return to the analysis repository.
+
+### 2. Build the analysis tarball
+
+Build a fresh tarball from the exact commit that will be submitted:
+
+```bash
+git status --short
+git rev-parse HEAD
+./makeEECAnalysisTar.sh
+cp -f eec5TeV.tar.gz crab/eecOO.tar.gz
+```
+
+The copy command is currently necessary because `makeEECAnalysisTar.sh` creates `eec5TeV.tar.gz`, while the Run-3 CRAB configurations and `crab/compileAndRun.sh` expect `eecOO.tar.gz`.
+
+Do not reuse an old tarball. CRAB compiles and runs the source stored inside this tarball, not necessarily the source currently visible in the working directory.
+
+### 3. Review the card and CRAB configuration
+
+```bash
+cd crab
+vim cardEECOO.input
+vim crabEECOO.py
+```
+
+For the selected sample, check:
+
+- `jobTag` is new and describes the production;
+- `card` and `inputList` select the intended sample;
+- `unitsPerJob` is appropriate;
+- `outLFNDirBase` points to a writable EOS directory;
+- `storageSite` and any site whitelist are correct;
+- the card contains the intended data type, trigger, cuts, and background method.
+
+The current input lists are:
+
+| Sample | Input list | Initial files/job |
+|---|---|---:|
+| O–O data | `OOForestfiles/OOForestFiles_partNN_chunkNN.txt` | 1 |
+| O–O MC | `OOMC2025ForestFiles.txt` | 2 |
+| ppRef data | `ppRefForestfiles/ppRefForestFiles_partNN_chunk01.txt` | 1 |
+| ppRef MC | `ppMC2024ForestFiles.txt` | 2 |
+
+The O–O data lists preserve the original ten 10% partitions as two chunks each,
+with at most 10,000 files/jobs per task. `crabEECOO.py` defaults to part01,
+chunk01; use `OO_CRAB_PART` and `OO_CRAB_CHUNK` to select another chunk.
+See the [OO CRAB instructions](crab/README.md#oo-mixedperpendicular-pilot-one-signal-file-per-job)
+for the task limit, archived lists and submission examples.
+
+The ppRef data setup reserves 35 mixing donors from `ppData2024ForestFiles.txt`
+and fills four consecutive tasks from the remaining 31,144 files in source
+order: 10,000 files/jobs in parts 01–03 and 1,144 in part04. This uses the
+same configured 10,000-job cap as OO. Use `PPREF_CRAB_PART` (1–4) and
+`PPREF_CRAB_CHUNK=1` with `crabEECppref5v36.py`; request names now end in
+`Run3_v2`. The previous ten-part setup is retained locally under
+`crab/ppRefForestfiles/previous_10parts/` (excluded from Git). The pool, card and worker payload
+are unchanged. See the [ppRef CRAB instructions](crab/README.md#ppref-mixedperpendicular-setup-one-signal-file-per-job)
+for donor provenance, validation reports and submission commands.
+
+Use `TriggerSelection 0` for O–O and ppRef MC; no trigger selection is required. For the first MC smoke test, also use `BackgroundMethods 0` and `DisableTrackPairEfficiencyCorrection 1`.
+
+### 4. Submit one pilot job
+
+Before the full submission, temporarily set:
+
+```python
+config.Data.totalUnits = config.Data.unitsPerJob
+```
+
+Submit the selected configuration:
+
+```bash
+crab submit -c crabEECOO.py
+```
+
+The other Run-3 submissions are:
+
+```bash
+crab submit -c crabEECOOMC.py
+crab submit -c crabEECppref5v36.py
+crab submit -c crabEECpprefMC5v36.py
+```
+
+Validate the pilot output before restoring:
+
+```python
+config.Data.totalUnits = len(config.Data.userInputFiles)
+```
+
+Use a new `jobTag` for the full production.
+
+### 5. Monitor and control the task
+
+The CRAB project directory normally has the form `JOB_TAG/crab_JOB_TAG`:
+
+```bash
+PROJECT=JOB_TAG/crab_JOB_TAG
+
+crab status -d "$PROJECT"
+crab status --long -d "$PROJECT"
+crab report -d "$PROJECT"
+crab getlog --short -d "$PROJECT" --jobids 1
+crab getoutput --dump -d "$PROJECT"
+```
+
+Resubmit failed jobs:
+
+```bash
+crab resubmit -d "$PROJECT"
+```
+
+If the job report shows that more runtime or memory is required:
+
+```bash
+crab resubmit -d "$PROJECT" --maxjobruntime 180 --maxmemory 3000
+```
+
+Stop a task:
+
+```bash
+crab kill -d "$PROJECT"
+```
+
+## Merge and post-process the output
+
+Merge the successful ROOT files. A simple local example is:
+
+```bash
+hadd -f merged_OO.root /path/to/OOfiles/*.root
+hadd -f merged_ppRef.root /path/to/ppRefFiles/*.root
+```
+
+For large productions, merge in several stages to avoid opening thousands of remote files in one `hadd` command.
+
+Project the sparse histograms:
+
+```bash
+./projectHistogramsInSteps.sh merged_OO.root merged_OO_processed.root -w 1
+./projectHistogramsInSteps.sh merged_ppRef.root merged_ppRef_processed.root -w 1
+```
+
+For files filled with `BackgroundMethods 3`, create explicit background-processing variants:
+
+```bash
+# Perpendicular-cone subtraction
+./processEnergyEnergyCorrelators.sh merged_OO_processed.root \
+  -o merged_OO_perpendicular.root -b 1
+
+# Reflected-cone subtraction
+./processEnergyEnergyCorrelators.sh merged_OO_processed.root \
+  -o merged_OO_reflected.root -b 2
+
+# Signal without background subtraction
+./processEnergyEnergyCorrelators.sh merged_OO_processed.root \
+  -o merged_OO_noSubtraction.root -b 3
+```
+
+Repeat the same commands for ppRef. Do not use the default `-b 0` unless the file contains a validated mixed-cone background.
+
+Before calculating the O–O/ppRef ratio, verify that both files use the same jet radius, WTA axis, jet and track bins, energy-weight exponent, normalization interval, and processing level.
+
+## Plotting and OO diagnostics
+
+Run-3 background and signal closure plots now use the legacy-derived C++ copies
+`plotting/compareDifferentEECpairingsRun3.C` and
+`plotting/validateBackgroundSubtractionRun3.C`. See
+[Run-3 closure configuration and error conventions](plotting/README_Run3Closure.md).
+The original Run-2 macros and shared drawing classes remain unchanged.
+
+
+Build `plotting/DrawingClasses.so` with `make -C plotting`, then run the macros
+from the repository root in a ROOT environment. Pass the input paths explicitly;
+the filenames in the examples below are placeholders for your projected or raw
+files. Outputs normally go to `figures/`.
+
+The general `plotEEChistograms.C` configuration now selects raw same-jet EECs
+instead of track QA, with centrality bin `0`, jet bin `0`, track threshold bin
+`3`, and the subevent drawing style enabled for OO MC. In the current OO cards,
+these indices mean 0–30%, 40–80 GeV jets, and track pT above 2 GeV. Its default
+figure suffix is `_OO_C0-30_GenGen`; edit the selection switches and suffix when
+using another sample. OO MC legends identify Pythia+Hijing at 5.36 TeV and use
+Hijing labels for the background subevents. Subevent figures use one legend and
+choose their vertical range from all displayed curves and statistical errors,
+so small components are visible without a fixed legacy y-axis range. OO
+filenames include centrality to distinguish plots from different selections.
+
+The constant-jet-pT and constant-track-pT EEC comparison figures use the same
+logarithmic y-axis limits, `2e-5` to `100`, so their shapes can be compared
+directly across OO centralities and the pp reference, including separate
+runs. Both limits are set together in
+`EECDrawer::DrawEnergyEnergyCorrelationHistograms`. For pp inputs the drawing
+range is reset to the inclusive bin and the centrality legend entry is omitted.
+The pp legend reads `pp 5.36 TeV`.
+
+| Macro/function | Input and purpose | Configurable arguments after the input |
+|---|---|---|
+| `plotEEChistogramsJetPtComparison` | Projected OO MC; compare the first four jet bins at one track threshold using the general drawer. Current cards give 40–80, 80–120, 120–160, and 160–200 GeV. | Track threshold, output directory, centrality minimum/maximum. |
+| `plotEEChistogramsTrackPtComparison` | Projected OO MC; compare the first four track thresholds in the first jet bin. Current cards give 0.5, 1, 1.5, and 2 GeV in 40–80 GeV jets. | Centrality minimum/maximum; output goes to `figures/`. |
+| `plotOOMCJetPtComparison` | Wrapper for `plotEEChistogramsJetPtComparison` with the same drawing style. | Output directory, track threshold, centrality minimum/maximum. |
+| `compareFourOOMCModes` | Directory of projected RecoReco, RecoGen, GenReco, and GenGen files; compare total EEC shapes for track thresholds 0.5, 1, 2, and 3 GeV at 0–30% and 40–80 GeV. | Output directory. |
+| `plotOOMCGenRecoTrackSelections` | Projected GenReco OO MC; draw the total EEC for the same four track thresholds at 0–30% and 40–80 GeV, without assuming reconstructed tracks have truth-origin labels. | Output directory. |
+| `plotOOMCSubeventDecomposition` | Raw seven-dimensional RecoGen/GenGen OO MC EEC sparse histogram; project exponent 1 and plot Pythia-Pythia, Pythia-Hijing, and Hijing-Hijing components at 0–30% and 40–80 GeV. | Output directory, whether to use the verified stored generator range instead of resolving the four low-pT thresholds. |
+| `plotRawOODataComparisons` | Projected OO data; compare four jet bins and four track thresholds for every stored centrality. | Output directory. |
+
+Example calls for the retained diagnostic macros are:
+
+```bash
+mkdir -p figures
+root -l -b -q 'plotting/plotEEChistogramsJetPtComparison.C("projected/OO_MC_processed.root",2.,"figures",0.,30.)'
+root -l -b -q 'plotting/plotEEChistogramsTrackPtComparison.C("projected/OO_MC_processed.root",0.,30.)'
+root -l -b -q 'plotting/plotOOMCJetPtComparison.C("projected/OO_MC_processed.root","figures",2.,0.,30.)'
+root -l -b -q 'plotting/compareFourOOMCModes.C("projected/fourModes","figures")'
+root -l -b -q 'plotting/plotOOMCGenRecoTrackSelections.C("projected/OO_GenReco_processed.root","figures")'
+root -l -b -q 'plotting/plotOOMCSubeventDecomposition.C("OO_RecoGen_raw.root","figures",false)'
+root -l -b -q 'plotting/plotRawOODataComparisons.C("projected/OO_data_processed.root","figures")'
+```
+
+`compareFourOOMCModes` expects
+`merged_OOMC_<mode>_20261022_processed.root` in its input directory, where
+`<mode>` is `RecoReco`, `RecoGen`, `GenReco`, or `GenGen`. Its labels describe
+the current generator-particle samples, which retain particles only from
+5 GeV upwards; thresholds below that floor select the same stored population.
+Use inputs matching that assumption. The raw subevent macro rejects inputs
+that cannot resolve its requested low-pT cuts. For the existing generator skim,
+pass `true` as its third argument to request a single diagnostic explicitly
+labeled with the verified 5 GeV input floor:
+
+```bash
+root -l -b -q 'plotting/plotOOMCSubeventDecomposition.C("OO_RecoGen_raw.root","figures",true)'
+```
+
+The shape comparisons normalize each total EEC to unit area using the full
+regular-bin width integral. Subevent components share the total normalization,
+so their sum remains the total; the raw subevent macro checks both content and
+variance closure before drawing. Projected mixed-subevent histograms already
+combine both orderings, so use that component once. The perpendicular
+background and signal comparisons instead retain the common raw EEC scale:
+their estimate is the average of jet–perpendicular-cone pairs, minus pairs
+between the two cones, plus the average of pairs within either cone. They do
+not fit or independently renormalize the truth and estimate.
+
+These plots diagnose shapes, available subevents, and background estimates.
+They do not establish detector corrections or independent physics validation.
+Reco-jet and gen-jet selections also contain different jet populations. Missing
+truth-origin labels or particles below an input skim threshold cannot be
+recovered by plotting or by changing the nominal track threshold.
+
+### Framework support and compatibility
+
+OO MC subevents are loaded from raw histograms, written during projection,
+and available when reading projected files, for both individual jet bins and
+the integrated jet selection. The drawer skips track processing when no track
+plots are requested, allowing EEC-only inputs that do not contain the event
+counter used by track QA. Track QA preserves variable EEC pT boundaries;
+when grouping uniform pT bins it rescales the merged density so the width
+integral remains unchanged. The drawer also initializes its maximum-particle
+selection flags using their own array bound.
+
+Shared sparse-projection helpers and track/particle matching readers use
+`THnBase` so both float and double sparse inputs can be projected without
+assuming `THnSparseD` storage. Matching projections also reserve space for the
+optional energy-weight-axis restriction and apply it only when the histogram
+contains that axis. The matching-closure getter keeps an already projected
+histogram and reads from the file only when the cache is empty; this prevents
+a valid raw projection being replaced by a missing processed-file object.
+Multiplicity and particle-density arrays, initialization, and copying all use
+the EEC track-bin capacity, preventing out-of-bounds access when an EEC card
+has more thresholds than the ordinary track QA bins. Boundary-based EEC
+lookups retain OO centrality selections and reject unavailable bin boundaries.
+
+This plotting update preserves the explicit Run-3 response configuration,
+native jet-bin selection, and collision-system/centrality compatibility checks
+described below. Removing them would select legacy pp response files for OO
+or ppRef, request jet-bin boundaries absent from the current cards, and drop
+OO centrality selections. The plotting build retains `LinkDef.h` for the ROOT
+dictionary and direct `TMath.h` includes in the model histogram managers so a
+clean build has the required declarations. The existing
+`plotting/validateOOMonteCarloWeights.py` and
+`plotting/validatePpMonteCarloWeights.py` scripts remain available for marginal
+weight checks; their same-sample one-dimensional comparisons do not establish
+event-level closure.
+
+### Validation of this plotting update
+
+The reviewed commit was checked in an isolated source copy with ROOT 6.40.04:
+
+- The analysis executable and a full rebuild of `DrawingClasses.so` compiled.
+- ROOT loaded all nine new macros and the updated `plotEEChistograms.C`.
+- `validation/checkOOCentralityLookup.cxx` passed, including invalid-boundary
+  rejection and legacy/current histogram naming.
+- `validation/run3Unfolding/testUnfoldConfiguration.cxx` passed, preserving
+  explicit OO/ppRef response selection and legacy defaults.
+- Synthetic QA checks passed with `MatchEECBinning` absent, disabled, and
+  enabled, including axis edges, overflow storage, and preserved closure cuts.
+- A synthetic projection/write/reload check passed 420,864 numerical content
+  and error comparisons across float/double sparse storage, exponents 1/2,
+  OO centralities, subevent sums, matching responses, and matching closure.
+
+These checks verify software behavior; detector-response and production-MC
+closure studies remain part of the validation work described below.
+
+## Run-3 response and unfolding pilot
+
+`UnfoldingForestReader` supports OO MC (`DataType 10`) and ppRef MC
+(`DataType 12`), including reconstructed/generated jet matching and the MiniAOD
+track vectors. Required trees, branch types, vector sizes, and event counts are
+checked. These paths pass synthetic ROOT regression and response-filling checks;
+a production MC forest still needs a one-file validation.
+
+For an initial response pilot, copy the corresponding MC card and set:
+
+```text
+McCorrelationType 3
+MatchJets 1
+TriggerSelection 0
+FilledHistograms 223
+BackgroundMethods 0
+JetUncertainty 0
+JetPtWeight 0
+SmearDeltaR 0
+SmearEnergyWeight 0
+DisableTrackPairEfficiencyCorrection 1
+```
+
+Mask `223` fills the regular histograms, jet closure, and unfolding response.
+Use `479` to include track–particle matching as well. Keep the nominal jet,
+track, and centrality bins consistent with the target data. The response uses
+generator particles inside reconstructed/generated jet cones regardless of the
+accompanying MC EEC correlation mode; it is a jet response for particle EECs,
+not a complete correction for single-track and track-pair detector effects.
+
+Run on one MC forest and project the response, for example:
+
+```bash
+./eecAnalysis /path/to/OO_MC.root cardOOResponse.input OO_response.root 1 true
+./projectHistogramsInSteps.sh OO_response.root OO_response_processed.root -c -r -a -w 1
+# Add -m when the pilot card includes track–particle matching.
+```
+
+OO/ppRef unfolding requires an explicit processed response file and a positive
+iteration count selected through independent closure studies. It cannot select
+the legacy pp2017 response automatically. In a ROOT session with RooUnfold
+available, the extended macro call is:
+
+```cpp
+.L plotting/unfoldEEChistograms.C
+unfoldEEChistograms("OO_data_processed.root", "OO_unfolded.root",
+                    0, 0, 0, 1, "OO_response_processed.root", chosenIterations);
+```
+
+The file and count are used explicitly for the requested split/systematic;
+the caller must supply the corresponding studied response. Compatibility checks
+cover collision system, MC metadata, energy exponent, jet type/axis/radius,
+binning, and response content. All OO centralities are retained. For Run-3, the
+macro selects complete native card bins inside its 120–200 GeV study window
+(120–160 and 160–200 GeV for the current cards).
+
+No dedicated Run-3 JER scale factors or EEC smearing files are installed.
+Nonzero Run-3 `JetUncertainty`, `JetPtWeight`, or smearing switches fail before
+initialization. Nominal pilot matrices contain the MC detector resolution;
+the additional data/MC resolution calibration, independent closure, iteration
+study, and a RooUnfold end-to-end check remain necessary. Existing processed
+OO/ppRef MC files in this workspace do not contain response/jet-closure outputs.
+
+## Current progress
+
+| Component | Status |
+|---|---|
+| O–O and ppRef data types 9–12 | Implemented in the main analysis path |
+| AK4, \(R=0.4\), WTA cards | Configured for O–O and ppRef data/MC |
+| O–O and ppRef JEC | Selected in the analyzer; closure is still required |
+| O–O tracking correction | Implemented with the 2025 nominal table |
+| ppRef tracking correction | Nominal table included with checksum and loader checks |
+| RecoReco production and QA | Current baseline workflow |
+| RecoGen and GenGen | Routing added; branch-by-branch validation is still required |
+| Reflected and perpendicular cones | Available with `BackgroundMethods 3` |
+| Mixed events | O–O and ppRef CRAB pilot setups; donor provenance and physics closure still require validation |
+| Track-pair efficiency | Native R4 derivation and explicit payload loading available; disabled in baseline cards pending independent closure |
+| Run-3 JER | Dedicated inputs outstanding; unsupported variations fail clearly |
+| Response and unfolding | Run-3 reader and explicit response configuration implemented; synthetic checks pass; production closure outstanding |
+| Final corrected O–O/ppRef ratio | Not yet final |
+
+## Next validation steps
+
+Do these approximately in this order:
+
+1. Rebuild the CRAB tarball and run one-file RecoReco tests for all four samples.
+2. Validate tracking closure; OO keeps the common PbPb EEC coordinate convention.
+3. Validate the installed O–O/ppRef marginal event weights in an event-level rerun and establish generator normalization.
+4. Validate RecoGen and GenGen trees and branches.
+5. Perform jet matching, JEC closure, and Run-3 JER studies.
+6. Perform single-track efficiency and fake-rate closure.
+7. Derive and validate the residual track-pair efficiency.
+8. Validate reflected/perpendicular background subtraction and its normalization.
+9. Produce dedicated O–O/ppRef response files, select iterations with independent closure, and validate RooUnfold end to end.
+10. Build the Run-3 systematic uncertainties and then produce the corrected O–O/ppRef ratio.
+
+## Repository structure
+
+| Path | Contents |
+|---|---|
+| `eecAnalysis.cxx` | Main executable and command-line interface |
+| `src/` | Forest readers, analyzer, histograms, and correction code |
+| `plotting/` | Projection, processing, QA, comparison, and unfolding macros |
+| `crab/` | CRAB configurations, cards, input lists, and wrapper scripts |
+| `jetEnergyCorrections/` | Jet-energy correction files |
+| `trackCorrectionTables/` | Single-track and track-pair correction tables |
+| `mixingFileList/` | Mixed-event input lists |
+| `smearingFiles/` | Detector-response smearing inputs |
+| `skimmer/` | Minimum-bias skimming tools for event mixing |
+| `toySimulation/` | Uniform-particle toy simulations |
+
+## Legacy PbPb/pp paper plots
+
+The legacy part of this repository reproduces the figures from *Observation of nuclear modification of energy-energy correlators inside jets in heavy ion collisions*, [Phys. Lett. B 866 (2025) 139556](https://doi.org/10.1016/j.physletb.2025.139556), [arXiv:2503.19993](https://arxiv.org/abs/2503.19993).
+
+On lxplus, with Vanderbilt T2 read access:
+
+```bash
+voms-proxy-init --voms cms
+xrdcp root://xrootd-vanderbilt.sites.opensciencegrid.org//store/user/jviinika/energyEnergyCorrelatorAnalysisFiles/eecAllFinalResultFiles.tar.gz .
+tar -xvzf eecAllFinalResultFiles.tar.gz
+./makeAllPaperPlots.sh
+```
+
+The publication figures are written under `paperFigures/`.
+
+
+## Consolidated OO/ppRef software integration
+
+The [overall-coordination record](validation/run3Integration/OverallCoordination.md)
+tracks the integrated preparation work and separates software checks from physics closure.
+Use the [R4 card catalog](cards/R4/README.md) for new configurations and the
+[Run-3 MC-weight macro](plotting/README_Run3MCWeights.md) for stored-weight QA
+and candidate fits. OO/ppRef readers skip unused PbPb-only track branches;
+active cards no longer request those cuts. Rebuild executables and job tarballs
+after syncing; no existing forest, correction, ROOT output or production job
+is altered by this source update.

@@ -4,8 +4,17 @@
 #include <TFile.h>
 #include <TMath.h>
 
+// C++ includes
+#include <stdexcept>
+#include <cmath>
+#include <iomanip>
+#include <limits>
+
 // Own includes
 #include "EECAnalyzer.h"
+#include "Run3JetGeometry.h"
+#include "Run3TrackSelection.h"
+// RUN3_TRACK_PREPARATION_V1
 
 using namespace std;
 
@@ -71,6 +80,9 @@ EECAnalyzer::EECAnalyzer() :
   fIsRealData(true),
   fIsPPbData(false),
   fIsPpData(false),
+  fIsOOData(false),
+  fIsPp2024Data(false),
+  fMaxEventsPerFile(0),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -181,6 +193,8 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   fHistograms(0),
   fJetCorrector(),
   fJetUncertainty(),
+  fTrackPairEfficiencyCorrector(nullptr),
+  fMaxEventsPerFile(0),
   fVzWeight(1),
   fCentralityWeight(1),
   fPtHatWeight(1),
@@ -257,8 +271,90 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
     } else {
       fEnergyWeightSmearer = NULL;
     } 
+  
+  } else if(fIsOOData){
     
-  } else if(fIsPPbData){
+    // Match the Run-3 selection to its OO table (never a Run-2 payload).
+    fTrackEfficiencyCorrector = new TrkEff2025OO(false,
+      EECRun3Tracking::Payload(true, fTrackSelectionVariation));
+
+    // Derived from eecAnalysis_OOMC_eventWeights_merged_processed.root and
+    // merged_eecOO2025_processed_121026.root; fit details and marginal checks:
+    // validation/ooEventWeights/summary.json. Generator weights remain unity.
+    fVzWeightFunction = new TF1("fvzOO", "pol6", -15, 15);
+    fVzWeightFunction->SetParameters(
+      0.838856911780552, -0.00776989024519781, 0.0058636391429985266,
+      -5.766156566253836e-05, 1.8438424060809344e-05,
+      -1.8301250990940377e-08, -1.75751097521435e-08);
+
+    // Fit the discrete event coordinate hiBin/2.0, rather than bin centers.
+    // Both pieces are constrained to share the same value at 30%.
+    fCentralityWeightFunctionCentral = new TF1("fCentralWeight","pol6",0,30);
+    fCentralityWeightFunctionCentral->SetParameters(
+      0.21673748247199076, 0.42798452395858855, -0.08577950095294451,
+      0.00876238763403549, -0.0004640687718153862,
+      1.2091163533760215e-05, -1.2250901514355144e-07);
+
+    fCentralityWeightFunctionPeripheral = new TF1("fPeripheralWeight","pol6",30,90);
+    fCentralityWeightFunctionPeripheral->SetParameters(
+      24.64385154550333, -3.0807890354515104, 0.1643162333925263,
+      -0.004560385561319567, 6.926614096592005e-05,
+      -5.486498310258901e-07, 1.7859004865978195e-09);
+    
+    fMultiplicityWeightFunction = new TF1("fMultiWeight", totalMultiplicityWeight, 0, 5000, 0);
+
+  
+    // Set remaining helpers to NULL to ensure they are skipped
+    fTrackPairEfficiencyCorrector = NULL;
+    fEnergyResolutionSmearingFinder = NULL;
+    fDeltaRSmearer = NULL;
+    fEnergyWeightSmearer = NULL;
+
+  }
+  else if(fIsPp2024Data) {
+
+  // ============================================================
+  // Run-3 pp reference at sqrt(s) = 5.36 TeV
+  //
+  // Do not reuse:
+  //   - 2017 pp tracking tables
+  //   - 2017 pp vz weights
+  //   - 2017 pp track-pair correction
+  //   - 2017 pp DeltaR/energy response files
+  //   - 2017 pp jet-spectrum weighting
+  // ============================================================
+
+  // Run-3 ppRef tracking efficiency.
+  fTrackEfficiencyCorrector = new TrkEff2024ppRef(false, EECRun3Tracking::Payload(false, fTrackSelectionVariation));
+
+  // Validated with merged_eecpp2024_run3_v7_processed.root and
+  // merged_eecppMC2024_GenGen_processed.root. The existing coefficients
+  // reproduce the vertex marginal to 0.56% RMS; retain them rather than
+  // replacing them with the statistically equivalent same-sample refit.
+  // Full comparison: validation/ppEventWeights/summary.json.
+  fVzWeightFunction = new TF1("fvzPpRef5p36TeV", "pol6", -15, 15);
+  fVzWeightFunction->SetParameters( 0.901743, -0.0100148, 0.00349298, -5.14891e-05, 6.59866e-06, 7.97589e-08, -5.10072e-08); 
+
+  // pp has no centrality correction.
+  fCentralityWeightFunctionCentral = NULL;
+  fCentralityWeightFunctionPeripheral = NULL;
+  fMultiplicityWeightFunction = NULL;
+
+  // Do not use the 2017 pp track-pair table for Run-3 ppRef.
+  // Keep a valid object because the EEC code dereferences this pointer.
+  fTrackPairEfficiencyCorrector = new TrackPairEfficiencyCorrector();
+
+  // No dedicated Run-3 ppRef JER scale factors are configured yet.
+  fEnergyResolutionSmearingFinder = NULL;
+
+  // No Run-3 ppRef response-smearing files are configured yet.
+  fDeltaRSmearer = NULL;
+  fEnergyWeightSmearer = NULL;
+
+  // Unsupported Run-3 variations are rejected when reading the card,
+  // before correction files or response helpers are initialized.
+
+} else if(fIsPPbData){
     
     // Track correction for 2016 pPb data
     fTrackEfficiencyCorrector = new TrkEff2016pPb(false, "trackCorrectionTables/pPb2016/");
@@ -385,10 +481,27 @@ EECAnalyzer::EECAnalyzer(std::vector<TString> fileNameVector, ConfigurationCard 
   //    Disable/enable the track pair efficiency correction
   //**********************************************************
 
+  if((fIsOOData || fIsPp2024Data) && fCard->HasKey("Run3TrackPairCorrectionFile")){
+    delete fTrackPairEfficiencyCorrector;
+    fTrackPairEfficiencyCorrector=new TrackPairEfficiencyCorrector(fCard->GetStr("Run3TrackPairCorrectionFile"),false,fIsOOData);
+    if(!fTrackPairEfficiencyCorrector->IsRun3Table())
+      throw std::invalid_argument("Run3TrackPairCorrectionFile is missing Run3PairCorrectionVersion");
+    // Old pre-repair maps cannot be applied to the corrected Run-3 selections.
+    TFile metadata(fCard->GetStr("Run3TrackPairCorrectionFile"), "READ");
+    const auto requireTag = [&metadata](const char* key, const std::string& expected){
+      TObject* object = metadata.Get(key);
+      if(!object || expected != object->GetTitle())
+        throw std::invalid_argument(std::string("Run-3 pair payload mismatch/missing tag: ") + key);
+    };
+    requireTag("Run3TrackSelectionVersion", EECRun3Tracking::Version());
+    requireTag("Run3TrackSelection", EECRun3Tracking::CanonicalSelection(fTrackSelectionVariation));
+    requireTag("Run3PairCollisionSystem", fIsOOData ? "OO" : "pp");
+  }
   bool disableTrackPairEfficiencyCorrection = (fCard->Get("DisableTrackPairEfficiencyCorrection") == 1);
   if((fMcCorrelationType == kGenGen) || (fMcCorrelationType == kRecoGen)) disableTrackPairEfficiencyCorrection = true; // Disable the track pair efficiency correction for generator level particles
-  fTrackPairEfficiencyCorrector->SetDisableCorrection(disableTrackPairEfficiencyCorrection);
-
+  if(fTrackPairEfficiencyCorrector != NULL) {
+    fTrackPairEfficiencyCorrector->SetDisableCorrection(disableTrackPairEfficiencyCorrection);
+  }
 }
 
 /*
@@ -417,6 +530,17 @@ EECAnalyzer::EECAnalyzer(const EECAnalyzer& in) :
   fIsRealData(in.fIsRealData),
   fIsPPbData(in.fIsPPbData),
   fIsPpData(in.fIsPpData),
+  fIsPp2024Data(in.fIsPp2024Data),
+  fIsOOData(in.fIsOOData),
+  fRun3JetID(in.fRun3JetID),
+  fUseRun3JEC(in.fUseRun3JEC),
+  fUsePpL1FastJet(in.fUsePpL1FastJet),
+  fFillRun3JetQA(in.fFillRun3JetQA),
+  fApplyJetVeto(in.fApplyJetVeto),
+  fJetVetoPtConvention(in.fJetVetoPtConvention),
+  fJetVetoMap(in.fJetVetoMap),
+  fMixedVetoJetReader(in.fMixedVetoJetReader),
+  fMaxEventsPerFile(in.fMaxEventsPerFile),
   fVzWeight(in.fVzWeight),
   fCentralityWeight(in.fCentralityWeight),
   fPtHatWeight(in.fPtHatWeight),
@@ -530,7 +654,18 @@ EECAnalyzer& EECAnalyzer::operator=(const EECAnalyzer& in){
   fDebugLevel = in.fDebugLevel;
   fIsRealData = in.fIsRealData;
   fIsPPbData = in.fIsPPbData;
+  fIsPp2024Data = in.fIsPp2024Data;
+  fIsOOData = in.fIsOOData;
   fIsPpData = in.fIsPpData;
+  fRun3JetID = in.fRun3JetID;
+  fUseRun3JEC = in.fUseRun3JEC;
+  fUsePpL1FastJet = in.fUsePpL1FastJet;
+  fFillRun3JetQA = in.fFillRun3JetQA;
+  fApplyJetVeto = in.fApplyJetVeto;
+  fJetVetoPtConvention = in.fJetVetoPtConvention;
+  fJetVetoMap = in.fJetVetoMap;
+  fMixedVetoJetReader = in.fMixedVetoJetReader;
+  fMaxEventsPerFile = in.fMaxEventsPerFile;
   fVzWeight = in.fVzWeight;
   fCentralityWeight = in.fCentralityWeight;
   fPtHatWeight = in.fPtHatWeight;
@@ -647,11 +782,36 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //****************************************
   fDataType = fCard->Get("DataType");
   fTriggerSelection = fCard->Get("TriggerSelection");
+  fMaxEventsPerFile = fCard->HasKey("MaxEventsPerFile") ? fCard->Get("MaxEventsPerFile") : 0;
+  if(fMaxEventsPerFile < 0) throw std::invalid_argument("MaxEventsPerFile must be nonnegative.");
+  // Reject retired raw-study cards rather than silently reinterpret their outputs.
+  if(fCard->HasKey("InclusiveMode")) throw std::invalid_argument("InclusiveMode is retired; use ordinary CentralityBinEdges with the standard EEC pipeline.");
 
-  // Determine the helper data types
-  fIsRealData = (fDataType != ForestReader::kPpMC && fDataType != ForestReader::kPbPbMC && fDataType != ForestReader::kPPbMC_pToMinusEta && fDataType != ForestReader::kPPbMC_pToPlusEta);
-  fIsPPbData = (fDataType == ForestReader::kPPb_pToMinusEta || fDataType == ForestReader::kPPb_pToPlusEta || fDataType == ForestReader::kPPb_pToMinusEta_5TeV || fDataType == ForestReader::kPPbMC_pToMinusEta || fDataType == ForestReader::kPPbMC_pToPlusEta);
-  fIsPpData = (fDataType == ForestReader::kPp || fDataType == ForestReader::kPpMC);
+
+  // Determine the helper data types.
+  //
+  // Keep Run-2 pp and Run-3 ppRef separate because they use different
+  // tracking, JEC, pair-efficiency, weighting, and smearing inputs.
+  fIsRealData = 
+    (fDataType != ForestReader::kPpMC &&
+    fDataType != ForestReader::kPbPbMC &&
+    fDataType != ForestReader::kPPbMC_pToMinusEta &&
+    fDataType != ForestReader::kPPbMC_pToPlusEta &&
+    fDataType != ForestReader::kOOMC &&
+    fDataType != ForestReader::kPpRef5p36TeVMC);
+  // Run-2 pPb data and MC, and Run-3 pPb data.
+  fIsPPbData = (fDataType == ForestReader::kPPb_pToMinusEta ||
+    fDataType == ForestReader::kPPb_pToPlusEta ||
+    fDataType == ForestReader::kPPb_pToMinusEta_5TeV ||
+    fDataType == ForestReader::kPPbMC_pToMinusEta ||
+    fDataType == ForestReader::kPPbMC_pToPlusEta);
+  // Legacy Run-2 pp only.
+  fIsPpData = (fDataType == ForestReader::kPp ||fDataType == ForestReader::kPpMC);
+  // Run-3 pp reference at 5.36 TeV only.
+  fIsPp2024Data =  (fDataType == ForestReader::kPpRef5p36TeV || fDataType == ForestReader::kPpRef5p36TeVMC);
+  //Run 3 - OO data and MC
+  fIsOOData = (fDataType == ForestReader::kOO ||     fDataType == ForestReader::kOOMC);
+
 
   
   //****************************************
@@ -674,6 +834,43 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fCutBadPhiRegion = (fCard->Get("CutBadPhi") == 1);   // Flag for cutting the phi region with bad tracking efficiency from the analysis
   fCutWithJetEtaCM = (fCard->Get("CutWithEtaCM") == 1);   // Flag for cutting symmetric region in center-of-mass jet eta that is within defined jet eta acceptence
   fJetUncertaintyMode = fCard->Get("JetUncertainty");  // Select whether to use nominal jet pT or vary it within uncertainties
+
+  // No map, histogram, era or pT prescription is inferred from a helper default.
+  const double run3ID = fCard->HasKey("Run3JetID") ? fCard->Get("Run3JetID") : 0;
+  const double applyVeto = fCard->HasKey("ApplyJetVeto") ? fCard->Get("ApplyJetVeto") : 0;
+  if(!std::isfinite(run3ID) || run3ID != std::floor(run3ID) || run3ID < 0 || run3ID > 1 ||
+     !std::isfinite(applyVeto) || (applyVeto != 0 && applyVeto != 1))
+    throw std::invalid_argument("Run3JetID must be 0/1 and ApplyJetVeto must be 0/1.");
+  fRun3JetID = static_cast<int>(run3ID);
+  if(fRun3JetID) Run3JetIDPrescription();
+  fApplyJetVeto = applyVeto == 1;
+  const double run3JEC=fCard->HasKey("Run3JEC")?fCard->Get("Run3JEC"):0;
+  const double ppL1=fCard->HasKey("Run3UsePpL1FastJet")?fCard->Get("Run3UsePpL1FastJet"):0;
+  const double jetQA=fCard->HasKey("Run3JetQA")?fCard->Get("Run3JetQA"):0;
+  if((run3JEC!=0 && run3JEC!=1) || (ppL1!=0 && ppL1!=1) || (jetQA!=0 && jetQA!=1))
+    throw std::invalid_argument("Run3JEC, Run3UsePpL1FastJet and Run3JetQA must be 0 or 1");
+  fUseRun3JEC=run3JEC==1; fUsePpL1FastJet=ppL1==1; fFillRun3JetQA=jetQA==1;
+  if(fUsePpL1FastJet && (!fUseRun3JEC || !fIsPp2024Data))
+    throw std::invalid_argument("Run3UsePpL1FastJet 1 is valid only for ppRef2024 with Run3JEC 1");
+  if((fUseRun3JEC || fFillRun3JetQA) && (!(fIsOOData || fIsPp2024Data) || fCard->Get("JetType")!=1 || std::abs(fCard->Get("JetRadius")-.4)>1e-6))
+    throw std::invalid_argument("Requested Run-3 calibration/QA supports native R4 OO/ppRef only");
+  if(fFillRun3JetQA && !fRun3JetID)
+    throw std::invalid_argument("Run3JetQA requires Run3JetID 1 to label the actual ID prescription");
+  if((fRun3JetID || fApplyJetVeto) && (!(fIsOOData || fIsPp2024Data) || fCard->Get("JetType") != 1))
+    throw std::invalid_argument("Run-3 PF Jet ID/veto requires OO2025 or ppRef2024 PF jets.");
+  if(fApplyJetVeto){
+    if(!fRun3JetID) throw std::invalid_argument("ApplyJetVeto requires explicit Run3JetID 1 (pinned collision-system HIN ID).");
+    for(const char* key : {"JetVetoMapFile", "JetVetoMapHistogram", "JetVetoPtConvention", "JetVetoInputMinPt"})
+      if(!fCard->HasKey(key)) throw std::invalid_argument(std::string("ApplyJetVeto requires ")+key);
+    const double inputMin = fCard->Get("JetVetoInputMinPt");
+    if(!std::isfinite(inputMin) || inputMin < 0 || inputMin > 15)
+      throw std::invalid_argument("JetVetoInputMinPt must declare complete input coverage at or below 15 GeV in the selected pT convention; inspect the producer first.");
+    fJetVetoPtConvention = fCard->GetStr("JetVetoPtConvention");
+    if(fJetVetoPtConvention != "raw" && fJetVetoPtConvention != "stored" && fJetVetoPtConvention != "recomputed")
+      throw std::invalid_argument("JetVetoPtConvention must be explicitly raw, stored, or recomputed.");
+    fJetVetoMap = std::make_shared<EECJetSelection::JetVetoMap>(
+      fCard->GetStr("JetVetoMapFile").Data(), fCard->GetStr("JetVetoMapHistogram").Data());
+  }
   
   //****************************************
   //   Extra jet cuts for unfolding study
@@ -691,10 +888,19 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fTrackMaxPtCut = fCard->Get("MaxTrackPtCut"); // Maximum track pT cut
   fMaxTrackPtRelativeError = fCard->Get("MaxTrackPtRelativeError");   // Maximum relative error for pT
   fMaxTrackDistanceToVertex = fCard->Get("VertexMaxDistance");        // Maximum distance to primary vetrex
-  fCalorimeterSignalLimitPt = fCard->Get("CalorimeterSignalLimitPt"); // Require signal in calorimeters for track above this pT
-  fHighPtEtFraction = fCard->Get("HighPtEtFraction"); // For high pT tracks, minimum required Et as a fraction of track pT
-  fChi2QualityCut = fCard->Get("Chi2QualityCut");     // Quality cut for track reconstruction
-  fMinimumTrackHits = fCard->Get("MinimumTrackHits"); // Quality cut for track hits
+  if(fIsOOData || fIsPp2024Data){
+    // The Run-3 track selection ends before PbPb-only calo/chi2/hit cuts.
+    // Do not request obsolete card keys or resurrect their forest branches.
+    fCalorimeterSignalLimitPt = std::numeric_limits<double>::infinity();
+    fHighPtEtFraction = 0;
+    fChi2QualityCut = std::numeric_limits<double>::infinity();
+    fMinimumTrackHits = 0;
+  } else {
+    fCalorimeterSignalLimitPt = fCard->Get("CalorimeterSignalLimitPt"); // Require signal in calorimeters for track above this pT
+    fHighPtEtFraction = fCard->Get("HighPtEtFraction"); // For high pT tracks, minimum required Et as a fraction of track pT
+    fChi2QualityCut = fCard->Get("Chi2QualityCut");     // Quality cut for track reconstruction
+    fMinimumTrackHits = fCard->Get("MinimumTrackHits"); // Quality cut for track hits
+  }
   
   fSubeventCut = fCard->Get("SubeventCut");     // Required subevent type
 
@@ -704,10 +910,21 @@ void EECAnalyzer::ReadConfigurationFromCard(){
 
   fTrackEfficiencyVariation = fCard->Get("TrackEfficiencyVariation"); // Relative amount with which the tracking efficiency corrections are varied to estimate systematic uncertainties
 
+  if(fIsOOData || fIsPp2024Data){
+    const std::string requested = fCard->HasKey("Run3TrackSelection")
+      ? std::string(fCard->GetStr("Run3TrackSelection").Data()) : std::string();
+    const std::string selection = EECRun3Tracking::ResolveSelection(
+      requested, fMaxTrackPtRelativeError, fMaxTrackDistanceToVertex);
+    fTrackSelectionVariation = selection == "Nominal" ? "" : selection;
+    cout << "Run-3 track selection: " << selection << ", " << EECRun3Tracking::Version()
+         << "; pT>10: sigmaPt/pT <= 0.1; vertex significance <= " << fMaxTrackDistanceToVertex << endl;
+  } else {
   // Determine the correct efficiency table to use based on track selection cuts
   fTrackSelectionVariation = "";
   if(TMath::Abs(fMaxTrackPtRelativeError-0.05) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-2) < 0.001 && TMath::Abs(fChi2QualityCut-0.15) < 0.001) fTrackSelectionVariation = "Tight";
   if(TMath::Abs(fMaxTrackPtRelativeError-0.15) < 0.001 && TMath::Abs(fMaxTrackDistanceToVertex-5) < 0.001) fTrackSelectionVariation = "Loose";
+
+  }
 
   // Select the jet pT weighting configuration
   fJetPtWeightConfiguration = fCard->Get("JetPtWeight");
@@ -723,6 +940,8 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   }
   fMultiplicityMode = (fCard->Get("MultiplicityMode") == 1);
 
+
+
   //****************************************
   //       Jet selection and matching
   //****************************************
@@ -734,7 +953,7 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   //    Turn off certain track cuts for generated tracks, pp, and pPb 
   //********************************************************************
   
-  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fIsPpData || fIsPPbData){
+  if(fMcCorrelationType == kGenGen || fMcCorrelationType == kRecoGen || fIsPpData || fIsPp2024Data || fIsPPbData){
     fCalorimeterSignalLimitPt = 10000;
     fChi2QualityCut = 10000;
     fMinimumTrackHits = 0;
@@ -811,10 +1030,62 @@ void EECAnalyzer::ReadConfigurationFromCard(){
   fFillJetPtClosure = bitChecker.test(kFillJetPtClosure);
   fFillJetPtUnfoldingResponse = bitChecker.test(kFillJetPtUnfoldingResponse);
   fFillTrackParticleMatchingHistograms = bitChecker.test(kFillTrackParticleMatchingHistograms);
+
+  if(fIsOOData || fIsPp2024Data){
+    EECJetGeometry::ValidateRun3Collection(fIsOOData, fIsPp2024Data, fJetType, fJetRadius);
+    EECJetGeometry::RequireRun3Calibration(fIsOOData, fIsPp2024Data, fJetType);
+    if(fCard->Get("DisableTrackPairEfficiencyCorrection") != 1 && !fCard->HasKey("Run3TrackPairCorrectionFile")){
+      throw std::invalid_argument("Run-3 pair correction requires explicit Run3TrackPairCorrectionFile; leave correction disabled until its support and closure are established.");
+    }
+    if(fCard->HasKey("Run3TrackPairCorrectionFile") && std::abs(fJetRadius-.4)>1e-6)
+      throw std::invalid_argument("Run3TrackPairCorrectionFile supports R4 only");
+    if(fJetPtWeightConfiguration != 0){
+      throw std::invalid_argument(
+        "Run-3 OO/ppRef jet-spectrum weights are not configured. Use JetPtWeight 0.");
+    }
+    if(fJetUncertaintyMode != 0){
+      throw std::invalid_argument(
+        "Run-3 OO/ppRef JES/JER variations require dedicated calibration inputs. Use JetUncertainty 0.");
+    }
+    if(fSmearDeltaR || fSmearEnergyWeight){
+      throw std::invalid_argument(
+        "Run-3 OO/ppRef EEC smearing requires dedicated response inputs. Use SmearDeltaR 0 and SmearEnergyWeight 0.");
+    }
+    if(fIsRealData && (fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms)){
+      throw std::invalid_argument(
+        "Run-3 response and track-particle matching histograms require MC (DataType 10 or 12).");
+    }
+  }
   
   //************************************************
   //              Debug messages
   //************************************************
+  fOOClosure->enabled = fCard->HasKey("OOClosurePilot") && fCard->Get("OOClosurePilot")==1;
+  if(fOOClosure->enabled){
+    if(fDataType!=ForestReader::kOOMC || fMcCorrelationType!=kGenGen || std::abs(fJetRadius-.4)>1e-6 ||
+       fJetAxis!=1 || fSubeventCut!=kSubeventAny || !fDoMixedCone || !fDoPerpendicularCone || fDoReflectedCone ||
+       fBinnedMixing || fMegaSkimMode || fEventMatchForMixing!=kMatchMultiplicity || fHFEnergyMatchingShift!=0 ||
+       fSmearDeltaR || fSmearEnergyWeight || fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms ||
+       !fCard->HasKey("DisableTrackPairEfficiencyCorrection") || fCard->Get("DisableTrackPairEfficiencyCorrection")!=1)
+      throw std::invalid_argument("OOClosurePilot requires OO R4 WTA GenGen, all subevents, mixed+perpendicular only, unbinned NH matching, HF shift OFF, smearing/pair correction OFF and no responses");
+    for(const char* key:{"OOClosureMaxSignalEvents","OOClosureMaxPoolEvents","OOClosureSeed","OOClosureOutputPrefix"})
+      if(!fCard->HasKey(key)) throw std::invalid_argument(std::string("OOClosurePilot requires ")+key);
+    for(const char* key:{"OOClosureMaxSignalEvents","OOClosureMaxPoolEvents","OOClosureSeed"}){
+      const double value=fCard->Get(key);
+      if(!std::isfinite(value) || value<1 || value!=std::floor(value) || value>2147483647.)
+        throw std::invalid_argument(std::string("OOClosurePilot requires a positive bounded integer ")+key);
+    }
+    fOOClosure->maxSignal=fCard->Get("OOClosureMaxSignalEvents");
+    fOOClosure->maxPool=fCard->Get("OOClosureMaxPoolEvents");
+    fOOClosure->seed=fCard->Get("OOClosureSeed");
+    if(fCard->HasKey("OOClosurePartitionPolicy")){
+      const double policy=fCard->Get("OOClosurePartitionPolicy");
+      if(policy!=0 && policy!=1) throw std::invalid_argument("OOClosurePartitionPolicy must be 0 (signal holdout test) or 1 (fixed reserved donors across campaign)");
+      fOOClosure->partitionPolicy=static_cast<int>(policy);
+    }
+
+
+  }
   fDebugLevel = fCard->Get("DebugLevel");
 }
 
@@ -822,6 +1093,26 @@ void EECAnalyzer::ReadConfigurationFromCard(){
  * Main analysis loop
  */
 void EECAnalyzer::RunAnalysis(){
+  if(fOOClosure->enabled){
+    const std::string prefix=fCard->GetStr("OOClosureOutputPrefix").Data();
+    const auto open=[&](std::ofstream& stream,const char* suffix){
+      const std::string path=prefix+suffix;
+      std::ifstream previous(path);
+      if(previous.good()) throw std::runtime_error("Refusing to overwrite pilot ledger: "+path);
+      stream.open(path);
+      if(!stream) throw std::runtime_error("Cannot write OO pilot ledger: "+path);
+      stream<<std::setprecision(17);
+    };
+    open(fOOClosure->partners,".partners.csv"); open(fOOClosure->poolLedger,".pool.csv");
+    open(fOOClosure->jets,".jets.csv"); open(fOOClosure->contributions,".contributions.csv");
+    fOOClosure->partners<<"signal_key,run,lumi,event,entry,vz,nh,hiBin,event_weight,raw_generator_weight,status,reason,inspected,donor1_key,donor1_run,donor1_lumi,donor1_event,donor1_entry,donor1_vz,donor1_nh,donor1_weight,donor2_key,donor2_run,donor2_lumi,donor2_event,donor2_entry,donor2_vz,donor2_nh,donor2_weight,background_provenance,signal_background_key,donor1_background_key,donor2_background_key,signal_background_signature,partition_policy\n";
+    fOOClosure->poolLedger<<"donor_key,run,lumi,event,entry,vz,nh,hiBin,hf,generator_weight,eligible,pool,uses,background_provenance,background_key,background_signature,excluded_signal_background,excluded_signal_physical_id,partition_policy\n";
+    fOOClosure->jets<<"signal_key,jet_index,jet_pt,jet_eta,jet_phi,centrality,event_weight,status\n";
+    fOOClosure->contributions<<"signal_key,jet_index,jet_pt,centrality,power,pairing,subevent,delta_r_bin,delta_r_low,delta_r_high,track_pt_bin,value\n";
+    cout<<"OOClosurePilot: GenGen single-track and pair corrections unity; matching NH stable charged pT>0.7 |eta|<2.4, dz<=0.5 cm, dNH<=max(1,0.01 NH); unknown shared embedding-background provenance."<<endl;
+  }
+  if(fApplyJetVeto && fDoMixedCone && fMegaSkimMode)
+    throw std::invalid_argument("Jet veto requires full native reco jets in mixing; mega skims cannot establish the event mask.");
   
   //************************************************
   //  Define variables needed in the analysis loop
@@ -849,6 +1140,14 @@ void EECAnalyzer::RunAnalysis(){
   Bool_t caloJet60Trigger;
   Bool_t caloJet80Trigger;
   Bool_t caloJet100Trigger;
+
+  // TriggerSelection 8:
+  //   DataType 9/10  -> HLT_MinimumBiasHF_OR_BptxAND_v1
+  //   DataType 11/12 -> HLT_PPRefZeroBias_v6
+  //
+  // HighForestReader and GeneratorLevelForestReader map the selected
+  // Run-3 trigger to the legacy caloJet15 trigger slot.
+  const Bool_t useRun3MinimumBiasTrigger = (fTriggerSelection == 8);
   
   // Variables for jets
   Double_t jetPt = 0;               // pT of the i:th jet in the event
@@ -933,6 +1232,8 @@ void EECAnalyzer::RunAnalysis(){
   vector<double> relativeTrackEta[EECHistograms::knJetConeTypes];    // Track eta relative to the jet axis
   vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes];    // Track phi relative to the jet axis
   vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes];  // Track subevent for tracks selected for energy-energy correlator analysis
+  vector<double> selectedTrackCorrection[EECHistograms::knJetConeTypes]; // Evaluated once using physical eta and source-event hiBin
+  int coneSourceHiBin[EECHistograms::knJetConeTypes]; // Each cone belongs to one physical source event
   Double_t jetReflectedEta = 0;          // Reflected jet eta to be used for background estimation
   Double_t jetPerpendicularPhi = 0;      // Perpendicular jet phi to be used for background estimation
   Double_t deltaRTrackJet = 0;           // DeltaR between tracks and jet axis
@@ -978,17 +1279,26 @@ void EECAnalyzer::RunAnalysis(){
   correctionFileRelative[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPPbMC_pToMinusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_Pbgoing_Embedded_MC_L2Relative_AK4PF.txt";
   correctionFileRelative[ForestReader::kPPbMC_pToPlusEta] = "jetEnergyCorrections/Autumn16_HI_pPb_pgoing_Embedded_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kOO] = "jetEnergyCorrections/L2Relative_AK4PF_OO_V1.txt";
+  correctionFileRelative[ForestReader::kOOMC] = "jetEnergyCorrections/L2Relative_AK4PF_OO_V1.txt";
+  correctionFileRelative[ForestReader::kPpRef5p36TeV] = "jetEnergyCorrections/Prompt24HIpp_V1_MC_L2Relative_AK4PF.txt";
+  correctionFileRelative[ForestReader::kPpRef5p36TeVMC] = "jetEnergyCorrections/Prompt24HIpp_V1_MC_L2Relative_AK4PF.txt";
+
 
   std::string correctionFileResidual[ForestReader::knDataTypes];
   correctionFileResidual[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPbPb] = "jetEnergyCorrections/Autumn18_HI_V8_DATA_L2L3Residual_AK4PF.txt";
-  correctionFileResidual[ForestReader::kPpMC] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPpMC] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
   correctionFileResidual[ForestReader::kPbPbMC] = "CorrectionNotAppliedPF.txt";
   correctionFileResidual[ForestReader::kPPb_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPPb_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PF.txt";
   correctionFileResidual[ForestReader::kPPbMC_pToMinusEta] = "CorrectionNotAppliedPF.txt";
   correctionFileResidual[ForestReader::kPPbMC_pToPlusEta] = "CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kOO] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt"; // Use the dummy string
+  correctionFileResidual[ForestReader::kOOMC] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
+  correctionFileResidual[ForestReader::kPpRef5p36TeV] = "jetEnergyCorrections/Prompt24HIpp_V1_DATA_L2Residual_AK4PF.txt";
+  correctionFileResidual[ForestReader::kPpRef5p36TeVMC] = "jetEnergyCorrections/Prompt24HIpp_V1_DATA_L2Residual_AK4PF.txt";
 
   std::string uncertaintyFile[ForestReader::knDataTypes];
   uncertaintyFile[ForestReader::kPp] = "jetEnergyCorrections/Spring18_ppRef5TeV_V6_DATA_Uncertainty_AK4PF.txt";
@@ -1000,9 +1310,13 @@ void EECAnalyzer::RunAnalysis(){
   uncertaintyFile[ForestReader::kPPb_pToMinusEta_5TeV] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   uncertaintyFile[ForestReader::kPPbMC_pToMinusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
   uncertaintyFile[ForestReader::kPPbMC_pToPlusEta] = "jetEnergyCorrections/Summer16_23Sep2016HV4_DATA_Uncertainty_AK4PF_modifiedtopPb.txt";
+  uncertaintyFile[ForestReader::kOO] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
+  uncertaintyFile[ForestReader::kOOMC] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
+  uncertaintyFile[ForestReader::kPpRef5p36TeV] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
+  uncertaintyFile[ForestReader::kPpRef5p36TeVMC] = "jetEnergyCorrections/CorrectionNotAppliedPF.txt";
   
   // For calo jets, use the correction files for calo jets (otherwise same name, but replace PF with Calo)
-  if(fJetType == 0){
+  if(fJetType == 0 && !fIsOOData){
     size_t pfIndex = 0;
     pfIndex = correctionFileRelative[fDataType].find("PF", pfIndex);
     correctionFileRelative[fDataType].replace(pfIndex, 2, "Calo");
@@ -1016,12 +1330,38 @@ void EECAnalyzer::RunAnalysis(){
   }
   
   vector<string> correctionFiles;
-  correctionFiles.push_back(correctionFileRelative[fDataType]);
-  if(fIsRealData)  correctionFiles.push_back(correctionFileResidual[fDataType]);
   
+  // The relative correction is available for every configured collision system
+  correctionFiles.push_back(correctionFileRelative[fDataType]);
+
+  // OO currently has only an L2Relative correction. Do not append a dummy
+  // L2L3Residual level; add the OO residual here once it becomes available.
+
+  if(fIsRealData && !fIsOOData) {
+    correctionFiles.push_back(correctionFileResidual[fDataType]);
+  }
+  
+  if(fUseRun3JEC) {
+    correctionFiles.clear();
+    if(fIsOOData) {
+      const std::string base="jetEnergyCorrections/OO2025/";
+      correctionFiles.push_back(base+"Prompt25HIOO_V1_MC_L2Relative_AK4PF.txt");
+    } else {
+      const std::string base="jetEnergyCorrections/pp2024/";
+      if(fUsePpL1FastJet) correctionFiles.push_back(base+"Prompt24HIpp_V1_MC_L1FastJet_AK4PF.txt");
+      correctionFiles.push_back(base+"Prompt24HIpp_V2_MC_L2Relative_AK4PF.txt");
+      if(fIsRealData) correctionFiles.push_back(base+"Prompt24HIpp_V1_DATA_L2Residual_AK4PF.txt");
+    }
+    for(const auto& path:correctionFiles) {
+      std::ifstream input(path);
+      if(!input.good()) throw std::runtime_error("Missing pinned Run-3 JEC payload: "+path);
+    }
+  } else if(fIsOOData || fIsPp2024Data) {
+    std::cout<<"Run3JEC 0: legacy calibration retained for comparison; current Run-3 L2 calibration is NOT active."<<std::endl;
+  }
   fJetCorrector = new JetCorrector(correctionFiles);
   fJetUncertainty = new JetUncertainty(uncertaintyFile[fDataType]);
-  
+    
   //************************************************
   //      Find forest readers for data files
   //************************************************
@@ -1054,8 +1394,36 @@ void EECAnalyzer::RunAnalysis(){
     fUnfoldingForestReader = new UnfoldingForestReader(fDataType,fJetType,fJetAxis);
   }
 
+  if(fRun3JetID || fApplyJetVeto || fUseRun3JEC){
+    if(auto* reco = dynamic_cast<HighForestReader*>(fJetReader)) reco->EnableRun3JetSelection(true);
+    if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms)
+      fUnfoldingForestReader->EnableRun3JetSelection(true);
+  }
+  if(fUseRun3JEC && fUsePpL1FastJet && fIsPp2024Data){
+    if(auto* reco = dynamic_cast<HighForestReader*>(fJetReader)) reco->EnableRun3PpL1Inputs();
+    if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms)
+      fUnfoldingForestReader->EnableRun3PpL1Inputs();
+  }
+  if(fApplyJetVeto || fUseRun3JEC){
+    if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen){
+      fRecoJetReader = new HighForestReader(fDataType, fTriggerSelection, fJetType, fJetAxis, 0, false);
+      fRecoJetReader->EnableRun3JetSelection(true);
+      if(fUseRun3JEC && fUsePpL1FastJet && fIsPp2024Data) fRecoJetReader->EnableRun3PpL1Inputs();
+    }
+    if(fDoMixedCone && fApplyJetVeto){
+      if(auto* reco = dynamic_cast<HighForestReader*>(fMixedEventReader)) {
+        reco->EnableRun3JetSelection(true);
+        if(fUseRun3JEC && fUsePpL1FastJet && fIsPp2024Data && fJetVetoPtConvention=="recomputed") reco->EnableRun3PpL1Inputs();
+      } else {
+        fMixedVetoJetReader = std::make_shared<HighForestReader>(fDataType, fTriggerSelection, fJetType, fJetAxis, 0, false, true, false);
+        fMixedVetoJetReader->EnableRun3JetSelection(true);
+        if(fUseRun3JEC && fUsePpL1FastJet && fIsPp2024Data && fJetVetoPtConvention=="recomputed") fMixedVetoJetReader->EnableRun3PpL1Inputs();
+      }
+    }
+  }
+
   // Prepare mixed event files and a forest reader for reflected cone mixing
-  const char* fileListName[2][ForestReader::knDataTypes][2];
+  const char* fileListName[2][ForestReader::knDataTypes][2] = {};
 
   // Transform the CRAB job index into a accepted range of mixing job indices
   if(fMixingListIndex < 0){
@@ -1083,6 +1451,9 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
   fileListName[0][ForestReader::kPPbMC_pToMinusEta][0] = "none"; // currently no mixing implemented for pPb MC
   fileListName[0][ForestReader::kPPbMC_pToPlusEta][0] = "none"; // currently no mixing implemented for pPb MC
+  fileListName[0][ForestReader::kOO][0] = "mixingFileList/OO2025_MB_pool_pilot.txt"; // currently no mixing implemented for OO
+  fileListName[0][ForestReader::kOOMC][0] = "none"; // currently no mixing implemented for OOMC
+
 
   // Local test, regular mixing forest
   fileListName[1][ForestReader::kPp][0] = "none";  // only mega skimmed mixing available for pp
@@ -1094,6 +1465,8 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][0] = "none"; // only mega skimmed mixing available for pPb p -> -eta 5 TeV
   fileListName[1][ForestReader::kPPbMC_pToMinusEta][0] = "none"; // currently no mixing implemented for pPb MC
   fileListName[1][ForestReader::kPPbMC_pToPlusEta][0] = "mixingFileList/mixingFilesPPb_pToPlusEta.txt"; // low statistics test mixing file for pPb MC p -> + eta
+  fileListName[1][ForestReader::kOO][0] = "mixingFileList/OO2025_MB_pool_pilot.txt"; // currently no mixing implemented for OO
+  fileListName[1][ForestReader::kOOMC][0] = "none"; // currently no mixing implemented for OOMC
 
   // CRAB running, mega skimmed mixing forest
   fileListName[0][ForestReader::kPp][1] = "mixingFileList/zeroBiasPp2017_5TeV_megaSkim_2025-06-24.txt"; // pp data for CRAB
@@ -1105,6 +1478,9 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[0][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/minimumBiasPPb2016_5TeV_megaSkim_pToMinusEta.txt"; // pPb pToMinusEta 5 TeV for CRAB
   fileListName[0][ForestReader::kPPbMC_pToMinusEta][1] = "none"; // currently no mixing implemented for pPb MC
   fileListName[0][ForestReader::kPPbMC_pToPlusEta][1] = "mixingFileList/EPOS_pToPlusEta_pPb816Summer16DR_megaSkim_2026-02-13.txt"; // currently no mixing implemented for pPb MC
+  fileListName[0][ForestReader::kOO][0] = "mixingFileList/OO2025_MB_pool_pilot.txt"; // currently no mixing implemented for OO
+  fileListName[0][ForestReader::kOOMC][0] = "none"; // currently no mixing implemented for OOMC
+
 
   // Local test, mega skimmed mixing forest
   fileListName[1][ForestReader::kPp][1] = "mixingFileList/mixingFilesPp_zeroBias_megaSkim.txt";  // pp data for local test
@@ -1116,10 +1492,22 @@ void EECAnalyzer::RunAnalysis(){
   fileListName[1][ForestReader::kPPb_pToMinusEta_5TeV][1] = "mixingFileList/mixingFilesPPb_pToMinusEta_megaSkim.txt"; // pPb p -> -eta 5 TeV for local test
   fileListName[1][ForestReader::kPPbMC_pToMinusEta][1] = "none"; // currently no mixing implemented for pPb MC
   fileListName[1][ForestReader::kPPbMC_pToPlusEta][1] = "mixingFileList/mixingFilesEpos_pToPlusEta_megaSkim.txt"; // pPb MC p -> +eta
+  fileListName[1][ForestReader::kOO][0] = "mixingFileList/OO2025_MB_pool_pilot.txt"; // currently no mixing implemented for OO
+  fileListName[1][ForestReader::kOOMC][0] = "none"; // currently no mixing implemented for OOMC
+
         
   // Read the mixing files if defined and a file list exists
   if(fDoMixedCone){
-    if(std::string(fileListName[fLocalRun][fDataType][fMegaSkimMode]) == "none"){
+    const char* legacyList = fileListName[fLocalRun][fDataType][fMegaSkimMode];
+    TString mixingList = fCard->HasKey("MixingFileList") ? fCard->GetStr("MixingFileList") : TString(legacyList ? legacyList : "none");
+    const bool run3 = fIsOOData || fDataType == ForestReader::kPpRef5p36TeV || fDataType == ForestReader::kPpRef5p36TeVMC;
+    if(run3 && (!fCard->HasKey("MixingFileList") || mixingList == "none"))
+      throw std::runtime_error("Run-3 mixing requires an explicitly configured MixingFileList and compatible activity matching.");
+    if(mixingList == "none"){
+      if(fDataType == ForestReader::kOO){
+        throw std::runtime_error("OO mixing requires a dedicated mixing file list");
+      }
+    
 
       cout << "EECAnalyzer::Note: You are trying to do mixed cone background estimation for a dataset for which no mixed event file list is defined in the code! The input file list is used also for mixing." << endl;
       mixingFiles = fFileNames;
@@ -1127,28 +1515,25 @@ void EECAnalyzer::RunAnalysis(){
     } else {
 
       std::string lineInFile;
-      std::ifstream mixingFileStream(fileListName[fLocalRun][fDataType][fMegaSkimMode]);
+      std::ifstream mixingFileStream(mixingList.Data());
+      if(!mixingFileStream) throw std::runtime_error("Cannot open configured MixingFileList: " + std::string(mixingList.Data()));
       while (std::getline(mixingFileStream,lineInFile)) {
+        const auto first = lineInFile.find_first_not_of(" \t\r");
+        if(first == std::string::npos || lineInFile[first] == '#') continue;
+        lineInFile = lineInFile.substr(first, lineInFile.find_last_not_of(" \t\r")-first+1);
 
-        // For slurm running, remove xrootd pointer from mixing lists
-        if(fLocalMixing){
-          // Find the first occurrence of "//"
-          size_t firstDoubleSlash = lineInFile.find("//");
-          if(firstDoubleSlash != std::string::npos){
-          // Find the second occurrence of "//"
-            size_t secondDoubleSlash = lineInFile.find("//", firstDoubleSlash + 2);
-            if(secondDoubleSlash != std::string::npos){
-              // Remove the part with xrootd pointer from mixing files
-              mixingFiles.push_back(lineInFile.substr(secondDoubleSlash + 1));
-            }
-          }
-        } else{
-          // If not running on slurm, we can directly use whatever is in the file lists
+        // Strip an xrootd redirector only when local mixing was explicitly selected.
+        if(fLocalMixing && lineInFile.rfind("root://",0) == 0){
+          const auto pathStart = lineInFile.find("//",7);
+          if(pathStart == std::string::npos) throw std::runtime_error("Malformed xrootd mixing path");
+          mixingFiles.push_back(lineInFile.substr(pathStart+1));
+        } else {
           mixingFiles.push_back(lineInFile);
         }
       }
     } // Mixing file list exists
 
+    if(mixingFiles.empty()) throw std::runtime_error("Configured mixing pool is empty.");
     // Check that all the mixing files we are supposed to read exist and can be opened
     for(auto currentFile : mixingFiles){
       testFile = TFile::Open(currentFile);
@@ -1177,6 +1562,13 @@ void EECAnalyzer::RunAnalysis(){
 
     // If everything is fine, we can read the mixing information from the minimum bias files
     fMixedEventReader->ReadForestFromFileList(mixingFiles);
+    if(fMixedVetoJetReader){
+      fMixedVetoJetReader->ReadForestFromFileList(mixingFiles);
+      const Long64_t vetoEntries=fOOClosure->enabled ? fMixedVetoJetReader->GetTotalChainEntries() : fMixedVetoJetReader->GetNEvents();
+      const Long64_t mixingEntries=fOOClosure->enabled ? fMixedEventReader->GetTotalChainEntries() : fMixedEventReader->GetNEvents();
+      if(vetoEntries != mixingEntries)
+        throw std::runtime_error("Mixing generator/reconstructed veto entry counts differ");
+    }
 
     // Print the used mixing files
     if(fDebugLevel > 0){
@@ -1188,9 +1580,14 @@ void EECAnalyzer::RunAnalysis(){
     }
 
     // Scourge the mixed events to find centrality and vz values that are matched for the mixed events
-    fnEventsInMixingFile = fMixedEventReader->GetNEvents();  
+    fnEventsInMixingFile = fOOClosure->enabled
+      ? static_cast<Int_t>(std::min<Long64_t>(fMixedEventReader->GetTotalChainEntries(),fOOClosure->maxPool))
+      : fMixedEventReader->GetNEvents();
+    if(fOOClosure->enabled && fMixedEventReader->GetTotalChainEntries()>fnEventsInMixingFile) fHistograms->MarkTruncatedInput();
 
-    if(fBinnedMixing){
+    if(fOOClosure->enabled){
+      PrepareOOClosurePool();
+    } else if(fBinnedMixing){
 
       // Find the event matching variables from mixed event list
       PrepareBinnedMixingVectors();
@@ -1223,6 +1620,20 @@ void EECAnalyzer::RunAnalysis(){
       // Find the event matching variables from mixed event list
       PrepareMixingVectors();
 
+      std::size_t nEligible = 0;
+      for (Double_t value : fMixedEventVz) {
+        if (TMath::Abs(value - kNonsenseValue) >= 1e-6) ++nEligible;
+      }
+
+      cout << "OO mixing: pool entries = " << fnEventsInMixingFile
+           << ", eligible after event cuts and MB trigger = "
+           << nEligible << endl;
+
+      if (nEligible < 2) {
+        throw std::runtime_error(
+            "OO mixing: fewer than two eligible pool events");
+      }
+
       // Make a two dimensional illustration of the mixed event statistics
       std::vector<Double_t> vzMixingCountVector = GetMixingBinBorders(fVzMixingBinBorders, fMixedEventVz);
       std::vector<Double_t> eventActivityCountVector;
@@ -1252,9 +1663,29 @@ void EECAnalyzer::RunAnalysis(){
   //       Main analysis loop over all files
   //************************************************
   
+  // Pair derivation export uses the exact same selected events and reconstructed
+  // jets as the ordinary analysis. RecoReco and RecoGen exports are joined by
+  // physical event and jet identity, never by independently selected gen jets.
+  std::ofstream pairExport, pairLedger;
+  const bool exportPairs=fCard->HasKey("PairExportFile");
+  std::string pairNamespace;
+  if(exportPairs){
+    if(!(fIsOOData || fIsPp2024Data) || fIsRealData ||
+       (fMcCorrelationType!=kRecoReco && fMcCorrelationType!=kRecoGen) ||
+       std::abs(fJetRadius-.4)>1e-6 || !fCard->HasKey("PairExportNamespace"))
+      throw std::invalid_argument("Pair export requires Run-3 R4 MC RecoReco/RecoGen and PairExportNamespace");
+    pairNamespace=fCard->GetStr("PairExportNamespace").Data();
+    pairExport.open(fCard->GetStr("PairExportFile").Data());
+    pairLedger.open((std::string(fCard->GetStr("PairExportFile").Data())+".events.jsonl").c_str());
+    if(!pairExport || !pairLedger) throw std::runtime_error("Cannot open native pair export");
+    pairExport<<std::setprecision(17); pairLedger<<std::setprecision(17);
+  }
+  bool firstExportJet=true;
+
   // Loop over files
   Int_t nFiles = fFileNames.size();
   for(Int_t iFile = 0; iFile < nFiles; iFile++) {
+    if(fOOClosure->enabled && fOOClosure->signalRead>=fOOClosure->maxSignal){ fHistograms->MarkTruncatedInput(); break; }
     
     //************************************************
     //              Find and open files
@@ -1263,6 +1694,11 @@ void EECAnalyzer::RunAnalysis(){
     // Find the filename and open the input file
     currentFile = fFileNames.at(iFile);
     inputFile = TFile::Open(currentFile);
+    std::unique_ptr<TFile> vetoInputFile;
+    if((fApplyJetVeto || fUseRun3JEC) && fRecoJetReader){
+      vetoInputFile.reset(TFile::Open(currentFile));
+      if(!vetoInputFile || vetoInputFile->IsZombie()) throw std::runtime_error("Cannot open independent reconstructed-veto input");
+    }
     if(useDifferentReaderForJetsAndTracks) copyInputFile = TFile::Open(currentFile);
     if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) unfoldingInputFile = TFile::Open(currentFile);
     
@@ -1296,7 +1732,17 @@ void EECAnalyzer::RunAnalysis(){
     fJetReader->ReadForestFromFile(inputFile);  // There might be a memory leak in handling the forest...
     if(useDifferentReaderForJetsAndTracks) fTrackReader->ReadForestFromFile(copyInputFile); // If we mix reco and gen, the reader for jets and tracks is different
     if(fFillJetPtUnfoldingResponse || fFillTrackParticleMatchingHistograms) fUnfoldingForestReader->ReadForestFromFile(unfoldingInputFile);
-    nEvents = fJetReader->GetNEvents();
+    if(vetoInputFile){
+      fRecoJetReader->ReadForestFromFile(vetoInputFile.get());
+      const Long64_t recoEntries=fOOClosure->enabled ? fRecoJetReader->GetTotalChainEntries() : fRecoJetReader->GetNEvents();
+      const Long64_t signalEntries=fOOClosure->enabled ? fJetReader->GetTotalChainEntries() : fJetReader->GetNEvents();
+      if(recoEntries != signalEntries) throw std::runtime_error("Reco veto and signal entry counts differ");
+    }
+    const Long64_t sourceEntries=fOOClosure->enabled ? fJetReader->GetTotalChainEntries() : fJetReader->GetNEvents();
+    nEvents = fOOClosure->enabled
+      ? static_cast<Int_t>(std::min<Long64_t>(sourceEntries,fOOClosure->maxSignal-fOOClosure->signalRead))
+      : static_cast<Int_t>(sourceEntries);
+    if(fOOClosure->enabled && sourceEntries>nEvents) fHistograms->MarkTruncatedInput();
 
 
     //**********************************************************************************************
@@ -1333,11 +1779,22 @@ void EECAnalyzer::RunAnalysis(){
 
     }*/
 
+    if(fHistograms->fhInputStatus) fHistograms->fhInputStatus->Fill(1);
+    if(fMaxEventsPerFile > 0 && nEvents > fMaxEventsPerFile){
+      fHistograms->MarkTruncatedInput();
+      nEvents = fMaxEventsPerFile;
+    }
+
     //************************************************
     //         Main event loop for each file
     //************************************************
     
     for(Int_t iEvent = 0; iEvent < nEvents; iEvent++){ // nEvents
+      if(fOOClosure->enabled){
+        if(fOOClosure->signalRead>=fOOClosure->maxSignal){ fHistograms->MarkTruncatedInput(); break; }
+        ++fOOClosure->signalRead;
+      }
+
 
       // For each event, chack that the file stays open:
       // This is to try to combat file read errors occasionally happening during CRAB running.
@@ -1368,6 +1825,7 @@ void EECAnalyzer::RunAnalysis(){
 
       // Read the event to memory
       fJetReader->GetEvent(iEvent);
+      if(vetoInputFile) fRecoJetReader->GetEvent(iEvent);
       
       // If track reader is not the same as jet reader, read the event to memory in trackReader
       if(useDifferentReaderForJetsAndTracks) fTrackReader->GetEvent(iEvent);
@@ -1379,20 +1837,44 @@ void EECAnalyzer::RunAnalysis(){
       hiBin = fJetReader->GetHiBin();
       ptHat = fJetReader->GetPtHat();
       eventNumber = fJetReader->GetEventNumber();
+      if(fOOClosure->enabled){
+        fOOClosure->signal=ReadOOClosureEvent(fTrackReader,iEvent,false);
+        if(!fOOClosure->signalIds.insert(fOOClosure->signal.id).second)
+          throw std::runtime_error("Duplicate signal physical identity in OO closure pilot");
+      }
+
+      if(exportPairs){
+        if(!fJetReader->HasPhysicalEventIdentity()) throw std::runtime_error("Pair export requires physical event identity");
+        pairLedger<<"{\"source_entry\":"<<iEvent<<",\"source_file\":"<<std::quoted(std::string(currentFile.Data()))
+          <<",\"id\":["<<fJetReader->GetRunNumber()<<','<<fJetReader->GetLumiNumber()<<','<<fJetReader->GetEventNumber()
+          <<"],\"vz\":"<<vz<<",\"activity\":"<<hiBin<<",\"ptHat\":"<<ptHat
+          <<",\"event_filters_pass\":"<<((fJetReader->GetPrimaryVertexFilterBit() && fJetReader->GetHfCoincidenceFilterBit() &&
+             fJetReader->GetClusterCompatibilityFilterBit() && fJetReader->GetHBHENoiseFilterBit() &&
+             fJetReader->GetBeamScrapingFilterBit() && fJetReader->GetPileupFilterBit() && std::abs(vz)<=fVzCut)?"true":"false")<<"}\n";
+      }
+
       hfSum = fJetReader->GetHFSum();
       hfPlus = fJetReader->GetHFPlus();
       hfMinus = fJetReader->GetHFMinus();
       
+      fHistograms->FillEventCoverage(fJetReader->GetStoredHiBin(), 0, fIsOOData);
+
       // We need to apply pT hat cuts before getting pT hat weight. There might be rare events above the upper
       // limit from which the weights are calculated, which could cause the code to crash.
       if(ptHat < fMinimumPtHat || ptHat >= fMaximumPtHat) continue;
+      fHistograms->FillEventCoverage(fJetReader->GetStoredHiBin(), 1, fIsOOData);
+
+      // Run-3 generator/cross-section normalization is not established by the
+      // processed marginal histograms. Keep that factor at unity while
+      // applying the validated OO/ppRef vertex and OO centrality fits.
+      const bool run3MC = (fDataType == ForestReader::kOOMC || fDataType == ForestReader::kPpRef5p36TeVMC);
       
       // Get the weighting for the event
       fVzWeight = GetVzWeight(vz);
       if(fMultiplicityMode){
         // Multiplicity based weight
         trackMultiplicity = GetMultiplicity();
-        fCentralityWeight = GetMultiplicityWeight(trackMultiplicity);
+        fCentralityWeight = run3MC ? 1.0 : GetMultiplicityWeight(trackMultiplicity);
         centrality = GetCentralityFromMultiplicity(trackMultiplicity);
       } else {
         // Regular centrality based weight
@@ -1403,10 +1885,10 @@ void EECAnalyzer::RunAnalysis(){
       if(!(fDataType == ForestReader::kPPbMC_pToMinusEta) && !(fDataType == ForestReader::kPPbMC_pToPlusEta)){
 
         // Event-by-event weight for pp and PbPb MC
-        fPtHatWeight = fJetReader->GetEventWeight();
+        fPtHatWeight = run3MC ? 1.0 : fJetReader->GetEventWeight();
+
       } 
       fTotalEventWeight = fVzWeight*fCentralityWeight*fPtHatWeight;
-      
       // Fill event counter histogram
       fHistograms->fhEvents->Fill(EECHistograms::kAll);          // All the events looped over
       
@@ -1423,7 +1905,10 @@ void EECAnalyzer::RunAnalysis(){
       caloJet100Trigger = (fJetReader->GetCaloJet100FilterBit() == 1);
       
       // Fill the trigger histograms before the trigger selection
-      if(fFillEventInformation){
+      // The existing trigger QA histogram describes only the legacy
+      // CaloJet60/80/100 combinations. Do not fill it for the Run-3
+      // minimum-bias or ZeroBias trigger.
+      if(fFillEventInformation && !useRun3MinimumBiasTrigger){
         if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kNoTrigger);
         if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet60);
         if(!caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggers->Fill(EECHistograms::kOnlyCaloJet80);
@@ -1442,15 +1927,28 @@ void EECAnalyzer::RunAnalysis(){
       if(fTriggerSelection == 5 && (!caloJet80Trigger && !caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet80 and CaloJet100 trigger.
       if(fTriggerSelection == 6 && (!caloJet60Trigger || caloJet80Trigger || caloJet100Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 OR CaloJet100 triggers. This selection is used with the sample forested filtering with CaloJet60 trigger. Any events containing CaloJet80 or CaloJet100 triggers must be vetoed to avoid double counting when combining the two samples.
       if(fTriggerSelection == 7 && (!caloJet60Trigger && !caloJet80Trigger)) continue; // Select events with CaloJet60 OR CaloJet80 triggers
+      // Run-3 baseline trigger:
+      //   DataType 9/10  -> HLT_MinimumBiasHF_OR_BptxAND_v1
+      //   DataType 11/12 -> HLT_PPRefZeroBias_v6
+      //
+      // The corresponding HLT branch is mapped to the first trigger slot
+      // by HighForestReader or GeneratorLevelForestReader.
+      if(fTriggerSelection == 8 && !caloJet15Trigger) continue;
       if(fTriggerSelection == 15 && !caloJet15Trigger) continue; // Select events with CaloJet15 trigger
       if(fTriggerSelection == 30 && !caloJet30Trigger) continue; // Select events with CaloJet30 trigger
       if(fTriggerSelection == 40 && !caloJet40Trigger) continue; // Select events with CaloJet40 trigger
 
+      
+
       // Fill the histogram for triggered events
       fHistograms->fhEvents->Fill(EECHistograms::kTriggered);
+      fHistograms->FillEventCoverage(fJetReader->GetStoredHiBin(), 2, fIsOOData);
 
       // Check event cuts
       if(!PassEventCuts(fJetReader,fFillEventInformation)) continue;
+      fHistograms->FillEventCoverage(fJetReader->GetStoredHiBin(), 3, fIsOOData);
+      fHistograms->FillSelectedEvent(fJetReader->GetStoredHiBin(), hfSum, vz, fTotalEventWeight);
+
       
       // If combining triggers, need to include event weight for events that only fire the lower trigger
       // The weight used here is the inverse of the average effective prescale in the whole sample
@@ -1488,20 +1986,25 @@ void EECAnalyzer::RunAnalysis(){
         fHistograms->fhPtHatWeighted->Fill(ptHat, fTotalEventWeight);           // pT het histogram weighted with corresponding cross section and event number
 
         // Fill the trigger histograms after the trigger selection
-        if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kNoTrigger);
-        if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet60);
-        if(!caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet80);
-        if(!caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet100);
-        if(caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80);
-        if(caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And100);
-        if(!caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet80And100);
-        if(caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80And100);
+        // These categories describe only the legacy jet triggers.
+      if(!useRun3MinimumBiasTrigger){
+          if(!caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kNoTrigger);
+          if(caloJet60Trigger && !caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet60);
+          if(!caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet80);
+          if(!caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kOnlyCaloJet100);
+          if(caloJet60Trigger && caloJet80Trigger && !caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80);
+          if(caloJet60Trigger && !caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And100);
+          if(!caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet80And100);
+          if(caloJet60Trigger && caloJet80Trigger && caloJet100Trigger) fHistograms->fhTriggersAfterSelection->Fill(EECHistograms::kCaloJet60And80And100);
+        }
       }
       
       // ======================================
       // ===== Event quality cuts applied =====
       // ======================================
       
+      if(fOOClosure->enabled) AssignOOClosurePartners(iEvent);
+
       // The unfolding study is completely separate from regular analysis to make code easier to follow
       if(fFillJetPtUnfoldingResponse) FillUnfoldingResponse();
       if(fFillTrackParticleMatchingHistograms) ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
@@ -1512,6 +2015,20 @@ void EECAnalyzer::RunAnalysis(){
       
       const Bool_t circleJet = false; // Instead of actual jets, just draw a random circle somewhere to the event to mimic a jet
       Int_t nJets = circleJet ? 1 : fJetReader->GetNJets();
+
+      if(exportPairs){
+        pairExport<<"{\"sample\":"<<std::quoted(fIsOOData?std::string("OO"):std::string("pp"))
+          <<",\"sample_namespace\":"<<std::quoted(pairNamespace)<<",\"source_entry\":"<<iEvent
+          <<",\"source_file\":"<<std::quoted(std::string(currentFile.Data()))
+          <<",\"id\":["<<fJetReader->GetRunNumber()<<','<<fJetReader->GetLumiNumber()<<','<<fJetReader->GetEventNumber()
+          <<"],\"activity\":"<<hiBin<<",\"vz\":"<<vz<<",\"generator_weight\":"<<fPtHatWeight
+          <<",\"stored_generator_weight\":"<<fJetReader->GetEventWeight()<<",\"event_weight\":"<<fVzWeight*fCentralityWeight
+          <<",\"vz_weight\":"<<fVzWeight<<",\"centrality_weight\":"<<fCentralityWeight
+          <<",\"tracks\":";
+        ExportPairTracks(pairExport,false);
+        pairExport<<",\"jets\":[";
+        firstExportJet=true;
+      }
 
       // Jet loop
       leadingJetPt = 0;
@@ -1556,7 +2073,10 @@ void EECAnalyzer::RunAnalysis(){
           
           // No jet quality cuts for generator level jets
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
-            
+            if(fRun3JetID){
+              if(!EECJetSelection::PassJetID(fJetReader->GetJetSelectionInputs(jetIndex), Run3JetIDPrescription())) continue;
+            }
+            // HIN ID supplements, never replaces, the EEC trackMax/rawpt cut.
             // I forgot to include the trackMax branch in the "NewRelease" MC production
             // This branch in correctly included in default MC and in the data production
             // But in case we want to use the NewRelease-files, we need to calculate trackMax manually
@@ -1582,31 +2102,25 @@ void EECAnalyzer::RunAnalysis(){
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
                 
-                if(deltaRTrackJet < 0.4){
+                if(deltaRTrackJet < fJetRadius){
                   if(trackPt > manualMaxTrackPt) manualMaxTrackPt = trackPt;
                 }
                 
               } // Track pT loop for manual calculation
               
-              if(fMinimumMaxTrackPtFraction >= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)){
-                continue; // Cut for jets with only very low pT particles
-              }
-              if(fMaximumMaxTrackPtFraction <= manualMaxTrackPt/fJetReader->GetJetRawPt(jetIndex)){
-                continue; // Cut for jets where all the pT is taken by one track
-              }
+              if(!EECJetSelection::PassTrackMaxFraction(manualMaxTrackPt, fJetReader->GetJetRawPt(jetIndex),
+                  fMinimumMaxTrackPtFraction, fMaximumMaxTrackPtFraction)) continue;
               
             } else {
               // Default jet quality cut, used in all other cases expect for NewRelease MC test
               
-              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)){
-                continue; // Cut for jets with only very low pT particles
-              }
-              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(jetIndex)/fJetReader->GetJetRawPt(jetIndex)){
-                continue; // Cut for jets where all the pT is taken by one track
-              }
+              if(!EECJetSelection::PassTrackMaxFraction(fJetReader->GetJetMaxTrackPt(jetIndex), fJetReader->GetJetRawPt(jetIndex),
+                  fMinimumMaxTrackPtFraction, fMaximumMaxTrackPtFraction)) continue;
             }
           }
           
+          // Both reconstructed quality requirements have now been applied.
+
           // Jet matching between reconstructed and generator level jets
           if((fMatchJets == 1) && !fJetReader->HasMatchingJet(jetIndex)){
             unmatchedCounter++;
@@ -1631,15 +2145,13 @@ void EECAnalyzer::RunAnalysis(){
           //  ========================================
           
           // Do a correction for the jet pT
-          fJetCorrector->SetJetPT(jetPt);
-          fJetCorrector->SetJetEta(jetEta);
-          fJetCorrector->SetJetPhi(jetPhi);
-          
-          fJetUncertainty->SetJetPT(jetPt);
-          fJetUncertainty->SetJetEta(jetEta);
-          fJetUncertainty->SetJetPhi(jetPhi);
-          
-          jetPtCorrected = fJetCorrector->GetCorrectedPT();
+          jetPtCorrected=jetPt;
+          if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
+            if(!std::isfinite(jetPt) || jetPt<=0) continue;
+            jetPtCorrected=CorrectRecoJet(fJetReader,jetIndex).back();
+            const auto detector=fUseRun3JEC ? fJetReader->GetJetSelectionInputs(jetIndex) : EECJetSelection::JetInputs{};
+            ConfigureJetUncertainty(jetPt,jetPtCorrected,fUseRun3JEC?detector.eta:jetEta,fUseRun3JEC?detector.phi:jetPhi);
+          }
           
           // No jet pT correction for generator level jets
           if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)) {
@@ -1713,11 +2225,31 @@ void EECAnalyzer::RunAnalysis(){
           
         } // Circle jet if
 
+        if(fOOClosure->enabled){
+          fOOClosure->jetIndex=jetIndex;
+          fOOClosure->jets<<oo_eec::PilotKey(fOOClosure->signal.id,false)<<','<<jetIndex<<','<<jetPt<<','<<jetEta<<','<<jetPhi<<','<<centrality<<','<<fTotalEventWeight<<','<<(fOOClosure->assignment.matched()?"matched":"failed")<<'\n';
+          if(!fOOClosure->assignment.matched()) continue;
+        }
+
+        if(exportPairs){
+          if(!firstExportJet) pairExport<<',';
+          firstExportJet=false;
+          pairExport<<"{\"radius\":"<<fJetRadius<<",\"index\":"<<jetIndex<<",\"pt\":"<<jetPt
+            <<",\"stored_pt\":"<<fJetReader->GetJetPt(jetIndex)<<",\"raw_pt\":"<<fJetReader->GetJetRawPt(jetIndex)
+            <<",\"eta\":"<<jetEta<<",\"phi\":"<<jetPhi<<",\"jet_weight\":"<<GetJetPtWeight(jetPt)<<",\"tracks\":";
+          ExportPairTracks(pairExport,true,jetEta,jetPhi);
+          pairExport<<'}';
+        }
+
         // Once the jet quality cuts are applied, determine the leading jet pT
         if(jetPt > leadingJetPt) leadingJetPt = jetPt;
 
         // We have a good jet!
         nGoodJets++;
+        if(fHistograms->fhJetExposure){
+          fHistograms->fhJetExposure->Fill(jetPt, fTotalEventWeight);
+        }
+
         
         //************************************************
         //         Fill histograms for all jets
@@ -1753,6 +2285,8 @@ void EECAnalyzer::RunAnalysis(){
           // Clear the vectors of track kinematics for tracks selected for energy-energy correlators
           for(int iJetConeType = 0; iJetConeType < EECHistograms::knJetConeTypes; iJetConeType++){
             selectedTrackPt[iJetConeType].clear();
+            selectedTrackCorrection[iJetConeType].clear();
+            coneSourceHiBin[iJetConeType]=fTrackReader->GetHiBin();
             relativeTrackEta[iJetConeType].clear();
             relativeTrackPhi[iJetConeType].clear();
             selectedTrackSubevent[iJetConeType].clear();
@@ -1782,7 +2316,7 @@ void EECAnalyzer::RunAnalysis(){
             trackPt = fTrackReader->GetTrackPt(iTrack);
             trackEta = fTrackReader->GetTrackEta(iTrack);
             trackPhi = fTrackReader->GetTrackPhi(iTrack);
-            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
+            trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, fTrackReader->GetHiBin());
             trackSubevent = fTrackReader->GetTrackSubevent(iTrack);
             trackSubeventIndex = GetSubeventIndex(trackSubevent);
 
@@ -1792,11 +2326,12 @@ void EECAnalyzer::RunAnalysis(){
             // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
             deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
             if(deltaRTrackJet < fJetRadius){
-              relativeTrackPhi[EECHistograms::kSignalCone].push_back(trackPhi-jetPhi);
+              relativeTrackPhi[EECHistograms::kSignalCone].push_back(fOOClosure->enabled ? oo_eec::PilotRelativePhi(trackPhi,jetPhi) : trackPhi-jetPhi);
               relativeTrackEta[EECHistograms::kSignalCone].push_back(trackEta-jetEta);
               
               // Also remember track pT and subevent
               selectedTrackPt[EECHistograms::kSignalCone].push_back(trackPt);
+                  selectedTrackCorrection[EECHistograms::kSignalCone].push_back(trackEfficiencyCorrection);
               selectedTrackSubevent[EECHistograms::kSignalCone].push_back(trackSubevent);
               
               // If we are calculating multiplicity within the jet cone, update the multiplicity arrays
@@ -1824,10 +2359,10 @@ void EECAnalyzer::RunAnalysis(){
               
             } // Track close to jet
             
-            // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
+            // For the track density, use a cone size synchronized with maxDeltaRTrackDensity in EECHistograms
             if(fFillJetConeHistograms){
               
-              if(deltaRTrackJet < 0.8){
+              if(deltaRTrackJet < 2*fJetRadius){
                 fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
                 fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
                 fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
@@ -1843,11 +2378,12 @@ void EECAnalyzer::RunAnalysis(){
             if(fDoReflectedCone){
               deltaRTrackJet = GetDeltaR(jetReflectedEta, jetPhi, trackEta, trackPhi);
               if(deltaRTrackJet < fJetRadius){
-                relativeTrackPhi[EECHistograms::kReflectedCone].push_back(trackPhi-jetPhi);
+                relativeTrackPhi[EECHistograms::kReflectedCone].push_back(fOOClosure->enabled ? oo_eec::PilotRelativePhi(trackPhi,jetPhi) : trackPhi-jetPhi);
                 relativeTrackEta[EECHistograms::kReflectedCone].push_back(trackEta-jetReflectedEta);
                 
                 // Also remember track pT and subevent
                 selectedTrackPt[EECHistograms::kReflectedCone].push_back(trackPt);
+                  selectedTrackCorrection[EECHistograms::kReflectedCone].push_back(trackEfficiencyCorrection);
                 selectedTrackSubevent[EECHistograms::kReflectedCone].push_back(trackSubevent);
                 
                 // If we are calculating multiplicity within the reflected cone, update the multiplicity arrays
@@ -1866,9 +2402,9 @@ void EECAnalyzer::RunAnalysis(){
                 } // Fill jet cone histograms
               }
               
-              // For the track density, use a fixed cone size around the jet axis. TODO: Synchronize the cone size with EECHistograms
+              // For the track density, use a cone size synchronized with maxDeltaRTrackDensity in EECHistograms
               if(fFillJetConeHistograms){
-                if(deltaRTrackJet < 0.8){
+                if(deltaRTrackJet < 2*fJetRadius){
                   fillerParticleDensityInJetCone[0] = deltaRTrackJet;     // Axis 0: DeltaR between the track and the jet
                   fillerParticleDensityInJetCone[1] = jetPt;              // Axis 1: jet pT
                   fillerParticleDensityInJetCone[2] = trackPt;            // Axis 2: track pT
@@ -1890,11 +2426,12 @@ void EECAnalyzer::RunAnalysis(){
 
                 deltaRTrackJet = GetDeltaR(jetEta, jetPerpendicularPhi, trackEta, trackPhi);
                 if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPhi-jetPerpendicularPhi);
+                  relativeTrackPhi[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(fOOClosure->enabled ? oo_eec::PilotRelativePhi(trackPhi,jetPerpendicularPhi) : trackPhi-jetPerpendicularPhi);
                   relativeTrackEta[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackEta-jetEta);
                 
                   // Also remember track pT and subevent
                   selectedTrackPt[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackPt);
+                  selectedTrackCorrection[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackEfficiencyCorrection);
                   selectedTrackSubevent[EECHistograms::kPerpendicularCone + iPerpendicularCone].push_back(trackSubevent);
                 
                   // If we are calculating multiplicity within the perpendicular cone, update the multiplicity arrays
@@ -1940,20 +2477,19 @@ void EECAnalyzer::RunAnalysis(){
               if(TMath::Abs(reflectedConeJetEta) >= fJetEtaCut) continue; // Cut for jet eta
               if(fCutBadPhiRegion && (reflectedConeJetPhi > -0.1 && reflectedConeJetPhi < 1.2)) continue; // Cut the area of large inefficiency in tracker
 
-              if(fMinimumMaxTrackPtFraction >= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
-                continue; // Cut for jets with only very low pT particles
+              if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){
+              if(fRun3JetID){
+                if(!EECJetSelection::PassJetID(fJetReader->GetJetSelectionInputs(reflectedConeJetIndex), Run3JetIDPrescription())) continue;
               }
-              if(fMaximumMaxTrackPtFraction <= fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex)/fJetReader->GetJetRawPt(reflectedConeJetIndex)){
-                continue; // Cut for jets where all the pT is taken by one track
-              }
+              if(!EECJetSelection::PassTrackMaxFraction(fJetReader->GetJetMaxTrackPt(reflectedConeJetIndex), fJetReader->GetJetRawPt(reflectedConeJetIndex),
+                  fMinimumMaxTrackPtFraction, fMaximumMaxTrackPtFraction)) continue;
+
+              } // no reconstructed PF/track quality requirement for generator jets
 
               // For non-generator level jet pT: do a correction for the jet pT
               if(!(fMcCorrelationType == kGenGen || fMcCorrelationType == kGenReco)){              
-                fJetCorrector->SetJetPT(reflectedConeJetPt);
-                fJetCorrector->SetJetEta(reflectedConeJetEta);
-                fJetCorrector->SetJetPhi(reflectedConeJetPhi);
-
-                reflectedConeJetPt = fJetCorrector->GetCorrectedPT();
+                if(!std::isfinite(reflectedConeJetPt) || reflectedConeJetPt<=0) continue;
+                reflectedConeJetPt=CorrectRecoJet(fJetReader,reflectedConeJetIndex).back();
               }
 
               // After the jet pT can been corrected, apply jet pT cuts for the jets in reflected cone
@@ -1984,7 +2520,10 @@ void EECAnalyzer::RunAnalysis(){
           if(fDoMixedCone){
 
             // Event matching is different for different systems
-            if(fEventMatchForMixing == kMatchHiBin){
+            if(fOOClosure->enabled){
+              mixedEventIndices.clear();
+              for(int partner:fOOClosure->assignment.partners) mixedEventIndices.push_back(fOOClosure->pool.at(partner).entry);
+            } else if(fEventMatchForMixing == kMatchHiBin){
               // Match HiBin
               FindHiBinMatchedEvents(mixedEventIndices, 2, vz, hiBin, eventNumber, iEvent, fBinnedMixing);
             } else if (fEventMatchForMixing == kMatchHFEnergy){
@@ -2009,7 +2548,7 @@ void EECAnalyzer::RunAnalysis(){
             for(int mixedEventIndex : mixedEventIndices){
 
               // If match vz and hiBin, then load the event from the mixed event tree and find particles from jet cone region
-              fMixedEventReader->GetEvent(mixedEventIndex);
+              ReadMixingEvent(mixedEventIndex);
 
               nTracks = fMixedEventReader->GetNTracks();
               for(Int_t iTrack = 0; iTrack < nTracks; iTrack++){
@@ -2023,16 +2562,22 @@ void EECAnalyzer::RunAnalysis(){
                 trackPt = fMixedEventReader->GetTrackPt(iTrack);
                 trackEta = fMixedEventReader->GetTrackEta(iTrack);
                 trackPhi = fMixedEventReader->GetTrackPhi(iTrack);
+                trackEfficiencyCorrection = GetTrackEfficiencyCorrection(trackPt, trackEta, fMixedEventReader->GetHiBin());
                 trackSubevent = fMixedEventReader->GetTrackSubevent(iTrack);
+                // Pure HIJING origin follows audited source provenance, never an embedded sube selection.
+                if(fOOClosure->enabled) trackSubevent=1;
+
 
                 // If the track is close to a jet, change the track eta-phi coordinates to a system where the jet axis is at origin
                 deltaRTrackJet = GetDeltaR(jetEta, jetPhi, trackEta, trackPhi);
                 if(deltaRTrackJet < fJetRadius){
-                  relativeTrackPhi[mixedEventFillIndex].push_back(trackPhi-jetPhi);
+                  relativeTrackPhi[mixedEventFillIndex].push_back(fOOClosure->enabled ? oo_eec::PilotRelativePhi(trackPhi,jetPhi) : trackPhi-jetPhi);
                   relativeTrackEta[mixedEventFillIndex].push_back(trackEta-jetEta);
 
                   // Also remember track pT and subevent
                   selectedTrackPt[mixedEventFillIndex].push_back(trackPt);
+                  selectedTrackCorrection[mixedEventFillIndex].push_back(trackEfficiencyCorrection);
+                  coneSourceHiBin[mixedEventFillIndex]=fMixedEventReader->GetHiBin();
                   selectedTrackSubevent[mixedEventFillIndex].push_back(trackSubevent);
                 } // Track is close to a jet
               } // Mixed event track loop
@@ -2110,7 +2655,7 @@ void EECAnalyzer::RunAnalysis(){
             }
 
             // Then calculate the energy-energy correlator for this jet
-            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, jetPt);
+            CalculateEnergyEnergyCorrelator(selectedTrackPt, relativeTrackEta, relativeTrackPhi, selectedTrackSubevent, selectedTrackCorrection, coneSourceHiBin, jetPt);
 
             // After that is done, add the contents from this event to the total coveriance matrix
             // Covariance matrix calculation only for data, not needed in MC
@@ -2148,6 +2693,7 @@ void EECAnalyzer::RunAnalysis(){
         } // Fill anything in-jet particle pairing related
         
       } // End of jet loop
+      if(exportPairs) pairExport<<"]}\n";
 
       // After the jet loop, we can fill the HF energy histograms for with leading jet pT
       if(fFillEventInformation){
@@ -2231,6 +2777,14 @@ void EECAnalyzer::RunAnalysis(){
     
   } // File loop
 
+  if(fOOClosure->enabled){
+    for(std::size_t index=0;index<fOOClosure->pool.size();++index){
+      const auto& event=fOOClosure->pool[index];
+      fOOClosure->poolLedger<<oo_eec::PilotKey(event.id,true)<<','<<event.id.run<<','<<event.id.lumi<<','<<event.id.event<<','<<event.entry<<','<<event.vz<<','<<event.nh<<','<<event.hiBin<<','<<event.hf<<','<<event.weight<<','<<event.eligible<<','<<(oo_eec::PilotPool(event,fOOClosure->seed)==0?'A':'B')<<','<<fOOClosure->uses[index]<<",unknown_lineage_fingerprint_screened,"<<(event.backgroundKnown?event.background:0)<<','<<event.fingerprint.text()<<','<<event.backgroundExcluded<<','<<event.physicalExcluded<<','<<fOOClosure->partitionPolicy<<'\n';
+    }
+    fOOClosure->partners.flush();fOOClosure->poolLedger.flush();fOOClosure->jets.flush();fOOClosure->contributions.flush();
+  }
+
   // Release the memory for arrays reserved with new operator
   delete[] trackPtBinsEEC;
   
@@ -2245,8 +2799,9 @@ void EECAnalyzer::RunAnalysis(){
  *  const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes] = subevent array for tracks selected for the analysis
  *  const double jetPt = pT of the jet the tracks are close to
  */
-void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt){
+void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const vector<double> selectedTrackCorrection[EECHistograms::knJetConeTypes], const int coneSourceHiBin[EECHistograms::knJetConeTypes], const double jetPt){
   
+  std::map<std::tuple<int,int,int,int,int>,double> pilotContributions;
   // Define a filler for THnSparse
   Double_t fillerEnergyEnergyCorrelator[7];       // Axes: deltaR, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
@@ -2336,7 +2891,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       trackEta1 = relativeTrackEta[firstParticleType[iPairingType]].at(iFirstTrack);
       
       // Get the efficiency correction for the first track
-      trackEfficiencyCorrection1 = GetTrackEfficiencyCorrection(trackPt1, trackEta1, hiBin);
+      trackEfficiencyCorrection1 = (fIsOOData || fIsPp2024Data)
+        ? selectedTrackCorrection[firstParticleType[iPairingType]].at(iFirstTrack)
+        : GetTrackEfficiencyCorrection(trackPt1, trackEta1, hiBin);
       
       // Find the track subevent (only relevant for simulation)
       subeventTrack1 = selectedTrackSubevent[firstParticleType[iPairingType]].at(iFirstTrack);
@@ -2358,7 +2915,9 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         trackEta2 = relativeTrackEta[secondParticleType[iPairingType]].at(iSecondTrack);
         
         // Get the efficiency correction for the second track
-        trackEfficiencyCorrection2 = GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
+        trackEfficiencyCorrection2 = (fIsOOData || fIsPp2024Data)
+          ? selectedTrackCorrection[secondParticleType[iPairingType]].at(iSecondTrack)
+          : GetTrackEfficiencyCorrection(trackPt2, trackEta2, hiBin);
         
         // Find the track subevent (only relevant for simulation)
         subeventTrack2 = selectedTrackSubevent[secondParticleType[iPairingType]].at(iSecondTrack);
@@ -2373,6 +2932,12 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
         // Find the lower of the two track pT:s
         lowerTrackPt = trackPt1;
         if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+        // Optional generic EEC pair threshold; reader/track QA cuts remain independent.
+        if(fCard->HasKey("MinPairTrackPt") && lowerTrackPt <= fCard->Get("MinPairTrackPt")) continue;
+        if((fIsOOData || fIsPp2024Data) &&
+           (!std::isfinite(trackEfficiencyCorrection1) || trackEfficiencyCorrection1<=0 ||
+            !std::isfinite(trackEfficiencyCorrection2) || trackEfficiencyCorrection2<=0))
+          throw std::runtime_error("Unsupported single-track correction in a selected Run-3 EEC pair; no silent zero/unity replacement");
 
         // Realistic smearing for track DeltaR if selected
         if(fSmearDeltaR){
@@ -2408,8 +2973,24 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
             correlatorWeight = smearedCorrelatorWeight;
           }
 
-          // Find the pair efficiency correction for the track pair
-          std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR, centrality, trackPt1, trackPt2, jetPt);
+          // Disabled corrections and independent detector realizations need no
+          // pair factor. Enabled Run-3 tables reject unsupported bins explicitly.
+          trackPairEfficiencyCorrection = 1.0;
+          trackPairEfficiencyError = 0.0;
+
+          // A translated cross-cone distance is not a physical close pair.
+          // Different mixed events are independent detector realizations.
+          const bool physicalSameCone = firstParticleType[iPairingType] == secondParticleType[iPairingType];
+          // A background cone has no physical signal jet at the analysis jet pT;
+          // its same-source self-pairs use the AN all-event (jet-independent) map.
+          const double correctionJetPt = (fIsOOData || fIsPp2024Data) && firstParticleType[iPairingType]!=EECHistograms::kSignalCone ? -1.0 : jetPt;
+          if(fTrackPairEfficiencyCorrector != NULL && (!(fIsOOData || fIsPp2024Data) || physicalSameCone)) {
+              std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(trackDeltaR,
+                (fIsOOData || fIsPp2024Data) ? coneSourceHiBin[firstParticleType[iPairingType]]/2.0 : centrality, trackPt1, trackPt2, correctionJetPt);
+          }
+
+          if(fOOClosure->enabled && (trackEfficiencyCorrection1!=1 || trackEfficiencyCorrection2!=1 || trackPairEfficiencyCorrection!=1))
+            throw std::runtime_error("OO GenGen pilot reconstruction correction is not unity");
 
           // Fill the energy-energy correlator histograms
           fillerEnergyEnergyCorrelator[0] = trackDeltaR;               // Axis 0: DeltaR between the two tracks
@@ -2422,6 +3003,13 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
 
           if(fFillEnergyEnergyCorrelators){
             fHistograms->fhEnergyEnergyCorrelator->Fill(fillerEnergyEnergyCorrelator, trackEfficiencyCorrection1 * trackEfficiencyCorrection2 * fTotalEventWeight * correlatorWeight * trackPairEfficiencyCorrection * jetPtWeight);  // Fill the energy-energy correlator histogram
+
+            if(fOOClosure->enabled){
+              auto* histogram=fHistograms->fhEnergyEnergyCorrelator;
+              const int drBin=histogram->GetAxis(0)->FindBin(trackDeltaR);
+              const int ptBin=histogram->GetAxis(2)->FindBin(lowerTrackPt);
+              pilotContributions[std::make_tuple(weightIndex,iPairingType,subeventCombination,drBin,ptBin)] += trackEfficiencyCorrection1*trackEfficiencyCorrection2*fTotalEventWeight*correlatorWeight*trackPairEfficiencyCorrection*jetPtWeight;
+            }
 
             // Fill also the histograms just from this jet to calculate covariances
             // Covariance matrix calculation only for data, not needed in MC
@@ -2462,8 +3050,16 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelator(const vector<double> selectedT
       } // Inner track loop
     } // Outer track loop
   } // Loop over pairing types (same jet/reflected cone jet)
-  
+  if(fOOClosure->enabled){
+    const auto* axis=fHistograms->fhEnergyEnergyCorrelator->GetAxis(0);
+    for(const auto& contribution:pilotContributions){
+      int power,pairing,subevent,drBin,ptBin;
+      std::tie(power,pairing,subevent,drBin,ptBin)=contribution.first;
+      fOOClosure->contributions<<oo_eec::PilotKey(fOOClosure->signal.id,false)<<','<<fOOClosure->jetIndex<<','<<jetPt<<','<<centrality<<','<<fWeightExponent.at(power)<<','<<pairing<<','<<subevent<<','<<drBin<<','<<axis->GetBinLowEdge(drBin)<<','<<axis->GetBinUpEdge(drBin)<<','<<ptBin<<','<<contribution.second<<'\n';
+    }
+  }
 }
+
 
 /*
  * Fill the jet pT closure histograms
@@ -2505,10 +3101,22 @@ void EECAnalyzer::FillJetPtClosureHistograms(const Int_t jetIndex){
   Double_t smearingFactor;
   
   // For 2018 data, we need to correct the reconstructed pT with jet energy correction
-  fJetCorrector->SetJetPT(recoPt);
-  fJetCorrector->SetJetEta(jetEta);
-  fJetCorrector->SetJetPhi(jetPhi);
-  recoPt = fJetCorrector->GetCorrectedPT();
+  if(fUseRun3JEC) {
+    ForestReader* reco=fJetReader;
+    int recoIndex=jetIndex;
+    if(fMcCorrelationType == kGenReco || fMcCorrelationType == kGenGen) {
+      auto* generator=dynamic_cast<GeneratorLevelForestReader*>(fJetReader);
+      if(!generator || !fRecoJetReader) throw std::runtime_error("Run-3 closure needs the synchronized native reconstructed companion");
+      reco=fRecoJetReader; recoIndex=generator->GetMatchedRecoIndex(jetIndex);
+      if(recoIndex<0) throw std::runtime_error("Run-3 closure has no matching reconstructed jet");
+    }
+    recoPt=CorrectRecoJet(reco,recoIndex).back();
+  } else {
+    fJetCorrector->SetJetPT(recoPt);
+    fJetCorrector->SetJetEta(jetEta);
+    fJetCorrector->SetJetPhi(jetPhi);
+    recoPt = fJetCorrector->GetCorrectedPT();
+  }
   
   // If we are using smearing scenario, modify the reconstructed jet pT using gaussian smearing
   if(fJetUncertaintyMode > 0){
@@ -2581,12 +3189,11 @@ void EECAnalyzer::FillUnfoldingResponse(){
     if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
     if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
 
-    if(fMinimumMaxTrackPtFraction >= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
-      continue;  // Cut for jets with only very low pT particles
+    if(fRun3JetID){
+      if(!EECJetSelection::PassJetID(fUnfoldingForestReader->GetJetSelectionInputs(jetIndex), Run3JetIDPrescription())) continue;
     }
-    if(fMaximumMaxTrackPtFraction <= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
-      continue;  // Cut for jets where all the pT is taken by one track
-    }
+    if(!EECJetSelection::PassTrackMaxFraction(fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex), fUnfoldingForestReader->GetJetRawPt(jetIndex),
+        fMinimumMaxTrackPtFraction, fMaximumMaxTrackPtFraction)) continue;
     
 
     //  ========================================
@@ -2594,15 +3201,11 @@ void EECAnalyzer::FillUnfoldingResponse(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector->SetJetPT(jetPt);
-    fJetCorrector->SetJetEta(jetEta);
-    fJetCorrector->SetJetPhi(jetPhi);
-
-    fJetUncertainty->SetJetPT(jetPt);
-    fJetUncertainty->SetJetEta(jetEta);
-    fJetUncertainty->SetJetPhi(jetPhi);
-
-    jetPt = fJetCorrector->GetCorrectedPT();
+    if(!std::isfinite(jetPt) || jetPt<=0) continue;
+    const Double_t rawPtForUncertainty = jetPt;
+    jetPt=CorrectRecoJet(fUnfoldingForestReader,jetIndex).back();
+    const auto detector=fUseRun3JEC ? fUnfoldingForestReader->GetJetSelectionInputs(jetIndex) : EECJetSelection::JetInputs{};
+    ConfigureJetUncertainty(rawPtForUncertainty,jetPt,fUseRun3JEC?detector.eta:jetEta,fUseRun3JEC?detector.phi:jetPhi);
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     // Note that for MC, we need to smear the jet pT to match the resolution in data
@@ -2802,7 +3405,7 @@ void EECAnalyzer::CalculateEnergyEnergyCorrelatorForUnfolding(const vector<doubl
       if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
 
       // Realistic smearing for DeltaR between two particles if selected
-      if(fSmearEnergyWeight){
+      if(fSmearDeltaR){
         trackDeltaR = fDeltaRSmearer->GetSmearedValue(trackDeltaR, centrality, jetPt, lowerTrackPt);
       }
 
@@ -2922,7 +3525,6 @@ void EECAnalyzer::ConstructParticleResponses(){
   Double_t trackPairEfficiencyError;      // Track pair efficiency error
   Int_t trackCharge;                      // Charge of the particle
   Int_t nTracks;                          // Number of generator level particles
-  Bool_t trackPairCorrectionFlag;         // Flag about enabling track pair efficiency correction
 
   // Event variables
   Int_t hiBin = fUnfoldingForestReader->GetHiBin();
@@ -2960,12 +3562,11 @@ void EECAnalyzer::ConstructParticleResponses(){
     if(TMath::Abs(jetEta) >= fJetEtaCut) continue;                     // Cut for jet eta
     if(fCutBadPhiRegion && (jetPhi > -0.1 && jetPhi < 1.2)) continue;  // Cut the area of large inefficiency in tracker
 
-    if(fMinimumMaxTrackPtFraction >= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
-      continue;  // Cut for jets with only very low pT particles
+    if(fRun3JetID){
+      if(!EECJetSelection::PassJetID(fUnfoldingForestReader->GetJetSelectionInputs(jetIndex), Run3JetIDPrescription())) continue;
     }
-    if(fMaximumMaxTrackPtFraction <= fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex) / fUnfoldingForestReader->GetJetRawPt(jetIndex)){
-      continue;  // Cut for jets where all the pT is taken by one track
-    }
+    if(!EECJetSelection::PassTrackMaxFraction(fUnfoldingForestReader->GetJetMaxTrackPt(jetIndex), fUnfoldingForestReader->GetJetRawPt(jetIndex),
+        fMinimumMaxTrackPtFraction, fMaximumMaxTrackPtFraction)) continue;
     
 
     //  ========================================
@@ -2973,15 +3574,11 @@ void EECAnalyzer::ConstructParticleResponses(){
     //  ========================================
 
     // For 2018 data: do a correction for the jet pT
-    fJetCorrector->SetJetPT(jetPt);
-    fJetCorrector->SetJetEta(jetEta);
-    fJetCorrector->SetJetPhi(jetPhi);
-
-    fJetUncertainty->SetJetPT(jetPt);
-    fJetUncertainty->SetJetEta(jetEta);
-    fJetUncertainty->SetJetPhi(jetPhi);
-
-    jetPt = fJetCorrector->GetCorrectedPT();
+    if(!std::isfinite(jetPt) || jetPt<=0) continue;
+    const Double_t rawPtForUncertainty = jetPt;
+    jetPt=CorrectRecoJet(fUnfoldingForestReader,jetIndex).back();
+    const auto detector=fUseRun3JEC ? fUnfoldingForestReader->GetJetSelectionInputs(jetIndex) : EECJetSelection::JetInputs{};
+    ConfigureJetUncertainty(rawPtForUncertainty,jetPt,fUseRun3JEC?detector.eta:jetEta,fUseRun3JEC?detector.phi:jetPhi);
 
     // If we are using smearing scenario, modify the jet pT using gaussian smearing
     if(fJetUncertaintyMode > 0) {
@@ -3133,11 +3730,12 @@ void EECAnalyzer::ConstructParticleResponses(){
         deltaRTracks = GetDeltaR(std::get<kTrackEta>(selectedTrackInformation.at(iTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(iTrack)), std::get<kTrackEta>(selectedTrackInformation.at(jTrack)), std::get<kTrackPhi>(selectedTrackInformation.at(jTrack)));
         deltaRParticles = GetDeltaR(std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(iTrack)))), std::get<kTrackEta>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))), std::get<kTrackPhi>(selectedParticleInformation.at(std::get<kMatchIndex>(selectedTrackInformation.at(jTrack)))));
 
-        // Find the pair acceptance correction for the track pair regardless if it is disabled in the main code or not
-        trackPairCorrectionFlag = fTrackPairEfficiencyCorrector->GetDisableCorrection();
-        fTrackPairEfficiencyCorrector->SetDisableCorrection(false);
-        std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(deltaRTracks, centrality, std::get<kTrackPt>(selectedTrackInformation.at(iTrack)), std::get<kTrackPt>(selectedTrackInformation.at(jTrack)), jetPt);
-        fTrackPairEfficiencyCorrector->SetDisableCorrection(trackPairCorrectionFlag);
+        // Use unity if pair corrections are disabled or no table exists.
+        trackPairEfficiencyCorrection = 1.0;
+        trackPairEfficiencyError = 0.0;
+        if(fTrackPairEfficiencyCorrector != nullptr && !fTrackPairEfficiencyCorrector->GetDisableCorrection()){
+          std::tie(trackPairEfficiencyCorrection, trackPairEfficiencyError) = fTrackPairEfficiencyCorrector->GetTrackPairEfficiencyCorrection(deltaRTracks, centrality, std::get<kTrackPt>(selectedTrackInformation.at(iTrack)), std::get<kTrackPt>(selectedTrackInformation.at(jTrack)), jetPt);
+        }
 
         // Fill the matched deltaR values to the response matrix
         fillerParticleDeltaRResponseMatrix[0] = deltaRTracks;
@@ -3177,6 +3775,14 @@ void EECAnalyzer::ConstructParticleResponses(){
 
 }
 
+// No lookup-coordinate convention is changed: callers retain their selected WTA or
+// standard axes. Run-3 JES remains disabled until applicable payloads are supplied.
+void EECAnalyzer::ConfigureJetUncertainty(const Double_t rawPt, const Double_t correctedPt, const Double_t eta, const Double_t phi){
+  fJetUncertainty->SetJetPT((fIsOOData || fIsPp2024Data) ? correctedPt : rawPt);
+  fJetUncertainty->SetJetEta(eta);
+  fJetUncertainty->SetJetPhi(phi);
+}
+
 /*
  * Get the proper vz weighting depending on analyzed system
  *
@@ -3199,6 +3805,12 @@ Double_t EECAnalyzer::GetVzWeight(const Double_t vz) const{
  *   return: Multiplicative correction factor for the given CMS hiBin
  */
 Double_t EECAnalyzer::GetCentralityWeight(const Int_t hiBin) const{
+  if(fDataType == ForestReader::kOOMC){
+    if(hiBin < 0 || hiBin >= 180) return 1.0; // OO fit covers 0–90%
+    if(hiBin < 60) return fCentralityWeightFunctionCentral->Eval(hiBin/2.0);
+    return fCentralityWeightFunctionPeripheral->Eval(hiBin/2.0);
+  }
+
   if(fDataType != ForestReader::kPbPbMC) return 1;
   
   // No weighting for the most peripheral centrality bins. Different weight function for central and peripheral.
@@ -3318,6 +3930,78 @@ Bool_t EECAnalyzer::PassSubeventCut(const Int_t subeventIndex) const{
  *
  *   return = True if all event cuts are passed, false otherwise
  */
+EECJetSelection::JetIDPrescription EECAnalyzer::Run3JetIDPrescription() const{
+  const TString table = fCard->HasKey("Run3JetIDTable") ? fCard->GetStr("Run3JetIDTable") : "MiniPOG20261108";
+  if(table == "HINc64293a")
+    return fIsOOData ? EECJetSelection::JetIDPrescription::HINPbPb : EECJetSelection::JetIDPrescription::HINpp;
+  if(table != "MiniPOG20261108") throw std::invalid_argument("Run3JetIDTable must be MiniPOG20261108 or HINc64293a");
+  return fIsOOData ? EECJetSelection::JetIDPrescription::MiniPOGOO : EECJetSelection::JetIDPrescription::MiniPOGpp;
+}
+
+void EECAnalyzer::ReadMixingEvent(Int_t event){
+  fMixedEventReader->GetEvent(event);
+  if(fMixedVetoJetReader) fMixedVetoJetReader->GetEvent(event);
+}
+
+Bool_t EECAnalyzer::PassRun3JetVeto(ForestReader* jetReader, Bool_t mixing){
+  if(!fJetVetoMap || !jetReader) throw std::runtime_error("Jet veto has no map or reconstructed reader");
+  const int stream = mixing ? 1 : 0;
+  std::vector<std::pair<double,double>> eligible;
+  bool reject = false;
+  for(int index=0; index<jetReader->GetNJets(); ++index){
+    const auto jet = jetReader->GetJetSelectionInputs(index);
+    double pt = jet.storedPt;
+    if(fJetVetoPtConvention == "raw") pt = jet.rawPt;
+    else if(fJetVetoPtConvention == "recomputed"){
+      if(jet.rawPt<=0) continue;
+      pt=CorrectRecoJet(jetReader,index).back();
+    }
+    if(!EECJetSelection::IsEligibleVetoJet(jet, pt, Run3JetIDPrescription())) continue;
+    eligible.emplace_back(jet.eta, EECJetSelection::DetectorPhi(jet.phi));
+    if(fJetVetoMap->IsVetoed(jet.eta, jet.phi)) reject = true;
+  }
+  // Unweighted event losses. After maps retain every eligible jet only in kept events.
+  if(fHistograms->fhJetVetoEventCounts){
+    fHistograms->fhJetVetoEventCounts->Fill(3*stream);
+    fHistograms->fhJetVetoEventCounts->Fill(3*stream + (reject ? 2 : 1));
+    for(const auto& jet : eligible){
+      fHistograms->fhJetVetoEtaPhiBefore[stream]->Fill(jet.first, jet.second);
+      if(!reject) fHistograms->fhJetVetoEtaPhiAfter[stream]->Fill(jet.first, jet.second);
+    }
+  }
+  return !reject;
+}
+
+void EECAnalyzer::FillRun3JetDiagnostics(ForestReader* reader, bool passesVeto) {
+  if(!fHistograms->fRun3JetQA) throw std::logic_error("Run-3 jet QA was not constructed");
+  const double centrality=fIsOOData?reader->GetCentrality():-0.5;
+  for(int index=0;index<reader->GetNJets();++index) {
+    const double raw=reader->GetJetRawPt(index), eta=reader->GetJetEta(index), phi=reader->GetJetPhi(index);
+    if(!std::isfinite(raw) || raw<=0 || std::abs(eta)>=fJetEtaCut) continue;
+    if(fCutBadPhiRegion && phi>-.1 && phi<1.2) continue;
+    const auto stages=CorrectRecoJet(reader,index);
+    const double pt=stages.back();
+    if(pt<fJetMinimumPtCut || pt>fJetMaximumPtCut) continue;
+    if(fMatchJets) {
+      const bool matched=reader->HasMatchingJet(index);
+      const double partner=matched?reader->GetMatchedPt(index):-1;
+      const bool compatible=matched && pt*.5<=partner && partner*.5<=pt;
+      if((fMatchJets==1 && !compatible) || (fMatchJets==2 && compatible)) continue;
+    }
+    double trackMax=reader->GetJetMaxTrackPt(index);
+    if(trackMax==-1) {
+      trackMax=0;
+      for(int t=0;t<reader->GetNTracks();++t)
+        if(PassTrackCuts(reader,t,fHistograms->fhTrackCuts,true) &&
+           GetDeltaR(eta,phi,reader->GetTrackEta(t),reader->GetTrackPhi(t))<fJetRadius)
+          trackMax=std::max(trackMax,static_cast<double>(reader->GetTrackPt(t)));
+    }
+    const bool trackPass=EECJetSelection::PassTrackMaxFraction(trackMax,raw,fMinimumMaxTrackPtFraction,fMaximumMaxTrackPtFraction);
+    const bool idPass=EECJetSelection::PassJetID(reader->GetJetSelectionInputs(index),Run3JetIDPrescription());
+    fHistograms->fRun3JetQA->Fill(pt,raw,trackMax,centrality,fTotalEventWeight,trackPass,idPass,passesVeto,stages);
+  }
+}
+
 Bool_t EECAnalyzer::PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms){
   
   // Primary vertex has at least two tracks, is within 25 cm in z-rirection and within 2 cm in xy-direction. Only applied for data.
@@ -3347,8 +4031,19 @@ Bool_t EECAnalyzer::PassEventCuts(ForestReader* eventReader, const Bool_t fillHi
   // Cut for vertex z-position
   if(TMath::Abs(eventReader->GetVz()) > fVzCut) return false;
   if(fillHistograms) fHistograms->fhEvents->Fill(EECHistograms::kVzCut);
-  
-  return true;
+
+  const bool mixing = eventReader == fMixedEventReader;
+  bool passesVeto=true;
+  if(fApplyJetVeto){
+    ForestReader* jets = mixing && fMixedVetoJetReader ? fMixedVetoJetReader.get() : eventReader;
+    if(!mixing && fRecoJetReader) jets = fRecoJetReader;
+    passesVeto=PassRun3JetVeto(jets,mixing);
+  }
+  // Preserve the no-veto denominator: fill before rejecting the event.
+  if(fFillRun3JetQA && !mixing && eventReader==fJetReader &&
+     !(fMcCorrelationType==kGenGen || fMcCorrelationType==kGenReco))
+    FillRun3JetDiagnostics(eventReader,passesVeto);
+  return passesVeto;
   
 }
 
@@ -3380,7 +4075,6 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   
   Double_t trackPt = trackReader->GetTrackPt(iTrack);
   Double_t trackEta = trackReader->GetTrackEta(iTrack);
-  Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
   
   //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
   
@@ -3408,12 +4102,27 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kHighPurity);
   
   // Cut for relative error for track pT
+  if(fIsOOData || fIsPp2024Data){
+    if(!std::isfinite(trackPt) || !std::isfinite(trackEta) ||
+       !EECRun3Tracking::PassMomentum(trackPt, trackReader->GetTrackPtError(iTrack))) return false;
+  } else {
   if(trackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
+  }
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kPtError);
   
   // Cut for track distance from primary vertex
-  if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
-  if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
+  if(fIsOOData || fIsPp2024Data){
+    if(!EECRun3Tracking::PassVertex(trackReader->GetTrackVertexDistanceZ(iTrack),
+       trackReader->GetTrackVertexDistanceZError(iTrack), fMaxTrackDistanceToVertex)) return false;
+  } else {
+    if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false;
+  } // Mysterious cut about track proximity to vertex in z-direction
+  if(fIsOOData || fIsPp2024Data){
+    if(!EECRun3Tracking::PassVertex(trackReader->GetTrackVertexDistanceXY(iTrack),
+       trackReader->GetTrackVertexDistanceXYError(iTrack), fMaxTrackDistanceToVertex)) return false;
+  } else {
+    if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false;
+  } // Mysterious cut about track proximity to vertex in xy-direction
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kVertexDistance);
 
   // The final cuts are applied only for PbPb data
@@ -3424,6 +4133,7 @@ Bool_t EECAnalyzer::PassTrackCuts(ForestReader* trackReader, const Int_t iTrack,
   }
   
   // Cut for energy deposition in calorimeters for high pT tracks
+  const Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
   if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
   if(fFillTrackHistograms && !bypassFill) trackCutHistogram->Fill(EECHistograms::kCaloSignal);
   
@@ -3450,7 +4160,8 @@ Bool_t EECAnalyzer::PassTrackCuts(UnfoldingForestReader* trackReader, const Int_
   
   Double_t trackPt = trackReader->GetTrackPt(iTrack);
   Double_t trackEta = trackReader->GetTrackEta(iTrack);
-  Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
+
+  if((fIsOOData || fIsPp2024Data) && trackReader->GetTrackCharge(iTrack) == 0) return false;
   
   //  ==== Apply cuts for tracks and collect information on how much track are cut in each step ====
   
@@ -3465,13 +4176,34 @@ Bool_t EECAnalyzer::PassTrackCuts(UnfoldingForestReader* trackReader, const Int_
   if(!trackReader->GetTrackHighPurity(iTrack)) return false;     // High purity cut
   
   // Cut for relative error for track pT
+  if(fIsOOData || fIsPp2024Data){
+    if(!std::isfinite(trackPt) || !std::isfinite(trackEta) ||
+       !EECRun3Tracking::PassMomentum(trackPt, trackReader->GetTrackPtError(iTrack))) return false;
+  } else {
   if(trackReader->GetTrackPtError(iTrack)/trackPt >= fMaxTrackPtRelativeError) return false; // Cut for track pT relative error
+  }
   
   // Cut for track distance from primary vertex
-  if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in z-direction
-  if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false; // Mysterious cut about track proximity to vertex in xy-direction
+  if(fIsOOData || fIsPp2024Data){
+    if(!EECRun3Tracking::PassVertex(trackReader->GetTrackVertexDistanceZ(iTrack),
+       trackReader->GetTrackVertexDistanceZError(iTrack), fMaxTrackDistanceToVertex)) return false;
+  } else {
+    if(TMath::Abs(trackReader->GetTrackVertexDistanceZ(iTrack)/trackReader->GetTrackVertexDistanceZError(iTrack)) >= fMaxTrackDistanceToVertex) return false;
+  } // Mysterious cut about track proximity to vertex in z-direction
+  if(fIsOOData || fIsPp2024Data){
+    if(!EECRun3Tracking::PassVertex(trackReader->GetTrackVertexDistanceXY(iTrack),
+       trackReader->GetTrackVertexDistanceXYError(iTrack), fMaxTrackDistanceToVertex)) return false;
+  } else {
+    if(TMath::Abs(trackReader->GetTrackVertexDistanceXY(iTrack)/trackReader->GetTrackVertexDistanceXYError(iTrack)) >= fMaxTrackDistanceToVertex) return false;
+  } // Mysterious cut about track proximity to vertex in xy-direction
+
+  // Use the same reconstructed-track selection as the ordinary Run-3 path.
+  // The calorimeter and reconstruction-quality cuts below belong to the
+  // legacy response selection, and their branches may be absent in Run-3.
+  if(fIsOOData || fIsPp2024Data) return true;
   
   // Cut for energy deposition in calorimeters for high pT tracks
+  const Double_t trackEt = (trackReader->GetTrackEnergyEcal(iTrack)+trackReader->GetTrackEnergyHcal(iTrack))/TMath::CosH(trackEta);
   if(!(trackPt < fCalorimeterSignalLimitPt || (trackEt >= fHighPtEtFraction*trackPt))) return false;  // For high pT tracks, require signal also in calorimeters
   
   // Cuts for track reconstruction quality
@@ -3563,7 +4295,7 @@ Double_t EECAnalyzer::GetTrackEfficiencyCorrection(const Int_t iTrack){
   // Get track information
   Float_t trackPt = fTrackReader->GetTrackPt(iTrack);    // Track pT
   Float_t trackEta = fTrackReader->GetTrackEta(iTrack);  // Track eta
-  Int_t hiBin = fTrackReader->GetHiBin();                // hiBin for 2018 track correction
+  Int_t hiBin = fTrackReader->GetHiBin(); // Event hiBin for the collision-system-specific correction
   
   // Get the correction using the track and event information
   return GetTrackEfficiencyCorrection(trackPt, trackEta, hiBin);
@@ -3589,9 +4321,39 @@ Double_t EECAnalyzer::GetTrackEfficiencyCorrection(const Float_t trackPt, const 
   double preWeight = 1.0;
   if(fDataType == ForestReader::kPpMC) preWeight = 0.979;
   
-  // For PbPb2018 and pp2017, there is an efficiency table from which the correction comes
+  // For PbPb2018, ppref2017, OO2025, ppref2024 , there is an efficiency table from which the correction comes
   return preWeight * fTrackEfficiencyCorrector->getCorrection(trackPt, trackEta, hiBin);
   
+}
+
+// Export only native selected tracks. Lookup before any cone-coordinate change.
+void EECAnalyzer::ExportPairTracks(std::ostream& output,bool inJet,double jetEta,double jetPhi){
+  output<<'[';
+  bool first=true;
+  for(int index=0;index<fTrackReader->GetNTracks();++index){
+    if(!PassTrackCuts(fTrackReader,index,fHistograms->fhTrackCuts,true)) continue;
+    const double pt=fTrackReader->GetTrackPt(index),eta=fTrackReader->GetTrackEta(index),phi=fTrackReader->GetTrackPhi(index);
+    if(fCard->HasKey("MinPairTrackPt") && pt<=fCard->Get("MinPairTrackPt")) continue;
+    if(inJet && GetDeltaR(jetEta,jetPhi,eta,phi)>=fJetRadius) continue;
+    const double factor=GetTrackEfficiencyCorrection(pt,eta,fTrackReader->GetHiBin());
+    const bool unsupportedSingle=!std::isfinite(factor) || factor<=0;
+    if(inJet && unsupportedSingle) throw std::runtime_error("Unsupported source-event single-track correction in selected native jet");
+    // Full-event auxiliary populations also include tracks outside every
+    // accepted jet. Retain these with an explicit unavailable-factor marker;
+    // consumers invalidate any AN all-event count/control that uses them.
+    // Zero is a flagged sentinel, never a usable correction or a unity rescue.
+    if(!first) output<<',';
+    first=false;
+    output<<"{\"index\":"<<index<<",\"pt\":"<<pt<<",\"eta\":"<<eta<<",\"phi\":"<<phi
+      <<",\"charge\":"<<fTrackReader->GetTrackCharge(index)<<",\"subevent\":"<<fTrackReader->GetTrackSubevent(index)
+      <<",\"correction\":"<<(unsupportedSingle?0.0:factor)<<",\"single_track_lookup_eta\":"<<eta
+      <<",\"source_activity\":"<<fTrackReader->GetHiBin();
+    if(unsupportedSingle) output<<",\"unsupported_single\":true";
+    if(inJet && fMcCorrelationType==kRecoReco)
+      output<<",\"legacy_relative_eta_correction\":"<<GetTrackEfficiencyCorrection(pt,eta-jetEta,fTrackReader->GetHiBin());
+    output<<'}';
+  }
+  output<<']';
 }
 
 /*
@@ -3840,9 +4602,9 @@ Double_t EECAnalyzer::GetPerpendicularPhi(const Double_t phi, const Int_t direct
   Double_t adder[2] = {TMath::Pi()/2.0, -TMath::Pi()/2.0};
   Double_t perpendicularPhi = phi + adder[direction];
 
-  // Make sure that the reflected phi index is in the range [-pi, pi]
-  if(perpendicularPhi < TMath::Pi()) perpendicularPhi += 2*TMath::Pi();
-  if(perpendicularPhi > TMath::Pi()) perpendicularPhi -= 2*TMath::Pi();
+  // Canonical circular coordinate. The old lower-bound check used +pi,
+  // leaving some negative-direction controls below -pi.
+  perpendicularPhi = EECJetGeometry::WrapPhi(perpendicularPhi);
 
   // Return perpendicularized phi
   return perpendicularPhi;
@@ -3861,8 +4623,8 @@ Double_t EECAnalyzer::GetPerpendicularPhi(const Double_t phi, const Int_t direct
 Double_t EECAnalyzer::TransformToUnfoldingAxis(const Double_t deltaR, const Double_t jetPt) const{
 
   const Int_t nJetPtBinsEEC = fCard->GetNBin("JetPtBinEdgesEEC");
-  const Double_t maxDeltaR = 0.8;
-  Double_t transformedDeltaR = deltaR;
+  // Must match maxDeltaREEC in EECHistograms::CreateHistograms
+  const Double_t maxDeltaR = 2*fCard->Get("JetRadius");  Double_t transformedDeltaR = deltaR;
   for(Int_t iJetPt = 1; iJetPt < nJetPtBinsEEC+1; iJetPt++){
     if(jetPt >= fCard->Get("JetPtBinEdgesEEC",iJetPt)){
       transformedDeltaR += maxDeltaR;
@@ -4648,6 +5410,115 @@ void EECAnalyzer::FindBinnedHFEnergyMatchedEvents(std::vector<int>& mixedEventIn
 /*
  * In case we are doing binless mixing, prepare vectors for vz and hiBin from the mixing file for faster event matching
  */
+Int_t EECAnalyzer::GetOOClosureMultiplicity(ForestReader* reader,bool pureHijing) const{
+  int result=0;
+  for(int index=0;index<reader->GetNTracks();++index){
+    const int origin=reader->GetTrackSubevent(index);
+    if(!pureHijing && origin!=0 && origin!=1)
+      throw std::runtime_error("OO embedded GenGen pilot requires verified PYTHIA=0/HIJING=1 particle origin labels");
+    if(oo_eec::IsPilotMatchingParticle(reader->GetTrackPt(index),reader->GetTrackEta(index),reader->GetTrackCharge(index),reader->GetTrackMCStatus(index),origin,pureHijing)) ++result;
+  }
+  return result;
+}
+
+oo_eec::PilotEvent EECAnalyzer::ReadOOClosureEvent(ForestReader* reader,Int_t entry,bool pureHijing) const{
+  if(!reader->HasPhysicalEventIdentity()) throw std::runtime_error("OO pilot requires physical run/lumi/64-bit evt branches");
+  oo_eec::PilotEvent result;
+  result.id={reader->GetRunNumber(),reader->GetLumiNumber(),reader->GetEventNumber()};
+  result.entry=entry;result.vz=reader->GetVz();result.nh=GetOOClosureMultiplicity(reader,pureHijing);
+  result.weight=reader->GetEventWeight();result.hiBin=reader->GetStoredHiBin();
+  // OFF is an exact identity, including raw low-HF cases. No legacy matcher is called.
+  result.hf=oo_eec::PilotHfOff(reader->GetRawHFSum());
+  for(int index=0;index<reader->GetNTracks();++index){
+    if(pureHijing || reader->GetTrackSubevent(index)>0)
+      result.fingerprint.add(reader->GetTrackPt(index),reader->GetTrackEta(index),reader->GetTrackPhi(index),reader->GetTrackCharge(index));
+  }
+  result.backgroundKnown=result.fingerprint.count>0;
+  if(result.backgroundKnown) result.background=result.fingerprint.key();
+  if(!std::isfinite(result.vz) || !std::isfinite(result.weight) || !std::isfinite(result.hf))
+    throw std::runtime_error("Non-finite OO pilot event metadata");
+  return result;
+}
+
+void EECAnalyzer::PrepareOOClosurePool(){
+  // Separate native reader: prescan exactly the same capped signal-entry ranges,
+  // preserving the main reader's source-event state and event-cut QA.
+  if(fOOClosure->partitionPolicy==0){
+  GeneratorLevelForestReader prescan(fDataType,fTriggerSelection,fJetType,fJetAxis,false,true,true,false);
+  int scanned=0;
+  for(const auto& file:fFileNames){
+    if(scanned>=fOOClosure->maxSignal) break;
+    prescan.ReadForestFromFileList(std::vector<TString>{file});
+    int count=static_cast<int>(std::min<Long64_t>(prescan.GetTotalChainEntries(),fOOClosure->maxSignal-scanned));
+    if(fMaxEventsPerFile>0) count=std::min(count,fMaxEventsPerFile);
+    for(int entry=0;entry<count;++entry){
+      prescan.GetEvent(entry);
+      const auto event=ReadOOClosureEvent(&prescan,entry,false);
+      if(!fOOClosure->signalHoldoutIds.insert(event.id).second)
+        throw std::runtime_error("Duplicate signal physical identity in capped OO holdout prescan");
+      if(event.backgroundKnown) fOOClosure->signalBackgrounds.insert(event.background);
+      ++scanned;
+    }
+  }
+  cout<<"OOClosurePilot: signal holdout prescan="<<scanned<<", physical IDs="<<fOOClosure->signalHoldoutIds.size()<<", nonempty background fingerprints="<<fOOClosure->signalBackgrounds.size()<<endl;
+  } // Existing bounded test reserves its scanned signals; campaign policy reserves donors.
+  fOOClosure->reservedPoolIds.clear();
+  fOOClosure->reservedPoolBackgrounds.clear();
+  fOOClosure->pool.clear();
+  unsigned long eligible=0,countA=0,countB=0,excludedPhysical=0,excludedBackground=0;
+  for(int entry=0;entry<fnEventsInMixingFile;++entry){
+    ReadMixingEvent(entry);
+    auto event=ReadOOClosureEvent(fMixedEventReader,entry,true);
+    event.eligible=PassEventCuts(fMixedEventReader,false);
+    if(fOOClosure->partitionPolicy==0){
+      oo_eec::ExcludePilotHoldout(event,fOOClosure->signalHoldoutIds,fOOClosure->signalBackgrounds);
+    } else {
+      fOOClosure->reservedPoolIds.insert(event.id);
+      if(event.backgroundKnown) fOOClosure->reservedPoolBackgrounds.insert(event.background);
+    }
+    excludedPhysical+=event.physicalExcluded;
+    excludedBackground+=event.backgroundExcluded;
+    if(fTriggerSelection==8 && fMixedEventReader->GetCaloJet15FilterBit()!=1) event.eligible=false;
+    if(event.eligible){ ++eligible; if(oo_eec::PilotPool(event,fOOClosure->seed)==0) ++countA; else ++countB; }
+    fOOClosure->pool.push_back(event);
+  }
+  oo_eec::ValidatePilotPool(fOOClosure->pool);
+  int largestNH=0;
+  for(const auto& event:fOOClosure->pool) largestNH=std::max(largestNH,event.nh);
+  fHistograms->fhMixedEventCounts->SetBins(60,-15.,15.,largestNH+1,-.5,largestNH+.5);
+  fHistograms->fhMixedEventCounts->GetXaxis()->SetTitle("v_{z} (cm)");
+  fHistograms->fhMixedEventCounts->GetYaxis()->SetTitle("N_{H}: stable charged HIJING p_{T}>0.7 GeV, |#eta|<2.4");
+  for(const auto& event:fOOClosure->pool) if(event.eligible) fHistograms->fhMixedEventCounts->Fill(event.vz,event.nh);
+  cout<<"OOClosurePilot: pool global cap="<<fOOClosure->maxPool<<", scanned="<<fOOClosure->pool.size()<<", eligible="<<eligible<<", A="<<countA<<", B="<<countB<<", excluded signal physical IDs="<<excludedPhysical<<", excluded signal background fingerprints="<<excludedBackground<<endl;
+  cout<<"OOClosurePilot: partition policy="<<fOOClosure->partitionPolicy
+      <<", reserved donor identities="<<fOOClosure->reservedPoolIds.size()
+      <<", reserved nonempty donor background fingerprints="<<fOOClosure->reservedPoolBackgrounds.size()<<endl;
+  // Sparse/empty pools are recorded as failed assignments; no widening or partial estimator.
+}
+
+void EECAnalyzer::AssignOOClosurePartners(Int_t entry){
+  fOOClosure->signal.entry=entry;
+  oo_eec::PilotAssignment assignment;
+  const std::string reservation=fOOClosure->partitionPolicy==1
+    ? oo_eec::PilotReservedSignalReason(fOOClosure->signal,fOOClosure->reservedPoolIds,fOOClosure->reservedPoolBackgrounds) : "";
+  if(reservation.empty()) assignment=oo_eec::SelectPilotPartners(fOOClosure->signal,fOOClosure->pool,fOOClosure->seed);
+  else assignment.reason=reservation; // no partial estimator or matched exposure
+
+  fOOClosure->assignment=assignment;
+  auto& out=fOOClosure->partners;
+  const auto& signal=fOOClosure->signal;
+  out<<oo_eec::PilotKey(signal.id,false)<<','<<signal.id.run<<','<<signal.id.lumi<<','<<signal.id.event<<','<<entry<<','<<signal.vz<<','<<signal.nh<<','<<signal.hiBin<<','<<fTotalEventWeight<<','<<signal.weight<<','<<(assignment.matched()?"matched":"failed")<<','<<assignment.reason<<','<<assignment.inspected;
+  for(int index:assignment.partners){
+    if(index<0){ out<<",,,,,,,,"; continue; }
+    const auto& donor=fOOClosure->pool.at(index);
+    ++fOOClosure->uses[index];
+    out<<','<<oo_eec::PilotKey(donor.id,true)<<','<<donor.id.run<<','<<donor.id.lumi<<','<<donor.id.event<<','<<donor.entry<<','<<donor.vz<<','<<donor.nh<<','<<donor.weight;
+  }
+  out<<",unknown_lineage_fingerprint_screened,"<<(signal.backgroundKnown?signal.background:0);
+  for(int index:assignment.partners) out<<','<<(index<0?0:fOOClosure->pool.at(index).background);
+  out<<','<<signal.fingerprint.text()<<','<<fOOClosure->partitionPolicy<<'\n';
+}
+
 void EECAnalyzer::PrepareMixingVectors(){
   
   // Print out debug message
@@ -4666,27 +5537,51 @@ void EECAnalyzer::PrepareMixingVectors(){
 
   // Event matching based on HiBin
   if(fEventMatchForMixing == kMatchHiBin){
+    Long64_t nPassCuts = 0, nPassMB = 0, nPassBoth = 0;
+    Long64_t nPV = 0, nHF = 0, nPileup = 0, nVz = 0;
+
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
+
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
         fMixedEventVz.push_back(fMixedEventReader->GetVz());
         fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
-      } else if(PassEventCuts(fMixedEventReader,false)){
-        fMixedEventVz.push_back(fMixedEventReader->GetVz());
-        fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
-      } else { // If event cuts not passed, input values such that events will never be mixed with these
-        fMixedEventVz.push_back(kNonsenseValue);
-        fMixedEventHiBin.push_back(kNonsenseValue);
-      }
+      } else {
+        const Bool_t passCuts = PassEventCuts(fMixedEventReader, false);
+        const Bool_t passMB = (fDataType != ForestReader::kOO || fMixedEventReader->GetCaloJet15FilterBit() == 1);
+
+        nPV     += (fMixedEventReader->GetPrimaryVertexFilterBit() != 0);
+        nHF     += (fMixedEventReader->GetHfCoincidenceFilterBit() != 0);
+        nPileup += (fMixedEventReader->GetPileupFilterBit() != 0);
+        nVz     += (TMath::Abs(fMixedEventReader->GetVz()) <= fVzCut);
+        nPassCuts += passCuts;
+        nPassMB   += passMB;
+        nPassBoth += (passCuts && passMB);
+
+        if (passCuts && passMB) {
+          fMixedEventVz.push_back(fMixedEventReader->GetVz());
+          fMixedEventHiBin.push_back(fMixedEventReader->GetHiBin());
+        } else {
+          fMixedEventVz.push_back(kNonsenseValue);
+          fMixedEventHiBin.push_back(kNonsenseValue);
+        }
     } // Loop over all mixed events
   } // Event matching based on HiBin
+  if (fDataType == ForestReader::kOO && !fMegaSkimMode) {
+        cout << "OO pool QA: total=" << fnEventsInMixingFile
+            << " PV=" << nPV << " HF=" << nHF
+            << " pileup=" << nPileup << " vz=" << nVz
+            << " allEventCuts=" << nPassCuts
+            << " MB=" << nPassMB << " both=" << nPassBoth << endl;
+      }
+    } 
 
   // Event matching based on background multiplicity
   else if(fEventMatchForMixing == kMatchMultiplicity){
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
@@ -4706,7 +5601,7 @@ void EECAnalyzer::PrepareMixingVectors(){
   else if(fEventMatchForMixing == kMatchHFEnergy){
 
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
       if(fMegaSkimMode){
         // Event selection is already applied in mega skim mode. No need to check it again here.
@@ -4751,7 +5646,7 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
   if(fEventMatchForMixing == kMatchHiBin){
 
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
 
       if(fMegaSkimMode){
@@ -4771,7 +5666,7 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
   // For MC, fill the vz and generator level particle multiplicity arrays for more accurate event matching
   else if(fEventMatchForMixing == kMatchMultiplicity){
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
 
       if(fMegaSkimMode){
@@ -4792,7 +5687,7 @@ void EECAnalyzer::PrepareBinnedMixingVectors(){
   else if(fEventMatchForMixing == kMatchHFEnergy){
 
     for(Int_t iMixedEvent = 0; iMixedEvent < fnEventsInMixingFile; iMixedEvent++){
-      fMixedEventReader->GetEvent(iMixedEvent);
+      ReadMixingEvent(iMixedEvent);
       fMixedEventEventNumber.push_back(fMixedEventReader->GetEventNumber());
 
       if(fMegaSkimMode){

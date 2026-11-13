@@ -15,12 +15,19 @@ LDFLAGS  += $(shell root-config --libs)
         
 # Use the following form if you have classes inherint TObject
 # HDRS += $(HDRSDICT) src/Class.h ... nanoDict.h       
-HDRS += src/ForestReader.h src/HighForestReader.h src/GeneratorLevelForestReader.h src/UnfoldingForestReader.h src/EECHistograms.h src/EECAnalyzer.h src/ConfigurationCard.h src/JetCorrector.h src/JetUncertainty.h src/trackingEfficiency2018PbPb.h src/trackingEfficiency2017pp.h src/trackingEfficiency2016pPb.h src/TrackingEfficiencyInterface.h src/BinningCard.h src/TrackPairEfficiencyCorrector.h src/SmearingProvider.h src/JetMetScalingFactorManager.h src/CovarianceHelper.h
+HDRS += src/ForestReader.h src/HighForestReader.h src/GeneratorLevelForestReader.h src/UnfoldingForestReader.h src/EECHistograms.h src/EECAnalyzer.h src/ConfigurationCard.h src/JetCorrector.h src/JetUncertainty.h src/trackingEfficiency2018PbPb.h src/trackingEfficiency2017pp.h src/trackingEfficiency2016pPb.h src/trackingEfficiency2024pp.h src/trackingEfficiency2025OO.h src/TrackingEfficiencyInterface.h src/BinningCard.h src/TrackPairEfficiencyCorrector.h src/SmearingProvider.h src/JetMetScalingFactorManager.h src/CovarianceHelper.h
 
 SRCS = $(HDRS:.h=.cxx)
 OBJS = $(HDRS:.h=.o)
 
 all:            $(PROGRAM)
+
+src/EECAnalyzer.o: src/OOMixingPilot.h src/OOEventIdentity.h src/Run3JetGeometry.h src/Run3JetSelection.h src/Run3JetSelectionInputs.h
+src/Run3JetSelection.o: src/Run3JetSelectionInputs.h
+src/ForestReader.o src/HighForestReader.o src/UnfoldingForestReader.o src/GeneratorLevelForestReader.o: src/ForestReader.h src/Run3JetSelectionInputs.h
+
+OBJS += src/Run3JetSelection.o
+src/HighForestReader.o src/GeneratorLevelForestReader.o: src/Run3JetBranchValidation.h
 
 $(PROGRAM):     $(OBJS) $(PROGRAM).cxx
 		@echo "Linking $(PROGRAM) ..."
@@ -48,3 +55,10 @@ cl:  clean $(PROGRAM)
 #		@echo "Generating dictionary ..."
 #		@rm -f nanoDict.cc nanoDict.hh nanoDict.h
 #		@rootcling nanoDict.cc -c -D$(version) $(HDRSDICT)
+
+# Run-3 tracking changes must invalidate dependent objects in incremental builds.
+src/EECAnalyzer.o: src/Run3TrackSelection.h
+src/HighForestReader.o: src/Run3TrackCharge.h
+src/trackingEfficiency2025OO.o src/trackingEfficiency2024pp.o: src/TrackingTableValidation.h
+src/EECHistograms.o src/EECAnalyzer.o: src/Run3JetQA.h
+src/EECAnalyzer.o src/HighForestReader.o src/UnfoldingForestReader.o: src/Run3JetL1Inputs.h

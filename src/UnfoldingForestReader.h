@@ -9,6 +9,10 @@
 #ifndef UNFOLDINGFORESTREADER_H
 #define UNFOLDINGFORESTREADER_H
 
+#include "Run3JetSelectionInputs.h"
+#include "Run3JetL1Inputs.h"
+#include <memory>
+
 // C++ includes
 #include <iostream>
 #include <assert.h>
@@ -26,13 +30,17 @@ using namespace std;
 class UnfoldingForestReader{
   
 private:
+  std::shared_ptr<Run3JetL1Inputs> fRun3L1Inputs;
   static const Int_t fnMaxJet = 250;        // Maximum number of jets in an event
   static const Int_t fnMaxTrack = 60000;    // Maximum number of tracks in an event
   
 public:
   
   // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, knDataTypes};
+  // Keep the values synchronized with ForestReader. pPb is not supported here.
+  enum enumDataTypes{kPp = 0, kPbPb = 1, kPpMC = 2, kPbPbMC = 3,
+                     kOO = 9, kOOMC = 10, kPpRef5p36TeV = 11,
+                     kPpRef5p36TeVMC = 12, knDataTypes = 13};
   
   // Constructors and destructors
   UnfoldingForestReader();                                          // Default constructor
@@ -69,6 +77,16 @@ public:
   Float_t GetMatchedGenPt(Int_t iJet) const;  // Getter for matched generator level jet pT
   Float_t GetMatchedGenEta(Int_t iJet) const; // Getter for matched generator level jet eta
   Float_t GetMatchedGenPhi(Int_t iJet) const; // Getter for matched generator level jet phi
+
+  void EnableRun3JetSelection(Bool_t enabled = true);
+  EECJetSelection::JetInputs GetJetSelectionInputs(Int_t iJet) const;
+  void EnableRun3PpL1Inputs() {
+    fRun3L1Inputs = std::make_shared<Run3JetL1Inputs>("ggHiNtuplizer/EventTree","rho","jtarea");
+  }
+  std::pair<double,double> GetJetL1Inputs(Int_t iJet) const {
+    if(!fRun3L1Inputs) throw std::logic_error("2024 ppRef L1 inputs were not enabled");
+    return fRun3L1Inputs->Get(iJet);
+  }
 
   // Getters for leaves in generator level jet tree
   Int_t GetNGeneratorJets() const;                   // Getter for number of generator level jets
@@ -118,8 +136,10 @@ private:
   
   // Methods
   void Initialize();      // Connect the branches to the tree
+  Bool_t IsMC() const;
+  Bool_t IsRun3() const;
     
-  Int_t fDataType;        // Type of data read with the tree. 0 = pp, 1 = PbPb, 2 = ppMC, 3 = PbPbMC
+  Int_t fDataType;        // Same type identifiers as ForestReader (0-3 and 9-12)
   Int_t fJetType;         // Choose the type of jets usedfor analysis. 0 = Calo jets, 1 = PF jets
   Int_t fJetAxis;         // Jet axis used for the jets. 0 = Anti-kT, 1 = WTA
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
@@ -188,6 +208,10 @@ private:
   Int_t fHiBin;        // HiBin = Centrality percentile * 2
   Float_t fPtHat;      // pT hat
   
+  Bool_t fRun3JetSelectionEnabled = false;
+  Bool_t fRun3JetInputsBound = false;
+  EECJetSelection::Detail::NativePFJetInputs<fnMaxJet> fRun3PFJetInputs;
+
   // Leaves for jet tree
   Int_t fnJets;          // number of jets in an event
   Int_t fnGenJets;       // Number of generator level jets in an event

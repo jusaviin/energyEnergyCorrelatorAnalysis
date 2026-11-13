@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include <map>        // To avoid using variable length arrays, that are clang extension
+#include <memory>
 
 // Root includes
 #include <TString.h>
@@ -26,12 +27,17 @@
 #include "JetCorrector.h"
 #include "JetUncertainty.h"
 #include "trackingEfficiency2018PbPb.h"
+#include "trackingEfficiency2025OO.h"
 #include "trackingEfficiency2017pp.h"
+#include "trackingEfficiency2024pp.h"
 #include "trackingEfficiency2016pPb.h"
 #include "TrackingEfficiencyInterface.h"
 #include "TrackPairEfficiencyCorrector.h"
 #include "JetMetScalingFactorManager.h"
 #include "SmearingProvider.h"
+#include "Run3JetSelection.h"
+#include <cmath>
+#include "OOMixingPilot.h"
 
 class EECAnalyzer{
   
@@ -65,7 +71,7 @@ public:
  private:
   
   // Private methods
-  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const vector<double> selectedTrackCorrection[EECHistograms::knJetConeTypes], const int coneSourceHiBin[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -73,8 +79,14 @@ public:
   void FillUnfoldingResponse(); // Fill the histograms needed for unfolding study
   void ConstructParticleResponses(); // Construct DeltaR and pT1*pT2 response matrices
   void ReadConfigurationFromCard(); // Read all the configuration from the input card
+  void ExportPairTracks(std::ostream& output, bool inJet, double jetEta=0, double jetPhi=0); // Native selected tracks in physical detector coordinates
 
   // Methods for event mixing
+  void PrepareOOClosurePool();
+  void AssignOOClosurePartners(Int_t entry);
+  Int_t GetOOClosureMultiplicity(ForestReader* reader, bool pureHijing) const;
+  oo_eec::PilotEvent ReadOOClosureEvent(ForestReader* reader, Int_t entry, bool pureHijing) const;
+  std::shared_ptr<oo_eec::ClosurePilotState> fOOClosure = std::make_shared<oo_eec::ClosurePilotState>();
   void PrepareMixingVectors(); // Find vz and hiBin values from mixed event in preparation for event mixing
   void PrepareBinnedMixingVectors(); // Prepare variables needed for mixing in a binned manner
   void FindMultiplicityMatchedEvents(std::vector<int>& mixedEventIndices, const Int_t nEventsToMatch, const Double_t vz, Int_t const currentMultiplicity, const Int_t eventNumber, const Int_t iEvent, const Bool_t binnedMixing); // Find the mixed events that are matched with the signal event using multiplicity
@@ -100,8 +112,36 @@ public:
   Bool_t PassGenParticleSelection(ForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassGenParticleSelection(UnfoldingForestReader* trackReader, const Int_t iTrack); // Check if a generator particle passes the defined selections
   Bool_t PassEventCuts(ForestReader* eventReader, const Bool_t fillHistograms); // Check if the event passes the event cuts
+  Bool_t PassRun3JetVeto(ForestReader* jetReader, Bool_t mixing); // Scan all reco jets before analysis jet cuts
+  void ReadMixingEvent(Int_t event); // Align generator-track and reco-veto companions
+  EECJetSelection::JetIDPrescription Run3JetIDPrescription() const;
+  bool fUseRun3JEC = false;
+  bool fUsePpL1FastJet = false; // Optional ppRef L1; off for current forests without a saved rho tree.
+  bool fFillRun3JetQA = false;
+  // Run-3 JEC changes jet pT. Optional pp L1 uses rho/jet area only when enabled; detector jteta selects the payload bin; WTA remains the EEC axis.
+  template<class Reader> std::vector<double> CorrectRecoJet(Reader* reader, int index) {
+    const double raw = reader->GetJetRawPt(index);
+    if(!std::isfinite(raw) || raw<=0) throw std::invalid_argument("Cannot calibrate a jet with nonpositive/nonfinite rawpt");
+    double eta=reader->GetJetEta(index), phi=reader->GetJetPhi(index);
+    if(fUseRun3JEC) {
+      const auto jet=reader->GetJetSelectionInputs(index); eta=jet.eta; phi=jet.phi;
+      if(fIsPp2024Data && fUsePpL1FastJet) {
+        const auto inputs=reader->GetJetL1Inputs(index);
+        fJetCorrector->SetRho(inputs.first);
+        fJetCorrector->SetJetArea(inputs.second);
+      }
+    }
+    fJetCorrector->SetJetPT(raw); fJetCorrector->SetJetEta(eta); fJetCorrector->SetJetPhi(phi);
+    auto stages=fJetCorrector->GetCorrectedPTStages();
+    for(const double pt:stages) if(!std::isfinite(pt) || pt<=0)
+      throw std::runtime_error("JEC produced invalid momentum; check payload support and detector coordinates");
+    return stages;
+  }
+  void FillRun3JetDiagnostics(ForestReader* reader, bool eventPassesVeto);
+
   Double_t GetTrackEfficiencyCorrection(const Int_t iTrack); // Get the track efficiency correction for a given track
   Double_t  GetTrackEfficiencyCorrection(const Float_t trackPt, const Float_t trackEta, const Int_t hiBin); // Get the track efficiency correction for given track and event information
+  void ConfigureJetUncertainty(const Double_t rawPt, const Double_t correctedPt, const Double_t eta, const Double_t phi); // Preserve legacy inputs; future Run-3 JES uses corrected pT
   Double_t GetVzWeight(const Double_t vz) const;  // Get the proper vz weighting depending on analyzed system
   Double_t GetCentralityWeight(const Int_t hiBin) const; // Get the proper centrality weighting depending on analyzed system
   Double_t GetMultiplicityWeight(const Double_t multiplicity) const; // Get the proper multiplicity weight for MC
@@ -155,8 +195,19 @@ public:
   Int_t fDebugLevel;                 // Amount of debug messages printed to console
   Bool_t fIsRealData;                // Simplification from fDataType: True = any measured data, False = any simulation
   Bool_t fIsPPbData;                 // Flag for any pPb dataset: True = any pPb dataset, False = anything else
-  Bool_t fIsPpData;                  // Flag for any pp dataset: True = any pp dataset, False = anything else
+  Bool_t fIsPpData;                  // Flag for any pp dataset: True = any Run 2 pp dataset, False = anything else
+  Bool_t fIsOOData;                  // Flag for any OO dataset: True = any OO dataset, False = anything else
+  Bool_t fIsPp2024Data;              // Flag for any pp dataset: True = any Run 3 pp dataset, False = anything else
+
   
+  Int_t fRun3JetID = 0; // 0 inherited quality, 1 pinned HIN PbPb ID for OO / pp ID for ppRef
+  Bool_t fApplyJetVeto = false;
+  TString fJetVetoPtConvention; // Explicit raw, stored, or recomputed; no default
+  std::shared_ptr<EECJetSelection::JetVetoMap> fJetVetoMap;
+  std::shared_ptr<HighForestReader> fMixedVetoJetReader;
+
+  Int_t fMaxEventsPerFile; // Optional bounded pilot limit; 0 means unlimited
+
   // Weights for filling the MC histograms
   Double_t fVzWeight;                // Weight for vz in MC
   Double_t fCentralityWeight;        // Weight for centrality in MC

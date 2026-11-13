@@ -11,12 +11,20 @@
 
 // Own includes
 #include "ForestReader.h"
+#include "Run3TrackCharge.h"
+#include "Run3JetL1Inputs.h"
+#include <memory>
 
 using namespace std;
 
 class HighForestReader : public ForestReader{
   
 private:
+  bool UsesRun3SlimTracks() const {
+    return fDataType == kOO || fDataType == kOOMC ||
+           fDataType == kPpRef5p36TeV || fDataType == kPpRef5p36TeVMC;
+  }
+  std::shared_ptr<Run3JetL1Inputs> fRun3L1Inputs;
   static const Int_t fnMaxJet = 250;        // Maximum number of jets in an event
   static const Int_t fnMaxTrack = 60000;    // Maximum number of tracks in an event
   
@@ -30,6 +38,7 @@ public:
   HighForestReader& operator=(const HighForestReader& obj);        // Equal sign operator
   
   // Methods
+  Long64_t GetTotalChainEntries() const override;
   void ReadForestFromFile(TFile* inputFile);  // Read the forest from a file
   void ReadForestFromFileList(std::vector<TString> fileList);  // Read the forest from a file list
   void BurnForest();                           // Burn the forest  
@@ -43,6 +52,16 @@ public:
   Float_t GetJetRawPt(Int_t iJet) const;      // Getter for jet raw pT
   Float_t GetJetMaxTrackPt(Int_t iJet) const; // Getter for maximum track pT inside a jet
   
+  void EnableRun3JetSelection(Bool_t enabled = true) override;
+  EECJetSelection::JetInputs GetJetSelectionInputs(Int_t iJet) const override;
+  void EnableRun3PpL1Inputs() override {
+    fRun3L1Inputs = std::make_shared<Run3JetL1Inputs>("ggHiNtuplizer/EventTree","rho","jtarea");
+  }
+  std::pair<double,double> GetJetL1Inputs(Int_t iJet) const override {
+    if(!fRun3L1Inputs) throw std::logic_error("2024 ppRef L1 inputs were not enabled");
+    return fRun3L1Inputs->Get(iJet);
+  }
+
   // Getters for leaves in the track tree
   Float_t GetTrackPt(Int_t iTrack) const;                    // Getter for track pT
   Float_t GetTrackPtError(Int_t iTrack) const;               // Getter for track pT error
@@ -114,6 +133,12 @@ private:
   TBranch* fParticleChargeBranch;         // Branch for particle charges
   TBranch* fParticleSubeventBranch;       // Branch for particle subevent indices (0 = PYTHIA, (>0) = HYDJET)
   
+  EECJetSelection::Detail::NativePFJetInputs<fnMaxJet> fRun3PFJetInputs;
+  Bool_t fRun3JetInputsBound = false;
+  Int_t fRun3ValidatedJetTreeNumber = -1;
+  Float_t fDetectorJetEtaArray[fnMaxJet] = {0};
+  Float_t fDetectorJetPhiArray[fnMaxJet] = {0};
+
   // Leaves for jet tree
   Float_t fJetPtArray[fnMaxJet] = {0};            // pT:s of all the jets in an event
   Float_t fJetPhiArray[fnMaxJet] = {0};           // phis of all the jets in an event
@@ -130,6 +155,8 @@ private:
   Float_t fMatchedJetEtaArray[fnMaxJet] = {0};    // etas of all the generator level jets in an event
   Float_t fMatchedJetWTAEtaArray[fnMaxJet] = {0}; // etas of all the generator level jets in an event with respect to WTA axis
   
+  EECRun3Tracking::TrackCharge fRun3TrackCharge;
+
   // Leaves for the track tree in AOD forests
   Float_t fTrackPtArray[fnMaxTrack] = {0};                    // Array for track pT:s
   Float_t fTrackPtErrorArray[fnMaxTrack] = {0};               // Array for track pT errors

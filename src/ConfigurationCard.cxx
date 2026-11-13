@@ -49,6 +49,10 @@ ConfigurationCard::~ConfigurationCard(){
 }
 
 
+bool ConfigurationCard::HasKey(TString keyword) const{
+  return fKeyTable.FindObject(keyword.Data()) != nullptr;
+}
+
 unsigned int ConfigurationCard::GetTVectorIndex(TString keyword, int tol) const{
   
   // Returns fIndex of a TVector according to its position in std::hash_map
@@ -299,5 +303,10 @@ void ConfigurationCard::WriteCard(TDirectory *file) const{
   fGitHash.Write("GitHash");
   for(unsigned int i=0;i<fValuesVector.size();i++){
     fValuesVector[i].Write(fKeyWordVector[i]);
+    if(fKeyWordVector[i] == "MixingFileList") TObjString(fValueString[i]).Write("MixingFileListPath");
+    if(fKeyWordVector[i] == "JetVetoMapFile" || fKeyWordVector[i] == "JetVetoMapHistogram" ||
+       fKeyWordVector[i] == "JetVetoPtConvention" || fKeyWordVector[i] == "Run3JetIDTable" ||
+       fKeyWordVector[i] == "Run3TrackSelection" || fKeyWordVector[i] == "Run3TrackPairCorrectionFile")
+      TObjString(fValueString[i]).Write(fKeyWordVector[i]+"String");
   }
 }

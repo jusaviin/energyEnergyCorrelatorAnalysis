@@ -15,6 +15,7 @@ ForestReader::ForestReader() :
   fReadTrackTree(true),
   fIsMiniAOD(false),
   fMixingMode(false),
+  fRun3JetSelectionEnabled(false),
   fMegaSkimMode(false),
   fIsMC(false),
   fIsPPb(false),
@@ -94,7 +95,7 @@ ForestReader::ForestReader() :
  * Custom constructor
  *
  *  Arguments:
- *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = pPb p -> -eta, 5 = pPb p -> +eta 6 = pPb 5 TeV, 7 = pPb MC p -> -eta, 8 = pPb MC p -> +eta
+ *   Int_t dataType: 0 = pp, 1 = PbPb, 2 = pp MC, 3 = PbPb MC, 4 = pPb p -> -eta, 5 = pPb p -> +eta, 6 = pPb 5 TeV, 7 = pPb MC p -> -eta, 8 = pPb MC p -> +eta, 9 = OO, 10 = OO MC
  *   Int_t useJetTrigger: 0 = Do not use any triggers, > 0 = Require jet trigger
  *   Int_t jetType: 0 = Calo jets, 1 = PF jets
  *   Int_t jetAxis: 0 = Anti-kT axis, 1 = WTA axis
@@ -111,6 +112,7 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   fReadTrackTree(readTrackTree),
   fIsMiniAOD(false),
   fMixingMode(mixingMode),
+  fRun3JetSelectionEnabled(false),
   fMegaSkimMode(megaSkimMode),
   fHiVzBranch(0),
   fHiBinBranch(0),
@@ -184,8 +186,9 @@ ForestReader::ForestReader(Int_t dataType, Int_t useJetTrigger, Int_t jetType, I
   
   SetDataType(dataType);
 
-  // We do not use trigger in mixed event mode, so disable jet trigger if mixing mode is used
-  if(fMixingMode) fUseJetTrigger = false;
+  // Regular OO mixing requires the minimum-bias trigger from the HLT tree.
+  if(fMixingMode && (fDataType != kOO || fMegaSkimMode))
+    fUseJetTrigger = false;
   
 }
 
@@ -201,6 +204,7 @@ ForestReader::ForestReader(const ForestReader& in) :
   fReadTrackTree(in.fReadTrackTree),
   fIsMiniAOD(in.fIsMiniAOD),
   fMixingMode(in.fMixingMode),
+  fRun3JetSelectionEnabled(in.fRun3JetSelectionEnabled),
   fMegaSkimMode(in.fMegaSkimMode),
   fIsMC(in.fIsMC),
   fIsPPb(in.fIsPPb),
@@ -254,6 +258,11 @@ ForestReader::ForestReader(const ForestReader& in) :
   fHFPlus(in.fHFPlus),
   fHFMinus(in.fHFMinus),
   fPtHat(in.fPtHat),
+  fRawHFSum(in.fRawHFSum),
+  fHasRawHFSum(in.fHasRawHFSum),
+  fRunNumber(in.fRunNumber),
+  fLumiNumber(in.fLumiNumber),
+  fHasPhysicalEventIdentity(in.fHasPhysicalEventIdentity),
   fEventNumber(in.fEventNumber),
   fnJets(in.fnJets),
   fnMatchedJets(in.fnMatchedJets),
@@ -291,6 +300,7 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fReadTrackTree = in.fReadTrackTree;
   fIsMiniAOD = in.fIsMiniAOD;
   fMixingMode = in.fMixingMode;
+  fRun3JetSelectionEnabled = in.fRun3JetSelectionEnabled;
   fMegaSkimMode = in.fMegaSkimMode;
   fIsMC = in.fIsMC;
   fIsPPb = in.fIsPPb;
@@ -344,6 +354,11 @@ ForestReader& ForestReader::operator=(const ForestReader& in){
   fHFPlus = in.fHFPlus;
   fHFMinus = in.fHFMinus;
   fPtHat = in.fPtHat;
+  fRawHFSum = in.fRawHFSum;
+  fHasRawHFSum = in.fHasRawHFSum;
+  fRunNumber = in.fRunNumber;
+  fLumiNumber = in.fLumiNumber;
+  fHasPhysicalEventIdentity = in.fHasPhysicalEventIdentity;
   fEventNumber = in.fEventNumber;
   fnJets = in.fnJets;
   fnMatchedJets = in.fnMatchedJets;
@@ -389,9 +404,25 @@ void ForestReader::SetDataType(Int_t dataType){
     fDataType = dataType;
 
     // Also set the relevant flags for this data type
-    fIsMC = (fDataType == kPpMC) || (fDataType == kPbPbMC) || (fDataType == kPPbMC_pToMinusEta) || (fDataType == kPPbMC_pToPlusEta);
-    fIsPPb = (fDataType == kPPb_pToMinusEta) || (fDataType == kPPb_pToPlusEta) || (fDataType == kPPb_pToMinusEta_5TeV) || (fDataType == kPPbMC_pToMinusEta) || (fDataType == kPPbMC_pToPlusEta);
+    fIsMC = (fDataType == kPpMC) ||
+            (fDataType == kPbPbMC) ||
+            (fDataType == kPPbMC_pToMinusEta) ||
+            (fDataType == kPPbMC_pToPlusEta) ||
+            (fDataType == kOOMC) ||
+            (fDataType == kPpRef5p36TeVMC);    
+
+    fIsPPb = (fDataType == kPPb_pToMinusEta) || 
+             (fDataType == kPPb_pToPlusEta) || 
+             (fDataType == kPPb_pToMinusEta_5TeV) || 
+             (fDataType == kPPbMC_pToMinusEta) || 
+             (fDataType == kPPbMC_pToPlusEta);
   }
+}
+
+// Explicitly ask the TChain for its total across all source files. A branch
+// GetEntries() can report only the first currently loaded source tree.
+Long64_t ForestReader::GetTotalChainEntries() const{
+  throw std::runtime_error("This forest reader does not expose a total-chain entry count");
 }
 
 // Getter for number of events in the tree
@@ -412,6 +443,11 @@ Float_t ForestReader::GetVz() const{
 // Getter for centrality. CMS has integer centrality bins from 0 to 200, thus division by 2.
 Float_t ForestReader::GetCentrality() const{
   return fHiBin/2.0;
+}
+
+// Preserve the raw stored coordinate for coverage audits; legacy correction access is separate.
+Int_t ForestReader::GetStoredHiBin() const{
+  return fHiBin;
 }
 
 // Getter for hiBin. Return 1 for negative values (for easier handling of tracking efficiency correction)
@@ -528,4 +564,16 @@ Int_t ForestReader::GetTrackOriginalAlgorithm(Int_t iTrack) const{
 // Getter for track MVA
 Float_t ForestReader::GetTrackMVA(Int_t iTrack) const{
   return 0;
+}
+
+// Run-3 native composition is opt-in so legacy reader behavior is preserved.
+void ForestReader::EnableRun3JetSelection(Bool_t enabled){
+  if(enabled && fDataType != kOO && fDataType != kOOMC &&
+     fDataType != kPpRef5p36TeV && fDataType != kPpRef5p36TeVMC)
+    throw std::invalid_argument("Run-3 jet selection is only supported for OO/ppRef Run-3 forests");
+  fRun3JetSelectionEnabled = enabled;
+}
+
+EECJetSelection::JetInputs ForestReader::GetJetSelectionInputs(Int_t) const{
+  throw std::runtime_error("This forest reader does not expose reconstructed Run-3 jet selection inputs");
 }

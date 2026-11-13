@@ -120,6 +120,7 @@ public:
   EECCard(TFile* inFile); // Contructor with input file
   ~EECCard();             // Destructor
   
+  const TVectorT<float>* GetCardEntry(int entryIndex) const; // Read optional metadata without legacy defaults
   TString GetDataType() const;            // Getter for data type string
   TString GetAlternativeDataType(const bool includeMCtype = true) const; // Getter for alternative data type string
   void Write(TDirectory* file);            // Write the contents of the card to a file
@@ -165,6 +166,7 @@ public:
   int GetSubeventCut() const;       // Get the index for used subevent cut
   int GetJetType() const;           // Get the jet type index
   double GetJetPtCut() const;       // Get the minimum jet pT cut
+  double GetJetRadius() const;   // Getter for the jet radius R
   int GetBackgroundMethods() const; // Get infprmation which backgorund methods are included in the file
   int GetWeightExponent(int index = 1) const; // Get the weight exponent used in energy-energy correlators
   int FindWeightExponentIndex(double weightExponent) const; // Find the index in card for the input weight exponent

@@ -6,6 +6,8 @@
 // Root includes
 #include <TFile.h>
 #include <TMath.h>
+#include <TDirectory.h>
+#include <TNamed.h>
 
 // Own includes
 #include "EECHistograms.h"
@@ -56,6 +58,11 @@ EECHistograms::EECHistograms() :
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
   fhParticlePtResponse(0),
+  fhJetExposure(0),
+  fhEventCoverage(0),
+  fhSelectedActivityWeighted(0),
+  fhEventActivity(0),
+  fhInputStatus(0),
   fCard(0)
 {
   // Default constructor
@@ -108,6 +115,11 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhTracksWithMatchedParticle(0),
   fhParticleDeltaRResponse(0),
   fhParticlePtResponse(0),
+  fhJetExposure(0),
+  fhEventCoverage(0),
+  fhSelectedActivityWeighted(0),
+  fhEventActivity(0),
+  fhInputStatus(0),
   fCard(newCard)
 {
   // Custom constructor
@@ -121,6 +133,9 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhVertexZ(in.fhVertexZ),
   fhVertexZWeighted(in.fhVertexZWeighted),
   fhEvents(in.fhEvents),
+  fhJetVetoEventCounts(in.fhJetVetoEventCounts),
+  fhJetVetoEtaPhiBefore{in.fhJetVetoEtaPhiBefore[0],in.fhJetVetoEtaPhiBefore[1]},
+  fhJetVetoEtaPhiAfter{in.fhJetVetoEtaPhiAfter[0],in.fhJetVetoEtaPhiAfter[1]},
   fhTriggers(in.fhTriggers),
   fhTriggersAfterSelection(in.fhTriggersAfterSelection),
   fhTrackCuts(in.fhTrackCuts),
@@ -160,9 +175,15 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhTracksWithMatchedParticle(in.fhTracksWithMatchedParticle),
   fhParticleDeltaRResponse(in.fhParticleDeltaRResponse),
   fhParticlePtResponse(in.fhParticlePtResponse),
+  fhJetExposure(in.fhJetExposure),
+  fhEventCoverage(in.fhEventCoverage),
+  fhSelectedActivityWeighted(in.fhSelectedActivityWeighted),
+  fhEventActivity(in.fhEventActivity),
+  fhInputStatus(in.fhInputStatus),
   fCard(in.fCard)
 {
   // Copy constructor
+  fRun3JetQA=in.fRun3JetQA;
 
 }
 
@@ -174,9 +195,15 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   
   if (&in==this) return *this;
   
+  fRun3JetQA=in.fRun3JetQA;
   fhVertexZ = in.fhVertexZ;
   fhVertexZWeighted = in.fhVertexZWeighted;
   fhEvents = in.fhEvents;
+  fhJetVetoEventCounts = in.fhJetVetoEventCounts;
+  for(int stream=0;stream<2;++stream){
+    fhJetVetoEtaPhiBefore[stream] = in.fhJetVetoEtaPhiBefore[stream];
+    fhJetVetoEtaPhiAfter[stream] = in.fhJetVetoEtaPhiAfter[stream];
+  }
   fhTriggers = in.fhTriggers;
   fhTriggersAfterSelection = in.fhTriggersAfterSelection;
   fhTrackCuts = in.fhTrackCuts;
@@ -216,6 +243,11 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhTracksWithMatchedParticle = in.fhTracksWithMatchedParticle;
   fhParticleDeltaRResponse = in.fhParticleDeltaRResponse;
   fhParticlePtResponse = in.fhParticlePtResponse;
+  fhJetExposure = in.fhJetExposure;
+  fhEventCoverage = in.fhEventCoverage;
+  fhSelectedActivityWeighted = in.fhSelectedActivityWeighted;
+  fhEventActivity = in.fhEventActivity;
+  fhInputStatus = in.fhInputStatus;
   fCard = in.fCard;
   
   return *this;
@@ -226,9 +258,19 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
  */
 EECHistograms::~EECHistograms(){
   // destructor
+  delete fhJetExposure;
+  delete fhEventCoverage;
+  delete fhSelectedActivityWeighted;
+  delete fhEventActivity;
+  delete fhInputStatus;
   delete fhVertexZ;
   delete fhVertexZWeighted;
   delete fhEvents;
+  delete fhJetVetoEventCounts;
+  for(int stream=0;stream<2;++stream){
+    delete fhJetVetoEtaPhiBefore[stream];
+    delete fhJetVetoEtaPhiAfter[stream];
+  }
   delete fhTriggers;
   delete fhTriggersAfterSelection;
   delete fhTrackCuts;
@@ -281,6 +323,9 @@ void EECHistograms::SetCard(ConfigurationCard* newCard){
  * Create the necessary histograms
  */
 void EECHistograms::CreateHistograms(){
+  if(fCard->HasKey("Run3JetQA") && fCard->Get("Run3JetQA")==1)
+    fRun3JetQA=std::make_shared<Run3JetQA>(fCard);
+  const bool matchEECBinning = fCard->HasKey("MatchEECBinning") && fCard->Get("MatchEECBinning") == 1;
   
   // ======== Common binning information for histograms =========
   
@@ -439,15 +484,17 @@ void EECHistograms::CreateHistograms(){
   const Double_t minEnergyWeightEEC = -0.5;
   const Double_t maxEnergyWeightEEC = nEnergyWeightsEEC - 0.5;
 
-  // DeltaR binning for track density
+  // DeltaR binning for track density. Range must cover the full cone diameter (2*R),
+  // since two tracks inside a cone of radius R can be separated by up to 2R.
   const Int_t nDeltaRBinsTrackDensity = 80;
   const Double_t minDeltaRTrackDensity = 0;
-  const Double_t maxDeltaRTrackDensity = 0.8;
+  const Double_t maxDeltaRTrackDensity = 2*fCard->Get("JetRadius");
   
-  // Logarithmic deltaR binning for energy-energy correlator histograms
+  // Logarithmic deltaR binning for energy-energy correlator histograms. Range must cover
+  // the full cone diameter (2*R) for the same reason as above.
   const Int_t nDeltaRBinsEEC = 32;
   const Double_t minDeltaREEC = 0;
-  const Double_t maxDeltaREEC = 0.8;
+  const Double_t maxDeltaREEC = 2*fCard->Get("JetRadius");
   const Double_t binnerShift = 0.01;
   const Double_t deltaRlogBinWidth = (TMath::Log(maxDeltaREEC+binnerShift) - TMath::Log(minDeltaREEC+binnerShift)) / nDeltaRBinsEEC;
   Double_t deltaRBinsEEC[nDeltaRBinsEEC+1];
@@ -466,6 +513,31 @@ void EECHistograms::CreateHistograms(){
     }
   }
   fullUnfoldingBinning[nUnfoldingBins] = maxUnfoldingBin;
+
+  // Event-coverage QA is independent of the output centrality binning.
+  {
+    fhJetExposure = new TH1D("jetExposure", "Selected jet diagnostic exposure", nJetPtBinsEEC, jetPtBinsEEC);
+    fhJetExposure->Sumw2();
+    fhEventCoverage = new TH2D("eventCoverage", "Stored activity and analyzer selection coverage", 5, -0.5, 4.5, 4, -0.5, 3.5);
+    fhEventCoverage->Sumw2();
+    fhSelectedActivityWeighted = new TH1D("selectedActivityWeighted", "Selected event diagnostic weights", 5, -0.5, 4.5);
+    fhSelectedActivityWeighted->Sumw2();
+    const char* categories[5] = {"OO hiBin 0-179", "OO hiBin 180-199", "OO negative hiBin", "OO hiBin >=200", "pp selected"};
+    for(Int_t i=0; i<5; ++i){
+      fhEventCoverage->GetXaxis()->SetBinLabel(i+1,categories[i]);
+      fhSelectedActivityWeighted->GetXaxis()->SetBinLabel(i+1,categories[i]);
+    }
+    const char* stages[4] = {"Read from forest", "Pass pThat", "Pass trigger", "Pass event cuts"};
+    for(Int_t i=0; i<4; ++i) fhEventCoverage->GetYaxis()->SetBinLabel(i+1,stages[i]);
+    const Int_t activityBins[3] = {202, 200, 60};
+    const Double_t activityLow[3] = {-1.5, 0, -15};
+    const Double_t activityHigh[3] = {200.5, 10000, 15};
+    fhEventActivity = new THnSparseD("eventActivity", "Actual stored hiBin, HF sum, vz; flows retained", 3, activityBins, activityLow, activityHigh);
+    fhEventActivity->Sumw2();
+    fhInputStatus = new TH1D("inputStatus", "Input coverage; analyzer cannot recover upstream source losses", 2, 0.5, 2.5);
+    fhInputStatus->GetXaxis()->SetBinLabel(1,"Files opened");
+    fhInputStatus->GetXaxis()->SetBinLabel(2,"Files truncated by MaxEventsPerFile");
+  }
 
   // Arrays for creating THnSparses
   const Int_t nAxesMultiplicity = 3;
@@ -558,6 +630,19 @@ void EECHistograms::CreateHistograms(){
   fhVertexZ = new TH1F("vertexZ","vertexZ",nVzBins,minVz,maxVz); fhVertexZ->Sumw2();
   fhVertexZWeighted = new TH1F("vertexZweighted","vertexZweighted",nVzBins,minVz,maxVz); fhVertexZWeighted->Sumw2();
   fhEvents = new TH1F("nEvents","nEvents",knEventTypes,-0.5,knEventTypes-0.5); fhEvents->Sumw2();
+  if(fCard && fCard->HasKey("ApplyJetVeto") && fCard->Get("ApplyJetVeto") == 1){
+    fhJetVetoEventCounts = new TH1D("jetVetoEventCounts", "Unweighted events after standard event cuts;selection;events", 6, -.5, 5.5);
+    const char* labels[] = {"signal checked", "signal kept", "signal vetoed", "mixing checked", "mixing kept", "mixing vetoed"};
+    for(int bin=0;bin<6;++bin) fhJetVetoEventCounts->GetXaxis()->SetBinLabel(bin+1,labels[bin]);
+    for(int stream=0;stream<2;++stream){
+      const TString prefix = stream ? "mixing" : "signal";
+      fhJetVetoEtaPhiBefore[stream] = new TH2D(prefix+"EligibleJetEtaPhiBeforeVeto", "Eligible reconstructed jets before event veto;detector #eta;detector #phi", 104,-5.2,5.2,72,-TMath::Pi(),TMath::Pi());
+      fhJetVetoEtaPhiAfter[stream] = new TH2D(prefix+"EligibleJetEtaPhiAfterVeto", "Eligible reconstructed jets in kept events;detector #eta;detector #phi", 104,-5.2,5.2,72,-TMath::Pi(),TMath::Pi());
+      fhJetVetoEtaPhiBefore[stream]->Sumw2();
+      fhJetVetoEtaPhiAfter[stream]->Sumw2();
+    }
+  }
+
   fhTriggers = new TH1F("triggers","triggers",knTriggerCombinations,-0.5,knTriggerCombinations-0.5); fhTriggers->Sumw2();
   fhTriggersAfterSelection = new TH1F("triggersAfterSelection","triggersAfterSelection",knTriggerCombinations,-0.5,knTriggerCombinations-0.5); fhTriggersAfterSelection->Sumw2();
   fhTrackCuts = new TH1F("trackCuts","trackCuts",knTrackCuts,-0.5,knTrackCuts-0.5); fhTrackCuts->Sumw2();
@@ -687,9 +772,9 @@ void EECHistograms::CreateHistograms(){
   // ======== THnSparse for all jets ========
   
   // Axis 0 for the inclusive jet histogram: jet pT
-  nBinsJet[0] = nPtBinsJet;         // nBins for inclusive jet pT
-  lowBinBorderJet[0] = minPtJet;    // low bin border for inclusive jet pT
-  highBinBorderJet[0] = maxPtJet;   // high bin border for inclusive jet pT
+  nBinsJet[0] = matchEECBinning ? nJetPtBinsEEC : nPtBinsJet;         // nBins for inclusive jet pT
+  lowBinBorderJet[0] = matchEECBinning ? minJetPtEEC : minPtJet;    // low bin border for inclusive jet pT
+  highBinBorderJet[0] = matchEECBinning ? maxJetPtEEC : maxPtJet;   // high bin border for inclusive jet pT
   
   // Axis 1 for the inclusive jet histogram: jet phi
   nBinsJet[1] = nPhiBins;        // nBins for inclusive jet phi
@@ -720,14 +805,15 @@ void EECHistograms::CreateHistograms(){
   fhInclusiveJet = new THnSparseF("inclusiveJet","inclusiveJet",nAxesJet,nBinsJet,lowBinBorderJet,highBinBorderJet); fhInclusiveJet->Sumw2();
 
   // Set custom centrality bins for histograms
+  if(matchEECBinning) fhInclusiveJet->SetBinEdges(0,jetPtBinsEEC);
   fhInclusiveJet->SetBinEdges(4,wideCentralityBins);
   
   // ======== THnSparses for tracks and uncorrected tracks ========
   
   // Axis 0 for the track histogram: track pT
-  nBinsTrack[0] = nPtBinsTrack;         // nBins for track pT
-  lowBinBorderTrack[0] = minPtTrack;    // low bin border for track pT
-  highBinBorderTrack[0] = maxPtTrack;   // high bin border for track pT
+  nBinsTrack[0] = matchEECBinning ? nTrackPtBinsEEC : nPtBinsTrack;         // nBins for track pT
+  lowBinBorderTrack[0] = matchEECBinning ? minTrackPtEEC : minPtTrack;    // low bin border for track pT
+  highBinBorderTrack[0] = matchEECBinning ? maxTrackPtEEC : maxPtTrack;   // high bin border for track pT
   
   // Axis 1 for the track histogram: track phi
   nBinsTrack[1] = nPhiBins;         // nBins for track phi
@@ -749,6 +835,10 @@ void EECHistograms::CreateHistograms(){
   fhTrackUncorrected = new THnSparseF("trackUncorrected","trackUncorrected",nAxesTrack,nBinsTrack,lowBinBorderTrack,highBinBorderTrack); fhTrackUncorrected->Sumw2();
 
   // Set custom centrality bins for histograms
+  if(matchEECBinning){
+    fhTrack->SetBinEdges(0,trackPtBinsEEC);
+    fhTrackUncorrected->SetBinEdges(0,trackPtBinsEEC);
+  }
   fhTrack->SetBinEdges(3,wideCentralityBins);
   fhTrackUncorrected->SetBinEdges(3,wideCentralityBins);
   
@@ -778,6 +868,7 @@ void EECHistograms::CreateHistograms(){
   fhMaxPtParticleInJet = new THnSparseF("maxParticlePtInJet", "maxParticlePtInJet", nAxesMaxParticlePtInJet, nBinsMaxParticlePtInJet, lowBinBorderMaxParticlePtInJet, highBinBorderMaxParticlePtInJet); fhMaxPtParticleInJet->Sumw2();
   
   // Set custom bin borders for histograms
+  // Keep the fine particle pT axes needed by the fixed max-particle pT cuts.
   fhMaxPtParticleInJet->SetBinEdges(0,jetPtBinsEEC);              // Jet pT bins
   fhMaxPtParticleInJet->SetBinEdges(3,wideCentralityBins);        // Centrality bins
   
@@ -939,6 +1030,7 @@ void EECHistograms::CreateHistograms(){
   fhJetPtClosure = new THnSparseF("jetPtClosure", "jetPtClosure", nAxesJetClosure, nBinsJetClosure, lowBinBorderJetClosure, highBinBorderJetClosure); fhJetPtClosure->Sumw2();
   
   // Set custom centrality bins for histograms
+  // Closure projections use fixed 10 GeV pT bins, independently of EEC binning.
   fhJetPtClosure->SetBinEdges(3,wideCentralityBins);
   
   // ======== RooUnfold compatible energy-energy correlator distributions. Assume only jet pT is unfolded ========
@@ -1211,9 +1303,9 @@ void EECHistograms::CreateHistograms(){
   fhJetNumberInReflectedCone->SetBinEdges(1,wideCentralityBins);  // Centrality bins 
 
   // Axis 0 for the jet pT in reflected cone histograms: jet pT
-  nBinsReflectedConeQA[0] = nJetPtInReflectedConeBins;       // nBins for jet pT within the reflected cone
-  lowBinBorderReflectedConeQA[0] = minJetPtReflectedCone;    // low bin border for jet pT within the reflected cone
-  highBinBorderReflectedConeQA[0] = maxJetPtReflectedCone;   // high bin border for jet pT within the reflected cone
+  nBinsReflectedConeQA[0] = matchEECBinning ? nJetPtBinsEEC : nJetPtInReflectedConeBins;       // nBins for jet pT within the reflected cone
+  lowBinBorderReflectedConeQA[0] = matchEECBinning ? minJetPtEEC : minJetPtReflectedCone;    // low bin border for jet pT within the reflected cone
+  highBinBorderReflectedConeQA[0] = matchEECBinning ? maxJetPtEEC : maxJetPtReflectedCone;   // high bin border for jet pT within the reflected cone
 
   // Axis 1 for the number of jets in reflected cone histograms: centrality
   nBinsReflectedConeQA[1] = nWideCentralityBins;     // nBins for centrality
@@ -1224,7 +1316,7 @@ void EECHistograms::CreateHistograms(){
   fhJetPtInReflectedCone = new THnSparseF("jetPtInReflectedCone", "jetPtInReflectedCone", nAxesReflectedConeQA, nBinsReflectedConeQA, lowBinBorderReflectedConeQA, highBinBorderReflectedConeQA); fhJetPtInReflectedCone->Sumw2();
 
   // Set custom bin axes for the histograms
-  fhJetPtInReflectedCone->SetBinEdges(0,jetPtReflectedConeBins);  // Jet pT bins 
+  fhJetPtInReflectedCone->SetBinEdges(0,matchEECBinning ? jetPtBinsEEC : jetPtReflectedConeBins);  // Jet pT bins
   fhJetPtInReflectedCone->SetBinEdges(1,wideCentralityBins);      // Centrality bins 
 
   // Release memory allocated to new arrays
@@ -1240,7 +1332,31 @@ void EECHistograms::CreateHistograms(){
  * Write the histograms to file
  */
 void EECHistograms::Write() const{
-  
+  if(fRun3JetQA) fRun3JetQA->Write();
+
+  {
+    TDirectory* parent = gDirectory;
+    TDirectory* qa = parent->GetDirectory("eventQA");
+    if(!qa) qa = parent->mkdir("eventQA");
+    qa->cd();
+    fhJetExposure->Write();
+    fhEventCoverage->Write();
+    fhSelectedActivityWeighted->Write();
+    fhEventActivity->Write();
+    fhInputStatus->Write();
+    TNamed("JetVetoState", fhJetVetoEventCounts ? "Enabled with explicit analyst-supplied inputs; production applicability/coverage must be established externally" : "NOT_APPLIED: Run-3 mandatory veto requirement not certified by this diagnostic output").Write();
+    if(fhJetVetoEventCounts){
+      fhJetVetoEventCounts->Write();
+      for(int stream=0;stream<2;++stream){
+        fhJetVetoEtaPhiBefore[stream]->Write();
+        fhJetVetoEtaPhiAfter[stream]->Write();
+      }
+    }
+    TNamed("WeightState", "Standard fTotalEventWeight; no weight changes from centrality output binning; correction applicability/physics closure must be validated separately").Write();
+    TNamed("EventClass", "Selected events; stored activity coordinates and invalid-coordinate counts retained; upstream losses and full acceptance not certified").Write();
+    parent->cd();
+  }
+
   // Write the histograms to file
   fhVertexZ->Write();
   fhVertexZWeighted->Write();
@@ -1317,4 +1433,24 @@ Double_t EECHistograms::GetDeltaRBinBorderLowEEC(Int_t iBin){
 // Getter for the high bin border of the i:th deltaR bin
 Double_t EECHistograms::GetDeltaRBinBorderHighEEC(Int_t iBin){
   return fhEnergyEnergyCorrelator->GetAxis(0)->GetBinUpEdge(iBin);
+}
+
+// Categories describe stored coordinates, not a newly certified percentile calibration.
+void EECHistograms::FillEventCoverage(Int_t hiBin, Int_t stage, Bool_t isOO){
+  if(!fhEventCoverage) return;
+  const Int_t category = !isOO ? 4 : (hiBin < 0 ? 2 : (hiBin >= 200 ? 3 : (hiBin >= 180 ? 1 : 0)));
+  fhEventCoverage->Fill(category, stage);
+}
+
+void EECHistograms::FillSelectedEvent(Int_t hiBin, Double_t hfSum, Double_t vz, Double_t eventWeight){
+  const Int_t dataType = fCard->Get("DataType");
+  const Bool_t isOO = dataType == 9 || dataType == 10;
+  const Int_t category = !isOO ? 4 : (hiBin < 0 ? 2 : (hiBin >= 200 ? 3 : (hiBin >= 180 ? 1 : 0)));
+  fhSelectedActivityWeighted->Fill(category, eventWeight);
+  const Double_t activity[3] = {static_cast<Double_t>(hiBin), hfSum, vz};
+  fhEventActivity->Fill(activity, eventWeight);
+}
+
+void EECHistograms::MarkTruncatedInput(){
+  if(fhInputStatus) fhInputStatus->Fill(2);
 }

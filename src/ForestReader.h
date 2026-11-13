@@ -23,14 +23,45 @@
 #include <TChainElement.h>
 #include <TObjArray.h>
 
+#include "Run3JetSelectionInputs.h"
+
 using namespace std;
 
 class ForestReader{
   
 public:
-  
-  // Possible data types to be read with the reader class
-  enum enumDataTypes{kPp, kPbPb, kPpMC, kPbPbMC, kPPb_pToMinusEta, kPPb_pToPlusEta, kPPb_pToMinusEta_5TeV, kPPbMC_pToMinusEta, kPPbMC_pToPlusEta, knDataTypes};
+
+// Possible data types to be read with the reader class
+  enum enumDataTypes {
+    kPp                    = 0,
+    kPbPb                  = 1,
+    kPpMC                  = 2,
+    kPbPbMC                = 3,
+    kPPb_pToMinusEta       = 4,
+    kPPb_pToPlusEta        = 5,
+    kPPb_pToMinusEta_5TeV  = 6,
+    kPPbMC_pToMinusEta     = 7,
+    kPPbMC_pToPlusEta      = 8,
+    kOO                    = 9,
+    kOOMC                  = 10,
+    kPpRef5p36TeV          = 11,
+    kPpRef5p36TeVMC        = 12,
+    knDataTypes
+  };
+
+ // 0 = pp Ref 5 TeV,
+ // 1 = PbPb 5 TeV, 
+ // 2 = pp MC, 
+ // 3 = PbPb MC, 
+ // 4 = pPb p -> -eta, 
+ // 5 = pPb p -> +eta, 
+ // 6 = pPb 5 TeV, 
+ // 7 = pPb MC p -> -eta, 
+ // 8 = pPb MC p -> +eta, 
+ // 9 = OO, 
+ // 10 = OO MC, 
+ // 11 = pp Ref 5.36 TeV, 
+ // 12 = pp Ref 5.36 TeV MC
   
   // Constructors and destructors
   ForestReader();                                          // Default constructor
@@ -41,6 +72,7 @@ public:
   
   // Methods
   virtual void GetEvent(Int_t nEvent) = 0;                 // Get the nth event in tree
+  virtual Long64_t GetTotalChainEntries() const; // Explicit full-chain count; legacy GetNEvents behavior is retained.
   virtual Int_t GetNEvents() const;                        // Get the number of events
   virtual void ReadForestFromFile(TFile *inputFile) = 0;   // Read the forest from a file
   virtual void ReadForestFromFileList(std::vector<TString> fileList) = 0;   // Read the forest from a file list
@@ -50,11 +82,16 @@ public:
   // Getters for leaves in heavy ion tree
   Float_t GetVz() const;              // Getter for vertex z position
   Float_t GetCentrality() const;      // Getter for centrality
+  Int_t GetStoredHiBin() const; // Actual stored coordinate, including invalid/unassigned negatives
   Int_t GetHiBin() const;             // Getter for CMS hiBin
   Float_t GetHFPlus() const;          // Getter for energy in HF plus calorimeters
   Float_t GetHFMinus() const;         // Getter for energy in HF minus calorimeters
   Float_t GetHFSum() const;           // Getter for energy in HF calorimeters
   Float_t GetPtHat() const;           // Getter for pT hat
+  Float_t GetRawHFSum() const { return fHasRawHFSum ? fRawHFSum : GetHFSum(); }
+  UInt_t GetRunNumber() const { return fRunNumber; }
+  UInt_t GetLumiNumber() const { return fLumiNumber; }
+  bool HasPhysicalEventIdentity() const { return fHasPhysicalEventIdentity; }
   ULong64_t GetEventNumber() const;   // Getter for event number
   Float_t GetEventWeight() const;     // Getter for jet weight in MC
   
@@ -66,6 +103,12 @@ public:
   virtual Float_t GetJetRawPt(Int_t iJet) const = 0;      // Getter for jet raw pT
   virtual Float_t GetJetMaxTrackPt(Int_t iJet) const = 0; // Getter for maximum track pT inside a jet
   
+  // Enable before opening a forest; unsupported readers fail on input access.
+  virtual void EnableRun3JetSelection(Bool_t enabled = true);
+  virtual EECJetSelection::JetInputs GetJetSelectionInputs(Int_t iJet) const;
+  virtual void EnableRun3PpL1Inputs() { throw std::logic_error("This reader does not provide 2024 ppRef L1 inputs"); }
+  virtual std::pair<double,double> GetJetL1Inputs(Int_t) const { throw std::logic_error("2024 ppRef L1 inputs were not enabled"); }
+
   // Getters for leaves in HLT tree
   Int_t GetCaloJet15FilterBit() const;           // Getter for calorimeter jet 15 filter bit
   Int_t GetCaloJet30FilterBit() const;           // Getter for calorimeter jet 30 filter bit
@@ -138,6 +181,7 @@ protected:
   Bool_t fReadTrackTree;  // Read the track trees from the forest
   Bool_t fIsMiniAOD;      // Flag for type of the forest True = MiniAOD forest, False = AOD forest
   Bool_t fMixingMode;     // Flag for mixed event mode (false = regular events, true = mixed events)
+  Bool_t fRun3JetSelectionEnabled; // Read native PF composition for Run-3 ID/veto
   Bool_t fMegaSkimMode;   // Flag for mega skim mode (false = regular mixing files, true = mega skimmed mixing files)
 
   // Flags to simplify finding certain data types
@@ -208,6 +252,10 @@ protected:
   Float_t fHFPlus;        // Energy in HF plus calorimeters
   Float_t fHFMinus;       // Energy in HF minus calorimeters
   Float_t fPtHat;         // pT hat
+  Float_t fRawHFSum=0;
+  bool fHasRawHFSum=false;
+  UInt_t fRunNumber=0, fLumiNumber=0;
+  bool fHasPhysicalEventIdentity=false;
   ULong64_t fEventNumber; // Number of the analyzed event
   
   // Leaves for jet tree

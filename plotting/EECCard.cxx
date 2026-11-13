@@ -4,6 +4,7 @@
 
 // Own includes
 #include "EECCard.h"
+#include <stdexcept>
 
 /*
  * Contructor with input file
@@ -83,14 +84,44 @@ void EECCard::ReadVectors(){
 void EECCard::FindDataTypeString(){
   
   // Define the different data types corresponding to certain indices
-  TString dataTypes[9] = {"pp","PbPb","pp MC","PbPb MC","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb p #rightarrow -#eta 5TeV", "pPb MC p #rightarrow -#eta", "pPb MC p #rightarrow +#eta"};
-  TString alternativeDataTypes[9] = {"pp","PbPb","Pythia8","Pythia+Hydjet","pPb p #rightarrow -#eta","pPb p #rightarrow +#eta", "pPb", "Pythia+EPOS p #rightarrow -#eta","Pythia+EPOS p #rightarrow +#eta",};
-  if(fDataType < 0 || fDataType > 8){
-    fDataTypeString = "Unknown";
-    fAlternativeDataTypeString = "Unknown";
-    fDataTypeStringWithoutMCType = "Unknown";
-    return;
-  }
+  TString dataTypes[13] = {
+  "pp",                              // 0
+  "PbPb",                            // 1
+  "pp MC",                           // 2
+  "PbPb MC",                         // 3
+  "pPb p #rightarrow -#eta",         // 4
+  "pPb p #rightarrow +#eta",         // 5
+  "pPb p #rightarrow -#eta 5TeV",    // 6
+  "pPb MC p #rightarrow -#eta",      // 7
+  "pPb MC p #rightarrow +#eta",      // 8
+  "OO",                              // 9
+  "OO MC",                           // 10
+  "ppRef 5.36 TeV",                  // 11
+  "ppRef 5.36 TeV MC"                // 12
+};
+
+TString alternativeDataTypes[13] = {
+  "pp",
+  "PbPb",
+  "Pythia8",
+  "Pythia+Hydjet",
+  "pPb p #rightarrow -#eta",
+  "pPb p #rightarrow +#eta",
+  "pPb",
+  "Pythia+EPOS p #rightarrow -#eta",
+  "Pythia+EPOS p #rightarrow +#eta",
+  "OO",
+  "OO MC",
+  "ppRef",
+  "ppRef MC"
+};
+
+if(fDataType < 0 || fDataType > 12){
+  fDataTypeString = "Unknown";
+  fAlternativeDataTypeString = "Unknown";
+  fDataTypeStringWithoutMCType = "Unknown";
+  return;
+}
   
   // Remember the data type without the MC type
   fDataTypeStringWithoutMCType = alternativeDataTypes[fDataType];
@@ -116,6 +147,12 @@ void EECCard::FindDataTypeString(){
 /*
  *  Getter for data type string
  */
+const TVectorT<float>* EECCard::GetCardEntry(int entryIndex) const{
+  if(entryIndex < 0 || entryIndex >= knEntries)
+    throw std::out_of_range("EECCard: invalid metadata entry index");
+  return fCardEntries[entryIndex];
+}
+
 TString EECCard::GetDataType() const{
   return fDataTypeString;
 }
@@ -150,12 +187,12 @@ int EECCard::GetLastUnfoldedTrackPtBin() const{
 
 // Getter for the first unfolded jet pT bin index
 int EECCard::GetFirstUnfoldedJetPtBin() const{
-  return (*fCardEntries[kFirstUnfoldedJetPtBin])[1];
+  return fCardEntries[kFirstUnfoldedJetPtBin] ? (*fCardEntries[kFirstUnfoldedJetPtBin])[1] : -1;
 } 
 
 // Getter for the last unfolded jet pT bin index
 int EECCard::GetLastUnfoldedJetPtBin() const{
-  return (*fCardEntries[kLastUnfoldedJetPtBin])[1];
+  return fCardEntries[kLastUnfoldedJetPtBin] ? (*fCardEntries[kLastUnfoldedJetPtBin])[1] : -1;
 } 
 
 /*
@@ -175,6 +212,11 @@ int EECCard::GetJetType() const{
 // Getter for the minimum jet pT cut
 double EECCard::GetJetPtCut() const{
   return (*fCardEntries[kMinPtCut])[1];
+}
+
+// Getter for the jet radios used in energy-energy correlator analysis
+double EECCard::GetJetRadius() const{
+  return (*fCardEntries[kJetRadius])[1];   // valor escalar guardado en la posición 0
 }
 
 /*
